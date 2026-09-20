@@ -1,1 +1,0 @@
-export { ExportCollectionsPageComponent } from './export-collections-page.component';

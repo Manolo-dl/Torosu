@@ -1,1 +1,0 @@
-export { LogsPageComponent } from './logs-page.component';

@@ -1,1 +1,0 @@
-export { ImportCollectionsPageComponent } from './import-collections-page.component';
