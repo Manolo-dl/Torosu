@@ -14,11 +14,17 @@
       {
         "title": "torosu",
         "width": 800,
-        "height": 600
+        "height": 600,
+        "dragDropEnabled": true,
+        "decorations": false
       }
     ],
     "security": {
-      "csp": null
+      "csp": null,
+      "assetProtocol": {
+        "enable": true,
+        "scope": []
+      }
     }
   },
   "bundle": {
@@ -30,6 +36,24 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "externalBin": ["binaries/tosu"],
+    "createUpdaterArtifacts": true,
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser"
+      }
+    }
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEQ2OTU0RjVGM0U2OTY0QzQKUldURVpHaytYMCtWMWpOa0R6c3RnT0NINThQN0crb3BiMkVJZU5RL0xRZHRYWnpQQmV0VmptdjUK",
+      "endpoints": [
+        "https://github.com/Manolo-dl/osu-tools-v2/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
   }
 }

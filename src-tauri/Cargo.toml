@@ -18,10 +18,38 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "2", features = [] }
+tauri = { version = "2", features = ["protocol-asset"] }
 tauri-plugin-opener = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+sqlx = { version = "0.9.0", features = ["sqlite", "runtime-tokio"] }
+tauri-plugin-shell = "2.3.6"
+tauri-plugin-updater = "2.12.0"
+tauri-plugin-log = "2.9.2"
+toml = "1.1.6"
+tauri-plugin-fs = "2.5.2"
+tauri-plugin-os = "2.3.2"
+chrono = "0.4.45"
+tauri-plugin-store = "2.4.5"
+tauri-plugin-dialog = "2.7.3"
+regex = "1.13.1"
+osynic_osudb = "0.1.5"
+anyhow = "1.0.104"
+rosu-map = "0.2.1"
+hound = "3.5.1"
+soundtouch = "0.5.4"
+symphonia = "0.6.1"
+log = "0.4.34"
+tokio = "1.53.1"
+zip = "8.6.0"
+futures-util = "0.3.34"
+tokio-tungstenite = "0.30.0"
+walkdir = "2.5.0"
+reqwest = "0.13.5"
+tauri-plugin-notification = "2.4.0"
+open = "5.4.4"
+dirs = "7.0.0"
+osu-db = { version = "0.3.0", default-features = false }
 
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration
