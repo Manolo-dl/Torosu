@@ -1,0 +1,71 @@
+<div class="difficulty-panel">
+  <span class="section-title">Difficulty</span>
+
+  <div class="difficulty-list">
+
+    <div class="difficulty-row">
+      <span class="difficulty-label">HP</span>
+      <input type="range" min="0" max="10" step="0.1" class="difficulty-slider"
+        [value]="trainer.hp().value"
+        [disabled]="trainer.hp().locked"
+        (input)="onSliderChange('hp', $event)" />
+      <span class="difficulty-value">{{ trainer.hp().value | number:'1.1-1' }}</span>
+      <button
+        type="button"
+        class="lock-btn"
+        [class.active]="trainer.hp().locked"
+        [title]="trainer.hp().locked ? 'Unlock HP' : 'Lock HP'"
+        (click)="trainer.toggleLock('hp')"
+      >{{ trainer.hp().locked ? '🔒' : '🔓' }}</button>
+    </div>
+
+    <div class="difficulty-row">
+      <span class="difficulty-label">CS</span>
+      <input type="range" min="0" max="10" step="0.1" class="difficulty-slider"
+        [value]="trainer.cs().value"
+        [disabled]="trainer.cs().locked"
+        (input)="onSliderChange('cs', $event)" />
+      <span class="difficulty-value">{{ trainer.cs().value | number:'1.1-1' }}</span>
+      <button
+        type="button"
+        class="lock-btn"
+        [class.active]="trainer.cs().locked"
+        [title]="trainer.cs().locked ? 'Unlock CS' : 'Lock CS'"
+        (click)="trainer.toggleLock('cs')"
+      >{{ trainer.cs().locked ? '🔒' : '🔓' }}</button>
+    </div>
+
+    <div class="difficulty-row">
+      <span class="difficulty-label">AR</span>
+      <input type="range" min="0" max="10" step="0.1" class="difficulty-slider"
+        [value]="trainer.ar().value"
+        [disabled]="trainer.ar().locked"
+        (input)="onSliderChange('ar', $event)" />
+      <span class="difficulty-value">{{ trainer.ar().value | number:'1.1-1' }}</span>
+      <button
+        type="button"
+        class="lock-btn"
+        [class.active]="trainer.ar().locked"
+        [title]="trainer.ar().locked ? 'Unlock AR' : 'Lock AR'"
+        (click)="trainer.toggleLock('ar')"
+      >{{ trainer.ar().locked ? '🔒' : '🔓' }}</button>
+    </div>
+
+    <div class="difficulty-row">
+      <span class="difficulty-label">OD</span>
+      <input type="range" min="0" max="10" step="0.1" class="difficulty-slider"
+        [value]="trainer.od().value"
+        [disabled]="trainer.od().locked"
+        (input)="onSliderChange('od', $event)" />
+      <span class="difficulty-value">{{ trainer.od().value | number:'1.1-1' }}</span>
+      <button
+        type="button"
+        class="lock-btn"
+        [class.active]="trainer.od().locked"
+        [title]="trainer.od().locked ? 'Unlock OD' : 'Lock OD'"
+        (click)="trainer.toggleLock('od')"
+      >{{ trainer.od().locked ? '🔒' : '🔓' }}</button>
+    </div>
+
+  </div>
+</div>

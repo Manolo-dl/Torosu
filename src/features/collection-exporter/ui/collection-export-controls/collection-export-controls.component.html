@@ -1,0 +1,10 @@
+<div class="export-controls">
+  <span class="section-title">Format</span>
+  <app-export-controls
+    [formats]="formats"
+    [count]="store.totalSelectedSets()"
+    countLabel="beatmapsets"
+    [disabled]="store.selectedCount() === 0"
+    (doExport)="export($event)"
+  />
+</div>

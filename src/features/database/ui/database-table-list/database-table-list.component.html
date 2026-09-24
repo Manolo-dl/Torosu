@@ -1,0 +1,18 @@
+<div class="table-list-panel">
+  <div class="panel-header">
+    <span class="section-title">Tables</span>
+  </div>
+
+  <ul class="table-list" role="list">
+    @for (table of store.tables(); track table.name) {
+      <li
+        class="table-item"
+        [class.active]="store.selectedTable() === table.name"
+        (click)="store.selectTable(table.name)"
+      >
+        <span class="table-name">{{ table.name }}</span>
+        <span class="column-count">{{ table.columns.length }} cols</span>
+      </li>
+    }
+  </ul>
+</div>

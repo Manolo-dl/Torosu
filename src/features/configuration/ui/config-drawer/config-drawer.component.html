@@ -1,0 +1,55 @@
+<button
+    size="m"
+    appearance="flat"
+    tuiButton
+    type="button"
+    (click)="open.set(!open())"
+    >
+    <fa-icon [icon]="faGears" />
+</button>
+
+<tui-drawer *tuiPopup="open()">
+    <header>
+        <h2 tuiHeader="body-l">
+            <div tuiTitle>
+                Onisu Configuration
+                <div tuiSubtitle>Manage your Onisu settings</div>
+            </div>
+
+            <div tuiAccesories>
+                <button
+                    size="m"
+                    appearance="icon"
+                    iconStart="@tui.x"
+                    tuiIconButton
+                    type="button"
+                    (click)="open.set(false)"
+                >
+                    Close
+                </button>
+            </div>
+        </h2>
+        <nav tuiNavigationNav>
+            <tui-tabs>
+                <button
+                    tuiTab
+                    type="button"
+                >
+                    General
+                </button>
+                <button
+                    tuiTab
+                    type="button"
+                >
+                    Tosu
+                </button>
+                <button
+                    tuiTab
+                    type="button"
+                >
+                    Downloader
+                </button>
+            </tui-tabs>
+        </nav>
+    </header>
+</tui-drawer>

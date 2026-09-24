@@ -1,0 +1,31 @@
+<div class="column" [class]="'level-' + level().toLowerCase()">
+  <div class="column-header">
+    <span class="level-label">{{ level() }}</span>
+    <span class="count-badge">{{ totalCount() }}</span>
+  </div>
+
+  @if (targetNames().length === 0) {
+    <div class="empty">No entries</div>
+  }
+
+  @for (target of targetNames(); track target) {
+    <div class="target-group">
+      <button class="target-header" (click)="toggle(target)">
+        <span class="chevron" [class.open]="isExpanded(target)">▸</span>
+        <span class="target-name">{{ target }}</span>
+        <span class="target-count">{{ entriesFor(target).length }}</span>
+      </button>
+
+      @if (isExpanded(target)) {
+        <div class="entries">
+          @for (entry of entriesFor(target); track $index) {
+            <div class="entry">
+              <span class="timestamp">{{ entry.timestamp }}</span>
+              <span class="message">{{ entry.message }}</span>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>

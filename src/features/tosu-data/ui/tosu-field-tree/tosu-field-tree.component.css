@@ -1,0 +1,55 @@
+:host { display: block; }
+
+.tree-object, .tree-array {
+    display: flex;
+    flex-direction: column;
+}
+
+.tree-row {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 0 8px;
+    align-items: baseline;
+    min-height: 22px;
+    border-bottom: 1px solid color-mix(in srgb, var(--border) 40%, transparent);
+}
+
+.tree-row:last-child { border-bottom: none; }
+
+.tree-key {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    font-family: monospace;
+    padding: 3px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tree-index {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: monospace;
+    padding: 3px 0;
+}
+
+.tree-type {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-style: italic;
+    padding: 3px 0;
+    align-self: center;
+}
+
+.tree-children {
+    grid-column: 1 / -1;
+    padding-left: 16px;
+    border-left: 2px solid color-mix(in srgb, var(--border) 50%, transparent);
+    margin: 2px 0 2px 0;
+}
+
+.val-string  { font-size: 12px; font-family: monospace; color: #7ec8a0; padding: 3px 0; }
+.val-number  { font-size: 12px; font-family: monospace; color: #79b8f9; padding: 3px 0; }
+.val-boolean { font-size: 12px; font-family: monospace; color: #f97fa3; padding: 3px 0; }
+.val-null    { font-size: 12px; font-family: monospace; color: var(--text-muted); font-style: italic; padding: 3px 0; }

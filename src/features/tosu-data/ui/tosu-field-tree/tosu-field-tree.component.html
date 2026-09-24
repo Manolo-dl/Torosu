@@ -1,0 +1,34 @@
+@if (isObject(value())) {
+    <div class="tree-object">
+        @for (entry of entries(value()); track entry[0]) {
+            <div class="tree-row">
+                <span class="tree-key">{{ entry[0] }}</span>
+                @if (isObject(entry[1]) || isArray(entry[1])) {
+                    <span class="tree-type">{{ typeLabel(entry[1]) }}</span>
+                    <div class="tree-children">
+                        <app-tosu-field-tree [value]="entry[1]" />
+                    </div>
+                } @else {
+                    <span [class]="valueClass(entry[1])">{{ formatValue(entry[1]) }}</span>
+                }
+            </div>
+        }
+    </div>
+} @else if (isArray(value())) {
+    <div class="tree-array">
+        @for (item of asArray(value()); track $index) {
+            <div class="tree-row">
+                <span class="tree-index">[{{ $index }}]</span>
+                @if (isObject(item) || isArray(item)) {
+                    <div class="tree-children">
+                        <app-tosu-field-tree [value]="item" />
+                    </div>
+                } @else {
+                    <span [class]="valueClass(item)">{{ formatValue(item) }}</span>
+                }
+            </div>
+        }
+    </div>
+} @else {
+    <span [class]="valueClass(value())">{{ formatValue(value()) }}</span>
+}

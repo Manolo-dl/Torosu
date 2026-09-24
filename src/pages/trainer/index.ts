@@ -1,0 +1,1 @@
+export { TrainerPageComponent } from './trainer-page.component';

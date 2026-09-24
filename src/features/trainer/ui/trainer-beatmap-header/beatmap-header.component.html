@@ -1,0 +1,19 @@
+<div
+  class="beatmap-banner"
+  [style.background-image]="tosu.backgroundUrl()"
+>
+  <div class="banner-overlay">
+    <div class="banner-info">
+      <h2 class="banner-title">
+        {{ tosu.title() }} <span class="banner-artist">— {{ tosu.artist() }}</span>
+      </h2>
+      <p class="banner-meta">
+        {{ tosu.version() }} · mapped by {{ tosu.mapper() }}
+      </p>
+    </div>
+
+    <div class="banner-stars">
+      <span class="star-icon">★</span> {{ tosu.stars() | number:'1.2-2' }}
+    </div>
+  </div>
+</div>

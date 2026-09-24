@@ -1,0 +1,1 @@
+export { TxtFileDropDirective } from './txt-file-drop-directive';

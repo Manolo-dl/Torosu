@@ -1,0 +1,25 @@
+<label for="{{ id() }}">{{ label() }}</label>
+
+@if (!hidden()) {
+    <div class="input-container">
+        <input 
+            [type]="type()"
+            [placeholder]="placeholder()"
+            [value]="value()"
+            (input)="value.set($event.target.value)"
+            [disabled]="disabled()"
+            [readonly]="readonly()"
+            [class.invalid]="invalid() && touched()"
+            [attr.aria-invalid]="invalid() && touched()"
+            (blur)="touched.set(true)"
+        />
+
+        @if (invalid() && touched()) {
+            <div class="error-messages" role="alert">
+                @for (error of errors(); track error) {
+                    <span class="error">{{ error.message }}</span>
+                }
+            </div>
+        }
+    </div>
+}

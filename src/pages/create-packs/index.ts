@@ -1,0 +1,1 @@
+export { CreatePacksPageComponent } from './create-packs-page.component';

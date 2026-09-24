@@ -15,9 +15,8 @@ pub async fn start_tosu_listener(app: AppHandle, url: String, shutdown: Arc<Atom
         }
 
         match connect_async(&url).await {
-            Ok((ws_stream, _)) => {
+            Ok((mut read, _)) => {
                 log::info!("Connected to TOSU WebSocket server");
-                let (_write, mut read) = ws_stream.split();
 
                 loop {
                     if shutdown.load(Ordering::SeqCst) {

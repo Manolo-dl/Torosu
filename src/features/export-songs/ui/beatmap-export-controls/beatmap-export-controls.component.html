@@ -1,0 +1,8 @@
+<div class="export-controls">
+  <app-export-controls
+    [formats]="formats"
+    [count]="store.totalFiltered()"
+    countLabel="beatmapsets"
+    (doExport)="export()"
+  />
+</div>

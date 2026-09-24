@@ -1,0 +1,15 @@
+<div
+  appTxtFileDrop
+  (fileContent)="onFileContent($event)"
+  #dropzone="appTxtFileDrop"
+  class="dropzone"
+  [class.drag-over]="dropzone.isDragOver()"
+>
+  <span class="dropzone-icon">↓</span>
+  <span class="dropzone-label">Drop a <code>.txt</code> file with collections here</span>
+  <span class="dropzone-or">or</span>
+  <label class="dropzone-browse">
+    Browse file
+    <input type="file" accept=".txt" (change)="onFileSelect($event)" hidden />
+  </label>
+</div>

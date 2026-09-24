@@ -1,0 +1,13 @@
+<div class="viewer-toolbar">
+  <span class="total-badge">{{ store.totalLogs() }} entries</span>
+  <button class="btn-reload" (click)="reload()">Reload</button>
+</div>
+
+<div class="columns">
+  @for (level of ['DEBUG', 'INFO', 'WARN', 'ERROR']; track level) {
+    <app-log-column
+      [level]="level"
+      [groups]="store.groupedLogs()[level]"
+    />
+  }
+</div>

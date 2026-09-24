@@ -1,0 +1,90 @@
+<div class="pipeline-panel">
+
+  <div class="panel-header">
+    <span class="section-title">Tasks</span>
+
+    <select
+      class="add-task-select"
+      (change)="addTask($any($event.target).value); $any($event.target).value = ''"
+    >
+      <option value="" disabled selected>+ Add task</option>
+      @for (type of availableTasksFiltered(); track type) {
+        <option [value]="type">{{ taskLabels[type] }}</option>
+      }
+    </select>
+  </div>
+
+  <div class="wip-notice">
+    Only <strong>Rate Change</strong> is currently implemented. Other tasks are coming soon.
+  </div>
+
+  <div class="task-list" cdkDropList (cdkDropListDropped)="onDrop($event)">
+
+    @for (entry of trainer.tasks(); track entry.id) {
+      <div class="task-item" cdkDrag>
+
+        <span class="task-handle" cdkDragHandle>⋮⋮</span>
+
+        <div class="task-content">
+          <span class="task-label">{{ taskLabels[entry.task.type] }}</span>
+
+          @if (entry.task.type === 'RateChange') {
+            <div class="task-params">
+              <div class="task-field">
+                <span class="task-field-label">Rate</span>
+                <input
+                  type="number" min="0.5" max="2" step="0.05"
+                  class="task-number-input"
+                  [value]="entry.task.params.rate"
+                  (change)="onRateInput(entry.id, $any($event.target).value, entry.task.params.adjustPitch)"
+                />
+                <span class="task-field-unit">x</span>
+              </div>
+
+              <div class="task-field">
+                <span class="task-field-label">BPM</span>
+                @if (originalBpm() !== null) {
+                  <span class="task-bpm-original">{{ originalBpm() }}</span>
+                  <span class="task-bpm-arrow">→</span>
+                }
+                <input
+                  type="number" min="1" step="1"
+                  class="task-number-input"
+                  [value]="newBpm(entry.task.params.rate) ?? entry.task.params.rate * 180"
+                  (change)="onBpmInput(entry.id, $any($event.target).value, entry.task.params.adjustPitch)"
+                />
+              </div>
+
+              <label class="task-checkbox">
+                <input
+                  type="checkbox"
+                  [checked]="entry.task.params.adjustPitch"
+                  (change)="onRateInput(entry.id, entry.task.params.rate + '', $any($event.target).checked)"
+                />
+                Adjust Pitch
+              </label>
+            </div>
+          }
+
+
+        </div>
+
+        <button
+          class="task-remove"
+          type="button"
+          title="Remove task"
+          (click)="trainer.removeTask(entry.id)"
+        >
+          ✕
+        </button>
+
+      </div>
+    }
+
+    @if (trainer.tasks().length === 0) {
+      <p class="empty-state">No tasks added yet.</p>
+    }
+
+  </div>
+
+</div>

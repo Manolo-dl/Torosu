@@ -1,0 +1,1 @@
+export { OsuPathComponent} from "./osu-path.component";

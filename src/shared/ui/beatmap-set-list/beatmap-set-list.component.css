@@ -1,0 +1,29 @@
+:host {
+  display: block;
+}
+
+.set-list {
+  overflow-x: hidden;
+}
+
+:host ::ng-deep .cdk-virtual-scroll-content-wrapper {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.set-list::-webkit-scrollbar { width: 4px; }
+.set-list::-webkit-scrollbar-track { background: transparent; }
+.set-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+.card-wrapper {
+  padding: 0 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.empty {
+  padding: 48px 20px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+}

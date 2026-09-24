@@ -1,0 +1,205 @@
+:host {
+  display: block;
+  margin-bottom: 2px;
+}
+
+.song-card {
+  display: flex;
+  border-radius: 5px;
+  background: var(--bg-overlay);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: border-color 120ms ease;
+}
+
+.song-card:hover {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.status-bar {
+  width: 3px;
+  flex-shrink: 0;
+  border-radius: 5px 0 0 5px;
+  background: var(--text-muted);
+}
+
+.song-card.ranked    .status-bar { background: #6699ff; }
+.song-card.approved  .status-bar { background: #33dd99; }
+.song-card.loved     .status-bar { background: #ff66ab; }
+.song-card.qualified .status-bar { background: #aaaaff; }
+.song-card.unranked  .status-bar { background: #ffaa44; }
+
+.card-body {
+  flex: 1;
+  padding: 8px 12px;
+  min-width: 0;
+}
+
+.card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.card-titles {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.song-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+  cursor: pointer;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.song-title:hover {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.song-artist {
+  font-size: 11px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.card-side-bottom {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-badge {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  padding: 2px 5px;
+  border-radius: 3px;
+  color: var(--text-muted);
+  background: var(--bg-surface);
+}
+
+.song-card.ranked    .status-badge { color: #6699ff; background: rgba(102,153,255,0.12); }
+.song-card.approved  .status-badge { color: #33dd99; background: rgba(51,221,153,0.12); }
+.song-card.loved     .status-badge { color: #ff66ab; background: rgba(255,102,171,0.12); }
+.song-card.qualified .status-badge { color: #aaaaff; background: rgba(170,170,255,0.12); }
+.song-card.unranked  .status-badge { color: #ffaa44; background: rgba(255,170,68,0.12); }
+
+.diff-pips {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-wrap: nowrap;
+}
+
+.diff-pip-mode {
+  font-size: 10px;
+  line-height: 1;
+  margin-right: 1px;
+  flex-shrink: 0;
+}
+
+.diff-pip {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  opacity: 0.85;
+  flex-shrink: 0;
+}
+
+.diff-pip-extra {
+  font-size: 9px;
+  color: var(--text-muted);
+  margin-left: 1px;
+  flex-shrink: 0;
+}
+
+.expand-chevron {
+  font-size: 11px;
+  color: var(--text-muted);
+  transition: transform 0.2s ease, color 0.15s;
+  display: inline-block;
+  line-height: 1;
+  user-select: none;
+}
+
+.expand-chevron.open {
+  transform: rotate(180deg);
+  color: var(--accent);
+}
+
+.diff-drawer {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.22s ease;
+}
+
+.diff-drawer.open {
+  max-height: 700px;
+}
+
+.diff-separator {
+  height: 1px;
+  background: var(--border);
+  margin: 6px 0 5px;
+}
+
+.diff-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 2px 0;
+  min-width: 0;
+}
+
+.mode-icon {
+  font-size: 11px;
+  width: 14px;
+  text-align: center;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.star-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  line-height: 1.6;
+  min-width: 52px;
+  text-align: center;
+}
+
+.diff-name {
+  font-size: 12px;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}

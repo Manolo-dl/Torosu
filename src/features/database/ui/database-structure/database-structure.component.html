@@ -1,0 +1,30 @@
+<div class="structure-panel">
+  <div class="panel-header">
+    <span class="section-title">
+      Structure
+      @if (store.selectedTable()) {
+        <span class="table-name-badge">{{ store.selectedTable() }}</span>
+      }
+    </span>
+  </div>
+
+  @if (!store.selectedTable()) {
+    <div class="empty">Select a table to view its structure</div>
+  } @else {
+    <div class="column-list">
+      @for (column of store.currentColumns(); track column.name) {
+        <button
+          class="column-chip"
+          [class.excluded]="isExcluded(column.name)"
+          (click)="store.toggleColumn(column.name)"
+        >
+          <span class="column-name">{{ column.name }}</span>
+          <span class="column-type">{{ column.columnType }}</span>
+          @if (column.pk) {
+            <span class="pk-badge">PK</span>
+          }
+        </button>
+      }
+    </div>
+  }
+</div>

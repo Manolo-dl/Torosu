@@ -1,0 +1,40 @@
+<header>
+  <!-- Left -->
+  <div>
+    <h1>Onisu</h1>
+  </div>
+
+  <!-- Middle -->
+  <!-- <div
+    [appearance]="'positive'"
+    tuiBadge
+    tuiStatus
+  >
+    Tosu Status
+  </div> -->
+
+  <!-- Right -->
+  <div class="actions">
+    <button
+      size="m"
+      appearance="flat"
+      tuiButton
+      type="button"
+      (click)="darkMode.update(dark => !dark)"
+    >
+      <fa-icon [icon]="icon()" />
+    </button>
+
+    <button
+      size="m"
+      appearance="flat"
+      tuiButton
+      type="button"
+      (click)="navStore.toggleMode()"
+    >
+      {{ navStore.isDevMode() }}
+    </button>
+
+    <app-config-drawer />
+  </div>
+</header>

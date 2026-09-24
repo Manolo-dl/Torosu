@@ -1,7 +1,8 @@
-use sqlx::SqlitePool;
-use walkdir::WalkDir;
+use std::path::Path;
 
-use crate::{commands::osu_db::model::BeatmapsetFolder};
+use sqlx::SqlitePool;
+
+use crate::commands::osu_db::model::BeatmapsetFolder;
 
 async fn resolve_cached_beatmapset_folder(pool: &SqlitePool, beatmapset_id: u32) -> Result<Option<BeatmapsetFolder>, sqlx::Error> {
     Ok(
@@ -14,28 +15,24 @@ async fn resolve_cached_beatmapset_folder(pool: &SqlitePool, beatmapset_id: u32)
     )
 }
 
-async fn resolve_beatmapset_folder(osu_path: &str, file_name: &str, beatmapset_id: u32) -> Result<BeatmapsetFolder, String> {
+/// Looks for `file_name` in `Songs` and in its direct subfolders.
+fn resolve_beatmapset_folder(osu_path: &str, file_name: &str, beatmapset_id: u32) -> Result<BeatmapsetFolder, String> {
 
-    let songs_folder = format!("{}/Songs", osu_path);
+    let songs_folder = Path::new(osu_path).join("Songs");
 
-    for entry in WalkDir::new(songs_folder).max_depth(2) {
+    let found = if songs_folder.join(file_name).is_file() {
+        Some(songs_folder)
+    } else {
+        std::fs::read_dir(&songs_folder)
+            .map_err(|e| e.to_string())?
+            .filter_map(|entry| entry.ok())
+            .map(|entry| entry.path())
+            .find(|dir| dir.join(file_name).is_file())
+    };
 
-        let entry = entry.map_err(|e| e.to_string())?;
-        if entry.file_name().to_string_lossy() == file_name {
-
-            let folder_path = entry.path()
-                .parent()
-                .ok_or("Could not get parent folder")?
-                .to_string_lossy()
-                .to_string();
-
-            return Ok(BeatmapsetFolder {
-                folder_path,
-            })
-        }
-    }
-
-    Err(format!("Could not find folder for beatmapset_id {} with file_name {}", beatmapset_id, file_name))
+    found
+        .map(|folder| BeatmapsetFolder { folder_path: folder.to_string_lossy().into_owned() })
+        .ok_or_else(|| format!("Could not find folder for beatmapset_id {} with file_name {}", beatmapset_id, file_name))
 }
 
 async fn save_beatmapset_folder(pool: &SqlitePool, beatmapset_id: u32, folder_path: &str) -> Result<(), sqlx::Error> {
@@ -66,16 +63,13 @@ pub async fn get_beatmapset_folder(
         .map_err(|e| e.to_string())?;
     
         if let Some(folder) = cached {
-            if check_beatmapset_folder_exists(&folder.folder_path)
-            .await?
-            {
+            if check_beatmapset_folder_exists(&folder.folder_path) {
                 return Ok(folder);
             }
         }
     }
 
-    let folder = resolve_beatmapset_folder(osu_path, file_name, beatmapset_id)
-        .await?;
+    let folder = resolve_beatmapset_folder(osu_path, file_name, beatmapset_id)?;
 
     if use_sqlite {
         save_beatmapset_folder(pool, beatmapset_id, &folder.folder_path)
@@ -86,6 +80,6 @@ pub async fn get_beatmapset_folder(
     Ok(folder)
 }
 
-pub async fn check_beatmapset_folder_exists(folder_path: &str) -> Result<bool, String> {
-    Ok(std::path::Path::new(folder_path).exists())
+pub fn check_beatmapset_folder_exists(folder_path: &str) -> bool {
+    Path::new(folder_path).exists()
 }

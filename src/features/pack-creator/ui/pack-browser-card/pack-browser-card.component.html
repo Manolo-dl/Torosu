@@ -1,0 +1,33 @@
+<div class="song-card" [ngClass]="set().status" (click)="toggleExpand($event)">
+  <div class="status-bar"></div>
+  <div class="card-body">
+
+    <div class="card-head">
+      <div class="card-titles">
+        <span class="song-title">{{ set().title }}</span>
+        <span class="song-artist">{{ set().artist }}</span>
+      </div>
+      <div class="card-side">
+        <span class="status-badge">{{ set().status }}</span>
+        <span class="expand-chevron" [class.open]="expanded()">▾</span>
+      </div>
+    </div>
+
+    <div class="diff-drawer" [class.open]="expanded()">
+      <div class="diff-separator"></div>
+      @for (diff of set().diffs; track diff.md5) {
+        <div class="diff-row">
+          <span class="star-badge">★ {{ diff.stars | number:'1.2-2' }}</span>
+          <span class="diff-name">{{ diff.diffName }}</span>
+          <button
+            class="add-btn"
+            [disabled]="store.addedMd5s().has(diff.md5)"
+            (click)="addDiff(diff, $event)">
+            {{ store.addedMd5s().has(diff.md5) ? 'Added' : '+' }}
+          </button>
+        </div>
+      }
+    </div>
+
+  </div>
+</div>

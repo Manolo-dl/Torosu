@@ -1,0 +1,227 @@
+:host {
+  display: block;
+}
+
+.filters {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.filters-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.section-title {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+}
+
+.reset-btn {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-dim);
+  padding: 2px 8px;
+  border-radius: 4px;
+  transition: background 0.12s;
+}
+
+.reset-btn:hover {
+  background: rgba(255, 102, 171, 0.2);
+}
+
+/* ── Mode sections ──────────────────────────────────────────────────────────── */
+
+.mode-section {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: opacity 0.15s;
+}
+
+.mode-section.excluded {
+  opacity: 0.45;
+}
+
+.mode-section.excluded .mode-header {
+  opacity: 1; /* keep header readable */
+}
+
+.mode-header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 10px;
+  cursor: pointer;
+  background: var(--bg-overlay);
+  user-select: none;
+  transition: background 0.1s;
+}
+
+.mode-header:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.mode-icon {
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.mode-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  flex: 1;
+}
+
+.mode-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.mode-toggle {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid;
+  padding: 0;
+  cursor: pointer;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+
+.expand-chevron {
+  font-size: 11px;
+  color: var(--text-muted);
+  transition: transform 0.2s ease;
+  display: inline-block;
+  line-height: 1;
+}
+
+.expand-chevron.open {
+  transform: rotate(180deg);
+}
+
+/* ── Mode body collapsible ──────────────────────────────────────────────────── */
+
+.mode-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.22s ease;
+}
+
+.mode-body.open {
+  max-height: 600px;
+}
+
+.mode-body-inner {
+  padding: 10px 10px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: 1px solid var(--border);
+}
+
+/* ── Global filter section separator ───────────────────────────────────────── */
+
+.filter-section {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  padding-top: 4px;
+  margin-top: 2px;
+  border-top: 1px solid var(--border);
+}
+
+/* ── Filter group ───────────────────────────────────────────────────────────── */
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.filter-group label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.button-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.button-group button {
+  padding: 3px 9px;
+  font-size: 12px;
+  border-radius: 4px;
+  background: var(--bg-overlay);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  transition: all 0.1s;
+}
+
+.button-group button:hover {
+  color: var(--text-primary);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.button-group button.active {
+  background: var(--accent-dim);
+  color: var(--accent);
+  border-color: rgba(255, 102, 171, 0.3);
+}
+
+.range-inputs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.range-inputs span {
+  color: var(--text-muted);
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.range-inputs input {
+  flex: 1;
+  min-width: 0;
+  background: var(--bg-overlay);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 4px 8px;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 12px;
+  outline: none;
+  transition: border-color 0.1s;
+}
+
+.range-inputs input:focus {
+  border-color: rgba(255, 102, 171, 0.4);
+}
+
+.range-inputs input::-webkit-inner-spin-button,
+.range-inputs input::-webkit-outer-spin-button {
+  opacity: 0.5;
+}

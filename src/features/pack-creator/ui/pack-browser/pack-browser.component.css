@@ -1,0 +1,46 @@
+:host {
+  display: block;
+}
+
+.browser-panel {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.section-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.empty {
+  padding: 40px 16px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.set-list {
+  overflow-x: hidden;
+}
+
+.card-wrapper {
+  padding: 4px 8px;
+  box-sizing: border-box;
+}
+
+:host ::ng-deep .cdk-virtual-scroll-content-wrapper {
+  width: 100%;
+  box-sizing: border-box;
+}

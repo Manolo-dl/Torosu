@@ -1,5 +1,7 @@
 use std::collections::HashSet;
 
+use osynic_osudb::entity::collection::{collection::Collection, collectiondb::CollectionDB};
+
 use crate::{AppConfigState, commands::collections::model::ImportCollection};
 
 #[tauri::command]
@@ -16,7 +18,7 @@ pub async fn import_collections(
 
     log::debug!("reading collection.db for import at {:?}", collection_path);
 
-    let mut collection_list = osu_db::CollectionList::from_file(&collection_path)
+    let mut collection_list = CollectionDB::from_file(&collection_path)
         .map_err(|e| {
             log::error!("Failed to parse collection.db: {:?}", e);
             format!("Failed to parse collection.db: {:?}", e)
@@ -45,7 +47,7 @@ pub async fn import_collections(
             }
             None => {
                 let count = import.md5s.len();
-                collection_list.collections.push(osu_db::collection::Collection {
+                collection_list.collections.push(Collection {
                     name: Some(import.name.clone()),
                     beatmap_hashes: import.md5s.into_iter().map(Some).collect(),
                 });

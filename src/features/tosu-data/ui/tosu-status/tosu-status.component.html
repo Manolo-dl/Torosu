@@ -1,0 +1,12 @@
+@if (store.connected()) {
+    <div class="status-badge connected">
+        <span class="status-dot"></span>
+        Connected
+    </div>
+} @else {
+    <div class="status-badge disconnected">
+        <span class="status-dot"></span>
+        Disconnected
+    </div>
+    <button class="reconnect-btn" (click)="reconnect()">Reconnect</button>
+}

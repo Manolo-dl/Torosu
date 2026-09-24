@@ -1,0 +1,26 @@
+<div>
+  <span class="note-icon">ℹ</span>
+  <span>
+    The <strong>osu_session</strong> cookie is required to download beatmaps.
+    @if (userStore.user()?.osuSession) {
+      <span class="cookie-status active">Cookie active</span>
+    } @else {
+      <span class="cookie-status missing">No cookie set</span>
+    }
+  </span>
+</div>
+
+<form [formRoot]="osuCookieForm">
+  <app-stateful-input
+    [label]="'Osu Session Cookie'"
+    [id]="'osuCookie'"
+    [formField]="osuCookieForm.osuSession"
+    [placeholder]="'Enter your osu_session cookie'" />
+
+  <div class="button-group">
+    <button type="submit">Save cookie</button>
+    @if (userStore.user()?.osuSession) {
+      <button type="button" class="btn-clear" (click)="clearSession()">Clear cookie</button>
+    }
+  </div>
+</form>

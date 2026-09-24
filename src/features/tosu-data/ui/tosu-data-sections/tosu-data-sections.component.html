@@ -1,0 +1,20 @@
+@if (store.data()) {
+    <div class="sections-grid">
+        @for (section of sections(); track section[0]) {
+            <div class="section-card">
+                <h3 class="section-title">{{ section[0] }}</h3>
+                <div class="section-body">
+                    @if (isPrimitive(section[1])) {
+                        <span class="value-primitive">{{ format(section[1]) }}</span>
+                    } @else {
+                        <pre class="value-json">{{ format(section[1]) }}</pre>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+} @else {
+    <div class="no-data">
+        <p class="no-data-text">No data received yet.</p>
+    </div>
+}

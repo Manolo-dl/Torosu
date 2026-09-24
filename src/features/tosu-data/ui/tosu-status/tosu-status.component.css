@@ -1,0 +1,66 @@
+:host {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.status-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid transparent;
+}
+
+.status-badge.connected {
+    color: #7ec8a0;
+    background: color-mix(in srgb, #7ec8a0 12%, transparent);
+    border-color: color-mix(in srgb, #7ec8a0 30%, transparent);
+}
+
+.status-badge.disconnected {
+    color: var(--text-muted);
+    background: color-mix(in srgb, var(--border) 40%, transparent);
+    border-color: var(--border);
+}
+
+.status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.connected .status-dot {
+    background: #7ec8a0;
+    box-shadow: 0 0 6px #7ec8a060;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.disconnected .status-dot {
+    background: var(--text-muted);
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.4; }
+}
+
+.reconnect-btn {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.reconnect-btn:hover {
+    background: var(--bg-overlay);
+}

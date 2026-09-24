@@ -1,0 +1,16 @@
+<div class="preview-panel">
+  <div class="panel-header">
+    <span class="section-title">Pack Preview</span>
+    <span class="diff-count">{{ store.selectedDiffs().length }} diffs</span>
+  </div>
+
+  @if (store.selectedDiffs().length === 0) {
+    <div class="empty">Add diffs from the browser to build your pack</div>
+  } @else {
+    <div class="pack-list">
+      @for (diff of store.selectedDiffs(); track trackDiff($index, diff)) {
+        <app-pack-preview-card [diff]="diff" />
+      }
+    </div>
+  }
+</div>

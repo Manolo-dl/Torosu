@@ -1,0 +1,12 @@
+<div
+  class="dropzone"
+  [class.drag-over]="isDragOver()"
+>
+  <span class="dropzone-icon">↓</span>
+  <span class="dropzone-label">Drop a <code>.txt</code> file here</span>
+  <span class="dropzone-or">or</span>
+  <label class="dropzone-browse">
+    Browse file
+    <input type="file" accept=".txt" (change)="onFileSelect($event)" hidden />
+  </label>
+</div>

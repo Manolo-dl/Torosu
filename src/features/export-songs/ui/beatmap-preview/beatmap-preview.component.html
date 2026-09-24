@@ -1,0 +1,60 @@
+<div class="songs-panel">
+  <div class="panel-header">
+    <span class="section-title">Preview</span>
+  </div>
+
+  @if (store.filteredBeatmaps().length === 0) {
+    <div class="empty">No beatmaps match the current filters</div>
+  } @else {
+    <cdk-virtual-scroll-viewport itemSize="56" class="song-list">
+      <div *cdkVirtualFor="let set of filteredBeatmaps$ | async; trackBy: trackSet" class="card-wrapper">
+
+        <div class="song-card" [ngClass]="set.status" (click)="toggleExpand(set.beatmapsetId, $event)">
+          <div class="status-bar"></div>
+          <div class="card-body">
+            
+            <div class="card-head">
+              <div class="card-titles">
+                <span class="song-title" (click)="openSet(set.beatmapsetId); $event.stopPropagation()">{{ set.title }}</span>
+                <span class="song-artist">{{ set.artist }}</span>
+              </div>
+              <div class="card-side">
+                <span class="status-badge">{{ set.status }}</span>
+                <div class="card-side-bottom">
+                  <div class="diff-pips">
+                    @for (mode of uniqueModes(set.diffs); track mode) {
+                      <span class="diff-pip-mode" [style.color]="modeColor(mode)">{{ modeChar(mode) }}</span>
+                      @for (diff of visibleDiffsForMode(set.diffs, mode); track diff.md5) {
+                        <span class="diff-pip" [style.background]="diffBg(diff.stars)"></span>
+                      }
+                      @if (extraDiffsForMode(set.diffs, mode) > 0) {
+                        <span class="diff-pip-extra">+{{ extraDiffsForMode(set.diffs, mode) }}</span>
+                      }
+                    }
+                  </div>
+                  <span class="expand-chevron" [class.open]="isExpanded(set.beatmapsetId)">▾</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="diff-drawer" [class.open]="isExpanded(set.beatmapsetId)">
+              <div class="diff-separator"></div>
+              @for (diff of sortedDiffs(set.diffs); track diff.md5) {
+                <div class="diff-row">
+                  <span class="mode-icon" [style.color]="modeColor(diff.mode)">{{ modeChar(diff.mode) }}</span>
+                  <span class="star-badge"
+                    [style.background]="diffBg(diff.stars)"
+                    [style.color]="diffFg(diff.stars)">
+                    ★ {{ diff.stars | number:'1.2-2' }}
+                  </span>
+                  <span class="diff-name">{{ diff.diffName }}</span>
+                </div>
+              }
+            </div>
+            
+          </div>
+        </div>
+      </div>
+    </cdk-virtual-scroll-viewport>
+  }
+</div>

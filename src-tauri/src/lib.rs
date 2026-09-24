@@ -27,6 +27,9 @@ pub struct AppConfigState {
 }
 
 pub fn run() {
+    // reqwest is built without a bundled crypto provider; share ring with the updater
+    let _ = rustls::crypto::ring::default_provider().install_default();
+
     tauri::Builder::default()
         .setup(|app| {
             app.handle().plugin(tauri_plugin_updater::Builder::new().build())?;
@@ -121,8 +124,6 @@ pub fn run() {
             Ok(())
         })
         .plugin(tauri_plugin_opener::init())
-        .plugin(tauri_plugin_fs::init())
-        .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_log::Builder::new()
             .max_file_size(50_000)
             .format(|out, message, record| {
@@ -153,15 +154,16 @@ pub fn run() {
             ])
             .build()
         )
-        .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_shell::init())
-        .plugin(tauri_plugin_store::Builder::new().build())
+        .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_os::init())
         .invoke_handler(tauri::generate_handler![
+            commands::config::file::get_config,
             commands::config::file::update_config,
             commands::system::osu_path::get_osu_path,
             commands::system::osu_path::save_osu_path,
-            commands::system::osu_path::get_osu_path_from_tosu,
             commands::collections::reader::read_osu_collections,
             commands::collections::reader::write_text_file,
             commands::collections::writer::import_collections,
@@ -169,7 +171,6 @@ pub fn run() {
             commands::system::download::start_downloads,
             commands::system::download::get_osu_session,
             commands::system::download::set_osu_session,
-            commands::system::download::append_text_file,
             commands::packs::folders::validate_pack_folder,
             commands::packs::creator::create_pack,
             commands::dev::logs::read_logs,

@@ -1,0 +1,36 @@
+<div class="adder-panel">
+    <div class="panel-header">
+        <span class="section-title">From Collection</span>
+        @if (!collectionStore.isLoaded() && !collectionStore.isLoading()) {
+            <button class="load-btn" (click)="collectionStore.load()">Load</button>
+        }
+    </div>
+
+    @if (collectionStore.isLoading()) {
+        <div class="state-msg">Loading collections…</div>
+    } @else if (!collectionStore.isLoaded()) {
+        <div class="state-msg">Collections not loaded yet.</div>
+    } @else if (entries().length === 0) {
+        <div class="state-msg">No collections with local diffs found.</div>
+    } @else {
+        <div class="collection-list">
+            @for (entry of entries(); track entry.collection.name) {
+                <div class="collection-row">
+                    <div class="collection-info">
+                        <span class="collection-name">{{ entry.collection.name }}</span>
+                        <span class="collection-count">
+                            {{ entry.added }}/{{ entry.available }}
+                        </span>
+                    </div>
+                    <button
+                        class="add-btn"
+                        [disabled]="entry.added === entry.available"
+                        (click)="addCollection(entry)"
+                    >
+                        {{ entry.added === entry.available ? 'Added' : '+ Add' }}
+                    </button>
+                </div>
+            }
+        </div>
+    }
+</div>

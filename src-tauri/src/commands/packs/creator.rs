@@ -98,7 +98,7 @@ pub async fn create_pack(
 
     log::debug!("opening osz with default handler: {:?}", osz_path);
 
-    if let Err(e) = open::that(&osz_path) {
+    if let Err(e) = tauri_plugin_opener::open_path(&osz_path, None::<&str>) {
         log::warn!("default handler failed to open .osz ({}), trying osu-wine --osuhandler", e);
 
         let osu_wine_result = std::process::Command::new("osu-wine")
@@ -214,7 +214,7 @@ fn create_osz(source_dir: &Path, output_path: &Path) -> Result<(), String> {
     Ok(())
 }
 
-fn sanitize(name: &str) -> String {
+pub fn sanitize(name: &str) -> String {
     name.chars()
         .map(|c| if "/\\:*?\"<>|".contains(c) { '_' } else { c })
         .collect()

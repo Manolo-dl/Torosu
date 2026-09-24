@@ -1,0 +1,9 @@
+@if (sets.length === 0) {
+  <div class="empty">{{ emptyText }}</div>
+} @else {
+  <cdk-virtual-scroll-viewport itemSize="56" class="set-list" [style.height]="listHeight">
+    <div *cdkVirtualFor="let set of sets; trackBy: trackSet" class="card-wrapper">
+      <app-beatmap-set-card [set]="set" />
+    </div>
+  </cdk-virtual-scroll-viewport>
+}

@@ -1,4 +1,4 @@
-use crate::{AppConfigState, commands::osu_db::folders::check_beatmapset_folder_exists};
+use crate::{AppConfigState, commands::{osu_db::folders::check_beatmapset_folder_exists, packs::creator::sanitize}};
 
 #[tauri::command]
 pub async fn validate_pack_folder(folder_name: String, osu_state: tauri::State<'_, AppConfigState>) -> Result<bool, String> {
@@ -9,13 +9,5 @@ pub async fn validate_pack_folder(folder_name: String, osu_state: tauri::State<'
 
     let target_path = format!("{}/Songs/Custom-pack_{}", osu_path, sanitize(&folder_name));
 
-    let exist = check_beatmapset_folder_exists(&target_path).await?;
-
-    Ok(!exist)
-}
-
-fn sanitize(name: &str) -> String {
-    name.chars()
-        .map(|c| if "/\\:*?\"<>|".contains(c) { '_' } else { c })
-        .collect()
+    Ok(!check_beatmapset_folder_exists(&target_path))
 }

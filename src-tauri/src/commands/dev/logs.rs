@@ -1,6 +1,3 @@
-use std::sync::LazyLock;
-
-use regex::Regex;
 use tauri::Manager;
 
 #[derive(serde::Serialize)]
@@ -11,10 +8,6 @@ pub struct LogEntry {
     target: String,
     message: String,
 }
-
-static LOG_REGEX: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"^\[(\S+\s+\S+)\s+(\w+)\s+([\w:]+)\]\s+(.*)$").expect("invalid log regex")
-});
 
 #[tauri::command]
 pub async fn read_logs(app: tauri::AppHandle) -> Result<Vec<LogEntry>, String> {
@@ -53,13 +46,22 @@ pub async fn read_logs(app: tauri::AppHandle) -> Result<Vec<LogEntry>, String> {
     Ok(entries)
 }
 
+/// Parses lines written by the log plugin format in `lib.rs`:
+/// `[<date> <time> <level> <target>] <message>`
 fn parse_log_line(line: &str) -> Option<LogEntry> {
-    let caps = LOG_REGEX.captures(line)?;
+    let (header, message) = line.strip_prefix('[')?.split_once(']')?;
+
+    let mut parts = header.split_whitespace();
+    let (date, time, level, target) = (parts.next()?, parts.next()?, parts.next()?, parts.next()?);
+
+    if parts.next().is_some() {
+        return None;
+    }
 
     Some(LogEntry {
-        timestamp: caps.get(1)?.as_str().to_string(),
-        level: caps.get(2)?.as_str().to_string(),
-        target: caps.get(3)?.as_str().to_string(),
-        message: caps.get(4)?.as_str().to_string(),
+        timestamp: format!("{} {}", date, time),
+        level: level.to_string(),
+        target: target.to_string(),
+        message: message.trim_start().to_string(),
     })
 }

@@ -1,22 +1,26 @@
-import { Component, signal } from "@angular/core";
+import { TUI_DARK_MODE, TuiRoot } from "@taiga-ui/core";
+import { Component, inject, OnInit } from "@angular/core";
 import { RouterOutlet } from "@angular/router";
-import { invoke } from "@tauri-apps/api/core";
+import { HeaderComponent } from "@widgets/header";
+import { SidebarComponent } from "@widgets/sidebar";
+import { OsuPathComponent } from "@widgets/osu-path";
+import { ToastComponent } from "@widgets/toast";
+import { PlatformStore } from "@shared/stores";
+import { WindowControlsComponent } from "@widgets/window-controls/window-controls.component";
 
 @Component({
   selector: "app-root",
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, HeaderComponent, SidebarComponent, OsuPathComponent, ToastComponent, TuiRoot, WindowControlsComponent],
   templateUrl: "./app.component.html",
-  styleUrl: "./app.component.css",
+  styleUrl: "./app.component.less",
 })
-export class AppComponent {
-  greetingMessage = signal("");
+export class AppComponent implements OnInit {
 
-  greet(event: SubmitEvent, name: string): void {
-    event.preventDefault();
+  readonly darkMode = inject(TUI_DARK_MODE);
+  readonly platformStore = inject(PlatformStore);
 
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    invoke<string>("greet", { name }).then((text) => {
-      this.greetingMessage.set(text);
-    });
+  ngOnInit() {
+    this.darkMode.set(true);
+    this.platformStore.setOs();
   }
 }

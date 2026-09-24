@@ -1,0 +1,20 @@
+<div class="actions">
+  <button
+    class="import-btn"
+    [disabled]="store.isImporting() || store.totalMaps() === 0"
+    (click)="onImport()"
+  >
+    @if (store.isImporting()) {
+      Importing...
+    } @else {
+      Import {{ store.totalMaps() }} maps
+    }
+  </button>
+  <button
+    class="clear-btn"
+    [disabled]="store.isImporting() || store.parsedImports().length === 0"
+    (click)="store.clear()"
+  >
+    Clear
+  </button>
+</div>

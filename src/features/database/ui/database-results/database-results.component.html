@@ -1,0 +1,37 @@
+<div class="results-panel">
+  <div class="panel-header">
+    <span class="section-title">Results</span>
+    @if (store.currentRows().length > 0) {
+      <span class="row-count">{{ store.currentRows().length }} rows</span>
+    }
+  </div>
+
+  @if (store.isQuerying()) {
+    <div class="loading">Running query...</div>
+  } @else if (!store.selectedTable()) {
+    <div class="empty">Select a table to see results</div>
+  } @else if (store.currentRows().length === 0) {
+    <div class="empty">No results</div>
+  } @else {
+    <div class="results-table-wrapper">
+      <table class="results-table">
+        <thead>
+          <tr>
+            @for (header of store.columnHeaders(); track header) {
+              <th>{{ header }}</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of store.currentRows(); track $index) {
+            <tr>
+              @for (header of store.columnHeaders(); track header) {
+                <td>{{ formatValue(row, header) }}</td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

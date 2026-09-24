@@ -1,0 +1,153 @@
+<div class="filters">
+  <div class="filters-header">
+    <span class="section-title">Filters</span>
+    <button class="reset-btn" (click)="reset()">Reset</button>
+  </div>
+
+  @for (m of modeConfigs; track m.value) {
+    <div class="mode-section" [class.excluded]="isModeExcluded(m.value)">
+
+      <div class="mode-header" (click)="toggleExpand(m.value)">
+        <span class="mode-icon" [style.color]="m.color">{{ m.icon }}</span>
+        <span class="mode-label" [style.color]="m.color">{{ m.label }}</span>
+        <div class="mode-header-actions">
+          <button
+            class="mode-toggle"
+            [class.on]="!isModeExcluded(m.value)"
+            [style.borderColor]="m.color"
+            [style.background]="!isModeExcluded(m.value) ? m.color : 'transparent'"
+            (click)="toggleExclude(m.value); $event.stopPropagation()"
+            [title]="(isModeExcluded(m.value) ? 'Enable' : 'Disable') + ' ' + m.label">
+          </button>
+          <span class="expand-chevron" [class.open]="isExpanded(m.value)">▾</span>
+        </div>
+      </div>
+
+      <div class="mode-body" [class.open]="isExpanded(m.value)">
+        <div class="mode-body-inner">
+
+          <div class="filter-group">
+            <label>Status</label>
+            <div class="button-group">
+              <button [class.active]="modeFilters(m.value).status === null"
+                      (click)="setModeFilter(m.value, 'status', null)">All</button>
+              @for (s of statuses; track s) {
+                <button [class.active]="modeFilters(m.value).status === s.toLowerCase()"
+                        (click)="setModeFilter(m.value, 'status', s.toLowerCase())">{{ s }}</button>
+              }
+            </div>
+          </div>
+
+          <div class="filter-group">
+            <label>Length (s)</label>
+            <div class="range-inputs">
+              <input type="number" min="0" placeholder="Min"
+                [value]="msToSec(modeFilters(m.value).minLength)"
+                (change)="setModeMinLength(m.value, $any($event.target).value)" />
+              <span>–</span>
+              <input type="number" min="0" placeholder="Max"
+                [value]="msToSec(modeFilters(m.value).maxLength)"
+                (change)="setModeMaxLength(m.value, $any($event.target).value)" />
+            </div>
+          </div>
+
+          <div class="filter-group">
+            <label>Stars</label>
+            <div class="range-inputs">
+              <input type="number" min="0" max="15" step="0.5" placeholder="Min"
+                [value]="modeFilters(m.value).minStars ?? ''"
+                (change)="setModeMin(m.value, 'minStars', 'maxStars', $any($event.target).value)" />
+              <span>–</span>
+              <input type="number" min="0" max="15" step="0.5" placeholder="Max"
+                [value]="modeFilters(m.value).maxStars ?? ''"
+                (change)="setModeMax(m.value, 'minStars', 'maxStars', $any($event.target).value)" />
+            </div>
+          </div>
+
+          @if (m.hasAr) {
+            <div class="filter-group">
+              <label>AR</label>
+              <div class="range-inputs">
+                <input type="number" min="0" max="10" step="0.5" placeholder="Min"
+                  [value]="modeFilters(m.value).minAr ?? ''"
+                  (change)="setModeMin(m.value, 'minAr', 'maxAr', $any($event.target).value)" />
+                <span>–</span>
+                <input type="number" min="0" max="10" step="0.5" placeholder="Max"
+                  [value]="modeFilters(m.value).maxAr ?? ''"
+                  (change)="setModeMax(m.value, 'minAr', 'maxAr', $any($event.target).value)" />
+              </div>
+            </div>
+          }
+
+          <div class="filter-group">
+            <label>OD</label>
+            <div class="range-inputs">
+              <input type="number" min="0" max="10" step="0.5" placeholder="Min"
+                [value]="modeFilters(m.value).minOd ?? ''"
+                (change)="setModeMin(m.value, 'minOd', 'maxOd', $any($event.target).value)" />
+              <span>–</span>
+              <input type="number" min="0" max="10" step="0.5" placeholder="Max"
+                [value]="modeFilters(m.value).maxOd ?? ''"
+                (change)="setModeMax(m.value, 'minOd', 'maxOd', $any($event.target).value)" />
+            </div>
+          </div>
+
+          <div class="filter-group">
+            <label>HP</label>
+            <div class="range-inputs">
+              <input type="number" min="0" max="10" step="0.5" placeholder="Min"
+                [value]="modeFilters(m.value).minHp ?? ''"
+                (change)="setModeMin(m.value, 'minHp', 'maxHp', $any($event.target).value)" />
+              <span>–</span>
+              <input type="number" min="0" max="10" step="0.5" placeholder="Max"
+                [value]="modeFilters(m.value).maxHp ?? ''"
+                (change)="setModeMax(m.value, 'minHp', 'maxHp', $any($event.target).value)" />
+            </div>
+          </div>
+
+          @if (m.csLabel !== null) {
+            @if (m.value === 3) {
+              <div class="filter-group">
+                <label>{{ m.csLabel }}</label>
+                <div class="button-group">
+                  <button [class.active]="modeKeyCount(m.value) === null"
+                          (click)="setModeKeyCount(m.value, null)">All</button>
+                  @for (k of keyCounts; track k) {
+                    <button [class.active]="modeKeyCount(m.value) === k"
+                            (click)="setModeKeyCount(m.value, k)">{{ k }}K</button>
+                  }
+                </div>
+              </div>
+            } @else {
+              <div class="filter-group">
+                <label>{{ m.csLabel }}</label>
+                <div class="range-inputs">
+                  <input type="number" min="0" max="10" step="0.5" placeholder="Min"
+                    [value]="modeFilters(m.value).minCs ?? ''"
+                    (change)="setModeMin(m.value, 'minCs', 'maxCs', $any($event.target).value)" />
+                  <span>–</span>
+                  <input type="number" min="0" max="10" step="0.5" placeholder="Max"
+                    [value]="modeFilters(m.value).maxCs ?? ''"
+                    (change)="setModeMax(m.value, 'minCs', 'maxCs', $any($event.target).value)" />
+                </div>
+              </div>
+            }
+          }
+
+        </div>
+      </div>
+
+    </div>
+  }
+
+  <div class="filter-section">Other</div>
+
+  <div class="filter-group">
+    <label>Played</label>
+    <div class="button-group">
+      <button [class.active]="store.filters().lastPlayed === null"  (click)="setLastPlayed(null)">All</button>
+      <button [class.active]="store.filters().lastPlayed === true"  (click)="setLastPlayed(true)">Played</button>
+      <button [class.active]="store.filters().lastPlayed === false" (click)="setLastPlayed(false)">Not played</button>
+    </div>
+  </div>
+</div>

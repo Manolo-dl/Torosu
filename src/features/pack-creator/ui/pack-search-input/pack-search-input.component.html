@@ -1,0 +1,7 @@
+<input
+  type="text"
+  class="search-input"
+  placeholder="Search by title or artist..."
+  [value]="store.searchQuery()"
+  (input)="onInput($event)"
+/>

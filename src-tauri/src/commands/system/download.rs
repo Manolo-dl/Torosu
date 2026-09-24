@@ -230,7 +230,7 @@ async fn download_beatmap(
     })?;
 
     if open_file {
-        if let Err(e) = open::that(&final_path) {
+        if let Err(e) = tauri_plugin_opener::open_path(&final_path, None::<&str>) {
             log::error!("Failed to open file {}: {}", final_path, e);
         } else {
             log::info!("Opened file {}", final_path);
@@ -240,15 +240,19 @@ async fn download_beatmap(
     Ok(())
 }
 
+/// Extracts `filename` from a `Content-Disposition` header, e.g.
+/// `attachment; filename="123 Artist - Title.osz"`
 fn extract_filename(disposition: &str, beatmap_set_id: u64) -> String {
-    let re = regex::Regex::new(r#"filename="?([^";\n]+)"?"#).unwrap();
-    let name = if let Some(cap) = re.captures(disposition) {
-        cap[1].to_string()
-    } else {
-        return format!("{}.osz", beatmap_set_id);
-    };
+    let name = disposition
+        .split_once("filename=")
+        .map(|(_, rest)| rest.trim_start_matches('"'))
+        .and_then(|rest| rest.split(['"', ';', '\n']).next())
+        .filter(|name| !name.is_empty());
 
-    sanitize_filename(&name)
+    match name {
+        Some(name) => sanitize_filename(name),
+        None => format!("{}.osz", beatmap_set_id),
+    }
 }
 
 fn sanitize_filename(name: &str) -> String {
@@ -261,21 +265,6 @@ fn sanitize_filename(name: &str) -> String {
         .collect::<String>()
         .trim_end_matches(['.', ' '])
         .to_string()
-}
-
-#[tauri::command]
-pub async fn append_text_file(path: String, content: String) -> Result<(), String> {
-    use std::io::Write;
-    let mut file = std::fs::OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open(&path)
-        .map_err(|e| e.to_string())?;
-
-    file.write_all(content.as_bytes()).map_err(|e| {
-        log::error!("Failed to write file {}: {}", path, e);
-        e.to_string()
-    })
 }
 
 #[tauri::command]

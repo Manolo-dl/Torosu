@@ -5,43 +5,45 @@ pub struct TrainerProgress {
     pub percent: u8,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RateChangeParams {
     pub rate: f64,
     pub adjust_pitch: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[allow(dead_code)] // Mirror task is not implemented yet
+#[derive(Deserialize)]
 pub struct MirrorParams {
     pub axis: MirrorAxis,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum MirrorAxis {
     Horizontal,
     Vertical,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Deserialize)]
 #[serde(tag = "type", content = "params")]
 pub enum TrainerTaskParams {
     RateChange(RateChangeParams),
+    #[allow(dead_code)]
     Mirror(MirrorParams),
     RemoveSV(EmptyParams),
     NoSpinner(EmptyParams),
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Deserialize)]
 pub struct EmptyParams {}
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Deserialize)]
 pub struct TrainerTask {
     pub task: TrainerTaskParams,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DifficultySettings {
     pub hp: f64,
@@ -50,7 +52,7 @@ pub struct DifficultySettings {
     pub ar: f64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RunTrainerRequest {
     pub osu_file_path: String,

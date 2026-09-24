@@ -23,8 +23,7 @@ pub async fn get_osu_path(
     Ok(path)
 }
 
-#[tauri::command]
-pub async fn get_osu_path_from_tosu(state: tauri::State<'_, AppConfigState>) -> Result<String, String> {
+async fn get_osu_path_from_tosu(state: tauri::State<'_, AppConfigState>) -> Result<String, String> {
 
     let tosu_config = state.config.lock().unwrap().tosu.clone();
     let url = format!("http://{}:{}/json/v2", tosu_config.ip, tosu_config.port);
@@ -75,7 +74,7 @@ async fn resolve_osu_path(app: &tauri::AppHandle) -> Result<String, String> {
     // 3. Check default paths
     log::debug!("checking default paths");
 
-    if let Some(local) = dirs::data_local_dir() {
+    if let Ok(local) = app.path().local_data_dir() {
         
         let candidates: Vec<PathBuf> = if cfg!(target_os = "windows") {
             vec![

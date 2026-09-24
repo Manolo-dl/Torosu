@@ -1,0 +1,1 @@
+export { DatabasePageComponent } from './database-page.component';

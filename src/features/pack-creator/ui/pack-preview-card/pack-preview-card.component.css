@@ -1,0 +1,43 @@
+:host {
+  display: block;
+}
+
+.diff-card {
+  background: var(--bg-base);
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) - 2px);
+  padding: 6px 8px;
+}
+
+.card-body {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-body app-stateful-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.remove-btn {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  border-radius: calc(var(--radius) - 2px);
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.remove-btn:hover {
+  color: var(--danger);
+  border-color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 8%, transparent);
+}

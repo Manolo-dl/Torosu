@@ -18,44 +18,49 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "2", features = ["protocol-asset"] }
+tauri = { version = "2", default-features = false, features = ["wry", "compression", "common-controls-v6", "x11", "protocol-asset"] }
 tauri-plugin-opener = "2"
+tauri-plugin-shell = "2.3.6"
+tauri-plugin-updater = { version = "2.12.0", default-features = false, features = ["rustls-tls"] }
+tauri-plugin-log = "2.9.2"
+tauri-plugin-notification = "2.4.0"
+tauri-plugin-fs = "2.5.2"
+tauri-plugin-dialog = "2.7.3"
+tauri-plugin-os = "2.3.2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-sqlx = { version = "0.9.0", features = ["sqlite", "runtime-tokio"] }
-tauri-plugin-shell = "2.3.6"
-tauri-plugin-updater = "2.12.0"
-tauri-plugin-log = "2.9.2"
+sqlx = { version = "0.9.0", default-features = false, features = ["sqlite-bundled", "runtime-tokio", "derive"] }
 toml = "1.1.6"
-tauri-plugin-fs = "2.5.2"
-tauri-plugin-os = "2.3.2"
-chrono = "0.4.45"
-tauri-plugin-store = "2.4.5"
-tauri-plugin-dialog = "2.7.3"
-regex = "1.13.1"
+chrono = { version = "0.4.45", default-features = false, features = ["clock"] }
 osynic_osudb = "0.1.5"
 anyhow = "1.0.104"
 rosu-map = "0.2.1"
 hound = "3.5.1"
 soundtouch = "0.5.4"
-symphonia = "0.6.1"
+symphonia = { version = "0.6.1", default-features = false, features = ["mp3", "ogg", "vorbis", "wav", "pcm", "id3v2"] }
 log = "0.4.34"
-tokio = "1.53.1"
-zip = "8.6.0"
-futures-util = "0.3.34"
-tokio-tungstenite = "0.30.0"
-walkdir = "2.5.0"
-reqwest = "0.13.5"
-tauri-plugin-notification = "2.4.0"
-open = "5.4.4"
-dirs = "7.0.0"
-osu-db = { version = "0.3.0", default-features = false }
+tokio = { version = "1.53.1", features = ["fs", "io-util", "macros", "net", "sync", "time"] }
+zip = { version = "8.6.0", default-features = false }
+futures-util = { version = "0.3.34", default-features = false }
+tokio-tungstenite = { version = "0.30.0", default-features = false, features = ["connect"] }
+reqwest = { version = "0.13.5", default-features = false, features = ["rustls-no-provider", "stream"] }
+rustls = { version = "0.23", default-features = false, features = ["ring"] }
 
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration
 [profile.release]
 codegen-units = 1
 lto = true
-opt-level = 3
+opt-level = "s"
 panic = "abort"
 strip = true
+
+# Keep the audio decoding hot paths fast despite opt-level = "s"
+[profile.release.package.symphonia-core]
+opt-level = 3
+
+[profile.release.package.symphonia-bundle-mp3]
+opt-level = 3
+
+[profile.release.package.symphonia-codec-vorbis]
+opt-level = 3
