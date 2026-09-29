@@ -28,9 +28,18 @@
                 "glob": "**/*",
                 "input": "src/assets",
                 "output": "assets"
+              },
+              {
+                "glob": "**/*",
+                "input": "node_modules/@taiga-ui/icons/src",
+                "output": "assets/taiga-ui/icons"
               }
             ],
-            "styles": ["src/styles.css"]
+            "styles": [
+              "@taiga-ui/styles/taiga-ui-theme.less",
+              "@taiga-ui/styles/taiga-ui-fonts.less",
+              "src/styles.css"
+            ]
           },
           "configurations": {
             "production": {

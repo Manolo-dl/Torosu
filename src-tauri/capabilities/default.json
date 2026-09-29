@@ -13,6 +13,7 @@
     "dialog:allow-open",
     "dialog:allow-save",
     "os:allow-platform",
-    "fs:allow-read-text-file"
+    "fs:allow-read-text-file",
+    "notification:allow-is-permission-granted"
   ]
 }

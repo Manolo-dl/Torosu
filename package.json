@@ -1,6 +1,6 @@
 {
   "name": "torosu",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
@@ -22,9 +22,12 @@
     "@fortawesome/free-brands-svg-icons": "^7.3.1",
     "@fortawesome/free-solid-svg-icons": "^7.3.1",
     "@ngrx/signals": "^22.0.1",
+    "@taiga-ui/cdk": "5.26.0",
     "@taiga-ui/core": "^5.25.0",
+    "@taiga-ui/icons": "5.26.0",
     "@taiga-ui/kit": "^5.25.0",
     "@taiga-ui/layout": "^5.25.0",
+    "@taiga-ui/styles": "5.26.0",
     "@tauri-apps/api": "^2.11.1",
     "@tauri-apps/plugin-dialog": "^2.7.3",
     "@tauri-apps/plugin-fs": "^2.5.2",
