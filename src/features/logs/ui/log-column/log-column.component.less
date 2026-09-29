@@ -1,0 +1,82 @@
+:host {
+  display: block;
+}
+
+[tuiCardLarge] {
+  --level-color: var(--tui-text-secondary);
+
+  border-inline-start: 3px solid var(--level-color);
+
+  &[data-level='debug'] { --level-color: var(--tui-status-info); }
+  &[data-level='info'] { --level-color: var(--tui-text-action); }
+  &[data-level='warn'] { --level-color: var(--tui-status-warning); }
+  &[data-level='error'] { --level-color: var(--tui-status-negative); }
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  [tuiBadge]:first-child {
+    font-weight: 700;
+    letter-spacing: 0.08em;
+  }
+}
+
+.target {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  inline-size: 100%;
+
+  .name {
+    flex: 1;
+    min-inline-size: 0;
+    text-align: start;
+    font-family: monospace;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.entries {
+  max-block-size: 22rem;
+
+  .entry {
+    display: flex;
+    gap: 0.75rem;
+    padding: 0.3rem 0;
+    font: var(--tui-typography-body-xs);
+    font-family: monospace;
+    line-height: 1.5;
+    color: var(--tui-text-secondary);
+    border-top: 1px solid var(--tui-border-normal);
+
+    &:first-child {
+      border-top: none;
+    }
+
+    .timestamp {
+      flex-shrink: 0;
+      color: var(--tui-text-tertiary);
+    }
+
+    .message {
+      word-break: break-all;
+    }
+  }
+}
+
+[data-level='warn'] .entry .message,
+[data-level='error'] .entry .message {
+  color: var(--level-color);
+}
+
+.empty {
+  padding: 1.5rem 0;
+  text-align: center;
+  color: var(--tui-text-tertiary);
+  font: var(--tui-typography-body-s);
+}

@@ -1,13 +1,21 @@
-<div class="viewer-toolbar">
-  <span class="total-badge">{{ store.totalLogs() }} entries</span>
-  <button class="btn-reload" (click)="reload()">Reload</button>
+<div class="toolbar">
+  <span appearance="neutral" tuiBadge>{{ store.totalLogs() }} entries</span>
+  <button
+    appearance="secondary"
+    iconStart="@tui.refresh-cw"
+    size="s"
+    tuiButton
+    type="button"
+    [loading]="reloading()"
+    (click)="reload()"
+  >
+    Reload
+  </button>
 </div>
 
-<div class="columns">
-  @for (level of ['DEBUG', 'INFO', 'WARN', 'ERROR']; track level) {
-    <app-log-column
-      [level]="level"
-      [groups]="store.groupedLogs()[level]"
-    />
-  }
-</div>
+@for (level of levels; track level) {
+  <app-log-column
+    [level]="level"
+    [groups]="store.groupedLogs()[level]"
+  />
+}
