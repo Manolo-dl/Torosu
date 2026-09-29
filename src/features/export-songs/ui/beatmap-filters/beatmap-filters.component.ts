@@ -1,5 +1,9 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { BeatmapExporterStore, ModeFilters, emptyModeFilters } from '@features/export-songs/stores/beatmap-exporter.store';
+import { TuiButton, TuiExpand, TuiIcon, TuiInput, TuiTitle } from '@taiga-ui/core';
+import { TuiChip, TuiSegmented, TuiSwitch } from '@taiga-ui/kit';
+import { TuiCardLarge } from '@taiga-ui/layout';
 
 export interface ModeConfig {
   label: string;
@@ -10,11 +14,20 @@ export interface ModeConfig {
   csLabel: string | null;
 }
 
+type RangeKey = { [K in keyof ModeFilters]: ModeFilters[K] extends number | null ? K : never }[keyof ModeFilters];
+
+interface RangeField {
+  label: string;
+  min: RangeKey;
+  max: RangeKey;
+  limit: number;
+}
+
 @Component({
   selector: 'app-beatmap-filters',
-  imports: [],
+  imports: [FormsModule, TuiButton, TuiCardLarge, TuiChip, TuiExpand, TuiIcon, TuiInput, TuiSegmented, TuiSwitch, TuiTitle],
   templateUrl: './beatmap-filters.component.html',
-  styleUrl: './beatmap-filters.component.css',
+  styleUrl: './beatmap-filters.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BeatmapFiltersComponent {
@@ -29,6 +42,7 @@ export class BeatmapFiltersComponent {
 
   readonly statuses = ['Ranked', 'Loved', 'Approved', 'Qualified', 'Unranked'];
   readonly keyCounts = [4, 5, 6, 7, 8];
+  readonly playedOptions: (boolean | null)[] = [null, true, false];
 
   private expandedModes = signal<number[]>([]);
 
@@ -60,6 +74,18 @@ export class BeatmapFiltersComponent {
     if (wasExcluded) {
       this.expandedModes.update(e => e.includes(mode) ? e : [...e, mode]);
     }
+  }
+
+  readonly rangeFields = new Map(this.modeConfigs.map(m => [m.value, this.buildRangeFields(m)]));
+
+  private buildRangeFields(mode: ModeConfig): RangeField[] {
+    return [
+      { label: 'Stars', min: 'minStars', max: 'maxStars', limit: 15 },
+      ...(mode.hasAr ? [{ label: 'AR', min: 'minAr', max: 'maxAr', limit: 10 } as RangeField] : []),
+      { label: 'OD', min: 'minOd', max: 'maxOd', limit: 10 },
+      { label: 'HP', min: 'minHp', max: 'maxHp', limit: 10 },
+      ...(mode.csLabel && mode.value !== 3 ? [{ label: mode.csLabel, min: 'minCs', max: 'maxCs', limit: 10 } as RangeField] : []),
+    ];
   }
 
   // ── Per-mode filters ────────────────────────────────────────────────────────

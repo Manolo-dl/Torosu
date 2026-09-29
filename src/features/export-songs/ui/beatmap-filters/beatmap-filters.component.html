@@ -1,153 +1,171 @@
-<div class="filters">
-  <div class="filters-header">
-    <span class="section-title">Filters</span>
-    <button class="reset-btn" (click)="reset()">Reset</button>
-  </div>
+<div appearance="floating" tuiCardLarge="compact">
+  <header>
+    <h3 tuiTitle>Filters</h3>
+    <button
+      appearance="flat"
+      iconStart="@tui.rotate-ccw"
+      size="xs"
+      tuiButton
+      type="button"
+      (click)="reset()"
+    >
+      Reset
+    </button>
+  </header>
 
+  <div class="modes">
   @for (m of modeConfigs; track m.value) {
-    <div class="mode-section" [class.excluded]="isModeExcluded(m.value)">
-
+    <section
+      class="mode"
+      [class.excluded]="isModeExcluded(m.value)"
+      [style.--mode-color]="m.color"
+    >
       <div class="mode-header" (click)="toggleExpand(m.value)">
-        <span class="mode-icon" [style.color]="m.color">{{ m.icon }}</span>
-        <span class="mode-label" [style.color]="m.color">{{ m.label }}</span>
-        <div class="mode-header-actions">
-          <button
-            class="mode-toggle"
-            [class.on]="!isModeExcluded(m.value)"
-            [style.borderColor]="m.color"
-            [style.background]="!isModeExcluded(m.value) ? m.color : 'transparent'"
-            (click)="toggleExclude(m.value); $event.stopPropagation()"
-            [title]="(isModeExcluded(m.value) ? 'Enable' : 'Disable') + ' ' + m.label">
-          </button>
-          <span class="expand-chevron" [class.open]="isExpanded(m.value)">▾</span>
-        </div>
+        <span class="mode-icon">{{ m.icon }}</span>
+        <span class="mode-label">{{ m.label }}</span>
+        <input
+          size="s"
+          tuiSwitch
+          type="checkbox"
+          [attr.aria-label]="(isModeExcluded(m.value) ? 'Enable ' : 'Disable ') + m.label"
+          [ngModel]="!isModeExcluded(m.value)"
+          (ngModelChange)="toggleExclude(m.value)"
+          (click)="$event.stopPropagation()"
+        />
+        <tui-icon icon="@tui.chevron-down" class="chevron" [class.open]="isExpanded(m.value)" />
       </div>
 
-      <div class="mode-body" [class.open]="isExpanded(m.value)">
-        <div class="mode-body-inner">
-
+      <tui-expand [expanded]="isExpanded(m.value)">
+        <div class="mode-body">
           <div class="filter-group">
-            <label>Status</label>
-            <div class="button-group">
-              <button [class.active]="modeFilters(m.value).status === null"
-                      (click)="setModeFilter(m.value, 'status', null)">All</button>
+            <span class="label">Status</span>
+            <div class="chips">
+              <button
+                size="xs"
+                tuiChip
+                type="button"
+                [appearance]="modeFilters(m.value).status === null ? 'primary' : 'neutral'"
+                (click)="setModeFilter(m.value, 'status', null)"
+              >
+                All
+              </button>
               @for (s of statuses; track s) {
-                <button [class.active]="modeFilters(m.value).status === s.toLowerCase()"
-                        (click)="setModeFilter(m.value, 'status', s.toLowerCase())">{{ s }}</button>
+                <button
+                  size="xs"
+                  tuiChip
+                  type="button"
+                  [appearance]="modeFilters(m.value).status === s.toLowerCase() ? 'primary' : 'neutral'"
+                  (click)="setModeFilter(m.value, 'status', s.toLowerCase())"
+                >
+                  {{ s }}
+                </button>
               }
             </div>
           </div>
 
           <div class="filter-group">
-            <label>Length (s)</label>
-            <div class="range-inputs">
-              <input type="number" min="0" placeholder="Min"
-                [value]="msToSec(modeFilters(m.value).minLength)"
-                (change)="setModeMinLength(m.value, $any($event.target).value)" />
+            <span class="label">Length (s)</span>
+            <div class="range">
+              <tui-textfield tuiTextfieldSize="s">
+                <input
+                  min="0"
+                  placeholder="Min"
+                  tuiInput
+                  type="number"
+                  [value]="msToSec(modeFilters(m.value).minLength)"
+                  (change)="setModeMinLength(m.value, $any($event.target).value)"
+                />
+              </tui-textfield>
               <span>–</span>
-              <input type="number" min="0" placeholder="Max"
-                [value]="msToSec(modeFilters(m.value).maxLength)"
-                (change)="setModeMaxLength(m.value, $any($event.target).value)" />
+              <tui-textfield tuiTextfieldSize="s">
+                <input
+                  min="0"
+                  placeholder="Max"
+                  tuiInput
+                  type="number"
+                  [value]="msToSec(modeFilters(m.value).maxLength)"
+                  (change)="setModeMaxLength(m.value, $any($event.target).value)"
+                />
+              </tui-textfield>
             </div>
           </div>
 
-          <div class="filter-group">
-            <label>Stars</label>
-            <div class="range-inputs">
-              <input type="number" min="0" max="15" step="0.5" placeholder="Min"
-                [value]="modeFilters(m.value).minStars ?? ''"
-                (change)="setModeMin(m.value, 'minStars', 'maxStars', $any($event.target).value)" />
-              <span>–</span>
-              <input type="number" min="0" max="15" step="0.5" placeholder="Max"
-                [value]="modeFilters(m.value).maxStars ?? ''"
-                (change)="setModeMax(m.value, 'minStars', 'maxStars', $any($event.target).value)" />
-            </div>
-          </div>
-
-          @if (m.hasAr) {
+          @for (f of rangeFields.get(m.value); track f.label) {
             <div class="filter-group">
-              <label>AR</label>
-              <div class="range-inputs">
-                <input type="number" min="0" max="10" step="0.5" placeholder="Min"
-                  [value]="modeFilters(m.value).minAr ?? ''"
-                  (change)="setModeMin(m.value, 'minAr', 'maxAr', $any($event.target).value)" />
+              <span class="label">{{ f.label }}</span>
+              <div class="range">
+                <tui-textfield tuiTextfieldSize="s">
+                  <input
+                    min="0"
+                    placeholder="Min"
+                    tuiInput
+                    type="number"
+                    [max]="f.limit"
+                    [step]="0.5"
+                    [value]="modeFilters(m.value)[f.min] ?? ''"
+                    (change)="setModeMin(m.value, f.min, f.max, $any($event.target).value)"
+                  />
+                </tui-textfield>
                 <span>–</span>
-                <input type="number" min="0" max="10" step="0.5" placeholder="Max"
-                  [value]="modeFilters(m.value).maxAr ?? ''"
-                  (change)="setModeMax(m.value, 'minAr', 'maxAr', $any($event.target).value)" />
+                <tui-textfield tuiTextfieldSize="s">
+                  <input
+                    min="0"
+                    placeholder="Max"
+                    tuiInput
+                    type="number"
+                    [max]="f.limit"
+                    [step]="0.5"
+                    [value]="modeFilters(m.value)[f.max] ?? ''"
+                    (change)="setModeMax(m.value, f.min, f.max, $any($event.target).value)"
+                  />
+                </tui-textfield>
               </div>
             </div>
           }
 
-          <div class="filter-group">
-            <label>OD</label>
-            <div class="range-inputs">
-              <input type="number" min="0" max="10" step="0.5" placeholder="Min"
-                [value]="modeFilters(m.value).minOd ?? ''"
-                (change)="setModeMin(m.value, 'minOd', 'maxOd', $any($event.target).value)" />
-              <span>–</span>
-              <input type="number" min="0" max="10" step="0.5" placeholder="Max"
-                [value]="modeFilters(m.value).maxOd ?? ''"
-                (change)="setModeMax(m.value, 'minOd', 'maxOd', $any($event.target).value)" />
-            </div>
-          </div>
-
-          <div class="filter-group">
-            <label>HP</label>
-            <div class="range-inputs">
-              <input type="number" min="0" max="10" step="0.5" placeholder="Min"
-                [value]="modeFilters(m.value).minHp ?? ''"
-                (change)="setModeMin(m.value, 'minHp', 'maxHp', $any($event.target).value)" />
-              <span>–</span>
-              <input type="number" min="0" max="10" step="0.5" placeholder="Max"
-                [value]="modeFilters(m.value).maxHp ?? ''"
-                (change)="setModeMax(m.value, 'minHp', 'maxHp', $any($event.target).value)" />
-            </div>
-          </div>
-
-          @if (m.csLabel !== null) {
-            @if (m.value === 3) {
-              <div class="filter-group">
-                <label>{{ m.csLabel }}</label>
-                <div class="button-group">
-                  <button [class.active]="modeKeyCount(m.value) === null"
-                          (click)="setModeKeyCount(m.value, null)">All</button>
-                  @for (k of keyCounts; track k) {
-                    <button [class.active]="modeKeyCount(m.value) === k"
-                            (click)="setModeKeyCount(m.value, k)">{{ k }}K</button>
-                  }
-                </div>
+          @if (m.value === 3) {
+            <div class="filter-group">
+              <span class="label">{{ m.csLabel }}</span>
+              <div class="chips">
+                <button
+                  size="xs"
+                  tuiChip
+                  type="button"
+                  [appearance]="modeKeyCount(m.value) === null ? 'primary' : 'neutral'"
+                  (click)="setModeKeyCount(m.value, null)"
+                >
+                  All
+                </button>
+                @for (k of keyCounts; track k) {
+                  <button
+                    size="xs"
+                    tuiChip
+                    type="button"
+                    [appearance]="modeKeyCount(m.value) === k ? 'primary' : 'neutral'"
+                    (click)="setModeKeyCount(m.value, k)"
+                  >
+                    {{ k }}K
+                  </button>
+                }
               </div>
-            } @else {
-              <div class="filter-group">
-                <label>{{ m.csLabel }}</label>
-                <div class="range-inputs">
-                  <input type="number" min="0" max="10" step="0.5" placeholder="Min"
-                    [value]="modeFilters(m.value).minCs ?? ''"
-                    (change)="setModeMin(m.value, 'minCs', 'maxCs', $any($event.target).value)" />
-                  <span>–</span>
-                  <input type="number" min="0" max="10" step="0.5" placeholder="Max"
-                    [value]="modeFilters(m.value).maxCs ?? ''"
-                    (change)="setModeMax(m.value, 'minCs', 'maxCs', $any($event.target).value)" />
-                </div>
-              </div>
-            }
+            </div>
           }
-
         </div>
-      </div>
-
-    </div>
+      </tui-expand>
+    </section>
   }
+  </div>
 
-  <div class="filter-section">Other</div>
-
-  <div class="filter-group">
-    <label>Played</label>
-    <div class="button-group">
-      <button [class.active]="store.filters().lastPlayed === null"  (click)="setLastPlayed(null)">All</button>
-      <button [class.active]="store.filters().lastPlayed === true"  (click)="setLastPlayed(true)">Played</button>
-      <button [class.active]="store.filters().lastPlayed === false" (click)="setLastPlayed(false)">Not played</button>
-    </div>
+  <div class="filter-group other">
+    <span class="label">Played</span>
+    <tui-segmented
+      size="s"
+      [activeItemIndex]="playedOptions.indexOf(store.filters().lastPlayed)"
+      (activeItemIndexChange)="setLastPlayed(playedOptions[$event])"
+    >
+      <button type="button">All</button>
+      <button type="button">Played</button>
+      <button type="button">Not played</button>
+    </tui-segmented>
   </div>
 </div>
