@@ -1,37 +1,47 @@
-<div class="results-panel">
-  <div class="panel-header">
-    <span class="section-title">Results</span>
+<div appearance="floating" tuiCardLarge="compact">
+  <header>
+    <h3 tuiTitle>Results</h3>
     @if (store.currentRows().length > 0) {
-      <span class="row-count">{{ store.currentRows().length }} rows</span>
+      <span appearance="neutral" tuiBadge>{{ store.currentRows().length }} rows</span>
     }
-  </div>
+  </header>
 
   @if (store.isQuerying()) {
-    <div class="loading">Running query...</div>
+    <tui-loader size="l" class="state" textContent="Running query..." />
   } @else if (!store.selectedTable()) {
-    <div class="empty">Select a table to see results</div>
+    <p class="state">Select a table to see results</p>
   } @else if (store.currentRows().length === 0) {
-    <div class="empty">No results</div>
+    <p class="state">No results</p>
   } @else {
-    <div class="results-table-wrapper">
-      <table class="results-table">
-        <thead>
-          <tr>
-            @for (header of store.columnHeaders(); track header) {
-              <th>{{ header }}</th>
-            }
-          </tr>
-        </thead>
-        <tbody>
-          @for (row of store.currentRows(); track $index) {
-            <tr>
-              @for (header of store.columnHeaders(); track header) {
-                <td>{{ formatValue(row, header) }}</td>
-              }
-            </tr>
+    <div class="table" [style.--columns]="store.columnHeaders().length">
+      <!-- Header scrolls horizontally in sync with the rows below -->
+      <div #head class="head-wrapper">
+        <div class="row head">
+          @for (header of store.columnHeaders(); track header) {
+            <span class="cell" [title]="header">{{ header }}</span>
           }
-        </tbody>
-      </table>
+        </div>
+      </div>
+
+      <!-- itemSize must match @row-height in the stylesheet -->
+      <cdk-virtual-scroll-viewport
+        itemSize="32"
+        tuiScrollRef
+        class="viewport"
+        (scroll)="head.scrollLeft = $any($event.target).scrollLeft"
+      >
+        <tui-scroll-controls />
+        <div
+          *cdkVirtualFor="let row of store.currentRows(); let odd = odd"
+          class="row"
+          [class.odd]="odd"
+        >
+          @for (header of store.columnHeaders(); track header) {
+            @let value = formatValue(row, header);
+            <span class="cell" [class.null]="value === 'NULL'" [title]="value">{{ value }}</span>
+          }
+        </div>
+      </cdk-virtual-scroll-viewport>
     </div>
   }
 </div>

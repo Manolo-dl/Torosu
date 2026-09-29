@@ -122,7 +122,8 @@ pub async fn save_beatmapsets(pool: &SqlitePool, sets: &[OsuBeatmapSet]) -> Resu
 
         for diff in &set.diffs {
             sqlx::query(
-                "INSERT INTO diffs (md5, beatmapset_id, diff_name, mode, length, stars,
+                // osu!.db can list the same .osu file twice; keep the first one.
+                "INSERT OR IGNORE INTO diffs (md5, beatmapset_id, diff_name, mode, length, stars,
                  last_played, circle_size, approach_rate, hp_drain, overall_difficulty, file_name, audio, creator)
                  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)"
             )

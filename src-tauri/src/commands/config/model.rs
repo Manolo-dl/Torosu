@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Serialize, Default, Clone)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct AppConfig {
     #[serde(default)]
     pub osu_path: Option<String>,
@@ -65,6 +65,22 @@ fn default_ip() -> String { "127.0.0.1".to_string() }
 fn default_port() -> u16 { 24050 }
 fn default_false() -> bool { false }
 fn default_max_concurrent_downloads() -> u32 { 1 }
+
+// Implemented by hand so the defaults match the serde ones above: a derived
+// Default would set `sqlite_db` to false, and that value is then written to
+// configuration.toml on close, silently disabling the cache for good.
+impl Default for AppConfig {
+    fn default() -> Self {
+        Self {
+            osu_path: None,
+            excluded_tools: Vec::new(),
+            tosu: TosuConfig::default(),
+            downloader: DownloaderConfig::default(),
+            sqlite_db: default_true(),
+            open_file: default_false(),
+        }
+    }
+}
 
 impl Default for TosuConfig { 
     fn default() -> Self {

@@ -1,18 +1,20 @@
-<div class="table-list-panel">
-  <div class="panel-header">
-    <span class="section-title">Tables</span>
-  </div>
+<div appearance="floating" tuiCardLarge="compact">
+  <h3 tuiTitle>Tables</h3>
 
-  <ul class="table-list" role="list">
+  <div class="list">
     @for (table of store.tables(); track table.name) {
-      <li
-        class="table-item"
+      <button
+        tuiCell="s"
+        type="button"
         [class.active]="store.selectedTable() === table.name"
         (click)="store.selectTable(table.name)"
       >
-        <span class="table-name">{{ table.name }}</span>
-        <span class="column-count">{{ table.columns.length }} cols</span>
-      </li>
+        <tui-icon icon="@tui.table" />
+        <span class="name">{{ table.name }}</span>
+        <span appearance="neutral" size="s" tuiBadge>{{ table.columns.length }}</span>
+      </button>
+    } @empty {
+      <p class="empty">No tables found</p>
     }
-  </ul>
+  </div>
 </div>

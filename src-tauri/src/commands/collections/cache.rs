@@ -57,7 +57,7 @@ pub async fn save_collections(pool: &SqlitePool, collections: &[OsuCollection]) 
     sqlx::query("DELETE FROM collections").execute(&mut *tx).await?;
 
     for col in collections {
-        sqlx::query("INSERT INTO collections (name) VALUES ($1)")
+        sqlx::query("INSERT OR IGNORE INTO collections (name) VALUES ($1)")
             .bind(&col.name)
             .execute(&mut *tx)
             .await?;
