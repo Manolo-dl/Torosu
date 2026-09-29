@@ -1,15 +1,19 @@
-import { Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { TASK_LABELS } from '@features/trainer';
 import { TrainerTaskType } from '@features/trainer/models/trainer.model';
 import { TrainerStore } from '@features/trainer/stores/trainer.store';
 import { TosuStore } from '@entities/tosu';
 import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDropList } from '@angular/cdk/drag-drop';
+import { TuiButton, TuiCheckbox, TuiDataList, TuiDropdown, TuiIcon, TuiInput, TuiNotificationDirective, TuiTitle } from '@taiga-ui/core';
+import { TuiCardLarge } from '@taiga-ui/layout';
 
 @Component({
   selector: 'app-trainer-task-pipeline',
-  imports: [CdkDrag, CdkDropList, CdkDragHandle],
+  imports: [CdkDrag, CdkDropList, CdkDragHandle, FormsModule, TuiButton, TuiCardLarge, TuiCheckbox, TuiDataList, TuiDropdown, TuiIcon, TuiInput, TuiNotificationDirective, TuiTitle],
   templateUrl: './trainer-task-pipeline.component.html',
-  styleUrl: './trainer-task-pipeline.component.css',
+  styleUrl: './trainer-task-pipeline.component.less',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TrainerTaskPipelineComponent {
 
@@ -18,6 +22,7 @@ export class TrainerTaskPipelineComponent {
 
   taskLabels = TASK_LABELS;
   availableTasks: TrainerTaskType[] = ['RateChange'];
+  readonly menuOpen = signal(false);
 
   availableTasksFiltered = computed(() => {
     const existingTypes = new Set(this.trainer.tasks().map(t => t.task.type));
@@ -35,7 +40,8 @@ export class TrainerTaskPipelineComponent {
     this.trainer.reorderTasks(event.previousIndex, event.currentIndex);
   }
 
-  addTask(type: TrainerTaskType | '') {
+  addTask(type: TrainerTaskType) {
+    this.menuOpen.set(false);
     switch (type) {
       case 'RateChange':
         this.trainer.addTask({ type: 'RateChange', params: { rate: 1.0, adjustPitch: false } });

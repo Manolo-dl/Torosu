@@ -1,90 +1,99 @@
-<div class="pipeline-panel">
-
-  <div class="panel-header">
-    <span class="section-title">Tasks</span>
-
-    <select
-      class="add-task-select"
-      (change)="addTask($any($event.target).value); $any($event.target).value = ''"
+<div appearance="floating" tuiCardLarge="compact">
+  <header>
+    <h3 tuiTitle>Tasks</h3>
+    <button
+      iconStart="@tui.plus"
+      size="s"
+      tuiButton
+      type="button"
+      [disabled]="availableTasksFiltered().length === 0"
+      [tuiDropdown]="taskMenu"
+      [(tuiDropdownOpen)]="menuOpen"
     >
-      <option value="" disabled selected>+ Add task</option>
-      @for (type of availableTasksFiltered(); track type) {
-        <option [value]="type">{{ taskLabels[type] }}</option>
-      }
-    </select>
-  </div>
+      Add task
+    </button>
+    <ng-template #taskMenu>
+      <tui-data-list>
+        @for (type of availableTasksFiltered(); track type) {
+          <button tuiOption type="button" (click)="addTask(type)">
+            {{ taskLabels[type] }}
+          </button>
+        }
+      </tui-data-list>
+    </ng-template>
+  </header>
 
-  <div class="wip-notice">
+  <div appearance="warning" size="s" tuiNotification>
     Only <strong>Rate Change</strong> is currently implemented. Other tasks are coming soon.
   </div>
 
-  <div class="task-list" cdkDropList (cdkDropListDropped)="onDrop($event)">
-
+  <div class="list" cdkDropList (cdkDropListDropped)="onDrop($event)">
     @for (entry of trainer.tasks(); track entry.id) {
-      <div class="task-item" cdkDrag>
+      <div class="task" cdkDrag>
+        <tui-icon icon="@tui.grip-vertical" class="handle" cdkDragHandle />
 
-        <span class="task-handle" cdkDragHandle>⋮⋮</span>
-
-        <div class="task-content">
-          <span class="task-label">{{ taskLabels[entry.task.type] }}</span>
+        <div class="content">
+          <span class="label">{{ taskLabels[entry.task.type] }}</span>
 
           @if (entry.task.type === 'RateChange') {
-            <div class="task-params">
-              <div class="task-field">
-                <span class="task-field-label">Rate</span>
+            <div class="params">
+              <tui-textfield tuiTextfieldSize="m" [tuiTextfieldCleaner]="false" class="rate">
+                <label tuiLabel>Rate</label>
                 <input
-                  type="number" min="0.5" max="2" step="0.05"
-                  class="task-number-input"
+                  max="2"
+                  min="0.5"
+                  step="0.05"
+                  tuiInput
+                  type="number"
                   [value]="entry.task.params.rate"
                   (change)="onRateInput(entry.id, $any($event.target).value, entry.task.params.adjustPitch)"
                 />
-                <span class="task-field-unit">x</span>
-              </div>
+              </tui-textfield>
 
-              <div class="task-field">
-                <span class="task-field-label">BPM</span>
-                @if (originalBpm() !== null) {
-                  <span class="task-bpm-original">{{ originalBpm() }}</span>
-                  <span class="task-bpm-arrow">→</span>
-                }
+              <tui-textfield tuiTextfieldSize="m" [tuiTextfieldCleaner]="false" class="bpm">
+                <label tuiLabel>
+                  BPM
+                  @if (originalBpm() !== null) {
+                    ({{ originalBpm() }} →)
+                  }
+                </label>
                 <input
-                  type="number" min="1" step="1"
-                  class="task-number-input"
+                  min="1"
+                  step="1"
+                  tuiInput
+                  type="number"
                   [value]="newBpm(entry.task.params.rate) ?? entry.task.params.rate * 180"
                   (change)="onBpmInput(entry.id, $any($event.target).value, entry.task.params.adjustPitch)"
                 />
-              </div>
+              </tui-textfield>
 
-              <label class="task-checkbox">
+              <label tuiLabel class="pitch">
                 <input
+                  size="s"
+                  tuiCheckbox
                   type="checkbox"
-                  [checked]="entry.task.params.adjustPitch"
-                  (change)="onRateInput(entry.id, entry.task.params.rate + '', $any($event.target).checked)"
+                  [ngModel]="entry.task.params.adjustPitch"
+                  (ngModelChange)="onRateInput(entry.id, entry.task.params.rate + '', $event)"
                 />
-                Adjust Pitch
+                Adjust pitch
               </label>
             </div>
           }
-
-
         </div>
 
         <button
-          class="task-remove"
+          appearance="flat"
+          iconStart="@tui.trash-2"
+          size="s"
+          tuiIconButton
           type="button"
-          title="Remove task"
           (click)="trainer.removeTask(entry.id)"
         >
-          ✕
+          Remove task
         </button>
-
       </div>
+    } @empty {
+      <p class="empty">No tasks added yet.</p>
     }
-
-    @if (trainer.tasks().length === 0) {
-      <p class="empty-state">No tasks added yet.</p>
-    }
-
   </div>
-
 </div>

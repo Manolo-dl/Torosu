@@ -1,0 +1,29 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.buttons {
+  display: flex;
+  gap: 0.5rem;
+
+  [tuiButton]:last-child {
+    flex: 1;
+  }
+}
+
+.progress {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  progress {
+    flex: 1;
+  }
+
+  .percent {
+    font: var(--tui-typography-body-xs);
+    font-weight: 700;
+  }
+}

@@ -1,0 +1,51 @@
+:host {
+  display: block;
+}
+
+// The banner always sits on the beatmap background image, so its text stays
+// white in both themes.
+.banner {
+  overflow: hidden;
+  border-radius: var(--tui-radius-l);
+  box-shadow: var(--tui-shadow-small);
+  background-color: var(--tui-background-elevation-2);
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+
+  .overlay {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    min-block-size: 8.5rem;
+    padding: 1.25rem;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.05) 0%, rgba(0, 0, 0, 0.8) 100%);
+  }
+
+  .info {
+    min-inline-size: 0;
+    color: #fff;
+
+    .title {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-weight: 700;
+    }
+
+    .artist {
+      font-weight: 400;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    [tuiSubtitle] {
+      color: rgba(255, 255, 255, 0.7);
+    }
+  }
+
+  .stars {
+    flex-shrink: 0;
+    font-weight: 700;
+  }
+}
