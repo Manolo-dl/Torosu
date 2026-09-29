@@ -4,13 +4,12 @@ import { RouterOutlet } from "@angular/router";
 import { HeaderComponent } from "@widgets/header";
 import { SidebarComponent } from "@widgets/sidebar";
 import { OsuPathComponent } from "@widgets/osu-path";
-import { ToastComponent } from "@widgets/toast";
 import { PlatformStore } from "@shared/stores";
 import { WindowControlsComponent } from "@widgets/window-controls/window-controls.component";
 
 @Component({
   selector: "app-root",
-  imports: [RouterOutlet, HeaderComponent, SidebarComponent, OsuPathComponent, ToastComponent, TuiRoot, WindowControlsComponent],
+  imports: [RouterOutlet, HeaderComponent, SidebarComponent, OsuPathComponent, TuiRoot, WindowControlsComponent],
   templateUrl: "./app.component.html",
   styleUrl: "./app.component.less",
 })

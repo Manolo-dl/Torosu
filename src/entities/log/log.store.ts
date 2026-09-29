@@ -1,7 +1,7 @@
 import { patchState, signalStore, withComputed, withMethods, withState } from "@ngrx/signals";
 import { LogEntry } from "./log.model";
 import { computed, inject } from "@angular/core";
-import { ToastStore } from "@shared/stores";
+import { TuiNotificationService } from '@taiga-ui/core';
 import { invoke } from "@tauri-apps/api/core";
 
 interface LogState {
@@ -39,7 +39,7 @@ export const LogStore = signalStore(
         }),
     })),
 
-    withMethods((store, toast = inject(ToastStore)) => ({
+    withMethods((store, alerts = inject(TuiNotificationService)) => ({
         async load() {
             try {
                 const logs = await invoke<LogEntry[]>('read_logs');
@@ -48,7 +48,7 @@ export const LogStore = signalStore(
                 );
                 patchState(store, { logs: sorted, isLoaded: true });
             } catch (error) {
-                toast.show('error', 'Failed to load logs');
+                alerts.open('Failed to load logs', { appearance: 'negative' }).subscribe();
                 patchState(store, { isLoaded: false });
                 throw error;
             }

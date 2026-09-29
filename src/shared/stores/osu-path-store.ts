@@ -1,7 +1,7 @@
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { invoke } from '@tauri-apps/api/core';
 import { open } from '@tauri-apps/plugin-dialog';
-import { ToastStore } from './toast-store';
+import { TuiNotificationService } from '@taiga-ui/core';
 import { computed, inject } from '@angular/core';
 
 interface OsuPathState {
@@ -19,20 +19,20 @@ export const OsuPathStore = signalStore(
     osuPathLabel: computed(() => store.path() ? store.path() : 'osu! path not detected'),
   })),
 
-  withMethods((store, toast = inject(ToastStore)) => {
+  withMethods((store, alerts = inject(TuiNotificationService)) => {
     let detectPromise: Promise<void> | undefined;
 
     async function doDetect() {
       patchState(store, { isLoading: true });
       try {
         const path = await invoke<string>('get_osu_path');
-        toast.show('success', 'Osu! path detected');
+        alerts.open('Osu! path detected', { appearance: 'positive' }).subscribe();
 
         patchState(store, { path, error: null });
         await invoke('save_osu_path', { path });
-        toast.show('success', 'Osu! path saved');
+        alerts.open('Osu! path saved', { appearance: 'positive' }).subscribe();
       } catch (error) {
-        toast.show('error', 'Failed to detect Osu! path');
+        alerts.open('Failed to detect Osu! path', { appearance: 'negative' }).subscribe();
         patchState(store, { error: error as string });
         detectPromise = undefined;
       } finally {
@@ -60,9 +60,9 @@ export const OsuPathStore = signalStore(
           detectPromise = Promise.resolve();
           try {
             await invoke('save_osu_path', { path: selected });
-            toast.show('success', 'Osu! path saved');
+            alerts.open('Osu! path saved', { appearance: 'positive' }).subscribe();
           } catch (e) {
-            toast.show('error', 'Failed to save osu! path');
+            alerts.open('Failed to save osu! path', { appearance: 'negative' }).subscribe();
             console.error('Failed to save osu! path:', e);
           }
         }

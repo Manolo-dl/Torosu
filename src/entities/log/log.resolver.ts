@@ -1,15 +1,15 @@
 import { inject } from '@angular/core';
 import type { ResolveFn } from '@angular/router';
 import { LogStore } from './log.store';
-import { ToastStore } from '@shared/stores';
+import { TuiNotificationService } from '@taiga-ui/core';
 
 export const logResolver:ResolveFn<void> = async () => {
 
   const store = inject(LogStore);
-  const toast = inject(ToastStore);
+  const alerts = inject(TuiNotificationService);
 
   if (!store.isLoaded()) {
-    toast.show('info', 'Loading logs, please wait...');
+    alerts.open('Loading logs, please wait...', { appearance: 'info' }).subscribe();
     await store.load();
   }
 };

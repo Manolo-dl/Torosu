@@ -1,6 +1,7 @@
 import { computed, inject } from "@angular/core";
 import { patchState, signalStore, withComputed, withMethods, withState } from "@ngrx/signals";
-import { OsuPathStore, ToastStore } from "@shared/stores"; 
+import { OsuPathStore } from "@shared/stores"; 
+import { TuiNotificationService } from '@taiga-ui/core';
 import { invoke } from "@tauri-apps/api/core";
 import { OsuBeatmapSet, OsuDiff } from "./osu-db.model";
 
@@ -80,7 +81,7 @@ export const OsuDbStore = signalStore(
         beatmapSetsBySetId: computed(() => new Map(store.beatmapSets().map(s => [s.beatmapsetId, s]))),
     })),
 
-    withMethods((store, osuPath = inject(OsuPathStore), toast = inject(ToastStore)) => ({
+    withMethods((store, osuPath = inject(OsuPathStore), alerts = inject(TuiNotificationService)) => ({
         setBeatmapSets(beatmapSets: OsuBeatmapSet[]) {
             patchState(store, { beatmapSets, isLoaded: true, isLoading: false });
         },
@@ -96,7 +97,7 @@ export const OsuDbStore = signalStore(
         async load() {
             const path = osuPath.path();
             if (!path) {
-                toast.show('error', 'Osu! path not set');
+                alerts.open('Osu! path not set', { appearance: 'negative' }).subscribe();
                 throw new Error("Osu! path not set");
             } 
 
@@ -104,11 +105,11 @@ export const OsuDbStore = signalStore(
 
             try {
                 const beatmapSets = await invoke<OsuBeatmapSet[]>('read_osu_db_full');
-                toast.show('success', `Loaded ${beatmapSets.length} beatmap sets from osu!.db`);
+                alerts.open(`Loaded ${beatmapSets.length} beatmap sets from osu!.db`, { appearance: 'positive' }).subscribe();
                 patchState(store, { beatmapSets, isLoaded: true, isLoading: false });
             } catch (error) {
                 patchState(store, { isLoading: false });
-                toast.show('error', `Failed to load osu!.db`);
+                alerts.open(`Failed to load osu!.db`, { appearance: 'negative' }).subscribe();
                 throw error;
             }
         }

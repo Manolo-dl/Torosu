@@ -4,7 +4,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { computed, inject } from "@angular/core";
 import { OsuDbStore } from "@entities/osu-db";
 import { OsuCollection } from "@entities/collection";
-import { ToastStore } from "@shared/stores";
+import { TuiNotificationService } from '@taiga-ui/core';
 
 interface PackStoreState {
     selectedDiffs: SelectedDiff[];
@@ -62,7 +62,7 @@ export const PackStore = signalStore(
         ),
     })),
 
-    withMethods((store, toastStore = inject(ToastStore), osuDb = inject(OsuDbStore)) => ({
+    withMethods((store, alerts = inject(TuiNotificationService), osuDb = inject(OsuDbStore)) => ({
         toggleDiff(diff: SelectedDiff) {
             const diffs = store.selectedDiffs();
             const index = diffs.findIndex(d => d.md5 === diff.md5);
@@ -131,11 +131,11 @@ export const PackStore = signalStore(
                     }
                 });
                 patchState(store, { isCreating: false });
-                toastStore.show('success', `Pack ${store.title()} created successfully!`);
+                alerts.open(`Pack ${store.title()} created successfully!`, { appearance: 'positive' }).subscribe();
                 patchState(store, initialState);
             } catch (error) {
                 patchState(store, { isCreating: false });
-                toastStore.show('error', 'Failed to create pack');
+                alerts.open('Failed to create pack', { appearance: 'negative' }).subscribe();
                 throw error;
             }
         },

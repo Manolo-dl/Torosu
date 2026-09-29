@@ -1,4 +1,4 @@
-import { provideTaiga } from "@taiga-ui/core";
+import { provideTaiga, tuiNotificationOptionsProvider } from "@taiga-ui/core";
 import {
   ApplicationConfig,
   provideBrowserGlobalErrorListeners
@@ -11,6 +11,8 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
-        provideTaiga()
-    ],
+    provideTaiga(),
+    // Defaults for every TuiNotificationService.open() call in the app
+    tuiNotificationOptionsProvider({ autoClose: 4000, closable: true }),
+  ],
 };

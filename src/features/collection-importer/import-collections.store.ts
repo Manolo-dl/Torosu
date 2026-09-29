@@ -2,7 +2,7 @@ import { computed, inject } from "@angular/core";
 import { CollectionStore } from "@entities/collection";
 import { OsuDbStore } from "@entities/osu-db";
 import { patchState, signalStore, withComputed, withMethods, withState } from "@ngrx/signals";
-import { ToastStore } from "@shared/stores";
+import { TuiNotificationService } from '@taiga-ui/core';
 import { invoke } from "@tauri-apps/api/core";
 import { ParsedImport } from "./import-collection-parser.service";
 
@@ -79,7 +79,7 @@ export const ImportCollectionStore = signalStore(
         };
     }),
 
-    withMethods((store, toast = inject(ToastStore)) => ({
+    withMethods((store, alerts = inject(TuiNotificationService)) => ({
         setParsed(parsedImports: ParsedImport[]) {
             patchState(store, { parsedImports });
         },
@@ -96,10 +96,10 @@ export const ImportCollectionStore = signalStore(
 
             try {
                 await invoke('import_collections', { collections });
-                toast.show('success', 'Collections imported successfully');
+                alerts.open('Collections imported successfully', { appearance: 'positive' }).subscribe();
                 patchState(store, initialState);
             } catch (error) {
-                toast.show('error', 'Failed to import collections');
+                alerts.open('Failed to import collections', { appearance: 'negative' }).subscribe();
                 patchState(store, { isImporting: false });
                 throw error;
             }

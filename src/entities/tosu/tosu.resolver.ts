@@ -1,15 +1,15 @@
 import { inject } from '@angular/core';
 import type { ResolveFn } from '@angular/router';
 import { TosuStore } from './tosu.store';
-import { ToastStore } from '@shared/stores';
+import { TuiNotificationService } from '@taiga-ui/core';
 
 export const tosuResolver: ResolveFn<void> = () => {
 
   const tosuStore = inject(TosuStore);
-  const toast = inject(ToastStore);
+  const alerts = inject(TuiNotificationService);
  
   if (!tosuStore.connected()) {
     tosuStore.connect();
-    toast.show('info', 'Connecting to Tosu, please wait...');
+    alerts.open('Connecting to Tosu, please wait...', { appearance: 'info' }).subscribe();
   }
 };

@@ -5,7 +5,8 @@ import { from, pipe, switchMap } from "rxjs";
 import { convertFileSrc, invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { computed, inject } from "@angular/core";
-import { OsuPathStore, ToastStore } from "@shared/stores";
+import { OsuPathStore } from "@shared/stores";
+import { TuiNotificationService } from '@taiga-ui/core';
 
 interface TosuStoreState {
     data: TosuData | null;
@@ -35,7 +36,7 @@ export const TosuStore = signalStore(
         }),
     })),
 
-    withMethods((store, toast = inject(ToastStore)) => ({
+    withMethods((store, alerts = inject(TuiNotificationService)) => ({
         connect: rxMethod<void>(
             pipe(
                 switchMap(() =>
@@ -49,10 +50,10 @@ export const TosuStore = signalStore(
                                     patchState(store, { data: event.payload });
                                 });
 
-                                toast.show('success', 'Connected to Tosu successfully.');
+                                alerts.open('Connected to Tosu successfully.', { appearance: 'positive' }).subscribe();
                                 patchState(store, { connected: true });
                             } catch {
-                                toast.show('error', 'Failed to connect to Tosu. Please make sure Tosu is running and try again.');
+                                alerts.open('Failed to connect to Tosu. Please make sure Tosu is running and try again.', { appearance: 'negative' }).subscribe();
                                 patchState(store, { connected: false });
                             }
                         })()

@@ -3,7 +3,8 @@ import { OsuCollection } from "./collection.model";
 import { computed, inject } from "@angular/core";
 import { OsuDbStore } from "@entities/osu-db";
 import { OsuBeatmapSet } from "@entities/osu-db/osu-db.model";
-import { OsuPathStore, ToastStore } from "@shared/stores"; 
+import { OsuPathStore } from "@shared/stores"; 
+import { TuiNotificationService } from '@taiga-ui/core';
 import { invoke } from "@tauri-apps/api/core";
 
 
@@ -69,12 +70,12 @@ export const CollectionStore = signalStore(
         };
     }),
 
-    withMethods((store, osuPath = inject(OsuPathStore), toast = inject(ToastStore)) => ({
+    withMethods((store, osuPath = inject(OsuPathStore), alerts = inject(TuiNotificationService)) => ({
 
         async load() {
             const path = osuPath.path();
             if (!path) {
-                toast.show('error', 'Osu! path not set');
+                alerts.open('Osu! path not set', { appearance: 'negative' }).subscribe();
                 throw new Error("Osu! path not set");
             }
 
@@ -82,11 +83,11 @@ export const CollectionStore = signalStore(
 
             try {
                 const collections = await invoke<OsuCollection[]>("read_osu_collections");
-                toast.show('success', `Loaded ${collections.length} collections`);
+                alerts.open(`Loaded ${collections.length} collections`, { appearance: 'positive' }).subscribe();
                 patchState(store, { collections, isLoaded: true, isLoading: false });
             } catch (error) {
                 patchState(store, { isLoading: false });
-                toast.show('error', `Failed to load collections`);
+                alerts.open(`Failed to load collections`, { appearance: 'negative' }).subscribe();
                 throw error;
             }
         },
