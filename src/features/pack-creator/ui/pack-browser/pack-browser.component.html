@@ -1,13 +1,19 @@
-<div class="browser-panel">
-  <div class="panel-header">
-    <span class="section-title">Browse Maps</span>
-  </div>
+<div appearance="floating" tuiCardLarge="compact">
+  <header>
+    <h3 tuiTitle>Browse Maps</h3>
+    <span appearance="neutral" tuiBadge>{{ store.filteredSets().length }} sets</span>
+  </header>
 
   @if (store.filteredSets().length === 0) {
-    <div class="empty">No maps found</div>
+    <p class="empty">No maps found</p>
   } @else {
-    <cdk-virtual-scroll-viewport itemSize="64" class="set-list" style="height: calc(100vh - 260px)">
-      <div *cdkVirtualFor="let set of store.filteredSets(); trackBy: trackSet" class="card-wrapper">
+    <cdk-virtual-scroll-viewport
+      itemSize="64"
+      tuiScrollRef
+      class="viewport"
+    >
+      <tui-scroll-controls />
+      <div *cdkVirtualFor="let set of store.filteredSets(); trackBy: trackSet" class="item">
         <app-pack-browser-card [set]="set" />
       </div>
     </cdk-virtual-scroll-viewport>

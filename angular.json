@@ -35,6 +35,9 @@
                 "output": "assets/taiga-ui/icons"
               }
             ],
+            "stylePreprocessorOptions": {
+              "includePaths": ["src"]
+            },
             "styles": [
               "@taiga-ui/styles/taiga-ui-theme.less",
               "@taiga-ui/styles/taiga-ui-fonts.less",

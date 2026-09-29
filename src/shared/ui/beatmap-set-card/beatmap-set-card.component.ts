@@ -2,6 +2,7 @@ import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, Input, signal } from '@angular/core';
 import { OsuBeatmapSet, OsuDiff } from '@entities/osu-db/osu-db.model';
 import { openUrl } from '@tauri-apps/plugin-opener';
+import { modeChar, modeColor, starBg, starFg } from '@shared/utils';
 import { TuiExpand, TuiIcon, TuiLink } from '@taiga-ui/core';
 import { TuiBadge } from '@taiga-ui/kit';
 
@@ -43,26 +44,8 @@ export class BeatmapSetCardComponent {
     return Math.max(0, diffs.filter(d => d.mode === mode).length - 6);
   }
 
-  diffBg(stars: number): string {
-    if (stars < 2)   return '#8bc9ff';
-    if (stars < 2.5) return '#89e066';
-    if (stars < 3.5) return '#f7eb40';
-    if (stars < 4.5) return '#f9a12e';
-    if (stars < 5.5) return '#f9504b';
-    if (stars < 6.5) return '#e06fda';
-    if (stars < 8)   return '#be4bf5';
-    return '#6c30f5';
-  }
-
-  diffFg(stars: number): string {
-    return stars >= 5 ? '#fff' : '#1a1a1a';
-  }
-
-  modeChar(mode: number): string {
-    return ['●', '◉', '✿', '⊞'][mode] ?? '●';
-  }
-
-  modeColor(mode: number): string {
-    return ['#ff66ab', '#e05555', '#66bbff', '#c966ff'][mode] ?? '#aaa';
-  }
+  readonly diffBg = starBg;
+  readonly diffFg = starFg;
+  readonly modeChar = modeChar;
+  readonly modeColor = modeColor;
 }

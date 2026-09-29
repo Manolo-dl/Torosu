@@ -1,6 +1,8 @@
 @if (!hidden()) {
-    <tui-textfield>
-        <label tuiLabel [for]="id()">{{ label() }}</label>
+    <tui-textfield [invalid]="invalid() && touched()">
+        @if (label()) {
+            <label tuiLabel [for]="id()">{{ label() }}</label>
+        }
         <input
             tuiInput
             [id]="id()"
@@ -9,7 +11,6 @@
             [value]="value()"
             [disabled]="disabled()"
             [readonly]="readonly()"
-            [invalid]="invalid() && touched()"
             (input)="value.set($any($event.target).value)"
             (blur)="touched.set(true)"
         />

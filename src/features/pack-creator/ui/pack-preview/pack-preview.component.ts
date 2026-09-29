@@ -1,12 +1,17 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ScrollingModule } from '@angular/cdk/scrolling';
 import { PackStore, SelectedDiff } from '@entities/pack';
+import { TuiScrollControls, TuiScrollRef, TuiTitle } from '@taiga-ui/core';
+import { TuiBadge } from '@taiga-ui/kit';
+import { TuiCardLarge } from '@taiga-ui/layout';
 import { PackPreviewCardComponent } from "../pack-preview-card/pack-preview-card.component";
 
 @Component({
   selector: 'app-pack-preview',
-  imports: [PackPreviewCardComponent],
+  imports: [ScrollingModule, PackPreviewCardComponent, TuiBadge, TuiCardLarge, TuiScrollControls, TuiScrollRef, TuiTitle],
   templateUrl: './pack-preview.component.html',
-  styleUrl: './pack-preview.component.css',
+  styleUrl: './pack-preview.component.less',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PackPreviewComponent {
 
