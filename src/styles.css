@@ -6,120 +6,132 @@
 
 /* ============================================
    Taiga UI theme classes (controladas por tuiTheme)
+   Paleta de prueba: rosa = acento 1, violeta = acento 2 / foco,
+   azul = info, y cada nivel de fondo con un salto visible.
    ============================================ */
 
 .dark {
-  --tui-background-base: #1a1825;
-  --tui-background-base-alt: #252333;
-  --tui-background-neutral-1: #ffffff14;
+  --tui-background-base: #14121c;
+  --tui-background-base-alt: #1c1a27;
+  --tui-background-neutral-1: #ffffff12;
   --tui-background-neutral-1-hover: #ffffff1f;
-  --tui-background-neutral-1-pressed: #ffffff29;
+  --tui-background-neutral-1-pressed: #ffffff2b;
   --tui-background-neutral-2: #ffffff29;
   --tui-background-neutral-2-hover: #ffffff33;
   --tui-background-neutral-2-pressed: #ffffff3d;
   --tui-background-accent-1: #ff66ab;
   --tui-background-accent-1-hover: #ff85be;
   --tui-background-accent-1-pressed: #e0548f;
-  --tui-background-accent-2: #ff66ab;
-  --tui-background-accent-2-hover: #ff85be;
-  --tui-background-accent-2-pressed: #e0548f;
-  --tui-background-accent-opposite: #f0ecfa;
-  --tui-background-accent-opposite-hover: #e8e2f5;
-  --tui-background-accent-opposite-pressed: #ddd4ee;
-  --tui-background-elevation-1: #252333;
-  --tui-background-elevation-2: #2e2b3e;
-  --tui-background-elevation-3: #383548;
+  --tui-background-accent-2: #8b5cf6;
+  --tui-background-accent-2-hover: #9d74f7;
+  --tui-background-accent-2-pressed: #7447e0;
+  --tui-background-accent-opposite: #f1edff;
+  --tui-background-accent-opposite-hover: #e4ddfa;
+  --tui-background-accent-opposite-pressed: #d6ccf2;
+  --tui-background-elevation-1: #221f30;
+  --tui-background-elevation-2: #2b2740;
+  --tui-background-elevation-3: #363150;
 
   --tui-service-autofill-background: rgb(85, 74, 42);
-  --tui-service-selection-background: #ff66ab26;
+  --tui-service-selection-background: #8b5cf640;
   --tui-service-backdrop: rgba(0, 0, 0, 0.75);
 
   --tui-border-normal: #ffffff14;
   --tui-border-hover: #ffffff33;
-  --tui-border-focus: #ff66ab;
+  --tui-border-focus: #8b5cf6;
 
   --tui-status-negative: #ff6b6b;
   --tui-status-negative-pale: #ff6b6b26;
   --tui-status-negative-pale-hover: #ff6b6b33;
-  --tui-status-positive: #69db7c;
-  --tui-status-positive-pale: #69db7c26;
-  --tui-status-positive-pale-hover: #69db7c33;
-  --tui-status-warning: #f59e0b;
-  --tui-status-warning-pale: #f59e0b26;
-  --tui-status-warning-pale-hover: #f59e0b33;
-  --tui-status-info: #ff66ab;
-  --tui-status-info-pale: #ff66ab26;
-  --tui-status-info-pale-hover: #ff66ab33;
-  --tui-status-neutral: #9b8fc4;
+  --tui-status-positive: #51cf66;
+  --tui-status-positive-pale: #51cf6626;
+  --tui-status-positive-pale-hover: #51cf6633;
+  --tui-status-warning: #fcc419;
+  --tui-status-warning-pale: #fcc41926;
+  --tui-status-warning-pale-hover: #fcc41933;
+  --tui-status-info: #4dabf7;
+  --tui-status-info-pale: #4dabf726;
+  --tui-status-info-pale-hover: #4dabf733;
+  --tui-status-neutral: #a39bc9;
 
-  --tui-text-primary: #ede8ff;
-  --tui-text-secondary: #9b8fc4;
-  --tui-text-tertiary: #6b5f8a;
-  --tui-text-primary-on-accent-1: #ede8ff;
-  --tui-text-primary-on-accent-2: #1a1825;
+  --tui-text-primary: #f1edff;
+  --tui-text-secondary: #a39bc9;
+  --tui-text-tertiary: #6f6790;
+  --tui-text-primary-on-accent-1: #1b0f16;
+  --tui-text-primary-on-accent-2: #ffffff;
   --tui-text-action: #ff66ab;
   --tui-text-action-hover: #ff85be;
-  --tui-text-positive: #69db7c;
-  --tui-text-positive-hover: #5cc96e;
+  --tui-text-positive: #51cf66;
+  --tui-text-positive-hover: #69db7c;
   --tui-text-negative: #ff6b6b;
-  --tui-text-negative-hover: #ff8585;
+  --tui-text-negative-hover: #ff8787;
 }
 
 .light {
-  --tui-background-base: #f0ecfa;
-  --tui-background-base-alt: #e8e2f5;
-  --tui-background-neutral-1: #00000014;
-  --tui-background-neutral-1-hover: #0000001f;
-  --tui-background-neutral-1-pressed: #00000029;
-  --tui-background-neutral-2: #00000029;
-  --tui-background-neutral-2-hover: #00000033;
-  --tui-background-neutral-2-pressed: #0000003d;
-  --tui-background-accent-1: #d4407a;
-  --tui-background-accent-1-hover: #c03070;
-  --tui-background-accent-1-pressed: #a8225f;
-  --tui-background-accent-2: #d4407a;
-  --tui-background-accent-2-hover: #c03070;
-  --tui-background-accent-2-pressed: #a8225f;
-  --tui-background-accent-opposite: #1a1825;
-  --tui-background-accent-opposite-hover: #252333;
-  --tui-background-accent-opposite-pressed: #383548;
+  --tui-background-base: #faf8ff;
+  --tui-background-base-alt: #f1edfb;
+  --tui-background-neutral-1: #1b172612;
+  --tui-background-neutral-1-hover: #1b17261f;
+  --tui-background-neutral-1-pressed: #1b17262b;
+  --tui-background-neutral-2: #1b172629;
+  --tui-background-neutral-2-hover: #1b172633;
+  --tui-background-neutral-2-pressed: #1b17263d;
+  --tui-background-accent-1: #e0407f;
+  --tui-background-accent-1-hover: #cc2f6e;
+  --tui-background-accent-1-pressed: #b3225e;
+  --tui-background-accent-2: #7048e8;
+  --tui-background-accent-2-hover: #5f3dc4;
+  --tui-background-accent-2-pressed: #5031a8;
+  --tui-background-accent-opposite: #1b1726;
+  --tui-background-accent-opposite-hover: #2b2740;
+  --tui-background-accent-opposite-pressed: #363150;
   --tui-background-elevation-1: #ffffff;
-  --tui-background-elevation-2: #ffffff;
-  --tui-background-elevation-3: #ffffff;
+  --tui-background-elevation-2: #f7f5fd;
+  --tui-background-elevation-3: #efebfa;
 
   --tui-service-autofill-background: #fff5c0;
-  --tui-service-selection-background: #d4407a26;
-  --tui-service-backdrop: rgba(0, 0, 0, 0.75);
+  --tui-service-selection-background: #7048e833;
+  --tui-service-backdrop: rgba(0, 0, 0, 0.6);
 
-  --tui-border-normal: #00000014;
-  --tui-border-hover: #00000029;
-  --tui-border-focus: #d4407a;
+  --tui-border-normal: #1b172614;
+  --tui-border-hover: #1b172629;
+  --tui-border-focus: #7048e8;
 
   --tui-status-negative: #e03131;
-  --tui-status-negative-pale: #e0313126;
+  --tui-status-negative-pale: #e0313122;
   --tui-status-negative-pale-hover: #e0313133;
-  --tui-status-positive: #2f9e44;
-  --tui-status-positive-pale: #2f9e4426;
-  --tui-status-positive-pale-hover: #2f9e4433;
-  --tui-status-warning: #d97706;
-  --tui-status-warning-pale: #d9770626;
-  --tui-status-warning-pale-hover: #d9770633;
-  --tui-status-info: #d4407a;
-  --tui-status-info-pale: #d4407a26;
-  --tui-status-info-pale-hover: #d4407a33;
-  --tui-status-neutral: #5a4f7a;
+  --tui-status-positive: #2b8a3e;
+  --tui-status-positive-pale: #2b8a3e22;
+  --tui-status-positive-pale-hover: #2b8a3e33;
+  --tui-status-warning: #e67700;
+  --tui-status-warning-pale: #e6770022;
+  --tui-status-warning-pale-hover: #e6770033;
+  --tui-status-info: #1c7ed6;
+  --tui-status-info-pale: #1c7ed622;
+  --tui-status-info-pale-hover: #1c7ed633;
+  --tui-status-neutral: #5c5480;
 
-  --tui-text-primary: #1a1825;
-  --tui-text-secondary: #5a4f7a;
-  --tui-text-tertiary: #9b8fc4;
+  --tui-text-primary: #1b1726;
+  --tui-text-secondary: #5c5480;
+  --tui-text-tertiary: #9a93b5;
   --tui-text-primary-on-accent-1: #ffffff;
   --tui-text-primary-on-accent-2: #ffffff;
-  --tui-text-action: #d4407a;
-  --tui-text-action-hover: #c03070;
-  --tui-text-positive: #2f9e44;
-  --tui-text-positive-hover: #268a3a;
+  --tui-text-action: #d6336c;
+  --tui-text-action-hover: #b82a5b;
+  --tui-text-positive: #2b8a3e;
+  --tui-text-positive-hover: #237032;
   --tui-text-negative: #e03131;
   --tui-text-negative-hover: #c92a2a;
+}
+
+/* Set by AppComponent for a couple of frames while the theme changes,
+   so animated surfaces switch colour at the same time as everything else. */
+.theme-switching,
+.theme-switching *,
+.theme-switching *::before,
+.theme-switching *::after {
+  transition-duration: 0s !important;
+  transition-delay: 0s !important;
 }
 
 /* ============================================

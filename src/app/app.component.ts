@@ -1,5 +1,5 @@
 import { TUI_DARK_MODE, TuiRoot } from "@taiga-ui/core";
-import { Component, inject, OnInit } from "@angular/core";
+import { Component, DOCUMENT, effect, inject, OnInit } from "@angular/core";
 import { RouterOutlet } from "@angular/router";
 import { HeaderComponent } from "@widgets/header";
 import { SidebarComponent } from "@widgets/sidebar";
@@ -18,6 +18,18 @@ export class AppComponent implements OnInit {
 
   readonly darkMode = inject(TUI_DARK_MODE);
   readonly platformStore = inject(PlatformStore);
+  private readonly document = inject(DOCUMENT);
+
+  constructor() {
+    // Taiga surfaces animate their background, so without this they fade
+    // to the new theme after everything else has already switched.
+    effect(() => {
+      this.darkMode();
+      const root = this.document.documentElement;
+      root.classList.add('theme-switching');
+      requestAnimationFrame(() => requestAnimationFrame(() => root.classList.remove('theme-switching')));
+    });
+  }
 
   ngOnInit() {
     this.darkMode.set(true);

@@ -1,13 +1,15 @@
-import { DecimalPipe, NgClass } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, Input, signal } from '@angular/core';
 import { OsuBeatmapSet, OsuDiff } from '@entities/osu-db/osu-db.model';
 import { openUrl } from '@tauri-apps/plugin-opener';
+import { TuiExpand, TuiIcon, TuiLink } from '@taiga-ui/core';
+import { TuiBadge } from '@taiga-ui/kit';
 
 @Component({
   selector: 'app-beatmap-set-card',
-  imports: [DecimalPipe, NgClass],
+  imports: [DecimalPipe, TuiBadge, TuiExpand, TuiIcon, TuiLink],
   templateUrl: './beatmap-set-card.component.html',
-  styleUrl: './beatmap-set-card.component.css',
+  styleUrl: './beatmap-set-card.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BeatmapSetCardComponent {
