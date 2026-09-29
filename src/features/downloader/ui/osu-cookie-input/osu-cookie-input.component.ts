@@ -3,12 +3,14 @@ import { form, maxLength, minLength, required, FormRoot, FormField } from '@angu
 import { signal } from '@angular/core';
 import { UserStore } from '@entities/user';
 import { StatefulInputComponent } from "@shared/ui";
+import { TuiButton, TuiNotificationDirective, TuiTitle } from '@taiga-ui/core';
+import { TuiBadge } from '@taiga-ui/kit';
 
 @Component({
   selector: 'app-osu-cookie-input',
-  imports: [FormRoot, StatefulInputComponent, FormField],
+  imports: [FormRoot, StatefulInputComponent, FormField, TuiButton, TuiNotificationDirective, TuiTitle, TuiBadge],
   templateUrl: './osu-cookie-input.component.html',
-  styleUrl: './osu-cookie-input.component.css',
+  styleUrl: './osu-cookie-input.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OsuCookieInputComponent {

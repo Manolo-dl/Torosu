@@ -1,13 +1,21 @@
-<div>
-  <span class="note-icon">ℹ</span>
-  <span>
-    The <strong>osu_session</strong> cookie is required to download beatmaps.
-    @if (userStore.user()?.osuSession) {
-      <span class="cookie-status active">Cookie active</span>
-    } @else {
-      <span class="cookie-status missing">No cookie set</span>
-    }
-  </span>
+<div
+  size="m"
+  tuiNotification
+  [appearance]="userStore.user()?.osuSession ? 'info' : 'warning'"
+>
+  <div tuiTitle>
+    <span>
+      Osu session
+      @if (userStore.user()?.osuSession) {
+        <span appearance="positive" size="s" tuiBadge>Cookie active</span>
+      } @else {
+        <span appearance="warning" size="s" tuiBadge>No cookie set</span>
+      }
+    </span>
+    <div tuiSubtitle>
+      The <strong>osu_session</strong> cookie is required to download beatmaps.
+    </div>
+  </div>
 </div>
 
 <form [formRoot]="osuCookieForm">
@@ -18,9 +26,17 @@
     [placeholder]="'Enter your osu_session cookie'" />
 
   <div class="button-group">
-    <button type="submit">Save cookie</button>
+    <button size="m" tuiButton type="submit">Save cookie</button>
     @if (userStore.user()?.osuSession) {
-      <button type="button" class="btn-clear" (click)="clearSession()">Clear cookie</button>
+      <button
+        appearance="negative"
+        size="m"
+        tuiButton
+        type="button"
+        (click)="clearSession()"
+      >
+        Clear cookie
+      </button>
     }
   </div>
 </form>
