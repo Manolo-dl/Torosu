@@ -1,25 +1,23 @@
-<label for="{{ id() }}">{{ label() }}</label>
-
 @if (!hidden()) {
-    <div class="input-container">
-        <input 
+    <tui-textfield>
+        <label tuiLabel [for]="id()">{{ label() }}</label>
+        <input
+            tuiInput
+            [id]="id()"
             [type]="type()"
             [placeholder]="placeholder()"
             [value]="value()"
-            (input)="value.set($event.target.value)"
             [disabled]="disabled()"
             [readonly]="readonly()"
-            [class.invalid]="invalid() && touched()"
-            [attr.aria-invalid]="invalid() && touched()"
+            [invalid]="invalid() && touched()"
+            (input)="value.set($any($event.target).value)"
             (blur)="touched.set(true)"
         />
+    </tui-textfield>
 
-        @if (invalid() && touched()) {
-            <div class="error-messages" role="alert">
-                @for (error of errors(); track error) {
-                    <span class="error">{{ error.message }}</span>
-                }
-            </div>
+    @if (invalid() && touched()) {
+        @for (error of errors(); track error) {
+            <tui-error [error]="error.message ?? null" />
         }
-    </div>
+    }
 }
