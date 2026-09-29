@@ -3,12 +3,15 @@ import { BeatmapStore } from '@entities/beatmap';
 import { TxtParserService } from '@features/beatmap-search/txt-parser.service';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { readTextFile } from '@tauri-apps/plugin-fs';
+import { FormsModule } from '@angular/forms';
+import { TuiIcon, TuiLink } from '@taiga-ui/core';
+import { TuiFiles } from '@taiga-ui/kit';
 
 @Component({
   selector: 'app-beatmap-import',
-  imports: [],
+  imports: [FormsModule, TuiFiles, TuiIcon, TuiLink],
   templateUrl: './beatmap-import.component.html',
-  styleUrl: './beatmap-import.component.css',
+  styleUrl: './beatmap-import.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BeatmapImportComponent implements OnInit, OnDestroy {
@@ -42,11 +45,8 @@ export class BeatmapImportComponent implements OnInit, OnDestroy {
     this.unlisten?.();
   }
 
-  onFileSelect(event: Event) {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
+  onFileSelect(file: File | null) {
     if (file) this.readFile(file);
-    input.value = '';
   }
 
   private readFile(file: File) {
