@@ -8,6 +8,7 @@
     <tui-accordion>
       @for (item of downloaderInfo; track $index) {
         <button
+          type="button"
           [tuiAccordion]="false"
         >
         {{ item.title }}
@@ -46,6 +47,7 @@
         <div tuiSubtitle>Load your osu! library to automatically skip maps you already own.</div>
         <div>
           <button
+          type="button"
             appearance="primary"
             size="m"
             tuiButton
