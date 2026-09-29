@@ -1,0 +1,35 @@
+:host {
+  display: block;
+}
+
+.groups {
+  max-block-size: calc(100vh - 24rem);
+
+  .group-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    inline-size: 100%;
+
+    .name {
+      flex: 1;
+      min-inline-size: 0;
+      text-align: start;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+
+  .sets {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+.empty {
+  padding: 2rem 1rem;
+  text-align: center;
+  color: var(--tui-text-tertiary);
+  font: var(--tui-typography-body-s);
+}

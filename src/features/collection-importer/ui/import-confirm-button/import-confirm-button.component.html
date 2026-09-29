@@ -1,20 +1,21 @@
-<div class="actions">
-  <button
-    class="import-btn"
-    [disabled]="store.isImporting() || store.totalMaps() === 0"
-    (click)="onImport()"
-  >
-    @if (store.isImporting()) {
-      Importing...
-    } @else {
-      Import {{ store.totalMaps() }} maps
-    }
-  </button>
-  <button
-    class="clear-btn"
-    [disabled]="store.isImporting() || store.parsedImports().length === 0"
-    (click)="store.clear()"
-  >
-    Clear
-  </button>
-</div>
+<button
+  iconStart="@tui.download"
+  size="m"
+  tuiButton
+  type="button"
+  [disabled]="store.totalMaps() === 0"
+  [loading]="store.isImporting()"
+  (click)="onImport()"
+>
+  Import {{ store.totalMaps() }} maps
+</button>
+<button
+  appearance="secondary"
+  size="m"
+  tuiButton
+  type="button"
+  [disabled]="store.isImporting() || store.parsedImports().length === 0"
+  (click)="store.clear()"
+>
+  Clear
+</button>

@@ -1,31 +1,36 @@
-<div class="preview-panel">
-  <div class="panel-header">
-    <span class="section-title">Preview</span>
-  </div>
+<div appearance="floating" tuiCardLarge="compact">
+  <h3 tuiTitle>Preview</h3>
 
   @if (store.previewGroups().length === 0) {
-    <div class="empty">Upload a .txt file to preview collections to import</div>
+    <p class="empty">Upload a .txt file to preview collections to import</p>
   } @else {
-    <div class="groups-scroll">
-      @for (group of store.previewGroups(); track group.name) {
-        <div class="collection-group">
-          <div class="group-header">
-            <span class="group-name">{{ group.name }}</span>
-            <div class="group-meta">
-              <span class="badge" [class.merge]="group.isExisting" [class.new]="!group.isExisting">
+    <tui-scrollbar class="groups">
+      <tui-accordion size="s">
+        @for (group of store.previewGroups(); track group.name; let first = $first) {
+          <button type="button" [tuiAccordion]="first">
+            <span class="group-header">
+              <span class="name">{{ group.name }}</span>
+              <span
+                size="s"
+                tuiBadge
+                [appearance]="group.isExisting ? 'warning' : 'positive'"
+              >
                 {{ group.isExisting ? 'Will merge' : 'New' }}
               </span>
-              <span class="group-count">{{ group.sets.length }} sets</span>
+              <span appearance="neutral" size="s" tuiBadge>{{ group.sets.length }} sets</span>
+            </span>
+          </button>
+          <tui-expand>
+            <div class="sets">
+              @for (set of group.sets; track set.beatmapsetId) {
+                <app-beatmap-set-card [set]="set" />
+              } @empty {
+                <p class="empty">No installed beatmaps found</p>
+              }
             </div>
-          </div>
-          @for (set of group.sets; track set.beatmapsetId) {
-            <app-beatmap-set-card [set]="set" />
-          }
-          @if (group.sets.length === 0) {
-            <div class="group-empty">No installed beatmaps found</div>
-          }
-        </div>
-      }
-    </div>
+          </tui-expand>
+        }
+      </tui-accordion>
+    </tui-scrollbar>
   }
 </div>
