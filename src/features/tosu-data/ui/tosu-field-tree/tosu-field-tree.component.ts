@@ -5,7 +5,7 @@ import { Component, input, ChangeDetectionStrategy } from '@angular/core';
     imports: [],
     changeDetection: ChangeDetectionStrategy.OnPush,
     templateUrl: './tosu-field-tree.component.html',
-    styleUrl: './tosu-field-tree.component.css',
+    styleUrl: './tosu-field-tree.component.less',
 })
 export class TosuFieldTreeComponent {
     value = input<unknown>();
@@ -31,11 +31,9 @@ export class TosuFieldTreeComponent {
         if (typeof v === 'string') return `"${v}"`;
         return String(v);
     }
-    valueClass(v: unknown): string {
-        if (v === null || v === undefined) return 'val-null';
-        if (typeof v === 'string') return 'val-string';
-        if (typeof v === 'number') return 'val-number';
-        if (typeof v === 'boolean') return 'val-boolean';
-        return 'val-null';
+    valueType(v: unknown): string {
+        if (v === null || v === undefined) return 'null';
+        if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') return typeof v;
+        return 'null';
     }
 }

@@ -1,12 +1,19 @@
 @if (store.connected()) {
-    <div class="status-badge connected">
-        <span class="status-dot"></span>
-        Connected
-    </div>
+  <span appearance="positive" size="l" tuiBadge tuiStatus="var(--tui-status-positive)" class="connected">
+    Connected
+  </span>
 } @else {
-    <div class="status-badge disconnected">
-        <span class="status-dot"></span>
-        Disconnected
-    </div>
-    <button class="reconnect-btn" (click)="reconnect()">Reconnect</button>
+  <span appearance="neutral" size="l" tuiBadge tuiStatus="var(--tui-text-tertiary)">
+    Disconnected
+  </span>
+  <button
+    appearance="secondary"
+    iconStart="@tui.refresh-cw"
+    size="s"
+    tuiButton
+    type="button"
+    (click)="reconnect()"
+  >
+    Reconnect
+  </button>
 }

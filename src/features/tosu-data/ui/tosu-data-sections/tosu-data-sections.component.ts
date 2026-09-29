@@ -1,27 +1,29 @@
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, inject, ChangeDetectionStrategy } from '@angular/core';
 import { TosuStore } from '@entities/tosu';
+import { TuiItem } from '@taiga-ui/cdk';
+import { TuiExpand } from '@taiga-ui/core';
+import { TuiAccordion, TuiBadge } from '@taiga-ui/kit';
+import { TuiCardLarge } from '@taiga-ui/layout';
+import { TosuFieldTreeComponent } from '../tosu-field-tree/tosu-field-tree.component';
 
 @Component({
     selector: 'app-tosu-data-sections',
-    imports: [],
+    imports: [TosuFieldTreeComponent, TuiAccordion, TuiBadge, TuiCardLarge, TuiExpand, TuiItem],
     templateUrl: './tosu-data-sections.component.html',
-    styleUrl: './tosu-data-sections.component.css',
+    styleUrl: './tosu-data-sections.component.less',
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TosuDataSectionsComponent {
     store = inject(TosuStore);
 
-    sections(): [string, unknown][] {
+    readonly sections = computed((): [string, unknown][] => {
         const data = this.store.data();
-        if (!data) return [];
-        return Object.entries(data);
-    }
+        return data ? Object.entries(data) : [];
+    });
 
-    format(v: unknown): string {
-        return JSON.stringify(v, null, 2);
-    }
-
-    isPrimitive(v: unknown): boolean {
-        return v === null || typeof v !== 'object';
+    typeLabel(v: unknown): string {
+        if (Array.isArray(v)) return `[${v.length}]`;
+        if (v !== null && typeof v === 'object') return `{${Object.keys(v).length}}`;
+        return typeof v;
     }
 }
