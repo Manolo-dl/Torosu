@@ -1,11 +1,11 @@
 use std::sync::{Arc, atomic::{AtomicBool, Ordering}};
 
 use futures_util::StreamExt;
-use tauri::{AppHandle, Emitter, Manager};
+use tauri::{AppHandle, Emitter};
 use tokio_tungstenite::connect_async;
 use tokio::select;
 
-use crate::{AppConfigState, TosuListenerState};
+use crate::TosuListenerState;
 
 pub async fn start_tosu_listener(app: AppHandle, url: String, shutdown: Arc<AtomicBool>) {
     loop {
@@ -67,11 +67,7 @@ pub async fn start_tosu_listener(app: AppHandle, url: String, shutdown: Arc<Atom
 #[tauri::command]
 pub async fn connect_tosu(app: AppHandle, state: tauri::State<'_, TosuListenerState>) -> Result<(), String> {
 
-    let config_state = app.state::<AppConfigState>();
-    let tosu_config = config_state.config.lock().unwrap().clone().tosu;
-
-
-    let url = format!("ws://{}:{}/websocket/v2", tosu_config.ip, tosu_config.port);
+    let url = format!("ws://{}/websocket/v2", super::TOSU_ADDR);
 
     if state.started.swap(true, Ordering::SeqCst) {
         return Ok(());

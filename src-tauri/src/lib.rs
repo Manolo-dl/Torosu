@@ -80,14 +80,12 @@ pub fn run() {
             if tosu_config.auto_start {
                 log::info!("auto_start is enabled, starting tosu sidecar if not running");
                 tauri::async_runtime::spawn(async move {
-                    if is_tosu_running(&tosu_config.ip, tosu_config.port).await {
+                    if is_tosu_running().await {
                         log::info!("tosu is already running, not spawning a new instance");
                     } else {
                         match app_handle.shell().sidecar("tosu") {
                             Ok(sidecar_command) => {
                                 let sidecar_command = sidecar_command
-                                    .env("SERVER_PORT", tosu_config.port.to_string())
-                                    .env("SERVER_IP", &tosu_config.ip)
                                     .env("OPEN_DASHBOARD_ON_STARTUP", "false");
 
                                 match sidecar_command.spawn() {
@@ -237,8 +235,8 @@ async fn update(app: tauri::AppHandle) -> tauri_plugin_updater::Result<()> {
     Ok(())
 }
 
-async fn is_tosu_running(ip: &str, port: u16) -> bool {
-    tokio::net::TcpStream::connect(format!("{}:{}", ip, port))
+async fn is_tosu_running() -> bool {
+    tokio::net::TcpStream::connect(commands::tosu::TOSU_ADDR)
         .await
         .is_ok()
 }

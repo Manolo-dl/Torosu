@@ -28,12 +28,6 @@ pub struct TosuConfig {
 
     #[serde(default = "default_true")]
     pub kill_on_exit: bool, // Kill the process only when started by the app, not if it was already running
-
-    #[serde(default = "default_ip")]
-    pub ip: String,
-
-    #[serde(default = "default_port")]
-    pub port: u16,
 }
 
 #[derive(Deserialize, Serialize, Clone)]
@@ -61,8 +55,6 @@ pub struct DownloaderConfig {
 }
 
 fn default_true() -> bool { true }
-fn default_ip() -> String { "127.0.0.1".to_string() }
-fn default_port() -> u16 { 24050 }
 fn default_false() -> bool { false }
 fn default_max_concurrent_downloads() -> u32 { 1 }
 
@@ -87,8 +79,6 @@ impl Default for TosuConfig {
         Self {
             auto_start: true,
             kill_on_exit: true,
-            ip: default_ip(),
-            port: default_port(),
         }
     }
 }

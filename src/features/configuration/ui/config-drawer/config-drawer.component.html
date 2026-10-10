@@ -3,7 +3,7 @@
     appearance="flat"
     tuiButton
     type="button"
-    (click)="open.set(!open())"
+    (click)="toggle()"
     >
     <fa-icon [icon]="faGears" />
 </button>
@@ -12,8 +12,8 @@
     <header>
         <h2 tuiHeader="body-l">
             <div tuiTitle>
-                Onisu Configuration
-                <div tuiSubtitle>Manage your Onisu settings</div>
+                Torosu Configuration
+                <div tuiSubtitle>Manage your Torosu settings</div>
             </div>
 
             <div tuiAccesories>
@@ -30,7 +30,7 @@
             </div>
         </h2>
         <nav tuiNavigationNav>
-            <tui-tabs>
+            <tui-tabs [(activeItemIndex)]="activeTab">
                 <button
                     tuiTab
                     type="button"
@@ -49,7 +49,203 @@
                 >
                     Downloader
                 </button>
+                <button
+                    tuiTab
+                    type="button"
+                >
+                    Trainer
+                </button>
             </tui-tabs>
         </nav>
     </header>
+
+    <div class="content">
+        @switch (activeTab()) {
+            @case (0) {
+                <section>
+                    <h3 tuiTitle="s">osu!</h3>
+                    <tui-textfield>
+                        <label tuiLabel>osu! folder path</label>
+                        <input
+                            placeholder="C:\Users\you\AppData\Local\osu!"
+                            tuiInput
+                            [ngModel]="draft.osu_path"
+                            (ngModelChange)="draft.osu_path = $event || undefined"
+                        />
+                        <button
+                            appearance="icon"
+                            iconStart="@tui.folder-open"
+                            size="xs"
+                            tuiIconButton
+                            type="button"
+                            (click)="pickOsuPath()"
+                        >
+                            Browse
+                        </button>
+                    </tui-textfield>
+                    <label tuiCell>
+                        <span tuiTitle>
+                            Use SQLite cache
+                            <span tuiSubtitle>Cache osu!.db and collections in a local database</span>
+                        </span>
+                        <input
+                            tuiSwitch
+                            type="checkbox"
+                            [(ngModel)]="draft.sqlite_db"
+                        />
+                    </label>
+                </section>
+
+                <section>
+                    <h3 tuiTitle="s">Tools</h3>
+                    @for (tool of tools; track tool.route) {
+                        <label tuiCell>
+                            <span tuiTitle>{{ tool.label }}</span>
+                            <input
+                                tuiSwitch
+                                type="checkbox"
+                                [ngModel]="isToolEnabled(tool.route)"
+                                (ngModelChange)="setToolEnabled(tool.route, $event)"
+                            />
+                        </label>
+                    }
+                </section>
+            }
+
+            @case (1) {
+                <section>
+                    <h3 tuiTitle="s">Process</h3>
+                    <label tuiCell>
+                        <span tuiTitle>
+                            Auto start
+                            <span tuiSubtitle>Launch tosu when Torosu starts</span>
+                        </span>
+                        <input
+                            tuiSwitch
+                            type="checkbox"
+                            [(ngModel)]="draft.tosu.auto_start"
+                        />
+                    </label>
+                    <label tuiCell>
+                        <span tuiTitle>
+                            Kill on exit
+                            <span tuiSubtitle>Only if tosu was started by Torosu</span>
+                        </span>
+                        <input
+                            tuiSwitch
+                            type="checkbox"
+                            [(ngModel)]="draft.tosu.kill_on_exit"
+                        />
+                    </label>
+                </section>
+            }
+
+            @case (2) {
+                <section>
+                    <h3 tuiTitle="s">Account</h3>
+                    <tui-textfield>
+                        <label tuiLabel>osu! session cookie</label>
+                        <input
+                            autocomplete="off"
+                            tuiInput
+                            type="password"
+                            [(ngModel)]="draft.downloader.osu_session"
+                        />
+                    </tui-textfield>
+                </section>
+
+                <section>
+                    <h3 tuiTitle="s">Output</h3>
+                    <tui-textfield>
+                        <label tuiLabel>Output path</label>
+                        <input
+                            placeholder="Defaults to the osu! Songs folder"
+                            tuiInput
+                            [ngModel]="draft.downloader.output_path"
+                            (ngModelChange)="draft.downloader.output_path = $event || undefined"
+                        />
+                        <button
+                            appearance="icon"
+                            iconStart="@tui.folder-open"
+                            size="xs"
+                            tuiIconButton
+                            type="button"
+                            (click)="pickOutputPath()"
+                        >
+                            Browse
+                        </button>
+                    </tui-textfield>
+                    <tui-textfield>
+                        <label tuiLabel>Max concurrent downloads</label>
+                        <input
+                            tuiInputNumber
+                            [min]="1"
+                            [step]="1"
+                            [(ngModel)]="draft.downloader.max_concurrent_downloads"
+                        />
+                    </tui-textfield>
+                </section>
+
+                <section>
+                    <h3 tuiTitle="s">Behaviour</h3>
+                    <label tuiCell>
+                        <span tuiTitle>
+                            Skip video
+                            <span tuiSubtitle>Download beatmaps without video</span>
+                        </span>
+                        <input
+                            tuiSwitch
+                            type="checkbox"
+                            [(ngModel)]="draft.downloader.skip_video"
+                        />
+                    </label>
+                    <label tuiCell>
+                        <span tuiTitle>
+                            Open file
+                            <span tuiSubtitle>Open each beatmap after downloading it</span>
+                        </span>
+                        <input
+                            tuiSwitch
+                            type="checkbox"
+                            [(ngModel)]="draft.open_file"
+                        />
+                    </label>
+                    <label tuiCell>
+                        <span tuiTitle>Load library</span>
+                        <input
+                            tuiSwitch
+                            type="checkbox"
+                            [(ngModel)]="draft.downloader.load_library"
+                        />
+                    </label>
+                    <label tuiCell>
+                        <span tuiTitle>
+                            Notify
+                            <span tuiSubtitle>Show a notification when downloads finish</span>
+                        </span>
+                        <input
+                            tuiSwitch
+                            type="checkbox"
+                            [(ngModel)]="draft.downloader.notify"
+                        />
+                    </label>
+                    <label tuiCell>
+                        <span tuiTitle>
+                            Error file
+                            <span tuiSubtitle>Write failed IDs to failed_downloads.txt</span>
+                        </span>
+                        <input
+                            tuiSwitch
+                            type="checkbox"
+                            [(ngModel)]="draft.downloader.error_file"
+                        />
+                    </label>
+                </section>
+            }
+
+            @case (3) {
+                <p class="empty">No trainer settings available yet.</p>
+            }
+        }
+    </div>
 </tui-drawer>

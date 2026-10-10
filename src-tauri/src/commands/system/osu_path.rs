@@ -23,10 +23,9 @@ pub async fn get_osu_path(
     Ok(path)
 }
 
-async fn get_osu_path_from_tosu(state: tauri::State<'_, AppConfigState>) -> Result<String, String> {
+async fn get_osu_path_from_tosu() -> Result<String, String> {
 
-    let tosu_config = state.config.lock().unwrap().tosu.clone();
-    let url = format!("http://{}:{}/json/v2", tosu_config.ip, tosu_config.port);
+    let url = format!("http://{}/json/v2", crate::commands::tosu::TOSU_ADDR);
 
     let body = reqwest::get(url)
         .await
@@ -66,7 +65,7 @@ async fn resolve_osu_path(app: &tauri::AppHandle) -> Result<String, String> {
     }
 
     // 2. Check path with tosu
-    if let Ok(path) = get_osu_path_from_tosu(app.state::<AppConfigState>()).await {
+    if let Ok(path) = get_osu_path_from_tosu().await {
         save_detected_path(&config_state, &path);
         return Ok(path);
     }

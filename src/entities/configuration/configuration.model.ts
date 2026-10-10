@@ -10,8 +10,6 @@ export interface AppConfig {
 export interface TosuConfig {
     auto_start: boolean;
     kill_on_exit: boolean; // Kill the process only when started by the app, not if it was already running
-    ip: string;
-    port: number;
 }
 
 export interface DownloaderConfig {
