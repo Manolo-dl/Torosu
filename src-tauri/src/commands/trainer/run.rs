@@ -2,7 +2,9 @@ use std::{fs, path::Path};
 use rosu_map::Beatmap;
 use tauri::Emitter;
 use crate::commands::trainer::{
-    audio_processing, model::{RunTrainerRequest, TrainerTaskParams, TrainerProgress}, osu_fixups, pipeline,
+    audio_processing,
+    model::{DifficultySettings, RunTrainerRequest, TrainerTaskParams, TrainerProgress},
+    naming, osu_fixups, pipeline,
 };
 
 #[tauri::command]
@@ -30,6 +32,15 @@ pub async fn run_trainer(app: tauri::AppHandle, request: RunTrainerRequest) -> R
         e.to_string()
     })?;
 
+    // Kept to name the diff after what actually changed.
+    let original_version = beatmap.version.clone();
+    let original_difficulty = DifficultySettings {
+        hp: beatmap.hp_drain_rate as f64,
+        cs: beatmap.circle_size as f64,
+        od: beatmap.overall_difficulty as f64,
+        ar: beatmap.approach_rate as f64,
+    };
+
     beatmap.hp_drain_rate = request.difficulty.hp as f32;
     beatmap.circle_size = request.difficulty.cs as f32;
     beatmap.overall_difficulty = request.difficulty.od as f32;
@@ -43,6 +54,22 @@ pub async fn run_trainer(app: tauri::AppHandle, request: RunTrainerRequest) -> R
     })?;
 
     emit_progress!(20);
+
+    let rate_task = request.tasks.iter().find_map(|t| {
+        if let TrainerTaskParams::RateChange(params) = &t.task {
+            Some(params.clone())
+        } else {
+            None
+        }
+    });
+
+    beatmap.version = naming::version(
+        &beatmap,
+        &original_version,
+        &original_difficulty,
+        &request.difficulty,
+        rate_task.as_ref(),
+    );
 
     // The .osz is written next to the beatmap folder, i.e. inside Songs, like
     // cosu-trainer does. It only carries the new diff and the new audio: osu!
@@ -63,17 +90,10 @@ pub async fn run_trainer(app: tauri::AppHandle, request: RunTrainerRequest) -> R
     // If there is a RateChange task, process the audio on a dedicated blocking
     // thread so the tokio runtime (and with it tosu's websocket listener) is not
     // stalled.
-    let rate_task = request.tasks.iter().find_map(|t| {
-        if let TrainerTaskParams::RateChange(params) = &t.task {
-            Some(params.clone())
-        } else {
-            None
-        }
-    });
 
     let mut audio_entry: Option<(String, Vec<u8>)> = None;
 
-    if let Some(params) = rate_task {
+    if let Some(params) = &rate_task {
         log::debug!("processing audio for rate change: rate={}, adjust_pitch={}", params.rate, params.adjust_pitch);
 
         let audio_src = beatmap_folder.join(&beatmap.audio_file);
@@ -111,7 +131,7 @@ pub async fn run_trainer(app: tauri::AppHandle, request: RunTrainerRequest) -> R
             e.to_string()
         })?;
 
-        let audio_filename = format!("audio_trainer_{}x.ogg", rate);
+        let audio_filename = naming::audio_filename(params);
 
         log::debug!("audio processing complete: {} ({} bytes)", audio_filename, audio_bytes.len());
 
@@ -127,10 +147,7 @@ pub async fn run_trainer(app: tauri::AppHandle, request: RunTrainerRequest) -> R
 
     let output_osu = osu_fixups::sanitize(output_osu, beatmap.beatmap_set_id);
 
-    let new_osu_name = format!(
-        "{} - {} ({}) [{} (trainer)].osu",
-        beatmap.artist, beatmap.title, beatmap.creator, beatmap.version
-    );
+    let new_osu_name = naming::osu_filename(&beatmap);
 
     emit_progress!(94);
 

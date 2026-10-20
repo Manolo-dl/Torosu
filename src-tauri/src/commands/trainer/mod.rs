@@ -1,4 +1,5 @@
 pub mod model;
+pub mod naming;
 pub mod osu_fixups;
 pub mod pipeline;
 pub mod tasks;
