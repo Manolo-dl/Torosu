@@ -41,7 +41,7 @@ export class BeatmapFiltersComponent {
   ];
 
   readonly statuses = ['Ranked', 'Loved', 'Approved', 'Qualified', 'Unranked'];
-  readonly keyCounts = [4, 5, 6, 7, 8];
+  readonly keyCounts = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 18];
   readonly playedOptions: (boolean | null)[] = [null, true, false];
 
   private expandedModes = signal<number[]>([]);
