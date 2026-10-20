@@ -1,9 +1,6 @@
 use std::{fs, path::Path};
-
 use rosu_map::Beatmap;
-
 use tauri::Emitter;
-
 use crate::commands::trainer::{
     audio_processing, model::{RunTrainerRequest, TrainerTaskParams, TrainerProgress}, osu_fixups, pipeline,
 };
@@ -84,7 +81,7 @@ pub async fn run_trainer(app: tauri::AppHandle, request: RunTrainerRequest) -> R
         let adjust_pitch = params.adjust_pitch;
         let app_audio = app.clone();
 
-        let (processed_samples, output_sample_rate, channels) = tokio::task::spawn_blocking(move || {
+        let audio_bytes = tokio::task::spawn_blocking(move || {
             let decoded = audio_processing::decode_audio(&audio_src)?;
             let _ = app_audio.emit("trainer-progress", TrainerProgress { percent: 30 });
 
@@ -100,7 +97,9 @@ pub async fn run_trainer(app: tauri::AppHandle, request: RunTrainerRequest) -> R
             };
 
             let _ = app_audio.emit("trainer-progress", TrainerProgress { percent: 88 });
-            Ok::<_, anyhow::Error>((samples, sample_rate, decoded.channels))
+
+            // Vorbis encoding is CPU-bound too, so it stays on the blocking pool.
+            audio_processing::encode_audio(&samples, sample_rate, decoded.channels as u16)
         })
         .await
         .map_err(|e| {
@@ -112,19 +111,12 @@ pub async fn run_trainer(app: tauri::AppHandle, request: RunTrainerRequest) -> R
             e.to_string()
         })?;
 
-        let wav_filename = format!("audio_trainer_{}x.wav", rate);
+        let audio_filename = format!("audio_trainer_{}x.ogg", rate);
 
-        let wav_bytes =
-            audio_processing::encode_wav(&processed_samples, output_sample_rate, channels as u16)
-                .map_err(|e| {
-                    log::error!("failed to encode wav: {}", e);
-                    e.to_string()
-                })?;
+        log::debug!("audio processing complete: {} ({} bytes)", audio_filename, audio_bytes.len());
 
-        log::debug!("audio processing complete: {} ({} bytes)", wav_filename, wav_bytes.len());
-
-        beatmap.audio_file = wav_filename.clone();
-        audio_entry = Some((wav_filename, wav_bytes));
+        beatmap.audio_file = audio_filename.clone();
+        audio_entry = Some((audio_filename, audio_bytes));
     }
 
     // Write the generated diff, with audio_file already updated if applicable.

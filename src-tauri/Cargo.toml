@@ -35,7 +35,6 @@ chrono = { version = "0.4.45", default-features = false, features = ["clock"] }
 osynic_osudb = "0.1.5"
 anyhow = "1.0.104"
 rosu-map = "0.2.1"
-hound = "3.5.1"
 soundtouch = "0.5.4"
 symphonia = { version = "0.6.1", default-features = false, features = ["mp3", "ogg", "vorbis", "wav", "pcm", "id3v2"] }
 log = "0.4.34"
@@ -56,7 +55,7 @@ opt-level = "s"
 panic = "abort"
 strip = true
 
-# Keep the audio decoding hot paths fast despite opt-level = "s"
+# Keep the audio decoding/encoding hot paths fast despite opt-level = "s"
 [profile.release.package.symphonia-core]
 opt-level = 3
 
@@ -64,4 +63,27 @@ opt-level = 3
 opt-level = 3
 
 [profile.release.package.symphonia-codec-vorbis]
+opt-level = 3
+
+[profile.release.package.aotuv_lancer_vorbis_sys]
+opt-level = 3
+
+# Same hot paths in `tauri dev`: at opt-level 0 the libvorbis C code and the
+# symphonia decoders are 5-15x slower than in release.
+[profile.dev.package.symphonia-core]
+opt-level = 3
+
+[profile.dev.package.symphonia-bundle-mp3]
+opt-level = 3
+
+[profile.dev.package.symphonia-codec-vorbis]
+opt-level = 3
+
+[profile.dev.package.aotuv_lancer_vorbis_sys]
+opt-level = 3
+
+[profile.dev.package.ogg_next_sys]
+opt-level = 3
+
+[profile.dev.package.soundtouch-ffi]
 opt-level = 3
