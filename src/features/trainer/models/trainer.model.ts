@@ -5,6 +5,8 @@ export type TrainerTaskType = 'RateChange' | 'Mirror' | 'RemoveSV' | 'NoSpinner'
 export interface RateChangeParams {
     rate: number;
     adjustPitch: boolean;
+    /** Also scales the shared .osb; the diff is then exported as a new set. */
+    scaleStoryboard: boolean;
 }
 
 export interface MirrorParams {

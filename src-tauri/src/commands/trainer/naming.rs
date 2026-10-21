@@ -119,6 +119,32 @@ pub fn audio_filename(params: &RateChangeParams) -> String {
     name
 }
 
+/// Whether `name` is an audio file written by an earlier run (see
+/// [`audio_filename`]), so it is not copied again into a new set.
+pub fn is_generated_audio(name: &str) -> bool {
+    let Some(rest) = name.strip_prefix("audio ").and_then(|r| r.strip_suffix(".ogg")) else {
+        return false;
+    };
+    let rate = rest
+        .strip_suffix(" (pitch raised)")
+        .or_else(|| rest.strip_suffix(" (pitch lowered)"))
+        .unwrap_or(rest);
+
+    rate.strip_suffix('x').is_some_and(|r| r.parse::<f64>().is_ok())
+}
+
+/// Title of the new set the diff goes to when the storyboard is scaled, e.g.
+/// `Lagtrain (1.5x SB)`: one set per rate, apart from the original.
+pub fn storyboard_set_title(title: &str, params: &RateChangeParams) -> String {
+    format!("{} ({} SB)", title, fmt_rate(params.rate))
+}
+
+/// `Artist - Title.osz`. Without the leading set ID of the original folder,
+/// so osu! does not tie it to the original set.
+pub fn new_set_osz_name(beatmap: &Beatmap) -> String {
+    sanitize_filename(&format!("{} - {}.osz", beatmap.artist, beatmap.title))
+}
+
 /// Drops the characters Windows does not allow in file names (osu! runs there
 /// or under Wine), so the file inside the .osz can always be extracted.
 fn sanitize_filename(name: &str) -> String {
@@ -143,12 +169,22 @@ mod tests {
 
     #[test]
     fn audio_name_depends_on_pitch() {
-        let ap = RateChangeParams { rate: 1.3, adjust_pitch: true };
-        let up = RateChangeParams { rate: 1.3, adjust_pitch: false };
-        let down = RateChangeParams { rate: 0.8, adjust_pitch: false };
+        let ap = RateChangeParams { rate: 1.3, adjust_pitch: true, scale_storyboard: false };
+        let up = RateChangeParams { rate: 1.3, adjust_pitch: false, scale_storyboard: false };
+        let down = RateChangeParams { rate: 0.8, adjust_pitch: false, scale_storyboard: false };
         assert_eq!(audio_filename(&ap), "audio 1.3x.ogg");
         assert_eq!(audio_filename(&up), "audio 1.3x (pitch raised).ogg");
         assert_eq!(audio_filename(&down), "audio 0.8x (pitch lowered).ogg");
+    }
+
+    #[test]
+    fn recognizes_generated_audio() {
+        assert!(is_generated_audio("audio 1.5x (pitch raised).ogg"));
+        assert!(is_generated_audio("audio 0.8x (pitch lowered).ogg"));
+        assert!(is_generated_audio("audio 1.25x.ogg"));
+        assert!(!is_generated_audio("audio.mp3"));
+        assert!(!is_generated_audio("audio extra.ogg"));
+        assert!(!is_generated_audio("sb/audio 1.5x.ogg"));
     }
 
     #[test]

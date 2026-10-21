@@ -46,7 +46,7 @@
                   tuiInput
                   type="number"
                   [value]="entry.task.params.rate"
-                  (change)="onRateInput(entry.id, $any($event.target).value, entry.task.params.adjustPitch)"
+                  (change)="onRateInput(entry.id, $any($event.target).value, entry.task.params)"
                 />
               </tui-textfield>
 
@@ -63,21 +63,40 @@
                   tuiInput
                   type="number"
                   [value]="newBpm(entry.task.params.rate) ?? entry.task.params.rate * 180"
-                  (change)="onBpmInput(entry.id, $any($event.target).value, entry.task.params.adjustPitch)"
+                  (change)="onBpmInput(entry.id, $any($event.target).value, entry.task.params)"
                 />
               </tui-textfield>
 
-              <label tuiLabel class="pitch">
+              <label tuiLabel class="option">
                 <input
                   size="s"
                   tuiCheckbox
                   type="checkbox"
                   [ngModel]="entry.task.params.adjustPitch"
-                  (ngModelChange)="onRateInput(entry.id, entry.task.params.rate + '', $event)"
+                  (ngModelChange)="onRateOptionChange(entry.id, entry.task.params, { adjustPitch: $event })"
                 />
                 Adjust pitch
               </label>
+
+              <label tuiLabel class="option">
+                <input
+                  size="s"
+                  tuiCheckbox
+                  type="checkbox"
+                  [ngModel]="entry.task.params.scaleStoryboard"
+                  (ngModelChange)="onRateOptionChange(entry.id, entry.task.params, { scaleStoryboard: $event })"
+                />
+                Scale storyboard
+              </label>
             </div>
+
+            @if (entry.task.params.scaleStoryboard) {
+              <div appearance="info" size="s" tuiNotification>
+                The storyboard is shared by every difficulty of the set, so this difficulty will be
+                exported to a <strong>new beatmap set</strong> (title ending in
+                <strong>({{ entry.task.params.rate }}x SB)</strong>) to avoid overlapping with the original one.
+              </div>
+            }
           }
         </div>
 

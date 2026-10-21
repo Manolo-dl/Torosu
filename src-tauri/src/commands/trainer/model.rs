@@ -10,6 +10,10 @@ pub struct TrainerProgress {
 pub struct RateChangeParams {
     pub rate: f64,
     pub adjust_pitch: bool,
+    /// Also scales the `.osb` storyboard. It is shared by every diff in the set,
+    /// so it is merged into the new diff and the .osz is exported as a new set.
+    #[serde(default)]
+    pub scale_storyboard: bool,
 }
 
 #[allow(dead_code)] // Mirror task is not implemented yet
