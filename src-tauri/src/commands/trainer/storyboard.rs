@@ -8,9 +8,11 @@
 //! and triggers are relative to their parent, but dividing both by the rate
 //! keeps them consistent, so all of them are simply divided by the rate.
 
-use std::{collections::HashMap, fs, path::Path};
+use std::{fs, path::Path};
 
 use anyhow::Result;
+
+use crate::commands::trainer::naming;
 
 /// Reads the `[Events]` of a `.osu` or `.osb`, with the `[Variables]` already
 /// expanded. Background and break lines are left out: rosu-map encodes those.
@@ -195,35 +197,24 @@ pub fn inject_events(osu: String, events: &[String]) -> String {
     out
 }
 
-/// The `.osb` of the set: osu! names it `Artist - Title (Creator).osb`, but any
-/// other one in the folder is taken if that one does not exist.
+/// The `.osb` osu! loads for a diff: `Artist - Title (Creator).osb`, from its
+/// metadata. Any other .osb in the folder belongs to a different song (packs
+/// put several in one folder), so it is ignored.
 pub fn find_osb(folder: &Path, artist: &str, title: &str, creator: &str) -> Option<std::path::PathBuf> {
-    let expected = format!("{} - {} ({}).osb", artist, title, creator).to_lowercase();
+    let expected = format!("{} - {} ({}).osb", artist, title, creator);
+    // On disk the characters Windows does not allow are stripped.
+    let sanitized = naming::sanitize_filename(&expected);
 
-    let mut candidates: Vec<_> = fs::read_dir(folder)
+    fs::read_dir(folder)
         .ok()?
         .filter_map(|e| e.ok())
         .map(|e| e.path())
-        .filter(|p| {
+        .find(|p| {
             p.is_file()
-                && p.extension()
-                    .is_some_and(|ext| ext.eq_ignore_ascii_case("osb"))
+                && p.file_name()
+                    .map(|name| name.to_string_lossy())
+                    .is_some_and(|name| name.eq_ignore_ascii_case(&expected) || name.eq_ignore_ascii_case(&sanitized))
         })
-        .collect();
-
-    let names: HashMap<_, _> = candidates
-        .iter()
-        .enumerate()
-        .filter_map(|(i, p)| Some((p.file_name()?.to_string_lossy().to_lowercase(), i)))
-        .collect();
-
-    match names.get(&expected) {
-        Some(&i) => Some(candidates.swap_remove(i)),
-        None => {
-            candidates.sort();
-            candidates.into_iter().next()
-        }
-    }
 }
 
 #[cfg(test)]

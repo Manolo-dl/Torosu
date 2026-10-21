@@ -92,8 +92,8 @@
 
             @if (entry.task.params.scaleStoryboard) {
               <div appearance="info" size="s" tuiNotification>
-                The storyboard is shared by every difficulty of the set, so this difficulty will be
-                exported to a <strong>new beatmap set</strong> (title ending in
+                If the set has a shared <strong>.osb</strong> storyboard, it is used by every difficulty, so this
+                difficulty will be exported to a <strong>new beatmap set</strong> (title ending in
                 <strong>({{ entry.task.params.rate }}x SB)</strong>) to avoid overlapping with the original one.
               </div>
             }

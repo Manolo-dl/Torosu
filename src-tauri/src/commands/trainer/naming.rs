@@ -147,7 +147,7 @@ pub fn new_set_osz_name(beatmap: &Beatmap) -> String {
 
 /// Drops the characters Windows does not allow in file names (osu! runs there
 /// or under Wine), so the file inside the .osz can always be extracted.
-fn sanitize_filename(name: &str) -> String {
+pub fn sanitize_filename(name: &str) -> String {
     name.chars()
         .filter(|c| !matches!(c, '<' | '>' | ':' | '"' | '/' | '\\' | '|' | '?' | '*') && !c.is_control())
         .collect()

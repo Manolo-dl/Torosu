@@ -73,22 +73,31 @@ pub async fn run_trainer(app: tauri::AppHandle, request: RunTrainerRequest) -> R
     // The .osb is shared by every diff of the set, so it cannot be rewritten in
     // place. It is merged into the new diff instead, and the .osz becomes a new
     // set: otherwise osu! would also load the original .osb, out of sync.
-    let new_set = rate_task.as_ref().is_some_and(|p| p.scale_storyboard);
+    // Without an .osb (e.g. the storyboard lives in the .osu) there is nothing
+    // to overlap with, so the diff stays in the original set.
     let rate = rate_task.as_ref().map_or(1.0, |p| p.rate);
 
-    let mut events = osu_events;
-    if new_set {
+    let osb_events = if rate_task.as_ref().is_some_and(|p| p.scale_storyboard) {
         match storyboard::find_osb(&beatmap_folder, &beatmap.artist, &beatmap.title, &beatmap.creator) {
-            Some(osb) => match storyboard::read_events(&osb) {
-                Ok(osb_events) => {
-                    log::debug!("merging {} storyboard line(s) from {:?}", osb_events.len(), osb);
-                    events.extend(osb_events);
-                }
-                Err(e) => log::warn!("failed to read storyboard {:?}: {}", osb, e),
-            },
-            None => log::debug!("no .osb found in {:?}", beatmap_folder),
+            Some(osb) => storyboard::read_events(&osb)
+                .inspect(|ev| log::debug!("merging {} storyboard line(s) from {:?}", ev.len(), osb))
+                .unwrap_or_else(|e| {
+                    log::warn!("failed to read storyboard {:?}: {}", osb, e);
+                    Vec::new()
+                }),
+            None => {
+                log::debug!("no .osb for this diff in {:?}, keeping it in the original set", beatmap_folder);
+                Vec::new()
+            }
         }
-    }
+    } else {
+        Vec::new()
+    };
+
+    let new_set = !osb_events.is_empty();
+
+    let mut events = osu_events;
+    events.extend(osb_events);
     let events = storyboard::scale_events(&events, rate);
 
     if let Some(params) = rate_task.as_ref().filter(|_| new_set) {
