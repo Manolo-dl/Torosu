@@ -7,6 +7,8 @@ export interface RateChangeParams {
     adjustPitch: boolean;
     /** Also scales the shared .osb; the diff is then exported as a new set. */
     scaleStoryboard: boolean;
+    /** Re-encodes the video at the new speed; needs ffmpeg in the PATH. */
+    scaleVideo: boolean;
 }
 
 export interface MirrorParams {

@@ -133,6 +133,33 @@ pub fn is_generated_audio(name: &str) -> bool {
     rate.strip_suffix('x').is_some_and(|r| r.parse::<f64>().is_ok())
 }
 
+/// Containers the video is re-encoded into (as H.264). Others, like .mpg,
+/// cannot hold H.264 and become .mp4.
+const VIDEO_EXTENSIONS: [&str; 4] = ["avi", "mp4", "flv", "m4v"];
+
+/// `video 1.5x.avi` next to the original `video.avi` (same folder inside the
+/// set), so the other diffs keep their video.
+pub fn video_filename(original: &str, params: &RateChangeParams) -> String {
+    let original = original.replace('\\', "/");
+    let (dir, file) = original.rsplit_once('/').map_or(("", original.as_str()), |(d, f)| (d, f));
+    let (stem, ext) = file.rsplit_once('.').unwrap_or((file, ""));
+
+    let ext = ext.to_lowercase();
+    let ext = if VIDEO_EXTENSIONS.contains(&ext.as_str()) { ext.as_str() } else { "mp4" };
+
+    let name = format!("{} {}.{}", stem, fmt_rate(params.rate), ext);
+    if dir.is_empty() { name } else { format!("{}/{}", dir, name) }
+}
+
+/// Whether `name` is a video written by an earlier run (see [`video_filename`]).
+pub fn is_generated_video(name: &str) -> bool {
+    name.rsplit_once('.')
+        .filter(|(_, ext)| VIDEO_EXTENSIONS.contains(ext))
+        .and_then(|(rest, _)| rest.rsplit_once(' '))
+        .and_then(|(_, rate)| rate.strip_suffix('x'))
+        .is_some_and(|r| r.parse::<f64>().is_ok())
+}
+
 /// Title of the new set the diff goes to when the storyboard is scaled, e.g.
 /// `Lagtrain (1.5x SB)`: one set per rate, apart from the original.
 pub fn storyboard_set_title(title: &str, params: &RateChangeParams) -> String {
@@ -169,9 +196,9 @@ mod tests {
 
     #[test]
     fn audio_name_depends_on_pitch() {
-        let ap = RateChangeParams { rate: 1.3, adjust_pitch: true, scale_storyboard: false };
-        let up = RateChangeParams { rate: 1.3, adjust_pitch: false, scale_storyboard: false };
-        let down = RateChangeParams { rate: 0.8, adjust_pitch: false, scale_storyboard: false };
+        let ap = RateChangeParams { rate: 1.3, adjust_pitch: true, scale_storyboard: false, scale_video: false };
+        let up = RateChangeParams { rate: 1.3, adjust_pitch: false, scale_storyboard: false, scale_video: false };
+        let down = RateChangeParams { rate: 0.8, adjust_pitch: false, scale_storyboard: false, scale_video: false };
         assert_eq!(audio_filename(&ap), "audio 1.3x.ogg");
         assert_eq!(audio_filename(&up), "audio 1.3x (pitch raised).ogg");
         assert_eq!(audio_filename(&down), "audio 0.8x (pitch lowered).ogg");
@@ -185,6 +212,17 @@ mod tests {
         assert!(!is_generated_audio("audio.mp3"));
         assert!(!is_generated_audio("audio extra.ogg"));
         assert!(!is_generated_audio("sb/audio 1.5x.ogg"));
+    }
+
+    #[test]
+    fn video_name_keeps_folder_and_container() {
+        let p = RateChangeParams { rate: 1.5, adjust_pitch: false, scale_storyboard: false, scale_video: true };
+        assert_eq!(video_filename("bga.avi", &p), "bga 1.5x.avi");
+        assert_eq!(video_filename("sb\\my video.FLV", &p), "sb/my video 1.5x.flv");
+        assert_eq!(video_filename("bga.mpg", &p), "bga 1.5x.mp4");
+        assert!(is_generated_video("bga 1.5x.avi"));
+        assert!(is_generated_video("bga 1.5x.mp4"));
+        assert!(!is_generated_video("bga.avi"));
     }
 
     #[test]

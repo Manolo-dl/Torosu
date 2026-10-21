@@ -176,7 +176,8 @@ pub fn run() {
             commands::dev::database::get_table_columns,
             commands::dev::database::execute_query,
             commands::tosu::listener::connect_tosu,
-            commands::trainer::run::run_trainer
+            commands::trainer::run::run_trainer,
+            commands::trainer::video::is_ffmpeg_available
         ])
         .on_window_event(|window, event| {
             

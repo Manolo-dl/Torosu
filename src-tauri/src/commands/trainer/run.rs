@@ -4,7 +4,7 @@ use tauri::Emitter;
 use crate::commands::trainer::{
     audio_processing,
     model::{DifficultySettings, RunTrainerRequest, TrainerTaskParams, TrainerProgress},
-    naming, osu_fixups, pipeline, storyboard,
+    naming, osu_fixups, pipeline, storyboard, video,
 };
 
 #[tauri::command]
@@ -98,7 +98,7 @@ pub async fn run_trainer(app: tauri::AppHandle, request: RunTrainerRequest) -> R
 
     let mut events = osu_events;
     events.extend(osb_events);
-    let events = storyboard::scale_events(&events, rate);
+    let mut events = storyboard::scale_events(&events, rate);
 
     if let Some(params) = rate_task.as_ref().filter(|_| new_set) {
         beatmap.title = naming::storyboard_set_title(&beatmap.title, params);
@@ -142,6 +142,10 @@ pub async fn run_trainer(app: tauri::AppHandle, request: RunTrainerRequest) -> R
 
     let mut audio_entry: Option<(String, Vec<u8>)> = None;
 
+    // The video is re-encoded after the audio, so the audio gets less of the bar.
+    let scale_video = rate_task.as_ref().is_some_and(|p| p.scale_video);
+    let (audio_span, audio_done) = if scale_video { (25.0, 58) } else { (55.0, 88) };
+
     if let Some(params) = &rate_task {
         log::debug!("processing audio for rate change: rate={}, adjust_pitch={}", params.rate, params.adjust_pitch);
 
@@ -157,7 +161,7 @@ pub async fn run_trainer(app: tauri::AppHandle, request: RunTrainerRequest) -> R
             let (samples, sample_rate) = if adjust_pitch {
                 let app_stretch = app_audio.clone();
                 let stretched = audio_processing::apply_timestretch(&decoded, rate, |p| {
-                    let pct = (30.0 + p * 55.0) as u8;
+                    let pct = (30.0 + p * audio_span) as u8;
                     let _ = app_stretch.emit("trainer-progress", TrainerProgress { percent: pct });
                 })?;
                 (stretched, decoded.sample_rate)
@@ -165,7 +169,7 @@ pub async fn run_trainer(app: tauri::AppHandle, request: RunTrainerRequest) -> R
                 audio_processing::apply_resample(&decoded, rate)
             };
 
-            let _ = app_audio.emit("trainer-progress", TrainerProgress { percent: 88 });
+            let _ = app_audio.emit("trainer-progress", TrainerProgress { percent: audio_done });
 
             // Vorbis encoding is CPU-bound too, so it stays on the blocking pool.
             audio_processing::encode_audio(&samples, sample_rate, decoded.channels as u16)
@@ -188,6 +192,47 @@ pub async fn run_trainer(app: tauri::AppHandle, request: RunTrainerRequest) -> R
         audio_entry = Some((audio_filename, audio_bytes));
     }
 
+    // osu! plays the video at 1x whatever the rate, so it is re-encoded at the
+    // new speed into a new file; the other diffs keep the original one.
+    let mut video_entry: Option<(String, TempFile)> = None;
+    let mut original_video: Option<String> = None;
+
+    if let Some(params) = rate_task.as_ref().filter(|p| p.scale_video) {
+        match storyboard::video_file(&events) {
+            Some(file) if beatmap_folder.join(&file).is_file() => {
+                let src = beatmap_folder.join(&file);
+                let name = naming::video_filename(&file, params);
+                let ext = name.rsplit_once('.').map_or("mp4", |(_, ext)| ext);
+                let tmp = TempFile::new(ext);
+
+                log::debug!("re-encoding video {:?} at {}x into {:?}", src, params.rate, tmp.0);
+
+                let rate = params.rate;
+                let dst = tmp.0.clone();
+                let app_video = app.clone();
+
+                tokio::task::spawn_blocking(move || {
+                    video::apply_rate(&src, &dst, rate, |p| {
+                        let pct = (60.0 + p * 30.0) as u8;
+                        let _ = app_video.emit("trainer-progress", TrainerProgress { percent: pct });
+                    })
+                })
+                .await
+                .map_err(|e| format!("video processing task panicked: {}", e))?
+                .map_err(|e| {
+                    log::error!("video processing failed: {:#}", e);
+                    format!("video processing failed: {:#}", e)
+                })?;
+
+                storyboard::set_video_file(&mut events, &name);
+                original_video = Some(file);
+                video_entry = Some((name, tmp));
+            }
+            Some(file) => log::warn!("video {:?} not found in {:?}, left as is", file, beatmap_folder),
+            None => log::debug!("scale video requested but the beatmap has no video"),
+        }
+    }
+
     // Write the generated diff, with audio_file already updated if applicable.
     let output_osu = beatmap.encode_to_string().map_err(|e| {
         log::error!("failed to encode beatmap: {}", e);
@@ -203,8 +248,12 @@ pub async fn run_trainer(app: tauri::AppHandle, request: RunTrainerRequest) -> R
 
     // A new set does not share the original folder, so it needs its own copy of
     // the background, the video, the storyboard sprites and the hitsounds.
-    let assets = if new_set {
-        collect_assets(&beatmap_folder, &original_audio).map_err(|e| {
+    let mut assets = if new_set {
+        let skip: Vec<&str> = std::iter::once(original_audio.as_str())
+            .chain(original_video.as_deref())
+            .collect();
+
+        collect_assets(&beatmap_folder, &skip).map_err(|e| {
             log::error!("failed to list beatmap files in {:?}: {}", beatmap_folder, e);
             e
         })?
@@ -212,13 +261,20 @@ pub async fn run_trainer(app: tauri::AppHandle, request: RunTrainerRequest) -> R
         Vec::new()
     };
 
+    if let Some((name, tmp)) = &video_entry {
+        assets.push((name.clone(), tmp.0.clone()));
+    }
+
     log::debug!("creating osz archive at {:?} ({} extra file(s))", osz_path, assets.len());
 
     // Copying the assets can mean hundreds of MB of video, so it is kept off
     // the async runtime too.
     let osz_target = osz_path.clone();
     tokio::task::spawn_blocking(move || {
-        write_osz(&osz_target, audio_entry.as_ref(), &assets, &new_osu_name, &output_osu)
+        let result = write_osz(&osz_target, audio_entry.as_ref(), &assets, &new_osu_name, &output_osu);
+        // The re-encoded video is already in the .osz (or failed to get there).
+        drop(video_entry);
+        result
     })
     .await
     .map_err(|e| format!("osz writing task panicked: {}", e))?
@@ -233,11 +289,30 @@ pub async fn run_trainer(app: tauri::AppHandle, request: RunTrainerRequest) -> R
     Ok(())
 }
 
-/// Every file of the set except the diffs, the .osb (merged into the new diff)
-/// and the original audio (replaced by the processed one), as
-/// `(path inside the .osz, path on disk)`.
-fn collect_assets(folder: &Path, original_audio: &str) -> Result<Vec<(String, PathBuf)>, String> {
-    let original_audio = original_audio.replace('\\', "/").to_lowercase();
+/// A file in the system temp dir, removed when dropped.
+struct TempFile(PathBuf);
+
+impl TempFile {
+    fn new(extension: &str) -> Self {
+        let nanos = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map_or(0, |d| d.as_nanos());
+        let name = format!("torosu-{}-{}.{}", std::process::id(), nanos, extension);
+        Self(std::env::temp_dir().join(name))
+    }
+}
+
+impl Drop for TempFile {
+    fn drop(&mut self) {
+        let _ = fs::remove_file(&self.0);
+    }
+}
+
+/// Every file of the set except the diffs, the .osb (merged into the new diff),
+/// the files in `skip` (replaced by processed ones: audio, video) and the files
+/// earlier runs generated, as `(path inside the .osz, path on disk)`.
+fn collect_assets(folder: &Path, skip: &[&str]) -> Result<Vec<(String, PathBuf)>, String> {
+    let skip: Vec<String> = skip.iter().map(|s| s.replace('\\', "/").to_lowercase()).collect();
     let mut assets = Vec::new();
     let mut pending = vec![folder.to_path_buf()];
 
@@ -257,8 +332,9 @@ fn collect_assets(folder: &Path, original_audio: &str) -> Result<Vec<(String, Pa
             if lower.ends_with(".osu")
                 || lower.ends_with(".osb")
                 || lower.ends_with(".osz")
-                || lower == original_audio
+                || skip.contains(&lower)
                 || naming::is_generated_audio(&name)
+                || naming::is_generated_video(&name)
             {
                 continue;
             }

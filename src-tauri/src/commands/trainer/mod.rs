@@ -5,4 +5,5 @@ pub mod pipeline;
 pub mod tasks;
 pub mod run;
 pub mod storyboard;
+pub mod video;
 pub mod audio_processing;

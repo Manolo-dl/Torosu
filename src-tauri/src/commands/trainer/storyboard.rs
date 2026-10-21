@@ -164,6 +164,31 @@ fn fmt_float(value: f64) -> String {
     s.trim_end_matches('0').trim_end_matches('.').to_string()
 }
 
+fn is_video_line(fields: &[String]) -> bool {
+    matches!(fields.first().map(|f| f.trim()), Some("1" | "Video"))
+}
+
+/// File of the first `Video` event, as written in it (relative to the set).
+pub fn video_file(events: &[String]) -> Option<String> {
+    events
+        .iter()
+        .filter(|line| !line.starts_with([' ', '_']))
+        .map(|line| split_fields(line))
+        .find(|fields| is_video_line(fields))
+        .and_then(|fields| fields.get(2).map(|f| f.trim().trim_matches('"').to_string()))
+}
+
+/// Points every `Video` event to `file`.
+pub fn set_video_file(events: &mut [String], file: &str) {
+    for line in events.iter_mut().filter(|line| !line.starts_with([' ', '_'])) {
+        let mut fields = split_fields(line);
+        if is_video_line(&fields) && fields.len() > 2 {
+            fields[2] = format!("\"{}\"", file);
+            *line = fields.join(",");
+        }
+    }
+}
+
 /// Appends `events` at the end of the `[Events]` section of an encoded `.osu`.
 pub fn inject_events(osu: String, events: &[String]) -> String {
     const HEADER: &str = "[Events]\n";
@@ -263,6 +288,19 @@ mod tests {
                 "Animation,Background,Centre,\"anim.png\",0,0,4,76.9231,LoopForever",
             ]
         );
+    }
+
+    #[test]
+    fn reads_and_replaces_video_file() {
+        let mut events = vec![
+            "Video,-200,\"bga.avi\"".to_string(),
+            "Sprite,Foreground,Centre,\"a.png\",320,240".to_string(),
+        ];
+        assert_eq!(video_file(&events).as_deref(), Some("bga.avi"));
+
+        set_video_file(&mut events, "bga 1.5x.mp4");
+        assert_eq!(events[0], "Video,-200,\"bga 1.5x.mp4\"");
+        assert_eq!(events[1], "Sprite,Foreground,Centre,\"a.png\",320,240");
     }
 
     #[test]

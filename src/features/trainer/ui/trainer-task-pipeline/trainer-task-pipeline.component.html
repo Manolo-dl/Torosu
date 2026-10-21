@@ -88,7 +88,30 @@
                 />
                 Scale storyboard
               </label>
+
+              <label tuiLabel class="option">
+                <input
+                  size="s"
+                  tuiCheckbox
+                  type="checkbox"
+                  [disabled]="!trainer.ffmpegAvailable()"
+                  [ngModel]="entry.task.params.scaleVideo && trainer.ffmpegAvailable()"
+                  (ngModelChange)="onRateOptionChange(entry.id, entry.task.params, { scaleVideo: $event })"
+                />
+                Scale video
+              </label>
             </div>
+
+            @if (!trainer.ffmpegAvailable()) {
+              <div appearance="neutral" size="s" tuiNotification>
+                Scaling the video needs <strong>ffmpeg</strong>, which was not found. Install it and make sure it is
+                in the PATH, then restart the app.
+              </div>
+            } @else if (entry.task.params.scaleVideo) {
+              <div appearance="info" size="s" tuiNotification>
+                The video is re-encoded at the new speed, which can take a while for long videos.
+              </div>
+            }
 
             @if (entry.task.params.scaleStoryboard) {
               <div appearance="info" size="s" tuiNotification>

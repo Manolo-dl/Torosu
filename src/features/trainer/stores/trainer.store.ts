@@ -14,6 +14,8 @@ interface TrainerState {
     tasks: TrainerTask[];
     creating: boolean;
     progress: number;
+    /** Whether the system ffmpeg is there, needed to scale the video. */
+    ffmpegAvailable: boolean;
 }
 
 const initialState: TrainerState = {
@@ -24,6 +26,7 @@ const initialState: TrainerState = {
     tasks: [],
     creating: false,
     progress: 0,
+    ffmpegAvailable: false,
 };
 
 export const TrainerStore = signalStore(
@@ -116,6 +119,11 @@ export const TrainerStore = signalStore(
     withHooks({
         onInit(store) {
             const tosu = inject(TosuStore);
+
+            invoke<boolean>('is_ffmpeg_available')
+                .then(ffmpegAvailable => patchState(store, { ffmpegAvailable }))
+                .catch(() => patchState(store, { ffmpegAvailable: false }));
+
             let lastBeatmapId: string | null = null;
 
             effect(() => {

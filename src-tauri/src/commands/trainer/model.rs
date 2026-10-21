@@ -14,6 +14,9 @@ pub struct RateChangeParams {
     /// so it is merged into the new diff and the .osz is exported as a new set.
     #[serde(default)]
     pub scale_storyboard: bool,
+    /// Re-encodes the background video at the new speed (needs ffmpeg).
+    #[serde(default)]
+    pub scale_video: bool,
 }
 
 #[allow(dead_code)] // Mirror task is not implemented yet

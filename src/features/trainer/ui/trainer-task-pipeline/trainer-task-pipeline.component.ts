@@ -44,7 +44,7 @@ export class TrainerTaskPipelineComponent {
     this.menuOpen.set(false);
     switch (type) {
       case 'RateChange':
-        this.trainer.addTask({ type: 'RateChange', params: { rate: 1.0, adjustPitch: false, scaleStoryboard: false } });
+        this.trainer.addTask({ type: 'RateChange', params: { rate: 1.0, adjustPitch: false, scaleStoryboard: false, scaleVideo: false } });
         break;
     }
   }
