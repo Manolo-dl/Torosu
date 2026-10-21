@@ -2,30 +2,53 @@
   display: block;
 }
 
-// The banner always sits on the beatmap background image, so its text stays
-// white in both themes.
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+// The banner always sits on the beatmap background image (or a dark fallback),
+// so its text stays white in both themes.
 .banner {
+  position: relative;
   overflow: hidden;
+  aspect-ratio: 32 / 9;
+  min-block-size: 10rem;
+  max-block-size: 18rem;
+  inline-size: 100%;
   border-radius: var(--tui-radius-l);
   box-shadow: var(--tui-shadow-small);
-  background-color: var(--tui-background-elevation-2);
-  background-repeat: no-repeat;
-  background-size: cover;
-  background-position: center;
+  background: #1f1f24;
 
+  .background {
+    position: absolute;
+    inset: 0;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+    // osu! backgrounds usually keep the subject a bit above the centre.
+    object-position: center 35%;
+    animation: fade-in 300ms ease-out;
+  }
+
+  // Only the bottom is darkened, behind the text; the rest of the image is
+  // left untouched.
   .overlay {
+    position: absolute;
+    inset: 0;
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
     gap: 1rem;
-    min-block-size: 8.5rem;
     padding: 1.25rem;
-    background: linear-gradient(180deg, rgba(0, 0, 0, 0.05) 0%, rgba(0, 0, 0, 0.8) 100%);
+    background: linear-gradient(0deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.35) 35%, rgba(0, 0, 0, 0) 65%);
   }
 
   .info {
     min-inline-size: 0;
     color: #fff;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
 
     .title {
       white-space: nowrap;
@@ -36,16 +59,17 @@
 
     .artist {
       font-weight: 400;
-      color: rgba(255, 255, 255, 0.7);
+      color: rgba(255, 255, 255, 0.75);
     }
 
     [tuiSubtitle] {
-      color: rgba(255, 255, 255, 0.7);
+      color: rgba(255, 255, 255, 0.75);
     }
   }
 
   .stars {
     flex-shrink: 0;
     font-weight: 700;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
   }
 }

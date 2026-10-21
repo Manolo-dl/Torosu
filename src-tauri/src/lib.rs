@@ -162,6 +162,7 @@ pub fn run() {
             commands::config::file::update_config,
             commands::system::osu_path::get_osu_path,
             commands::system::osu_path::save_osu_path,
+            commands::system::songs_file::read_songs_file,
             commands::collections::reader::read_osu_collections,
             commands::collections::reader::write_text_file,
             commands::collections::writer::import_collections,

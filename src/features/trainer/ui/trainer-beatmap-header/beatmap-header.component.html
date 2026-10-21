@@ -1,7 +1,8 @@
-<div
-  class="banner"
-  [style.background-image]="tosu.backgroundUrl()"
->
+<div class="banner">
+  @if (tosu.backgroundUrl(); as url) {
+    <img alt="" class="background" [src]="url" />
+  }
+
   <div class="overlay">
     <div tuiTitle="m" class="info">
       <span class="title">
