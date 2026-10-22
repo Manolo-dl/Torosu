@@ -1,6 +1,6 @@
 export type DifficultyKey = 'hp' | 'cs' | 'od' | 'ar';
 
-export type TrainerTaskType = 'RateChange' | 'Mirror' | 'RemoveSV' | 'NoSpinner' | 'SVNormalizer';
+export type TrainerTaskType = 'RateChange' | 'SVNormalizer' | 'FlnConverter';
 
 export interface RateChangeParams {
     rate: number;
@@ -11,16 +11,25 @@ export interface RateChangeParams {
     scaleVideo: boolean;
 }
 
-export interface MirrorParams {
-    axis: 'horizontal' | 'vertical';
+/** A length in beats (`1/value` of a beat) or in milliseconds. */
+export interface NoteLength {
+    unit: 'beat' | 'ms';
+    value: number;
+}
+
+export interface FlnConverterParams {
+    /** Time each long note is released before the next note in its column. */
+    gap: NoteLength;
+    /** Long notes shorter than this stay as normal notes. */
+    minLength: NoteLength;
+    /** Also reshapes the long notes the map already has. */
+    reworkExistingLn: boolean;
 }
 
 export type TrainerTaskParams =
     | { type: 'RateChange'; params: RateChangeParams }
-    | { type: 'Mirror'; params: MirrorParams }
-    | { type: 'RemoveSV'; params: {} }
-    | { type: 'NoSpinner'; params: {} }
-    | { type: 'SVNormalizer'; params: {} };
+    | { type: 'SVNormalizer'; params: {} }
+    | { type: 'FlnConverter'; params: FlnConverterParams };
 
 export interface TrainerTask {
     id: string;
@@ -29,10 +38,8 @@ export interface TrainerTask {
 
 export const TASK_LABELS: Record<TrainerTaskType, string> = {
     RateChange: 'Rate Change',
-    Mirror: 'Mirror',
-    RemoveSV: 'Remove SV',
-    NoSpinner: 'No Spinner',
     SVNormalizer: 'SV Normalizer',
+    FlnConverter: 'FLN Converter',
 };
 
 export interface DifficultyStat {

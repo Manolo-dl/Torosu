@@ -7,7 +7,7 @@
 
 use rosu_map::Beatmap;
 
-use crate::commands::trainer::model::{DifficultySettings, RateChangeParams};
+use crate::commands::trainer::model::{DifficultySettings, FlnConverterParams, LengthUnit, NoteLength, RateChangeParams};
 
 /// Formats a number with at most `decimals` decimals, without trailing zeros:
 /// 1.3 -> "1.3", 1.25 -> "1.25", 1.0 -> "1", 1.1500000000000001 -> "1.15".
@@ -58,6 +58,7 @@ pub fn main_bpm(beatmap: &Beatmap) -> Option<f64> {
 /// - `Insane 1.3x (234bpm) (pitch raised) AR9.5 OD8`
 /// - `Insane HP7` when only the difficulty settings change
 /// - `Insane (SV normalized)` when the SV changes are normalized
+/// - `Insane (FLN BG4 ML4)` after the FLN converter, named like osuLNmaster
 /// - `Insane (trainer)` when nothing changes
 ///
 /// `beatmap` must already have the tasks applied; `original` holds the
@@ -69,6 +70,7 @@ pub fn version(
     new: &DifficultySettings,
     rate: Option<&RateChangeParams>,
     sv_normalized: bool,
+    fln: Option<&FlnConverterParams>,
 ) -> String {
     let mut parts = vec![original_version.to_string()];
 
@@ -85,6 +87,10 @@ pub fn version(
 
     if sv_normalized {
         parts.push("(SV normalized)".to_string());
+    }
+
+    if let Some(params) = fln {
+        parts.push(fln_tag(params));
     }
 
     let stats = [
@@ -104,6 +110,17 @@ pub fn version(
     }
 
     parts.join(" ")
+}
+
+/// `FLN` reworks the existing LNs too, `INV` keeps them. `BG` is the gap and
+/// `ML` the minimum length, as a beat divisor (`BG4` is 1/4 beat) or in ms.
+fn fln_tag(params: &FlnConverterParams) -> String {
+    let length = |l: NoteLength| match l.unit {
+        LengthUnit::Beat => fmt_num(l.value, 2),
+        LengthUnit::Ms => format!("{}ms", fmt_num(l.value, 0)),
+    };
+    let kind = if params.rework_existing_ln { "FLN" } else { "INV" };
+    format!("({} BG{} ML{})", kind, length(params.gap), length(params.min_length))
 }
 
 /// `Artist - Title (Creator) [Version].osu`, the naming osu! itself uses.

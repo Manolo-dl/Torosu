@@ -23,10 +23,6 @@
     </ng-template>
   </header>
 
-  <div appearance="warning" size="s" tuiNotification>
-    Only <strong>Rate Change</strong> and <strong>SV Normalizer</strong> are currently implemented. Other tasks are coming soon.
-  </div>
-
   <div class="list" cdkDropList (cdkDropListDropped)="onDrop($event)">
     @for (entry of trainer.tasks(); track entry.id) {
       <div class="task" cdkDrag>
@@ -127,6 +123,45 @@
               The original SV changes are removed and an SV is set on every BPM change, so the scroll speed stays
               the one of the main BPM. BPM changes, kiai and hitsounds are kept.
             </div>
+          }
+
+          @if (entry.task.type === 'FlnConverter') {
+            @if (!isMania()) {
+              <div appearance="warning" size="s" tuiNotification>
+                The FLN converter only works on <strong>osu!mania</strong> maps.
+              </div>
+            }
+
+            <p class="description">
+              Turns every note into a long note held until just before the next note in its column.
+            </p>
+
+            <app-trainer-note-length
+              hint="How early each long note ends before the next note in the column."
+              label="Release gap"
+              [bpm]="originalBpm()"
+              [value]="entry.task.params.gap"
+              (valueChange)="onFlnChange(entry.id, entry.task.params, { gap: $event })"
+            />
+
+            <app-trainer-note-length
+              hint="Long notes that would be shorter than this stay as normal notes."
+              label="Minimum length"
+              [bpm]="originalBpm()"
+              [value]="entry.task.params.minLength"
+              (valueChange)="onFlnChange(entry.id, entry.task.params, { minLength: $event })"
+            />
+
+            <label tuiLabel class="option">
+              <input
+                size="s"
+                tuiCheckbox
+                type="checkbox"
+                [ngModel]="entry.task.params.reworkExistingLn"
+                (ngModelChange)="onFlnChange(entry.id, entry.task.params, { reworkExistingLn: $event })"
+              />
+              Also reshape the map's existing long notes
+            </label>
           }
         </div>
 

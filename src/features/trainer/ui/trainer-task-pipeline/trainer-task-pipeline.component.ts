@@ -1,16 +1,17 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TASK_LABELS } from '@features/trainer';
-import { RateChangeParams, TrainerTaskType } from '@features/trainer/models/trainer.model';
+import { FlnConverterParams, RateChangeParams, TrainerTaskType } from '@features/trainer/models/trainer.model';
 import { TrainerStore } from '@features/trainer/stores/trainer.store';
 import { TosuStore } from '@entities/tosu';
 import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDropList } from '@angular/cdk/drag-drop';
 import { TuiButton, TuiCheckbox, TuiDataList, TuiDropdown, TuiIcon, TuiInput, TuiNotificationDirective, TuiTitle } from '@taiga-ui/core';
 import { TuiCardLarge } from '@taiga-ui/layout';
+import { TrainerNoteLengthComponent } from '../trainer-note-length/trainer-note-length.component';
 
 @Component({
   selector: 'app-trainer-task-pipeline',
-  imports: [CdkDrag, CdkDropList, CdkDragHandle, FormsModule, TuiButton, TuiCardLarge, TuiCheckbox, TuiDataList, TuiDropdown, TuiIcon, TuiInput, TuiNotificationDirective, TuiTitle],
+  imports: [CdkDrag, CdkDropList, CdkDragHandle, FormsModule, TuiButton, TuiCardLarge, TuiCheckbox, TuiDataList, TuiDropdown, TuiIcon, TuiInput, TuiNotificationDirective, TuiTitle, TrainerNoteLengthComponent],
   templateUrl: './trainer-task-pipeline.component.html',
   styleUrl: './trainer-task-pipeline.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -21,7 +22,7 @@ export class TrainerTaskPipelineComponent {
   readonly tosu = inject(TosuStore);
 
   taskLabels = TASK_LABELS;
-  availableTasks: TrainerTaskType[] = ['RateChange', 'SVNormalizer'];
+  availableTasks: TrainerTaskType[] = ['RateChange', 'SVNormalizer', 'FlnConverter'];
   readonly menuOpen = signal(false);
 
   availableTasksFiltered = computed(() => {
@@ -30,6 +31,8 @@ export class TrainerTaskPipelineComponent {
   });
 
   originalBpm = computed(() => this.tosu.data()?.beatmap?.stats?.bpm?.common ?? null);
+
+  isMania = computed(() => this.tosu.data()?.beatmap?.mode?.number === 3);
 
   newBpm(rate: number): number | null {
     const bpm = this.originalBpm();
@@ -48,6 +51,12 @@ export class TrainerTaskPipelineComponent {
         break;
       case 'SVNormalizer':
         this.trainer.addTask({ type: 'SVNormalizer', params: {} });
+        break;
+      case 'FlnConverter':
+        this.trainer.addTask({
+          type: 'FlnConverter',
+          params: { gap: { unit: 'beat', value: 4 }, minLength: { unit: 'beat', value: 4 }, reworkExistingLn: true },
+        });
         break;
     }
   }
@@ -71,7 +80,7 @@ export class TrainerTaskPipelineComponent {
     this.trainer.updateTaskParams(id, { ...params, ...change });
   }
 
-  onMirrorChange(id: string, axis: 'horizontal' | 'vertical') {
-    this.trainer.updateTaskParams(id, { axis });
+  onFlnChange(id: string, params: FlnConverterParams, change: Partial<FlnConverterParams>) {
+    this.trainer.updateTaskParams(id, { ...params, ...change });
   }
 }

@@ -19,28 +19,39 @@ pub struct RateChangeParams {
     pub scale_video: bool,
 }
 
-#[allow(dead_code)] // Mirror task is not implemented yet
-#[derive(Deserialize)]
-pub struct MirrorParams {
-    pub axis: MirrorAxis,
+/// A length either in beats, as `1/value` of a beat at the BPM in effect, or
+/// in milliseconds.
+#[derive(Clone, Copy, Deserialize)]
+pub struct NoteLength {
+    pub unit: LengthUnit,
+    pub value: f64,
 }
 
-#[derive(Deserialize)]
+#[derive(Clone, Copy, PartialEq, Deserialize)]
 #[serde(rename_all = "lowercase")]
-pub enum MirrorAxis {
-    Horizontal,
-    Vertical,
+pub enum LengthUnit {
+    Beat,
+    Ms,
+}
+
+#[derive(Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FlnConverterParams {
+    /// Time each long note is released before the next note in its column.
+    pub gap: NoteLength,
+    /// Long notes shorter than this are left as normal notes.
+    pub min_length: NoteLength,
+    /// Also reshapes the long notes the map already has (FLN); otherwise they
+    /// are kept as they are (INV).
+    pub rework_existing_ln: bool,
 }
 
 #[derive(Deserialize)]
 #[serde(tag = "type", content = "params")]
 pub enum TrainerTaskParams {
     RateChange(RateChangeParams),
-    #[allow(dead_code)]
-    Mirror(MirrorParams),
-    RemoveSV(EmptyParams),
-    NoSpinner(EmptyParams),
     SVNormalizer(EmptyParams),
+    FlnConverter(FlnConverterParams),
 }
 
 #[derive(Deserialize)]

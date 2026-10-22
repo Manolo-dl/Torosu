@@ -114,6 +114,10 @@ pub async fn run_trainer(app: tauri::AppHandle, request: RunTrainerRequest) -> R
         &request.difficulty,
         rate_task.as_ref(),
         request.tasks.iter().any(|t| matches!(t.task, TrainerTaskParams::SVNormalizer(_))),
+        request.tasks.iter().find_map(|t| match &t.task {
+            TrainerTaskParams::FlnConverter(params) => Some(params),
+            _ => None,
+        }),
     );
 
     // The .osz is written next to the beatmap folder, i.e. inside Songs, like
