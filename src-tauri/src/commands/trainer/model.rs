@@ -40,6 +40,7 @@ pub enum TrainerTaskParams {
     Mirror(MirrorParams),
     RemoveSV(EmptyParams),
     NoSpinner(EmptyParams),
+    SVNormalizer(EmptyParams),
 }
 
 #[derive(Deserialize)]

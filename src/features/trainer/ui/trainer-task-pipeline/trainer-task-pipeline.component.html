@@ -24,7 +24,7 @@
   </header>
 
   <div appearance="warning" size="s" tuiNotification>
-    Only <strong>Rate Change</strong> is currently implemented. Other tasks are coming soon.
+    Only <strong>Rate Change</strong> and <strong>SV Normalizer</strong> are currently implemented. Other tasks are coming soon.
   </div>
 
   <div class="list" cdkDropList (cdkDropListDropped)="onDrop($event)">
@@ -120,6 +120,13 @@
                 <strong>({{ entry.task.params.rate }}x SB)</strong>) to avoid overlapping with the original one.
               </div>
             }
+          }
+
+          @if (entry.task.type === 'SVNormalizer') {
+            <div appearance="info" size="s" tuiNotification>
+              The original SV changes are removed and an SV is set on every BPM change, so the scroll speed stays
+              the one of the main BPM. BPM changes, kiai and hitsounds are kept.
+            </div>
           }
         </div>
 

@@ -1,7 +1,7 @@
 use anyhow::Result;
 use rosu_map::Beatmap;
 
-use crate::commands::trainer::{model::{TrainerTask, TrainerTaskParams}, tasks::rate_change};
+use crate::commands::trainer::{model::{TrainerTask, TrainerTaskParams}, tasks::{rate_change, sv_normalizer}};
 
 pub fn run(beatmap: &mut Beatmap, tasks: &[TrainerTask]) -> Result<()> {
 
@@ -11,6 +11,7 @@ pub fn run(beatmap: &mut Beatmap, tasks: &[TrainerTask]) -> Result<()> {
             TrainerTaskParams::Mirror(_) => log::warn!("Mirror task is not implemented yet"),
             TrainerTaskParams::RemoveSV(_) => log::warn!("RemoveSV task is not implemented yet"),
             TrainerTaskParams::NoSpinner(_) => log::warn!("NoSpinner task is not implemented yet"),
+            TrainerTaskParams::SVNormalizer(_) => sv_normalizer::apply(beatmap)?,
         }
     }
 

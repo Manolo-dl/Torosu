@@ -36,7 +36,7 @@ fn pitch_tag(params: &RateChangeParams) -> Option<&'static str> {
 
 /// BPM of the timing point that lasts the longest, like the one osu! shows on
 /// song select. Expects the timing points to be already rate-scaled.
-fn main_bpm(beatmap: &Beatmap) -> Option<f64> {
+pub fn main_bpm(beatmap: &Beatmap) -> Option<f64> {
     let points = &beatmap.control_points.timing_points;
     let end = beatmap.hit_objects.last().map_or(0.0, |h| h.start_time);
 
@@ -57,6 +57,7 @@ fn main_bpm(beatmap: &Beatmap) -> Option<f64> {
 /// - `Insane 1.3x (234bpm)`
 /// - `Insane 1.3x (234bpm) (pitch raised) AR9.5 OD8`
 /// - `Insane HP7` when only the difficulty settings change
+/// - `Insane (SV normalized)` when the SV changes are normalized
 /// - `Insane (trainer)` when nothing changes
 ///
 /// `beatmap` must already have the tasks applied; `original` holds the
@@ -67,6 +68,7 @@ pub fn version(
     original: &DifficultySettings,
     new: &DifficultySettings,
     rate: Option<&RateChangeParams>,
+    sv_normalized: bool,
 ) -> String {
     let mut parts = vec![original_version.to_string()];
 
@@ -79,6 +81,10 @@ pub fn version(
             rate_part.push_str(&format!(" ({})", tag));
         }
         parts.push(rate_part);
+    }
+
+    if sv_normalized {
+        parts.push("(SV normalized)".to_string());
     }
 
     let stats = [

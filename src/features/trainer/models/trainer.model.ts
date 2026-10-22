@@ -1,6 +1,6 @@
 export type DifficultyKey = 'hp' | 'cs' | 'od' | 'ar';
 
-export type TrainerTaskType = 'RateChange' | 'Mirror' | 'RemoveSV' | 'NoSpinner';
+export type TrainerTaskType = 'RateChange' | 'Mirror' | 'RemoveSV' | 'NoSpinner' | 'SVNormalizer';
 
 export interface RateChangeParams {
     rate: number;
@@ -19,7 +19,8 @@ export type TrainerTaskParams =
     | { type: 'RateChange'; params: RateChangeParams }
     | { type: 'Mirror'; params: MirrorParams }
     | { type: 'RemoveSV'; params: {} }
-    | { type: 'NoSpinner'; params: {} };
+    | { type: 'NoSpinner'; params: {} }
+    | { type: 'SVNormalizer'; params: {} };
 
 export interface TrainerTask {
     id: string;
@@ -31,6 +32,7 @@ export const TASK_LABELS: Record<TrainerTaskType, string> = {
     Mirror: 'Mirror',
     RemoveSV: 'Remove SV',
     NoSpinner: 'No Spinner',
+    SVNormalizer: 'SV Normalizer',
 };
 
 export interface DifficultyStat {

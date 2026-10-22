@@ -21,7 +21,7 @@ export class TrainerTaskPipelineComponent {
   readonly tosu = inject(TosuStore);
 
   taskLabels = TASK_LABELS;
-  availableTasks: TrainerTaskType[] = ['RateChange'];
+  availableTasks: TrainerTaskType[] = ['RateChange', 'SVNormalizer'];
   readonly menuOpen = signal(false);
 
   availableTasksFiltered = computed(() => {
@@ -45,6 +45,9 @@ export class TrainerTaskPipelineComponent {
     switch (type) {
       case 'RateChange':
         this.trainer.addTask({ type: 'RateChange', params: { rate: 1.0, adjustPitch: false, scaleStoryboard: false, scaleVideo: false } });
+        break;
+      case 'SVNormalizer':
+        this.trainer.addTask({ type: 'SVNormalizer', params: {} });
         break;
     }
   }
