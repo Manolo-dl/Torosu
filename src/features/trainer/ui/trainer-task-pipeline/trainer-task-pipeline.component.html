@@ -206,10 +206,7 @@
                     <button type="button">{{ option.label }}</button>
                   }
                 </tui-segmented>
-                <span class="setting-hint">
-                  Widens chords into the key next to them, on the same hand. Some: on the beats and chords. More:
-                  almost every row.
-                </span>
+                <span class="setting-hint">{{ densityOptions[densityIndex(entry.task.params.density)].hint }}</span>
               </div>
             } @else {
               <div appearance="info" size="s" tuiNotification>

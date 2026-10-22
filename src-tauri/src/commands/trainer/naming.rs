@@ -128,6 +128,7 @@ fn key_tag(params: &KeyConverterParams) -> String {
         Density::None => {}
         Density::Dense => tag.push_str(" Dense"),
         Density::MoreDense => tag.push_str(" More Dense"),
+        Density::Full => tag.push_str(" Full"),
     }
     if !params.keep_jacks {
         tag.push_str(", split jacks");

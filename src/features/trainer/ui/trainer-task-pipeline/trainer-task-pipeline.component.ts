@@ -39,10 +39,15 @@ export class TrainerTaskPipelineComponent {
   sourceKeys = computed(() => (this.isMania() ? Math.round(this.tosu.data()?.beatmap?.stats?.cs?.original ?? 0) || null : null));
 
   readonly keyOptions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-  readonly densityOptions: { value: KeyDensity; label: string }[] = [
-    { value: 'none', label: 'None' },
-    { value: 'dense', label: 'Some' },
-    { value: 'moreDense', label: 'More' },
+  readonly densityOptions: { value: KeyDensity; label: string; hint: string }[] = [
+    { value: 'none', label: 'None', hint: 'Only the notes of the original map.' },
+    { value: 'dense', label: 'Some', hint: 'Widens chords into the key next to them, on the beats and chords.' },
+    { value: 'moreDense', label: 'More', hint: 'Widens chords into the keys next to them, on almost every row.' },
+    {
+      value: 'full',
+      label: 'Full',
+      hint: 'Chords grow with the key count, like hand-made conversions: jumps become hands and hands become quints. Handstreams stay handstreams, and the map gets much harder.',
+    },
   ];
 
   newBpm(rate: number): number | null {

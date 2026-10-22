@@ -11,19 +11,27 @@
 //!   rolls stay varied.
 //! - **Hands**: a note stays on its hand (left, right, or the middle key on odd
 //!   key counts), but may cross over now and then to keep a stream flowing.
-//! - **Trills**: only real trills (two columns alternating for a while) stay
-//!   trills. The short back-and-forths a 4K stream is full of, just because it
-//!   has 4 keys, are not copied: a key coming back 2 or 3 notes later within a
-//!   beat costs more, so streams roll over the extra keys instead.
+//! - **Repeated patterns** are spotted in the source and copied as they are:
+//!   a chordjack (the same row again, up to 1/2 beat later) repeats its whole
+//!   target row, extra notes included, and a jumptrill or trill (two rows
+//!   alternating) alternates between two fixed target rows, one per hand,
+//!   like tyrcs' 7K Lolit speed does. Single-note trills need a few more notes
+//!   to count: the short back-and-forths a 4K stream is full of, just because
+//!   it has 4 keys, are not copied. A key coming back 2 or 3 notes later
+//!   within a beat costs more there, so streams roll over the extra keys.
 //! - **Consistency**: each column keeps loosely to the keys around its natural
 //!   place.
 //! - **Spread**: a key that was just used costs more, decaying over a beat. The
 //!   notes spread over every key, without anchors or minijacks.
 //! - **Jacks**: no new jacks; the map's own jacks (the same column in
-//!   consecutive rows) stay on a single key.
+//!   consecutive rows, up to 1/2 beat apart) stay on a single key.
 //! - **Extra notes** (optional, only with more keys) widen the chords into the
-//!   key next to them, on the same hand, as hand conversions do (7K Delta Dan),
-//!   more on the stronger beats.
+//!   keys next to them, on the same hand, as hand conversions do (7K Delta Dan),
+//!   more on the stronger beats. *Full* scales every chord with the key count
+//!   instead, like Enie's 7K H.A.R.D.C.O.R.E. does with the 4K one: jumps
+//!   become hands and hands become quints, so handstreams stay handstreams.
+//!   A full row of the source (a quad on 4K) only grows by a note or so, as
+//!   in tyrcs' Lolit speed, not into a wall.
 //!
 //! A note that cannot be placed (every key it could go to is held) is dropped,
 //! so the output is always a valid map.
@@ -48,8 +56,11 @@ pub const MAX_KEYS: usize = 10;
 const BEAM_WIDTH: usize = 8;
 
 /// Notes in the same column closer than this (in beats) are a jack, as in the
-/// original: a 1/4 with some leniency.
+/// original: a 1/4 with some leniency. New ones are avoided.
 const JACK_BEATS: f64 = 0.375;
+/// The same column in consecutive source rows up to this far apart (in beats)
+/// is a jack of the map, kept on one key: fast maps jack at 1/2.
+const SOURCE_JACK_BEATS: f64 = 0.55;
 
 /// Leniency for notes a couple of ms off the grid.
 const GRID_LENIENCY_MS: f64 = 2.0;
@@ -64,14 +75,18 @@ const COST_BROKEN_JACK: f64 = 40.0;
 const EXTRA_REWARD: f64 = 10.0;
 /// How far (in keys) a column can stray from its natural place for free.
 const FREE_DEVIATION: f64 = 0.75;
-/// A source trill: two columns alternating for at least this many notes, at
-/// most this far apart (in beats).
+/// A source trill: two rows alternating for at least this many rows (single
+/// notes) or chord rows (jumptrills), at most this far apart (in beats).
 const TRILL_MIN_NOTES: usize = 6;
+const TRILL_MIN_CHORDS: usize = 4;
 const TRILL_MAX_GAP_BEATS: f64 = 0.5;
 /// Breaking a real trill.
 const COST_BROKEN_TRILL: f64 = 10.0;
-/// Rows of history kept to spot back-and-forths.
+/// Rows of history kept to spot back-and-forths and to copy patterns.
 const HISTORY: usize = 3;
+/// Reward for copying a repeated pattern (see [`mark_patterns`]): it wins
+/// whenever it fits.
+const W_COPY: f64 = 40.0;
 /// Upper bound of the noise that breaks ties between equal choices, so the
 /// patterns do not always go the same way.
 const TIE_BREAK: f64 = 0.3;
@@ -93,6 +108,9 @@ const W_LONG_ROLL: f64 = 4.0;
 const W_SAME_ROLL: f64 = 2.0;
 /// Using a key that was just released, decaying over a beat.
 const W_FRESH: f64 = 10.0;
+/// The same in chord rows, where a key coming back from 2 rows ago anchors a
+/// jumpstream instead of breaking a stream.
+const W_FRESH_CHORDS: f64 = 4.0;
 /// A column going to another key than its previous note.
 const W_SWITCH: f64 = 0.3;
 /// Per squared key a column strays from its natural place.
@@ -103,13 +121,37 @@ const W_REPEAT3: f64 = 6.0;
 /// A note going to the other hand.
 const W_CROSS: f64 = 6.0;
 
-/// Extra notes as `(max per row, min strength of the row, min gap in beats
-/// from the previous note in that key)`.
-fn fill_settings(density: Density) -> Option<(usize, f64, f64)> {
+/// Most extra notes a row can get.
+const MAX_EXTRAS: usize = 4;
+/// Full: chords grow by the key ratio times this. Measured on Enie's 7K
+/// H.A.R.D.C.O.R.E. against the 4K: 1 note -> 1.5, 2 -> 3.4, 3 -> 4.6.
+const FULL_SCALE: f64 = 0.9;
+/// Full: how much a full row of the source grows (tyrcs: a quad -> 4.1).
+const FULL_ROW_GROWTH: f64 = 0.5;
+/// Full: reward per extra note, high enough to fill every row's quota.
+const FULL_REWARD: f64 = 25.0;
+/// Full: an extra note in a key used a moment ago (a minijack). Handstreams
+/// on more keys cannot avoid them all.
+const W_EXTRA_JACK: f64 = 8.0;
+
+#[derive(Clone, Copy)]
+struct Fill {
+    /// Most extra notes per row; with `scaled`, each row's quota instead.
+    max: usize,
+    /// Rows weaker than this (see [`beat_strength`]) get none.
+    min_strength: f64,
+    /// Min gap in beats from the previous note in that key.
+    gap_beats: f64,
+    /// Chords grow with the key count (Full).
+    scaled: bool,
+}
+
+fn fill_settings(density: Density) -> Option<Fill> {
     match density {
         Density::None => None,
-        Density::Dense => Some((1, 0.7, 0.5)),
-        Density::MoreDense => Some((2, 0.0, JACK_BEATS)),
+        Density::Dense => Some(Fill { max: 1, min_strength: 0.7, gap_beats: 0.5, scaled: false }),
+        Density::MoreDense => Some(Fill { max: 2, min_strength: 0.0, gap_beats: JACK_BEATS, scaled: false }),
+        Density::Full => Some(Fill { max: MAX_EXTRAS, min_strength: 0.0, gap_beats: 0.0, scaled: true }),
     }
 }
 
@@ -167,8 +209,16 @@ struct Row {
     beat_len: f64,
     /// How much an extra note fits here: 1 on the beat, less off it.
     strength: f64,
-    /// Part of a real trill in the source.
+    /// Part of a trill or jumptrill of the source: keys coming back are fine.
     trill: bool,
+    /// Repeats the row this many rows back (1: chordjack, 2: trill), so its
+    /// target row is copied too. 0 when it does not.
+    copy: u8,
+    /// Part of a repeated pattern: its extra notes stay on the same hand as
+    /// the chord, so each row of a jumptrill sits on one hand.
+    grouped: bool,
+    /// Full: how many extra notes this row should get.
+    quota: u8,
 }
 
 const NONE: u8 = u8::MAX;
@@ -191,9 +241,8 @@ struct State {
     single: Option<(u8, u8, i8, u8)>,
     /// The way the last connected run of three or more went (±1).
     last_roll: i8,
-    /// The last rows, newest first: time and the source and target columns
-    /// as bit masks.
-    history: [(f64, u16, u16); HISTORY],
+    /// The last rows, newest first.
+    history: [Past; HISTORY],
 }
 
 impl State {
@@ -207,7 +256,7 @@ impl State {
             prev: None,
             single: None,
             last_roll: 0,
-            history: [(f64::NEG_INFINITY, 0, 0); HISTORY],
+            history: [Past { time: f64::NEG_INFINITY, src: 0, dst: 0, decision: Decision::DROPPED }; HISTORY],
         }
     }
 }
@@ -218,8 +267,21 @@ impl State {
 struct Decision {
     size: u8,
     combo: u16,
-    extras: [u8; 2],
+    extras: [u8; MAX_EXTRAS],
     n_extras: u8,
+}
+
+impl Decision {
+    const DROPPED: Self = Self { size: 0, combo: 0, extras: [0; MAX_EXTRAS], n_extras: 0 };
+}
+
+/// A row already placed: its source and target columns as bit masks.
+#[derive(Clone, Copy)]
+struct Past {
+    time: f64,
+    src: u16,
+    dst: u16,
+    decision: Decision,
 }
 
 struct Ctx<'a> {
@@ -228,7 +290,7 @@ struct Ctx<'a> {
     src_keys: usize,
     dst_keys: usize,
     keep_jacks: bool,
-    fill: Option<(usize, f64, f64)>,
+    fill: Option<Fill>,
 }
 
 fn pos(col: usize, keys: usize) -> f64 {
@@ -237,7 +299,8 @@ fn pos(col: usize, keys: usize) -> f64 {
 
 impl Ctx<'_> {
     fn fresh(&self, state: &State, col: usize, row: &Row) -> f64 {
-        W_FRESH * (-(row.time - state.release[col]) / row.beat_len).exp()
+        let weight = if row.notes.len() > 1 || row.quota > 0 { W_FRESH_CHORDS } else { W_FRESH };
+        weight * (-(row.time - state.release[col]) / row.beat_len).exp()
     }
 
     fn free(&self, state: &State, col: usize, row: &Row, src: u8) -> bool {
@@ -255,10 +318,9 @@ impl Ctx<'_> {
             let src = note.src as usize;
             // A jack is the same column in consecutive rows. Coming back to
             // it after other notes, as fast 4K streams do, is not one.
-            let (_, prev_src, _) = state.history[0];
             let source_jack = state.src_target[src] != NONE
-                && prev_src & (1 << src) != 0
-                && row.time - state.src_release[src] <= jack_gap;
+                && state.history[0].src & (1 << src) != 0
+                && row.time - state.src_release[src] <= row.beat_len * SOURCE_JACK_BEATS;
 
             for col in 0..self.dst_keys {
                 if !self.free(state, col, row, note.src) {
@@ -297,16 +359,21 @@ impl Ctx<'_> {
     }
 
     /// Cost of a key coming back 2 or 3 notes later (a back-and-forth), and
-    /// of breaking a real trill.
+    /// of breaking a real trill. Only between single notes: in jumpstreams a
+    /// chord sharing a key with the one 2 rows back is what holds them
+    /// together (tyrcs' Lolit speed: 82% of the rows).
     fn repeat_cost(&self, state: &State, row: &Row, src: usize, col: usize) -> f64 {
         let mut cost = 0.0;
         for (lag, weight) in [(2, W_REPEAT2), (3, W_REPEAT3)] {
-            let (time, src_mask, dst_mask) = state.history[lag - 1];
-            if row.time - time > row.beat_len {
+            let past = &state.history[lag - 1];
+            if row.time - past.time > row.beat_len {
                 break;
             }
-            let src_repeats = src_mask & (1 << src) != 0;
-            let dst_repeats = dst_mask & (1 << col) != 0;
+            if row.notes.len() > 1 || past.dst.count_ones() > 1 {
+                continue;
+            }
+            let src_repeats = past.src & (1 << src) != 0;
+            let dst_repeats = past.dst & (1 << col) != 0;
 
             if row.trill && lag == 2 {
                 if src_repeats && !dst_repeats {
@@ -323,52 +390,73 @@ impl Ctx<'_> {
     /// where it does not fit.
     fn extra_costs(&self, state: &State, row: &Row) -> [f64; MAX_KEYS] {
         let mut costs = [f64::INFINITY; MAX_KEYS];
-        let Some((_, min_strength, gap_beats)) = self.fill else { return costs };
-        if row.strength < min_strength {
+        let Some(fill) = self.fill else { return costs };
+        if row.strength < fill.min_strength {
             return costs;
         }
 
-        let gap = row.beat_len * gap_beats;
+        let gap = row.beat_len * fill.gap_beats;
+        let jack_gap = row.beat_len * JACK_BEATS;
+        let reward = if fill.scaled { FULL_REWARD } else { EXTRA_REWARD * row.strength };
+
         for (col, cost) in costs.iter_mut().enumerate().take(self.dst_keys) {
-            if row.time - state.release[col] >= gap {
-                *cost = self.fresh(state, col, row) - EXTRA_REWARD * row.strength;
+            let since = row.time - state.release[col];
+            if since > 0.0 && since >= gap {
+                let jack = if since <= jack_gap { W_EXTRA_JACK } else { 0.0 };
+                *cost = self.fresh(state, col, row) + jack - reward;
             }
         }
         costs
     }
 
-    /// The best extra notes for a row placed in `combo`: next to its notes,
-    /// on the same hand.
-    fn pick_extras(&self, combo: &[u8], extra_costs: &[f64; MAX_KEYS]) -> ([u8; 2], u8, f64) {
-        let Some((max, _, _)) = self.fill else { return ([0; 2], 0, 0.0) };
+    /// The best extra notes for a row placed in `combo`: the chord grows
+    /// into the keys next to it, on the same hand, one note at a time. Full
+    /// takes any free key instead, so big chords stay open (`O.O.O.O`, not
+    /// `OOOO...`), as in hand conversions of handstreams.
+    fn pick_extras(&self, row: &Row, combo: &[u8], extra_costs: &[f64; MAX_KEYS]) -> ([u8; MAX_EXTRAS], u8, f64) {
+        let mut extras = [0u8; MAX_EXTRAS];
+        let Some(fill) = self.fill else { return (extras, 0, 0.0) };
+        let max = if fill.scaled { row.quota as usize } else { fill.max };
 
-        let mut picks: Vec<(f64, u8)> = Vec::with_capacity(4);
-        for &col in combo {
-            let neighbours = [col.checked_sub(1), Some(col + 1).filter(|&c| (c as usize) < self.dst_keys)];
-            for n in neighbours.into_iter().flatten() {
-                let cost = extra_costs[n as usize];
-                if cost < 0.0
-                    && !combo.contains(&n)
-                    && !picks.iter().any(|&(_, p)| p == n)
-                    && same_hand(side(col as usize, self.dst_keys), side(n as usize, self.dst_keys))
-                {
-                    picks.push((cost, n));
+        // Full spreads the extras over any key, except in repeated patterns.
+        let anywhere = fill.scaled && !row.grouped;
+
+        let mut n = 0;
+        let mut total = 0.0;
+        while n < max {
+            let mut best: Option<(f64, u8)> = None;
+            if anywhere {
+                for next in 0..self.dst_keys as u8 {
+                    let cost = extra_costs[next as usize];
+                    if cost < 0.0
+                        && !combo.contains(&next)
+                        && !extras[..n].contains(&next)
+                        && best.is_none_or(|(b, _)| cost < b)
+                    {
+                        best = Some((cost, next));
+                    }
                 }
             }
-        }
-        picks.sort_by(|a, b| a.0.total_cmp(&b.0));
-
-        let mut extras = [0u8; 2];
-        let mut total = 0.0;
-        let n = picks.len().min(max);
-        for (i, (slot, &(cost, col))) in extras.iter_mut().zip(&picks[..n]).enumerate() {
-            // A second extra in the same row is worth half: rows mostly grow
-            // by one note, sometimes two.
-            if i > 0 && cost + EXTRA_REWARD / 2.0 >= 0.0 {
-                return (extras, i as u8, total);
+            for &col in combo.iter().chain(&extras[..n]).filter(|_| !anywhere) {
+                let neighbours = [col.checked_sub(1), Some(col + 1).filter(|&c| (c as usize) < self.dst_keys)];
+                for next in neighbours.into_iter().flatten() {
+                    // Without Full, a second extra in the same row is worth
+                    // half: rows mostly grow by one note, sometimes two.
+                    let cost = extra_costs[next as usize] + if n > 0 && !fill.scaled { EXTRA_REWARD / 2.0 } else { 0.0 };
+                    if cost < 0.0
+                        && !combo.contains(&next)
+                        && !extras[..n].contains(&next)
+                        && same_hand(side(col as usize, self.dst_keys), side(next as usize, self.dst_keys))
+                        && best.is_none_or(|(b, _)| cost < b)
+                    {
+                        best = Some((cost, next));
+                    }
+                }
             }
-            *slot = col;
-            total += if i > 0 { cost + EXTRA_REWARD / 2.0 } else { cost };
+            let Some((cost, col)) = best else { break };
+            extras[n] = col;
+            total += cost;
+            n += 1;
         }
         (extras, n as u8, total)
     }
@@ -418,6 +506,16 @@ impl Ctx<'_> {
     /// when they do not all fit.
     fn candidates(&self, state: &State, row: &Row, row_idx: usize, out: &mut Vec<(f64, Decision)>) {
         let k = row.notes.len();
+
+        // A repeated pattern copies the row it repeats, whenever it fits.
+        if row.copy > 0 {
+            let past = state.history[row.copy as usize - 1].decision;
+            if self.fits(state, row, &past) {
+                out.push((-W_COPY, past));
+                return;
+            }
+        }
+
         let costs = self.note_costs(state, row);
         let extra_costs = self.extra_costs(state, row);
 
@@ -439,7 +537,7 @@ impl Ctx<'_> {
                 let dst_pos = combo.iter().map(|&c| pos(c as usize, self.dst_keys)).sum::<f64>() / size as f64;
                 cost += self.flow_cost(state, row, src_pos, dst_pos, self.single(row, &keep, combo));
 
-                let (extras, n_extras, extra_cost) = self.pick_extras(combo, &extra_costs);
+                let (extras, n_extras, extra_cost) = self.pick_extras(row, combo, &extra_costs);
                 let decision = Decision { size: size as u8, combo: ci as u16, extras, n_extras };
 
                 out.push((cost + extra_cost + tie_break(row_idx, ci), decision));
@@ -451,7 +549,20 @@ impl Ctx<'_> {
         }
 
         // Every key is held: the whole row is dropped.
-        out.push((k as f64 * COST_DROP, Decision { size: 0, combo: 0, extras: [0; 2], n_extras: 0 }));
+        out.push((k as f64 * COST_DROP, Decision::DROPPED));
+    }
+
+    /// Whether `decision`, taken from a row with the same source columns, can
+    /// place this row too: every key it uses is free.
+    fn fits(&self, state: &State, row: &Row, decision: &Decision) -> bool {
+        let size = decision.size as usize;
+        if size != row.notes.len() {
+            return false;
+        }
+        let notes = &self.notes[row.notes.clone()];
+        let combo = &self.combos[size][decision.combo as usize];
+        notes.iter().zip(combo).all(|(note, &col)| self.free(state, col as usize, row, note.src))
+            && decision.extras[..decision.n_extras as usize].iter().all(|&col| row.time > state.release[col as usize])
     }
 
     fn commit(&self, state: &mut State, row: &Row, decision: &Decision) {
@@ -499,7 +610,7 @@ impl Ctx<'_> {
             dst_mask |= 1 << col;
         }
         state.history.rotate_right(1);
-        state.history[0] = (row.time, src_mask, dst_mask);
+        state.history[0] = Past { time: row.time, src: src_mask, dst: dst_mask, decision: *decision };
 
         for &col in &decision.extras[..decision.n_extras as usize] {
             let end = self.template(row, decision, col).map_or(row.time, |n| self.notes[n].end);
@@ -593,22 +704,35 @@ fn set_x(obj: &mut HitObject, x: f32) {
     }
 }
 
-/// Marks the rows that are part of a real trill: single notes alternating
-/// between the same two columns for [`TRILL_MIN_NOTES`] notes or more, fast.
-/// Shorter back-and-forths are just what streams look like on few keys.
-fn mark_trills(rows: &mut [Row], notes: &[Note]) {
-    let single = |row: &Row| (row.notes.len() == 1).then(|| notes[row.notes.start].src);
+/// Spots the patterns of the source that repeat rows, so the conversion can
+/// repeat them too (see [`Row::copy`]):
+///
+/// - Chordjacks and jacks: the same row again, up to [`SOURCE_JACK_BEATS`]
+///   later. Not with split jacks.
+/// - Jumptrills and trills: two rows with nothing in common alternating, fast,
+///   for [`TRILL_MIN_CHORDS`] rows when they are chords or
+///   [`TRILL_MIN_NOTES`] when they are single notes. Shorter back-and-forths
+///   are just what streams look like on few keys.
+fn mark_patterns(rows: &mut [Row], notes: &[Note], keep_jacks: bool) {
+    let cols: Vec<u16> = rows.iter().map(|row| notes[row.notes.clone()].iter().fold(0u16, |m, n| m | 1 << n.src)).collect();
+
+    if keep_jacks {
+        for i in 1..rows.len() {
+            if cols[i] == cols[i - 1] && rows[i].time - rows[i - 1].time <= rows[i].beat_len * SOURCE_JACK_BEATS {
+                rows[i].copy = 1;
+                rows[i].grouped = true;
+                rows[i - 1].grouped = true;
+            }
+        }
+    }
 
     // Length of the alternation ending at each row.
     let mut run = vec![0usize; rows.len()];
     for i in 2..rows.len() {
-        let (a, b, c) = (single(&rows[i - 2]), single(&rows[i - 1]), single(&rows[i]));
         let fast = rows[i].time - rows[i - 1].time <= rows[i].beat_len * TRILL_MAX_GAP_BEATS
             && rows[i - 1].time - rows[i - 2].time <= rows[i].beat_len * TRILL_MAX_GAP_BEATS;
-        if let (Some(a), Some(b), Some(c)) = (a, b, c) {
-            if fast && a == c && a != b {
-                run[i] = if run[i - 1] > 0 { run[i - 1] + 1 } else { 3 };
-            }
+        if fast && cols[i] == cols[i - 2] && cols[i] & cols[i - 1] == 0 {
+            run[i] = if run[i - 1] > 0 { run[i - 1] + 1 } else { 3 };
         }
     }
 
@@ -616,13 +740,21 @@ fn mark_trills(rows: &mut [Row], notes: &[Note]) {
     let mut i = rows.len();
     while i > 0 {
         i -= 1;
-        if run[i] >= TRILL_MIN_NOTES {
-            let start = i + 1 - run[i];
-            for row in &mut rows[start..=i] {
-                row.trill = true;
-            }
-            i = start;
+        if run[i] == 0 {
+            continue;
         }
+        let start = i + 1 - run[i];
+        let chords = rows[start..=i].iter().all(|row| row.notes.len() > 1);
+        if run[i] >= if chords { TRILL_MIN_CHORDS } else { TRILL_MIN_NOTES } {
+            for (j, row) in rows[start..=i].iter_mut().enumerate() {
+                row.trill = true;
+                row.grouped = true;
+                if j >= 2 {
+                    row.copy = 2;
+                }
+            }
+        }
+        i = start;
     }
 }
 
@@ -697,6 +829,9 @@ pub fn apply(beatmap: &mut Beatmap, params: &KeyConverterParams) -> Result<()> {
                     beat_len,
                     strength: beat_strength(time, tp_time, beat_len),
                     trill: false,
+                    copy: 0,
+                    grouped: false,
+                    quota: 0,
                 });
             }
         }
@@ -710,10 +845,24 @@ pub fn apply(beatmap: &mut Beatmap, params: &KeyConverterParams) -> Result<()> {
         }
     }
 
-    mark_trills(&mut rows, &notes);
+    mark_patterns(&mut rows, &notes, params.keep_jacks);
 
     // Extra notes only make sense with more keys.
     let fill = fill_settings(params.density).filter(|_| dst_keys > src_keys);
+
+    // Full: each row's chord grows to its size times the key ratio. The
+    // fraction is dithered per row, so the average comes out right.
+    if fill.is_some_and(|f| f.scaled) {
+        let scale = dst_keys as f64 / src_keys as f64 * FULL_SCALE;
+        for (i, row) in rows.iter_mut().enumerate() {
+            let k = row.notes.len();
+            let target = if k == src_keys { k as f64 + FULL_ROW_GROWTH } else { k as f64 * scale };
+            // Any choice index no row uses, so it is independent noise.
+            let dither = tie_break(i, u32::MAX as usize) / TIE_BREAK;
+            let size = (target.floor() + if dither < target.fract() { 1.0 } else { 0.0 }) as usize;
+            row.quota = size.saturating_sub(k).min(dst_keys - k.min(dst_keys)).min(MAX_EXTRAS) as u8;
+        }
+    }
     let ctx = Ctx {
         notes: &notes,
         combos: combinations(dst_keys),
@@ -844,6 +993,56 @@ mod tests {
         assert!(cols.windows(3).all(|w| w[0] == w[2] && w[0] != w[1]), "{:?}", cols);
     }
 
+    /// A 4K map from rows of columns, in 1/4s at 120 BPM.
+    fn rows_map(rows: &[&[usize]]) -> String {
+        let mut osu = String::from(
+            "osu file format v14\n\n[General]\nMode: 3\n\n[Difficulty]\nCircleSize:4\n\n[TimingPoints]\n0,500,4,1,0,60,1,0\n\n[HitObjects]\n",
+        );
+        for (step, row) in rows.iter().enumerate() {
+            for col in row.iter() {
+                osu.push_str(&format!("{},192,{},1,0,0:0:0:0:\n", col * 128 + 64, step * 125));
+            }
+        }
+        osu
+    }
+
+    /// The keys of each row of a converted map.
+    fn key_rows(beatmap: &Beatmap, keys: usize) -> Vec<Vec<usize>> {
+        let mut rows: Vec<(f64, Vec<usize>)> = Vec::new();
+        for obj in &beatmap.hit_objects {
+            match rows.last_mut() {
+                Some((time, cols)) if *time == obj.start_time => cols.push(column(obj, keys)),
+                _ => rows.push((obj.start_time, vec![column(obj, keys)])),
+            }
+        }
+        rows.into_iter().map(|(_, mut cols)| {
+            cols.sort();
+            cols
+        }).collect()
+    }
+
+    #[test]
+    fn keeps_jumptrills() {
+        let trill: Vec<&[usize]> = (0..12).map(|i| if i % 2 == 0 { &[0, 1][..] } else { &[2, 3][..] }).collect();
+        for density in [Density::None, Density::Full] {
+            let (_, beatmap) = convert(&rows_map(&trill), 7, density);
+            let rows = key_rows(&beatmap, 7);
+            assert!(rows.windows(3).all(|w| w[0] == w[2]), "{:?}", rows);
+            assert!(rows.windows(2).all(|w| w[0].iter().all(|c| !w[1].contains(c))), "{:?}", rows);
+        }
+    }
+
+    #[test]
+    fn keeps_chordjacks() {
+        // Quads every 1/2 beat.
+        let osu = rows_map(&[&[0, 1, 2, 3], &[], &[0, 1, 2, 3], &[], &[0, 1, 2, 3], &[], &[0, 1, 2, 3]]);
+        let (_, beatmap) = convert(&osu, 7, Density::Full);
+        let rows = key_rows(&beatmap, 7);
+        assert!(rows.windows(2).all(|w| w[0] == w[1]), "{:?}", rows);
+        // A full row grows by a note or so, not into a wall.
+        assert!(rows[0].len() <= 5, "{:?}", rows);
+    }
+
     #[test]
     fn rolls_short_back_and_forths() {
         // A 4K stream that comes back to the same columns, like the one in
@@ -932,10 +1131,21 @@ mod tests {
     }
 
     #[test]
-    fn density_adds_notes_without_jacks() {
+    fn density_adds_notes_without_many_jacks() {
         let (original, beatmap) = convert(&map(4), 10, Density::MoreDense);
         assert!(beatmap.hit_objects.len() > original.hit_objects.len());
-        assert!(check(&beatmap, 10) <= check(&original, 4));
+        // Chordjacks copy their extra notes too, so their jacks grow with
+        // them; the rest adds none.
+        assert!(check(&beatmap, 10) as f64 <= check(&original, 4) as f64 * 1.2);
+    }
+
+    #[test]
+    fn full_scales_chords_with_the_keys() {
+        let (original, beatmap) = convert(&map(4), 7, Density::Full);
+        let ratio = beatmap.hit_objects.len() as f64 / original.hit_objects.len() as f64;
+        // 7/4 * 0.9, give or take what does not fit.
+        assert!((1.4..=1.65).contains(&ratio), "{}", ratio);
+        check(&beatmap, 7);
     }
 
     #[test]

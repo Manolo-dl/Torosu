@@ -27,7 +27,7 @@ export interface FlnConverterParams {
 }
 
 /** Extra notes added to fill the new keys when converting to more keys. */
-export type KeyDensity = 'none' | 'dense' | 'moreDense';
+export type KeyDensity = 'none' | 'dense' | 'moreDense' | 'full';
 
 export interface KeyConverterParams {
     targetKeys: number;

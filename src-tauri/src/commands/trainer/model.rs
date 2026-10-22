@@ -53,6 +53,8 @@ pub enum Density {
     None,
     Dense,
     MoreDense,
+    /// Chords grow with the key count, so handstreams stay handstreams.
+    Full,
 }
 
 #[derive(Clone, Deserialize)]
