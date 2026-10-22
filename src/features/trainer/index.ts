@@ -3,5 +3,5 @@ export { TrainerDifficultySlidersComponent } from './ui/trainer-difficulty-slide
 export { TrainerTaskPipelineComponent } from './ui/trainer-task-pipeline/trainer-task-pipeline.component';
 export { TrainerActionsComponent } from './ui/trainer-actions/trainer-actions.component';
 export { TrainerStore } from './stores/trainer.store';
-export type { FlnConverterParams, KeyConverterParams, KeyDensity, NoteLength, PatternStyle, RateChangeParams, TrainerTask, TrainerTaskParams, DifficultyStat, DifficultyKey } from './models/trainer.model';
+export type { FlnConverterParams, KeyConverterParams, KeyDensity, NoteLength, RateChangeParams, TrainerTask, TrainerTaskParams, DifficultyStat, DifficultyKey } from './models/trainer.model';
 export { TASK_LABELS } from './models/trainer.model';

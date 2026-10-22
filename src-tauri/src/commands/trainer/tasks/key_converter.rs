@@ -6,17 +6,17 @@
 //! good pattern is:
 //!
 //! - **Flow**: when the source moves right, the target moves right too, about
-//!   as far. Stairs stay stairs, trills stay trills, jumps stay jumps.
+//!   as far. Now and then two connected notes (next keys) grow into three, but
+//!   longer runs, or runs going the same way again and again, cost more: the
+//!   rolls stay varied.
 //! - **Hands**: a note stays on its hand (left, right, or the middle key on odd
-//!   key counts), so hand alternation is kept. Spread may cross over now and
-//!   then to keep a stream flowing.
+//!   key counts), but may cross over now and then to keep a stream flowing.
 //! - **Trills**: only real trills (two columns alternating for a while) stay
 //!   trills. The short back-and-forths a 4K stream is full of, just because it
 //!   has 4 keys, are not copied: a key coming back 2 or 3 notes later within a
 //!   beat costs more, so streams roll over the extra keys instead.
-//! - **Consistency**: each column keeps to a couple of keys around its natural
-//!   place and changes key only when it pays off, like hand conversions do (in
-//!   krrcream's 8K -> 10K, a column changes key in 1 of 4 notes).
+//! - **Consistency**: each column keeps loosely to the keys around its natural
+//!   place.
 //! - **Spread**: a key that was just used costs more, decaying over a beat. The
 //!   notes spread over every key, without anchors or minijacks.
 //! - **Jacks**: no new jacks; the map's own jacks (the same column in
@@ -38,7 +38,7 @@ use rosu_map::{
 };
 
 use crate::commands::trainer::{
-    model::{Density, KeyConverterParams, PatternStyle},
+    model::{Density, KeyConverterParams},
     naming,
 };
 
@@ -76,58 +76,32 @@ const HISTORY: usize = 3;
 /// patterns do not always go the same way.
 const TIE_BREAK: f64 = 0.3;
 
-struct Weights {
-    /// Moving the other way than the source.
-    direction: f64,
-    /// Per key of difference between how far the source and the target move.
-    shape: f64,
-    /// Using a key that was just released, decaying over a beat.
-    fresh: f64,
-    /// A column going to another key than its previous note.
-    switch: f64,
-    /// Per squared key a column strays from its natural place.
-    deviation: f64,
-    /// A key coming back 2 / 3 notes later within a beat, outside a trill.
-    repeat2: f64,
-    repeat3: f64,
-    /// A note going to the other hand.
-    cross: f64,
-}
+// Weights of the pattern costs, tuned against hand conversions (Delta Dan,
+// krrcream's packs) and feedback on Black dress.
 
-fn weights(style: PatternStyle) -> Weights {
-    match style {
-        PatternStyle::Faithful => Weights {
-            direction: 10.0,
-            shape: 3.0,
-            fresh: 4.0,
-            switch: 2.0,
-            deviation: 4.0,
-            repeat2: 3.0,
-            repeat3: 1.5,
-            cross: f64::INFINITY,
-        },
-        PatternStyle::Balanced => Weights {
-            direction: 6.0,
-            shape: 1.5,
-            fresh: 7.0,
-            switch: 1.0,
-            deviation: 2.5,
-            repeat2: 8.0,
-            repeat3: 4.0,
-            cross: 30.0,
-        },
-        PatternStyle::Spread => Weights {
-            direction: 3.0,
-            shape: 0.5,
-            fresh: 10.0,
-            switch: 0.3,
-            deviation: 1.0,
-            repeat2: 12.0,
-            repeat3: 6.0,
-            cross: 6.0,
-        },
-    }
-}
+/// Moving the other way than the source.
+const W_DIRECTION: f64 = 3.0;
+/// Per key of difference between how far the source and the target move
+/// (relative to the key count).
+const W_SHAPE: f64 = 0.5;
+/// Reward for turning two connected notes (next keys, same way) into three,
+/// when the source goes that way too.
+const W_ROLL: f64 = 1.0;
+/// Making a connected run longer than three notes.
+const W_LONG_ROLL: f64 = 4.0;
+/// Starting a connected run the same way as the last one.
+const W_SAME_ROLL: f64 = 2.0;
+/// Using a key that was just released, decaying over a beat.
+const W_FRESH: f64 = 10.0;
+/// A column going to another key than its previous note.
+const W_SWITCH: f64 = 0.3;
+/// Per squared key a column strays from its natural place.
+const W_DEVIATION: f64 = 1.0;
+/// A key coming back 2 / 3 notes later within a beat, outside a trill.
+const W_REPEAT2: f64 = 12.0;
+const W_REPEAT3: f64 = 6.0;
+/// A note going to the other hand.
+const W_CROSS: f64 = 6.0;
 
 /// Extra notes as `(max per row, min strength of the row, min gap in beats
 /// from the previous note in that key)`.
@@ -211,6 +185,12 @@ struct State {
     /// Time and average position (0..1) of the previous row, in source and
     /// target.
     prev: Option<(f64, f64, f64)>,
+    /// The previous row when it was a single note: its source and target
+    /// columns, the step that led to it when it was part of a connected run
+    /// (±1, else 0), and how many notes that run has.
+    single: Option<(u8, u8, i8, u8)>,
+    /// The way the last connected run of three or more went (±1).
+    last_roll: i8,
     /// The last rows, newest first: time and the source and target columns
     /// as bit masks.
     history: [(f64, u16, u16); HISTORY],
@@ -225,6 +205,8 @@ impl State {
             src_release: [f64::NEG_INFINITY; MAX_KEYS],
             src_target: [NONE; MAX_KEYS],
             prev: None,
+            single: None,
+            last_roll: 0,
             history: [(f64::NEG_INFINITY, 0, 0); HISTORY],
         }
     }
@@ -245,7 +227,6 @@ struct Ctx<'a> {
     combos: Vec<Vec<Vec<u8>>>,
     src_keys: usize,
     dst_keys: usize,
-    weights: Weights,
     keep_jacks: bool,
     fill: Option<(usize, f64, f64)>,
 }
@@ -256,7 +237,7 @@ fn pos(col: usize, keys: usize) -> f64 {
 
 impl Ctx<'_> {
     fn fresh(&self, state: &State, col: usize, row: &Row) -> f64 {
-        self.weights.fresh * (-(row.time - state.release[col]) / row.beat_len).exp()
+        W_FRESH * (-(row.time - state.release[col]) / row.beat_len).exp()
     }
 
     fn free(&self, state: &State, col: usize, row: &Row, src: u8) -> bool {
@@ -286,10 +267,7 @@ impl Ctx<'_> {
 
                 let mut cost = 0.0;
                 if !same_hand(side(src, self.src_keys), side(col, self.dst_keys)) {
-                    cost += self.weights.cross;
-                    if !cost.is_finite() {
-                        continue;
-                    }
+                    cost += W_CROSS;
                 }
                 let keeps_jack = source_jack && state.src_target[src] as usize == col;
 
@@ -305,11 +283,11 @@ impl Ctx<'_> {
                 }
 
                 if state.src_target[src] != NONE && state.src_target[src] as usize != col {
-                    cost += self.weights.switch;
+                    cost += W_SWITCH;
                 }
                 let natural = pos(src, self.src_keys) * self.dst_keys as f64 - 0.5;
                 let stray = ((col as f64 - natural).abs() - FREE_DEVIATION).max(0.0);
-                cost += self.weights.deviation * stray * stray;
+                cost += W_DEVIATION * stray * stray;
 
                 costs[i][col] = cost;
             }
@@ -322,7 +300,7 @@ impl Ctx<'_> {
     /// of breaking a real trill.
     fn repeat_cost(&self, state: &State, row: &Row, src: usize, col: usize) -> f64 {
         let mut cost = 0.0;
-        for (lag, weight) in [(2, self.weights.repeat2), (3, self.weights.repeat3)] {
+        for (lag, weight) in [(2, W_REPEAT2), (3, W_REPEAT3)] {
             let (time, src_mask, dst_mask) = state.history[lag - 1];
             if row.time - time > row.beat_len {
                 break;
@@ -395,8 +373,9 @@ impl Ctx<'_> {
         (extras, n as u8, total)
     }
 
-    /// Cost of the flow from the previous row to this one.
-    fn flow_cost(&self, state: &State, row: &Row, src_pos: f64, dst_pos: f64) -> f64 {
+    /// Cost of the flow from the previous row to this one. `single` is the
+    /// source and target column when both rows are single notes.
+    fn flow_cost(&self, state: &State, row: &Row, src_pos: f64, dst_pos: f64, single: Option<(u8, u8)>) -> f64 {
         let Some((prev_time, prev_src, prev_dst)) = state.prev else { return 0.0 };
         if row.time - prev_time > row.beat_len * FLOW_BEATS {
             return 0.0;
@@ -404,11 +383,30 @@ impl Ctx<'_> {
 
         let ds = src_pos - prev_src;
         let dt = dst_pos - prev_dst;
-        let mut cost = self.weights.shape * (ds - dt).abs() * self.dst_keys as f64;
+        let mut cost = 0.0;
         if ds.abs() > 1e-9 && (dt.abs() < 1e-9 || ds.signum() != dt.signum()) {
-            cost += self.weights.direction;
+            cost += W_DIRECTION;
+        }
+
+        cost += W_SHAPE * (ds - dt).abs() * self.dst_keys as f64;
+
+        if let (Some((src, dst)), Some((prev_src, prev_dst, prev_step, run))) = (single, state.single) {
+            let ds = src as i32 - prev_src as i32;
+            let dt = dst as i32 - prev_dst as i32;
+            if dt.abs() == 1 && dt == prev_step as i32 {
+                match run {
+                    2 if ds.signum() == dt.signum() && dt != state.last_roll as i32 => cost -= W_ROLL,
+                    2 => cost += W_SAME_ROLL,
+                    _ => cost += W_LONG_ROLL,
+                }
+            }
         }
         cost
+    }
+
+    /// The source and target column of a single note row placed in `combo`.
+    fn single(&self, row: &Row, keep: &[usize], combo: &[u8]) -> Option<(u8, u8)> {
+        (row.notes.len() == 1 && combo.len() == 1).then(|| (self.notes[row.notes.start + keep[0]].src, combo[0]))
     }
 
     fn source_pos(&self, row: &Row, keep: &[usize]) -> f64 {
@@ -439,7 +437,7 @@ impl Ctx<'_> {
                 }
 
                 let dst_pos = combo.iter().map(|&c| pos(c as usize, self.dst_keys)).sum::<f64>() / size as f64;
-                cost += self.flow_cost(state, row, src_pos, dst_pos);
+                cost += self.flow_cost(state, row, src_pos, dst_pos, self.single(row, &keep, combo));
 
                 let (extras, n_extras, extra_cost) = self.pick_extras(combo, &extra_costs);
                 let decision = Decision { size: size as u8, combo: ci as u16, extras, n_extras };
@@ -474,6 +472,21 @@ impl Ctx<'_> {
 
             let dst_pos = combo.iter().map(|&c| pos(c as usize, self.dst_keys)).sum::<f64>() / size as f64;
             state.prev = Some((row.time, self.source_pos(row, &keep), dst_pos));
+
+            state.single = self.single(row, &keep, combo).map(|(src, dst)| {
+                let Some((_, prev_dst, prev_step, run)) = state.single else { return (src, dst, 0, 1) };
+                let step = dst as i32 - prev_dst as i32;
+                if step.abs() != 1 {
+                    return (src, dst, 0, 1);
+                }
+                let run = if step == prev_step as i32 { run + 1 } else { 2 };
+                if run == 3 {
+                    state.last_roll = step as i8;
+                }
+                (src, dst, step as i8, run)
+            });
+        } else {
+            state.single = None;
         }
 
         let src_mask = notes.iter().fold(0u16, |m, n| m | 1 << n.src);
@@ -706,7 +719,6 @@ pub fn apply(beatmap: &mut Beatmap, params: &KeyConverterParams) -> Result<()> {
         combos: combinations(dst_keys),
         src_keys,
         dst_keys,
-        weights: weights(params.style),
         keep_jacks: params.keep_jacks,
         fill,
     };
@@ -827,7 +839,7 @@ mod tests {
 
     #[test]
     fn keeps_real_trills() {
-        let (_, beatmap) = convert(&stream(&[0, 1, 0, 1, 0, 1, 0, 1, 0, 1]), 7, Density::None, PatternStyle::Spread);
+        let (_, beatmap) = convert(&stream(&[0, 1, 0, 1, 0, 1, 0, 1, 0, 1]), 7, Density::None);
         let cols = columns(&beatmap, 7);
         assert!(cols.windows(3).all(|w| w[0] == w[2] && w[0] != w[1]), "{:?}", cols);
     }
@@ -836,7 +848,7 @@ mod tests {
     fn rolls_short_back_and_forths() {
         // A 4K stream that comes back to the same columns, like the one in
         // Black dress: on 7K it should roll over the keys instead.
-        let (_, beatmap) = convert(&stream(&[1, 2, 3, 0, 2, 1, 0, 3, 2, 1, 2, 1, 3, 2, 0, 1, 2, 0]), 7, Density::None, PatternStyle::Spread);
+        let (_, beatmap) = convert(&stream(&[1, 2, 3, 0, 2, 1, 0, 3, 2, 1, 2, 1, 3, 2, 0, 1, 2, 0]), 7, Density::None);
         let cols = columns(&beatmap, 7);
         let back_and_forths = cols.windows(3).filter(|w| w[0] == w[2]).count();
         assert!(back_and_forths <= 1, "{:?}", cols);
@@ -881,10 +893,10 @@ mod tests {
         jacks
     }
 
-    fn convert(osu: &str, dst: usize, density: Density, style: PatternStyle) -> (Beatmap, Beatmap) {
+    fn convert(osu: &str, dst: usize, density: Density) -> (Beatmap, Beatmap) {
         let original = rosu_map::from_str::<Beatmap>(osu).unwrap();
         let mut beatmap = original.clone();
-        let params = KeyConverterParams { target_keys: dst as u8, density, style, keep_jacks: true };
+        let params = KeyConverterParams { target_keys: dst as u8, density, keep_jacks: true };
         apply(&mut beatmap, &params).unwrap();
         (original, beatmap)
     }
@@ -892,7 +904,7 @@ mod tests {
     #[test]
     fn expanding_keeps_every_note_and_adds_no_jacks() {
         for (src, dst) in [(4, 7), (4, 10), (7, 8), (7, 10), (4, 5), (6, 9)] {
-            let (original, beatmap) = convert(&map(src), dst, Density::None, PatternStyle::Balanced);
+            let (original, beatmap) = convert(&map(src), dst, Density::None);
             assert_eq!(beatmap.circle_size, dst as f32);
             assert_eq!(beatmap.hit_objects.len(), original.hit_objects.len(), "{}K -> {}K", src, dst);
             assert!(check(&beatmap, dst) <= check(&original, src), "{}K -> {}K", src, dst);
@@ -901,7 +913,7 @@ mod tests {
 
     #[test]
     fn expanding_uses_every_key_evenly() {
-        let (_, beatmap) = convert(&map(4), 7, Density::None, PatternStyle::Balanced);
+        let (_, beatmap) = convert(&map(4), 7, Density::None);
         let mut used = [0usize; 7];
         for obj in &beatmap.hit_objects {
             used[column(obj, 7)] += 1;
@@ -912,7 +924,7 @@ mod tests {
 
     #[test]
     fn stairs_keep_their_direction() {
-        let (_, beatmap) = convert(&stair(), 7, Density::None, PatternStyle::Balanced);
+        let (_, beatmap) = convert(&stair(), 7, Density::None);
         let cols: Vec<usize> = beatmap.hit_objects.iter().map(|o| column(o, 7)).collect();
         // Within each 0123 the target goes right too.
         let rising = cols.chunks(4).filter(|c| c.windows(2).all(|w| w[0] < w[1])).count();
@@ -921,7 +933,7 @@ mod tests {
 
     #[test]
     fn density_adds_notes_without_jacks() {
-        let (original, beatmap) = convert(&map(4), 10, Density::MoreDense, PatternStyle::Balanced);
+        let (original, beatmap) = convert(&map(4), 10, Density::MoreDense);
         assert!(beatmap.hit_objects.len() > original.hit_objects.len());
         assert!(check(&beatmap, 10) <= check(&original, 4));
     }
@@ -929,7 +941,7 @@ mod tests {
     #[test]
     fn reducing_stays_playable() {
         for (src, dst) in [(7, 4), (10, 7), (4, 1)] {
-            let (_, beatmap) = convert(&map(src), dst, Density::MoreDense, PatternStyle::Balanced);
+            let (_, beatmap) = convert(&map(src), dst, Density::MoreDense);
             assert_eq!(beatmap.circle_size, dst as f32);
             check(&beatmap, dst);
         }

@@ -29,13 +29,9 @@ export interface FlnConverterParams {
 /** Extra notes added to fill the new keys when converting to more keys. */
 export type KeyDensity = 'none' | 'dense' | 'moreDense';
 
-/** What the key converter favours: the original shapes, or every key evenly. */
-export type PatternStyle = 'faithful' | 'balanced' | 'spread';
-
 export interface KeyConverterParams {
     targetKeys: number;
     density: KeyDensity;
-    style: PatternStyle;
     /** Keeps the map's jacks on a single key instead of splitting them. */
     keepJacks: boolean;
 }

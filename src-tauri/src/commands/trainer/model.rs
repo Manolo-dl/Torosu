@@ -55,22 +55,11 @@ pub enum Density {
     MoreDense,
 }
 
-/// What the key converter favours: the shapes of the original patterns, or
-/// using every key evenly.
-#[derive(Clone, Copy, PartialEq, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub enum PatternStyle {
-    Faithful,
-    Balanced,
-    Spread,
-}
-
 #[derive(Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct KeyConverterParams {
     pub target_keys: u8,
     pub density: Density,
-    pub style: PatternStyle,
     /// Keeps the map's jacks on a single key instead of splitting them.
     pub keep_jacks: bool,
 }

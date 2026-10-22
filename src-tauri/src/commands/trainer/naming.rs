@@ -8,8 +8,7 @@
 use rosu_map::Beatmap;
 
 use crate::commands::trainer::model::{
-    Density, DifficultySettings, FlnConverterParams, KeyConverterParams, LengthUnit, NoteLength, PatternStyle,
-    RateChangeParams,
+    Density, DifficultySettings, FlnConverterParams, KeyConverterParams, LengthUnit, NoteLength, RateChangeParams,
 };
 
 /// Formats a number with at most `decimals` decimals, without trailing zeros:
@@ -121,7 +120,7 @@ pub fn version(
     parts.join(" ")
 }
 
-/// `(10K)`, `(10K More Dense)`, `(7K, spread)`... Every setting that changes
+/// `(10K)`, `(10K More Dense)`, `(7K, split jacks)`... Every setting that changes
 /// the notes is in the name.
 fn key_tag(params: &KeyConverterParams) -> String {
     let mut tag = format!("({}K", params.target_keys);
@@ -129,11 +128,6 @@ fn key_tag(params: &KeyConverterParams) -> String {
         Density::None => {}
         Density::Dense => tag.push_str(" Dense"),
         Density::MoreDense => tag.push_str(" More Dense"),
-    }
-    match params.style {
-        PatternStyle::Faithful => tag.push_str(", faithful"),
-        PatternStyle::Balanced => {}
-        PatternStyle::Spread => tag.push_str(", spread"),
     }
     if !params.keep_jacks {
         tag.push_str(", split jacks");

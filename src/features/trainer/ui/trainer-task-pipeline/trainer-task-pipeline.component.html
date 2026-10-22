@@ -172,8 +172,8 @@
             }
 
             <p class="description">
-              Moves the notes to another number of keys, keeping the shape of the patterns (stairs, trills, chords)
-              and each note on its hand.
+              Moves the notes to another number of keys. Streams roll over the new keys, while real trills, jacks
+              and chords keep their shape.
             </p>
 
             <div class="setting">
@@ -192,20 +192,6 @@
                   <button type="button" [disabled]="keys === sourceKeys()">{{ keys }}K</button>
                 }
               </tui-segmented>
-            </div>
-
-            <div class="setting">
-              <span class="setting-title">Style</span>
-              <tui-segmented
-                size="s"
-                [activeItemIndex]="styleIndex(entry.task.params.style)"
-                (activeItemIndexChange)="onKeyChange(entry.id, entry.task.params, { style: styleOptions[$event].value })"
-              >
-                @for (option of styleOptions; track option.value) {
-                  <button type="button">{{ option.label }}</button>
-                }
-              </tui-segmented>
-              <span class="setting-hint">{{ styleOptions[styleIndex(entry.task.params.style)].hint }}</span>
             </div>
 
             @if (sourceKeys() === null || entry.task.params.targetKeys > sourceKeys()!) {

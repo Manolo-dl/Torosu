@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TASK_LABELS } from '@features/trainer';
-import { FlnConverterParams, KeyConverterParams, KeyDensity, PatternStyle, RateChangeParams, TrainerTaskType } from '@features/trainer/models/trainer.model';
+import { FlnConverterParams, KeyConverterParams, KeyDensity, RateChangeParams, TrainerTaskType } from '@features/trainer/models/trainer.model';
 import { TrainerStore } from '@features/trainer/stores/trainer.store';
 import { TosuStore } from '@entities/tosu';
 import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDropList } from '@angular/cdk/drag-drop';
@@ -39,11 +39,6 @@ export class TrainerTaskPipelineComponent {
   sourceKeys = computed(() => (this.isMania() ? Math.round(this.tosu.data()?.beatmap?.stats?.cs?.original ?? 0) || null : null));
 
   readonly keyOptions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-  readonly styleOptions: { value: PatternStyle; label: string; hint: string }[] = [
-    { value: 'faithful', label: 'Faithful', hint: 'Each column keeps to its keys and rarely moves. Closest to the original patterns.' },
-    { value: 'balanced', label: 'Balanced', hint: 'Columns move to use every key and to break up the back-and-forths of the original.' },
-    { value: 'spread', label: 'Spread', hint: 'Streams roll over every key, crossing hands if needed. Real trills and jacks are kept.' },
-  ];
   readonly densityOptions: { value: KeyDensity; label: string }[] = [
     { value: 'none', label: 'None' },
     { value: 'dense', label: 'Some' },
@@ -78,7 +73,7 @@ export class TrainerTaskPipelineComponent {
         const source = this.sourceKeys() ?? 4;
         this.trainer.addTask({
           type: 'KeyConverter',
-          params: { targetKeys: source < 7 ? 7 : source < 10 ? 10 : 7, density: 'none', style: 'balanced', keepJacks: true },
+          params: { targetKeys: source < 7 ? 7 : source < 10 ? 10 : 7, density: 'none', keepJacks: true },
         });
         break;
       }
@@ -106,10 +101,6 @@ export class TrainerTaskPipelineComponent {
 
   onKeyChange(id: string, params: KeyConverterParams, change: Partial<KeyConverterParams>) {
     this.trainer.updateTaskParams(id, { ...params, ...change });
-  }
-
-  styleIndex(style: PatternStyle): number {
-    return this.styleOptions.findIndex(o => o.value === style);
   }
 
   densityIndex(density: KeyDensity): number {
