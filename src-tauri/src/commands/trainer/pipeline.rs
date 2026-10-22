@@ -1,7 +1,7 @@
 use anyhow::Result;
 use rosu_map::Beatmap;
 
-use crate::commands::trainer::{model::{TrainerTask, TrainerTaskParams}, tasks::{fln_converter, rate_change, sv_normalizer}};
+use crate::commands::trainer::{model::{TrainerTask, TrainerTaskParams}, tasks::{fln_converter, key_converter, rate_change, sv_normalizer}};
 
 pub fn run(beatmap: &mut Beatmap, tasks: &[TrainerTask]) -> Result<()> {
 
@@ -10,6 +10,7 @@ pub fn run(beatmap: &mut Beatmap, tasks: &[TrainerTask]) -> Result<()> {
             TrainerTaskParams::RateChange(params) => rate_change::apply(beatmap, params)?,
             TrainerTaskParams::SVNormalizer(_) => sv_normalizer::apply(beatmap)?,
             TrainerTaskParams::FlnConverter(params) => fln_converter::apply(beatmap, params)?,
+            TrainerTaskParams::KeyConverter(params) => key_converter::apply(beatmap, params)?,
         }
     }
 

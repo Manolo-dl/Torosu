@@ -1,17 +1,18 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TASK_LABELS } from '@features/trainer';
-import { FlnConverterParams, RateChangeParams, TrainerTaskType } from '@features/trainer/models/trainer.model';
+import { FlnConverterParams, KeyConverterParams, KeyDensity, RateChangeParams, TrainerTaskType } from '@features/trainer/models/trainer.model';
 import { TrainerStore } from '@features/trainer/stores/trainer.store';
 import { TosuStore } from '@entities/tosu';
 import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDropList } from '@angular/cdk/drag-drop';
 import { TuiButton, TuiCheckbox, TuiDataList, TuiDropdown, TuiIcon, TuiInput, TuiNotificationDirective, TuiTitle } from '@taiga-ui/core';
+import { TuiSegmented } from '@taiga-ui/kit';
 import { TuiCardLarge } from '@taiga-ui/layout';
 import { TrainerNoteLengthComponent } from '../trainer-note-length/trainer-note-length.component';
 
 @Component({
   selector: 'app-trainer-task-pipeline',
-  imports: [CdkDrag, CdkDropList, CdkDragHandle, FormsModule, TuiButton, TuiCardLarge, TuiCheckbox, TuiDataList, TuiDropdown, TuiIcon, TuiInput, TuiNotificationDirective, TuiTitle, TrainerNoteLengthComponent],
+  imports: [CdkDrag, CdkDropList, CdkDragHandle, FormsModule, TuiButton, TuiCardLarge, TuiCheckbox, TuiDataList, TuiDropdown, TuiIcon, TuiInput, TuiNotificationDirective, TuiSegmented, TuiTitle, TrainerNoteLengthComponent],
   templateUrl: './trainer-task-pipeline.component.html',
   styleUrl: './trainer-task-pipeline.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -22,7 +23,7 @@ export class TrainerTaskPipelineComponent {
   readonly tosu = inject(TosuStore);
 
   taskLabels = TASK_LABELS;
-  availableTasks: TrainerTaskType[] = ['RateChange', 'SVNormalizer', 'FlnConverter'];
+  availableTasks: TrainerTaskType[] = ['RateChange', 'SVNormalizer', 'FlnConverter', 'KeyConverter'];
   readonly menuOpen = signal(false);
 
   availableTasksFiltered = computed(() => {
@@ -33,6 +34,21 @@ export class TrainerTaskPipelineComponent {
   originalBpm = computed(() => this.tosu.data()?.beatmap?.stats?.bpm?.common ?? null);
 
   isMania = computed(() => this.tosu.data()?.beatmap?.mode?.number === 3);
+
+  /** Key count of the current map: in mania it is the CS. */
+  sourceKeys = computed(() => (this.isMania() ? Math.round(this.tosu.data()?.beatmap?.stats?.cs?.original ?? 0) || null : null));
+
+  readonly keyOptions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+  readonly patternOptions = [
+    { beats: 1, label: 'Every beat' },
+    { beats: 2, label: 'Every 2 beats' },
+    { beats: 4, label: 'Every 4 beats' },
+  ];
+  readonly densityOptions: { value: KeyDensity; label: string }[] = [
+    { value: 'none', label: 'None' },
+    { value: 'dense', label: 'Some' },
+    { value: 'moreDense', label: 'More' },
+  ];
 
   newBpm(rate: number): number | null {
     const bpm = this.originalBpm();
@@ -58,6 +74,14 @@ export class TrainerTaskPipelineComponent {
           params: { gap: { unit: 'beat', value: 4 }, minLength: { unit: 'beat', value: 4 }, reworkExistingLn: true },
         });
         break;
+      case 'KeyConverter': {
+        const source = this.sourceKeys() ?? 4;
+        this.trainer.addTask({
+          type: 'KeyConverter',
+          params: { targetKeys: source < 7 ? 7 : source < 10 ? 10 : 7, density: 'none', beatsPerPattern: 1, keepJacks: true },
+        });
+        break;
+      }
     }
   }
 
@@ -78,6 +102,18 @@ export class TrainerTaskPipelineComponent {
 
   onRateOptionChange(id: string, params: RateChangeParams, change: Partial<RateChangeParams>) {
     this.trainer.updateTaskParams(id, { ...params, ...change });
+  }
+
+  onKeyChange(id: string, params: KeyConverterParams, change: Partial<KeyConverterParams>) {
+    this.trainer.updateTaskParams(id, { ...params, ...change });
+  }
+
+  patternIndex(beats: number): number {
+    return this.patternOptions.findIndex(o => o.beats === beats);
+  }
+
+  densityIndex(density: KeyDensity): number {
+    return this.densityOptions.findIndex(o => o.value === density);
   }
 
   onFlnChange(id: string, params: FlnConverterParams, change: Partial<FlnConverterParams>) {

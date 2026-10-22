@@ -1,6 +1,6 @@
 export type DifficultyKey = 'hp' | 'cs' | 'od' | 'ar';
 
-export type TrainerTaskType = 'RateChange' | 'SVNormalizer' | 'FlnConverter';
+export type TrainerTaskType = 'RateChange' | 'SVNormalizer' | 'FlnConverter' | 'KeyConverter';
 
 export interface RateChangeParams {
     rate: number;
@@ -26,10 +26,23 @@ export interface FlnConverterParams {
     reworkExistingLn: boolean;
 }
 
+/** Extra notes added to fill the new keys when converting to more keys. */
+export type KeyDensity = 'none' | 'dense' | 'moreDense';
+
+export interface KeyConverterParams {
+    targetKeys: number;
+    density: KeyDensity;
+    /** How many beats each pattern lasts before the notes are spread again. */
+    beatsPerPattern: number;
+    /** Keeps the map's jacks on a single key instead of splitting them. */
+    keepJacks: boolean;
+}
+
 export type TrainerTaskParams =
     | { type: 'RateChange'; params: RateChangeParams }
     | { type: 'SVNormalizer'; params: {} }
-    | { type: 'FlnConverter'; params: FlnConverterParams };
+    | { type: 'FlnConverter'; params: FlnConverterParams }
+    | { type: 'KeyConverter'; params: KeyConverterParams };
 
 export interface TrainerTask {
     id: string;
@@ -40,6 +53,7 @@ export const TASK_LABELS: Record<TrainerTaskType, string> = {
     RateChange: 'Rate Change',
     SVNormalizer: 'SV Normalizer',
     FlnConverter: 'FLN Converter',
+    KeyConverter: 'Key Converter',
 };
 
 export interface DifficultyStat {

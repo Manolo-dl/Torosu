@@ -1,7 +1,7 @@
 import { effect, inject, untracked } from "@angular/core";
 import { TosuStore } from "@entities/tosu";
 import { patchState, signalStore, withHooks, withMethods, withState } from "@ngrx/signals";
-import { DifficultyKey, DifficultyStat, FlnConverterParams, RateChangeParams, TrainerTask, TrainerTaskParams } from "../models/trainer.model";
+import { DifficultyKey, DifficultyStat, FlnConverterParams, KeyConverterParams, RateChangeParams, TrainerTask, TrainerTaskParams } from "../models/trainer.model";
 import { OsuPathStore } from "@shared/stores";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
@@ -56,7 +56,7 @@ export const TrainerStore = signalStore(
             patchState(store, { tasks: store.tasks().filter(task => task.id !== id) });
         },
 
-        updateTaskParams(id: string, params: RateChangeParams | FlnConverterParams | {}) {
+        updateTaskParams(id: string, params: RateChangeParams | FlnConverterParams | KeyConverterParams | {}) {
             patchState(store, {
                 tasks: store.tasks().map(t =>
                     t.id === id ? { ...t, task: { ...t.task, params } as TrainerTaskParams } : t

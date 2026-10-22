@@ -7,7 +7,9 @@
 
 use rosu_map::Beatmap;
 
-use crate::commands::trainer::model::{DifficultySettings, FlnConverterParams, LengthUnit, NoteLength, RateChangeParams};
+use crate::commands::trainer::model::{
+    Density, DifficultySettings, FlnConverterParams, KeyConverterParams, LengthUnit, NoteLength, RateChangeParams,
+};
 
 /// Formats a number with at most `decimals` decimals, without trailing zeros:
 /// 1.3 -> "1.3", 1.25 -> "1.25", 1.0 -> "1", 1.1500000000000001 -> "1.15".
@@ -59,6 +61,7 @@ pub fn main_bpm(beatmap: &Beatmap) -> Option<f64> {
 /// - `Insane HP7` when only the difficulty settings change
 /// - `Insane (SV normalized)` when the SV changes are normalized
 /// - `Insane (FLN BG4 ML4)` after the FLN converter, named like osuLNmaster
+/// - `Insane (10K Dense)` after the key converter
 /// - `Insane (trainer)` when nothing changes
 ///
 /// `beatmap` must already have the tasks applied; `original` holds the
@@ -71,6 +74,7 @@ pub fn version(
     rate: Option<&RateChangeParams>,
     sv_normalized: bool,
     fln: Option<&FlnConverterParams>,
+    keys: Option<&KeyConverterParams>,
 ) -> String {
     let mut parts = vec![original_version.to_string()];
 
@@ -87,6 +91,10 @@ pub fn version(
 
     if sv_normalized {
         parts.push("(SV normalized)".to_string());
+    }
+
+    if let Some(params) = keys {
+        parts.push(key_tag(params));
     }
 
     if let Some(params) = fln {
@@ -110,6 +118,25 @@ pub fn version(
     }
 
     parts.join(" ")
+}
+
+/// `(10K)`, `(10K More Dense)`, `(7K, 2 beats)`... Every setting that changes
+/// the notes is in the name.
+fn key_tag(params: &KeyConverterParams) -> String {
+    let mut tag = format!("({}K", params.target_keys);
+    match params.density {
+        Density::None => {}
+        Density::Dense => tag.push_str(" Dense"),
+        Density::MoreDense => tag.push_str(" More Dense"),
+    }
+    if params.beats_per_pattern > 1 {
+        tag.push_str(&format!(", {} beats", params.beats_per_pattern));
+    }
+    if !params.keep_jacks {
+        tag.push_str(", split jacks");
+    }
+    tag.push(')');
+    tag
 }
 
 /// `FLN` reworks the existing LNs too, `INV` keeps them. `BG` is the gap and

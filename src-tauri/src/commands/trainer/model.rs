@@ -46,12 +46,33 @@ pub struct FlnConverterParams {
     pub rework_existing_ln: bool,
 }
 
+/// Extra notes the key converter adds to fill the new keys.
+#[derive(Clone, Copy, PartialEq, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum Density {
+    None,
+    Dense,
+    MoreDense,
+}
+
+#[derive(Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct KeyConverterParams {
+    pub target_keys: u8,
+    pub density: Density,
+    /// How many beats each pattern lasts before the notes are spread again.
+    pub beats_per_pattern: u8,
+    /// Keeps the map's jacks on a single key instead of splitting them.
+    pub keep_jacks: bool,
+}
+
 #[derive(Deserialize)]
 #[serde(tag = "type", content = "params")]
 pub enum TrainerTaskParams {
     RateChange(RateChangeParams),
     SVNormalizer(EmptyParams),
     FlnConverter(FlnConverterParams),
+    KeyConverter(KeyConverterParams),
 }
 
 #[derive(Deserialize)]

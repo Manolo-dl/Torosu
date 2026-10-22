@@ -163,6 +163,82 @@
               Also reshape the map's existing long notes
             </label>
           }
+
+          @if (entry.task.type === 'KeyConverter') {
+            @if (!isMania()) {
+              <div appearance="warning" size="s" tuiNotification>
+                The key converter only works on <strong>osu!mania</strong> maps.
+              </div>
+            }
+
+            <p class="description">
+              Moves the notes to another number of keys, keeping the shape of the patterns (stairs, trills, chords)
+              and each note on its hand.
+            </p>
+
+            <div class="setting">
+              <span class="setting-title">
+                Keys
+                @if (sourceKeys() !== null) {
+                  ({{ sourceKeys() }}K → {{ entry.task.params.targetKeys }}K)
+                }
+              </span>
+              <tui-segmented
+                size="s"
+                [activeItemIndex]="keyOptions.indexOf(entry.task.params.targetKeys)"
+                (activeItemIndexChange)="onKeyChange(entry.id, entry.task.params, { targetKeys: keyOptions[$event] })"
+              >
+                @for (keys of keyOptions; track keys) {
+                  <button type="button" [disabled]="keys === sourceKeys()">{{ keys }}K</button>
+                }
+              </tui-segmented>
+            </div>
+
+            <div class="setting">
+              <span class="setting-title">Change pattern</span>
+              <tui-segmented
+                size="s"
+                [activeItemIndex]="patternIndex(entry.task.params.beatsPerPattern)"
+                (activeItemIndexChange)="onKeyChange(entry.id, entry.task.params, { beatsPerPattern: patternOptions[$event].beats })"
+              >
+                @for (option of patternOptions; track option.beats) {
+                  <button type="button">{{ option.label }}</button>
+                }
+              </tui-segmented>
+              <span class="setting-hint">How often the notes move to other keys. Longer keeps patterns together.</span>
+            </div>
+
+            @if (sourceKeys() === null || entry.task.params.targetKeys > sourceKeys()!) {
+              <div class="setting">
+                <span class="setting-title">Extra notes</span>
+                <tui-segmented
+                  size="s"
+                  [activeItemIndex]="densityIndex(entry.task.params.density)"
+                  (activeItemIndexChange)="onKeyChange(entry.id, entry.task.params, { density: densityOptions[$event].value })"
+                >
+                  @for (option of densityOptions; track option.value) {
+                    <button type="button">{{ option.label }}</button>
+                  }
+                </tui-segmented>
+                <span class="setting-hint">Copies some notes into the free keys next to them, to make use of the extra keys.</span>
+              </div>
+            } @else {
+              <div appearance="info" size="s" tuiNotification>
+                With fewer keys some notes will not fit and are removed (chords and notes inside long notes).
+              </div>
+            }
+
+            <label tuiLabel class="option">
+              <input
+                size="s"
+                tuiCheckbox
+                type="checkbox"
+                [ngModel]="entry.task.params.keepJacks"
+                (ngModelChange)="onKeyChange(entry.id, entry.task.params, { keepJacks: $event })"
+              />
+              Keep the map's jacks on a single key
+            </label>
+          }
         </div>
 
         <button

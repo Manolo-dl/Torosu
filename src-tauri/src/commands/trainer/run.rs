@@ -1,5 +1,5 @@
 use std::{fs, path::{Path, PathBuf}};
-use rosu_map::Beatmap;
+use rosu_map::{Beatmap, section::general::GameMode};
 use tauri::Emitter;
 use crate::commands::trainer::{
     audio_processing,
@@ -47,6 +47,13 @@ pub async fn run_trainer(app: tauri::AppHandle, request: RunTrainerRequest) -> R
         od: beatmap.overall_difficulty as f64,
         ar: beatmap.approach_rate as f64,
     };
+
+    // In mania CS is the key count: changing it would break the map, and the
+    // key converter sets it itself.
+    let mut request = request;
+    if beatmap.mode == GameMode::Mania {
+        request.difficulty.cs = original_difficulty.cs;
+    }
 
     beatmap.hp_drain_rate = request.difficulty.hp as f32;
     beatmap.circle_size = request.difficulty.cs as f32;
@@ -116,6 +123,10 @@ pub async fn run_trainer(app: tauri::AppHandle, request: RunTrainerRequest) -> R
         request.tasks.iter().any(|t| matches!(t.task, TrainerTaskParams::SVNormalizer(_))),
         request.tasks.iter().find_map(|t| match &t.task {
             TrainerTaskParams::FlnConverter(params) => Some(params),
+            _ => None,
+        }),
+        request.tasks.iter().find_map(|t| match &t.task {
+            TrainerTaskParams::KeyConverter(params) => Some(params),
             _ => None,
         }),
     );
