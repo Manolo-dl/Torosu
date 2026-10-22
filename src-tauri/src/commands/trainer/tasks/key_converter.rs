@@ -1,20 +1,32 @@
 //! Converts an osu!mania map to another key count, in either direction.
 //!
-//! Based on osu-mania-converter (4K/7K -> 8K/10K), generalised:
+//! Based on osu-mania-converter (4K/7K -> 8K/10K), but instead of picking a
+//! column mapping per beat it decides every row (the notes that start at the
+//! same time) on its own, with a beam search over a cost that describes what a
+//! good pattern is:
 //!
-//! - Every note keeps its source column's relative order: a *layout* maps the
-//!   source columns onto the target ones, order-preserving, so stairs stay
-//!   stairs and trills stay trills. Each source column also stays on its hand
-//!   (left, right, or the middle key on odd key counts).
-//! - The map is cut into groups (one per beat by default) and each group picks
-//!   a layout. Changing layouts between groups is what spreads the notes over
-//!   the extra keys; going down, a layout folds several columns into one.
-//! - The layouts are chosen with a beam search over a cost (new jacks, broken
-//!   jacks, moving a finger that holds an LN, dropped notes...), instead of the
-//!   original greedy choice with one beat of lookahead and its 15 hand-written
-//!   rules for the 7K middle key.
-//! - A note that cannot be placed (it would land inside an LN, or on another
-//!   note) is dropped, so the output is always a valid map.
+//! - **Flow**: when the source moves right, the target moves right too, about
+//!   as far. Stairs stay stairs, trills stay trills, jumps stay jumps.
+//! - **Hands**: a note stays on its hand (left, right, or the middle key on odd
+//!   key counts), so hand alternation is kept. Spread may cross over now and
+//!   then to keep a stream flowing.
+//! - **Trills**: only real trills (two columns alternating for a while) stay
+//!   trills. The short back-and-forths a 4K stream is full of, just because it
+//!   has 4 keys, are not copied: a key coming back 2 or 3 notes later within a
+//!   beat costs more, so streams roll over the extra keys instead.
+//! - **Consistency**: each column keeps to a couple of keys around its natural
+//!   place and changes key only when it pays off, like hand conversions do (in
+//!   krrcream's 8K -> 10K, a column changes key in 1 of 4 notes).
+//! - **Spread**: a key that was just used costs more, decaying over a beat. The
+//!   notes spread over every key, without anchors or minijacks.
+//! - **Jacks**: no new jacks; the map's own jacks (the same column in
+//!   consecutive rows) stay on a single key.
+//! - **Extra notes** (optional, only with more keys) widen the chords into the
+//!   key next to them, on the same hand, as hand conversions do (7K Delta Dan),
+//!   more on the stronger beats.
+//!
+//! A note that cannot be placed (every key it could go to is held) is dropped,
+//! so the output is always a valid map.
 
 use anyhow::{Result, bail};
 use rosu_map::{
@@ -26,37 +38,106 @@ use rosu_map::{
 };
 
 use crate::commands::trainer::{
-    model::{Density, KeyConverterParams},
+    model::{Density, KeyConverterParams, PatternStyle},
     naming,
 };
 
 /// osu! stable plays 1K to 10K.
 pub const MAX_KEYS: usize = 10;
 
-const BEAM_WIDTH: usize = 12;
+const BEAM_WIDTH: usize = 8;
 
 /// Notes in the same column closer than this (in beats) are a jack, as in the
-/// original: a 1/4 with some leniency. 1/2 apart is just a repeated key.
+/// original: a 1/4 with some leniency.
 const JACK_BEATS: f64 = 0.375;
 
-/// Shorter LNs are played like taps and do not lock the finger.
-const LOCK_MIN_MS: f64 = 100.0;
-
-/// Leniency for notes a couple of ms off the beat when grouping.
+/// Leniency for notes a couple of ms off the grid.
 const GRID_LENIENCY_MS: f64 = 2.0;
+
+/// Rows further apart than this (in beats) are not compared for flow.
+const FLOW_BEATS: f64 = 2.0;
 
 const COST_DROP: f64 = 150.0;
 const COST_NEW_JACK: f64 = 100.0;
-const COST_LN_FINGER: f64 = 30.0;
-const COST_BROKEN_JACK: f64 = 20.0;
-/// Keeping the same layout costs more than moving one column, so it changes
-/// whenever it can, like the original alternating shifts.
-const COST_STAY: f64 = 3.0;
-const COST_MOVE: f64 = 1.0;
-const COST_IMBALANCE: f64 = 2.0;
-/// Upper bound of the noise that breaks ties between equal layouts, so the
-/// patterns do not always move the same way.
-const TIE_BREAK: f64 = 0.5;
+const COST_BROKEN_JACK: f64 = 40.0;
+/// Reward for an extra note on a downbeat or a chord; less elsewhere.
+const EXTRA_REWARD: f64 = 10.0;
+/// How far (in keys) a column can stray from its natural place for free.
+const FREE_DEVIATION: f64 = 0.75;
+/// A source trill: two columns alternating for at least this many notes, at
+/// most this far apart (in beats).
+const TRILL_MIN_NOTES: usize = 6;
+const TRILL_MAX_GAP_BEATS: f64 = 0.5;
+/// Breaking a real trill.
+const COST_BROKEN_TRILL: f64 = 10.0;
+/// Rows of history kept to spot back-and-forths.
+const HISTORY: usize = 3;
+/// Upper bound of the noise that breaks ties between equal choices, so the
+/// patterns do not always go the same way.
+const TIE_BREAK: f64 = 0.3;
+
+struct Weights {
+    /// Moving the other way than the source.
+    direction: f64,
+    /// Per key of difference between how far the source and the target move.
+    shape: f64,
+    /// Using a key that was just released, decaying over a beat.
+    fresh: f64,
+    /// A column going to another key than its previous note.
+    switch: f64,
+    /// Per squared key a column strays from its natural place.
+    deviation: f64,
+    /// A key coming back 2 / 3 notes later within a beat, outside a trill.
+    repeat2: f64,
+    repeat3: f64,
+    /// A note going to the other hand.
+    cross: f64,
+}
+
+fn weights(style: PatternStyle) -> Weights {
+    match style {
+        PatternStyle::Faithful => Weights {
+            direction: 10.0,
+            shape: 3.0,
+            fresh: 4.0,
+            switch: 2.0,
+            deviation: 4.0,
+            repeat2: 3.0,
+            repeat3: 1.5,
+            cross: f64::INFINITY,
+        },
+        PatternStyle::Balanced => Weights {
+            direction: 6.0,
+            shape: 1.5,
+            fresh: 7.0,
+            switch: 1.0,
+            deviation: 2.5,
+            repeat2: 8.0,
+            repeat3: 4.0,
+            cross: 30.0,
+        },
+        PatternStyle::Spread => Weights {
+            direction: 3.0,
+            shape: 0.5,
+            fresh: 10.0,
+            switch: 0.3,
+            deviation: 1.0,
+            repeat2: 12.0,
+            repeat3: 6.0,
+            cross: 6.0,
+        },
+    }
+}
+
+/// Extra notes as `(max per row, min strength of the row, min gap in beats
+/// from the previous note in that key)`.
+fn fill_settings(density: Density) -> Option<(usize, f64, f64)> {
+    match density {
+        Density::None => None,
+        Density::Dense => Some((1, 0.7, 0.5)),
+        Density::MoreDense => Some((2, 0.0, JACK_BEATS)),
+    }
+}
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 enum Side {
@@ -73,182 +154,367 @@ fn side(col: usize, keys: usize) -> Side {
     }
 }
 
-/// A source column stays on its hand; the middle key goes either way.
+/// A note stays on its hand; the middle key goes either way.
 fn same_hand(src: Side, dst: Side) -> bool {
     src == Side::Middle || dst == Side::Middle || src == dst
 }
 
-/// Every order-preserving map from `src` columns to `dst` columns that keeps
-/// each column on its hand: injective when expanding, folding when reducing.
-fn layouts(src: usize, dst: usize) -> Vec<Vec<u8>> {
-    fn rec(i: usize, min: usize, src: usize, dst: usize, cur: &mut Vec<u8>, out: &mut Vec<Vec<u8>>) {
-        if i == src {
-            out.push(cur.clone());
-            return;
-        }
-        let injective = dst >= src;
-        for d in min..dst {
-            // Leave room for the remaining columns.
-            if injective && dst - d < src - i {
-                break;
-            }
-            if !same_hand(side(i, src), side(d, dst)) {
-                continue;
-            }
-            cur.push(d as u8);
-            rec(i + 1, if injective { d + 1 } else { d }, src, dst, cur, out);
-            cur.pop();
-        }
+/// Every set of `size` keys out of `keys`, sorted, indexed by size.
+fn combinations(keys: usize) -> Vec<Vec<Vec<u8>>> {
+    let mut by_size = vec![Vec::new(); keys + 1];
+    for mask in 1u32..(1 << keys) {
+        let combo: Vec<u8> = (0..keys as u8).filter(|&c| mask & (1 << c) != 0).collect();
+        by_size[combo.len()].push(combo);
     }
+    by_size
+}
 
-    let mut out = Vec::new();
-    rec(0, 0, src, dst, &mut Vec::with_capacity(src), &mut out);
-    out
+/// Which of `k` notes (sorted by column) are kept when only `m` fit: spread
+/// out, so the outer notes of a chord survive.
+fn kept(k: usize, m: usize) -> Vec<usize> {
+    match m {
+        0 => Vec::new(),
+        1 => vec![k / 2],
+        _ => (0..m).map(|i| (i * (k - 1) + (m - 1) / 2) / (m - 1)).collect(),
+    }
 }
 
 struct Note {
     /// Index in `beatmap.hit_objects`.
     idx: usize,
-    time: f64,
     end: f64,
-    src: usize,
-    beat_len: f64,
+    src: u8,
 }
 
-impl Note {
-    fn jack_gap(&self) -> f64 {
-        self.beat_len * JACK_BEATS
-    }
-
-    fn holds(&self) -> bool {
-        self.end - self.time >= LOCK_MIN_MS
-    }
+struct Row {
+    time: f64,
+    /// Indices into the notes, sorted by source column.
+    notes: std::ops::Range<usize>,
+    beat_len: f64,
+    /// How much an extra note fits here: 1 on the beat, less off it.
+    strength: f64,
+    /// Part of a real trill in the source.
+    trill: bool,
 }
 
 const NONE: u8 = u8::MAX;
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 struct State {
-    /// Per target column: when it is free again (end of its last note).
-    release: Vec<f64>,
-    last_src: Vec<u8>,
-    last_is_ln: Vec<bool>,
-    holding: Vec<bool>,
-    /// Per source column: its last note, to keep its jacks together.
-    src_release: Vec<f64>,
-    src_target: Vec<u8>,
+    /// Per target key: when it is free again, and what was there.
+    release: [f64; MAX_KEYS],
+    last_src: [u8; MAX_KEYS],
+    last_is_ln: [bool; MAX_KEYS],
+    /// Per source column: its last note, to keep its jacks on one key.
+    src_release: [f64; MAX_KEYS],
+    src_target: [u8; MAX_KEYS],
+    /// Time and average position (0..1) of the previous row, in source and
+    /// target.
+    prev: Option<(f64, f64, f64)>,
+    /// The last rows, newest first: time and the source and target columns
+    /// as bit masks.
+    history: [(f64, u16, u16); HISTORY],
 }
 
 impl State {
-    fn new(src: usize, dst: usize) -> Self {
+    fn new() -> Self {
         Self {
-            release: vec![f64::NEG_INFINITY; dst],
-            last_src: vec![NONE; dst],
-            last_is_ln: vec![false; dst],
-            holding: vec![false; dst],
-            src_release: vec![f64::NEG_INFINITY; src],
-            src_target: vec![NONE; src],
+            release: [f64::NEG_INFINITY; MAX_KEYS],
+            last_src: [NONE; MAX_KEYS],
+            last_is_ln: [false; MAX_KEYS],
+            src_release: [f64::NEG_INFINITY; MAX_KEYS],
+            src_target: [NONE; MAX_KEYS],
+            prev: None,
+            history: [(f64::NEG_INFINITY, 0, 0); HISTORY],
         }
     }
 }
 
-#[derive(Default)]
-struct Placement {
-    /// Target column of each note of the group, `None` when dropped.
-    targets: Vec<Option<u8>>,
-    new_jacks: usize,
+/// What was done with a row: the keys of the notes kept (the `size` of them
+/// picked by [`kept`]) and the keys of the extra notes.
+#[derive(Clone, Copy)]
+struct Decision {
+    size: u8,
+    combo: u16,
+    extras: [u8; 2],
+    n_extras: u8,
 }
 
-/// Places a group with `layout`, updating `state`, and returns its cost.
-fn place(
-    state: &mut State,
-    group: &[Note],
-    layout: &[u8],
-    prev: Option<&[u8]>,
+struct Ctx<'a> {
+    notes: &'a [Note],
+    combos: Vec<Vec<Vec<u8>>>,
+    src_keys: usize,
+    dst_keys: usize,
+    weights: Weights,
     keep_jacks: bool,
-    dst: usize,
-    mut out: Option<&mut Placement>,
-) -> f64 {
-    let start = group[0].time;
-    let mut cost = 0.0;
+    fill: Option<(usize, f64, f64)>,
+}
 
-    // A finger holding an LN cannot move to another key.
-    for d in 0..dst {
-        if state.holding[d] && state.release[d] > start {
-            let src = state.last_src[d] as usize;
-            if layout[src] as usize != d {
-                cost += COST_LN_FINGER;
+fn pos(col: usize, keys: usize) -> f64 {
+    (col as f64 + 0.5) / keys as f64
+}
+
+impl Ctx<'_> {
+    fn fresh(&self, state: &State, col: usize, row: &Row) -> f64 {
+        self.weights.fresh * (-(row.time - state.release[col]) / row.beat_len).exp()
+    }
+
+    fn free(&self, state: &State, col: usize, row: &Row, src: u8) -> bool {
+        let chained = row.time == state.release[col] && state.last_src[col] == src && state.last_is_ln[col];
+        row.time > state.release[col] || chained
+    }
+
+    /// Cost of each source note of the row in each target key, `INFINITY`
+    /// where it cannot go.
+    fn note_costs(&self, state: &State, row: &Row) -> [[f64; MAX_KEYS]; MAX_KEYS] {
+        let mut costs = [[f64::INFINITY; MAX_KEYS]; MAX_KEYS];
+        let jack_gap = row.beat_len * JACK_BEATS;
+
+        for (i, note) in self.notes[row.notes.clone()].iter().enumerate() {
+            let src = note.src as usize;
+            // A jack is the same column in consecutive rows. Coming back to
+            // it after other notes, as fast 4K streams do, is not one.
+            let (_, prev_src, _) = state.history[0];
+            let source_jack = state.src_target[src] != NONE
+                && prev_src & (1 << src) != 0
+                && row.time - state.src_release[src] <= jack_gap;
+
+            for col in 0..self.dst_keys {
+                if !self.free(state, col, row, note.src) {
+                    continue;
+                }
+
+                let mut cost = 0.0;
+                if !same_hand(side(src, self.src_keys), side(col, self.dst_keys)) {
+                    cost += self.weights.cross;
+                    if !cost.is_finite() {
+                        continue;
+                    }
+                }
+                let keeps_jack = source_jack && state.src_target[src] as usize == col;
+
+                if source_jack && self.keep_jacks && !keeps_jack {
+                    cost += COST_BROKEN_JACK;
+                }
+                if !keeps_jack {
+                    cost += self.repeat_cost(state, row, src, col);
+                    if state.last_src[col] != note.src && row.time - state.release[col] <= jack_gap {
+                        cost += COST_NEW_JACK;
+                    }
+                    cost += self.fresh(state, col, row);
+                }
+
+                if state.src_target[src] != NONE && state.src_target[src] as usize != col {
+                    cost += self.weights.switch;
+                }
+                let natural = pos(src, self.src_keys) * self.dst_keys as f64 - 0.5;
+                let stray = ((col as f64 - natural).abs() - FREE_DEVIATION).max(0.0);
+                cost += self.weights.deviation * stray * stray;
+
+                costs[i][col] = cost;
             }
+        }
+
+        costs
+    }
+
+    /// Cost of a key coming back 2 or 3 notes later (a back-and-forth), and
+    /// of breaking a real trill.
+    fn repeat_cost(&self, state: &State, row: &Row, src: usize, col: usize) -> f64 {
+        let mut cost = 0.0;
+        for (lag, weight) in [(2, self.weights.repeat2), (3, self.weights.repeat3)] {
+            let (time, src_mask, dst_mask) = state.history[lag - 1];
+            if row.time - time > row.beat_len {
+                break;
+            }
+            let src_repeats = src_mask & (1 << src) != 0;
+            let dst_repeats = dst_mask & (1 << col) != 0;
+
+            if row.trill && lag == 2 {
+                if src_repeats && !dst_repeats {
+                    cost += COST_BROKEN_TRILL;
+                }
+            } else if dst_repeats {
+                cost += weight;
+            }
+        }
+        cost
+    }
+
+    /// Cost of an extra note in each key (negative: a reward), `INFINITY`
+    /// where it does not fit.
+    fn extra_costs(&self, state: &State, row: &Row) -> [f64; MAX_KEYS] {
+        let mut costs = [f64::INFINITY; MAX_KEYS];
+        let Some((_, min_strength, gap_beats)) = self.fill else { return costs };
+        if row.strength < min_strength {
+            return costs;
+        }
+
+        let gap = row.beat_len * gap_beats;
+        for (col, cost) in costs.iter_mut().enumerate().take(self.dst_keys) {
+            if row.time - state.release[col] >= gap {
+                *cost = self.fresh(state, col, row) - EXTRA_REWARD * row.strength;
+            }
+        }
+        costs
+    }
+
+    /// The best extra notes for a row placed in `combo`: next to its notes,
+    /// on the same hand.
+    fn pick_extras(&self, combo: &[u8], extra_costs: &[f64; MAX_KEYS]) -> ([u8; 2], u8, f64) {
+        let Some((max, _, _)) = self.fill else { return ([0; 2], 0, 0.0) };
+
+        let mut picks: Vec<(f64, u8)> = Vec::with_capacity(4);
+        for &col in combo {
+            let neighbours = [col.checked_sub(1), Some(col + 1).filter(|&c| (c as usize) < self.dst_keys)];
+            for n in neighbours.into_iter().flatten() {
+                let cost = extra_costs[n as usize];
+                if cost < 0.0
+                    && !combo.contains(&n)
+                    && !picks.iter().any(|&(_, p)| p == n)
+                    && same_hand(side(col as usize, self.dst_keys), side(n as usize, self.dst_keys))
+                {
+                    picks.push((cost, n));
+                }
+            }
+        }
+        picks.sort_by(|a, b| a.0.total_cmp(&b.0));
+
+        let mut extras = [0u8; 2];
+        let mut total = 0.0;
+        let n = picks.len().min(max);
+        for (i, (slot, &(cost, col))) in extras.iter_mut().zip(&picks[..n]).enumerate() {
+            // A second extra in the same row is worth half: rows mostly grow
+            // by one note, sometimes two.
+            if i > 0 && cost + EXTRA_REWARD / 2.0 >= 0.0 {
+                return (extras, i as u8, total);
+            }
+            *slot = col;
+            total += if i > 0 { cost + EXTRA_REWARD / 2.0 } else { cost };
+        }
+        (extras, n as u8, total)
+    }
+
+    /// Cost of the flow from the previous row to this one.
+    fn flow_cost(&self, state: &State, row: &Row, src_pos: f64, dst_pos: f64) -> f64 {
+        let Some((prev_time, prev_src, prev_dst)) = state.prev else { return 0.0 };
+        if row.time - prev_time > row.beat_len * FLOW_BEATS {
+            return 0.0;
+        }
+
+        let ds = src_pos - prev_src;
+        let dt = dst_pos - prev_dst;
+        let mut cost = self.weights.shape * (ds - dt).abs() * self.dst_keys as f64;
+        if ds.abs() > 1e-9 && (dt.abs() < 1e-9 || ds.signum() != dt.signum()) {
+            cost += self.weights.direction;
+        }
+        cost
+    }
+
+    fn source_pos(&self, row: &Row, keep: &[usize]) -> f64 {
+        let notes = &self.notes[row.notes.clone()];
+        keep.iter().map(|&i| pos(notes[i].src as usize, self.src_keys)).sum::<f64>() / keep.len() as f64
+    }
+
+    /// Every way to place the row, with its cost. Fewer notes are only tried
+    /// when they do not all fit.
+    fn candidates(&self, state: &State, row: &Row, row_idx: usize, out: &mut Vec<(f64, Decision)>) {
+        let k = row.notes.len();
+        let costs = self.note_costs(state, row);
+        let extra_costs = self.extra_costs(state, row);
+
+        for size in (1..=k.min(self.dst_keys)).rev() {
+            let keep = kept(k, size);
+            let src_pos = self.source_pos(row, &keep);
+            let dropped = (k - size) as f64 * COST_DROP;
+            let before = out.len();
+
+            for (ci, combo) in self.combos[size].iter().enumerate() {
+                let mut cost = dropped;
+                for (&note, &col) in keep.iter().zip(combo) {
+                    cost += costs[note][col as usize];
+                }
+                if !cost.is_finite() {
+                    continue;
+                }
+
+                let dst_pos = combo.iter().map(|&c| pos(c as usize, self.dst_keys)).sum::<f64>() / size as f64;
+                cost += self.flow_cost(state, row, src_pos, dst_pos);
+
+                let (extras, n_extras, extra_cost) = self.pick_extras(combo, &extra_costs);
+                let decision = Decision { size: size as u8, combo: ci as u16, extras, n_extras };
+
+                out.push((cost + extra_cost + tie_break(row_idx, ci), decision));
+            }
+
+            if out.len() > before {
+                return;
+            }
+        }
+
+        // Every key is held: the whole row is dropped.
+        out.push((k as f64 * COST_DROP, Decision { size: 0, combo: 0, extras: [0; 2], n_extras: 0 }));
+    }
+
+    fn commit(&self, state: &mut State, row: &Row, decision: &Decision) {
+        let notes = &self.notes[row.notes.clone()];
+        let size = decision.size as usize;
+        let keep = kept(notes.len(), size);
+
+        if size > 0 {
+            let combo = &self.combos[size][decision.combo as usize];
+            for (&i, &col) in keep.iter().zip(combo) {
+                let (note, col) = (&notes[i], col as usize);
+                state.release[col] = note.end;
+                state.last_src[col] = note.src;
+                state.last_is_ln[col] = note.end > row.time;
+                state.src_release[note.src as usize] = note.end;
+                state.src_target[note.src as usize] = col as u8;
+            }
+
+            let dst_pos = combo.iter().map(|&c| pos(c as usize, self.dst_keys)).sum::<f64>() / size as f64;
+            state.prev = Some((row.time, self.source_pos(row, &keep), dst_pos));
+        }
+
+        let src_mask = notes.iter().fold(0u16, |m, n| m | 1 << n.src);
+        let mut dst_mask = if size > 0 {
+            self.combos[size][decision.combo as usize].iter().fold(0u16, |m, &c| m | 1 << c)
+        } else {
+            0
+        };
+        for &col in &decision.extras[..decision.n_extras as usize] {
+            dst_mask |= 1 << col;
+        }
+        state.history.rotate_right(1);
+        state.history[0] = (row.time, src_mask, dst_mask);
+
+        for &col in &decision.extras[..decision.n_extras as usize] {
+            let end = self.template(row, decision, col).map_or(row.time, |n| self.notes[n].end);
+            state.release[col as usize] = end;
+            state.last_src[col as usize] = NONE;
+            state.last_is_ln[col as usize] = end > row.time;
         }
     }
 
-    match prev {
-        Some(prev) if prev == layout => cost += COST_STAY,
-        Some(prev) => {
-            let moved: u32 = prev.iter().zip(layout).map(|(&a, &b)| a.abs_diff(b) as u32).sum();
-            cost += COST_MOVE * moved as f64;
+    /// The note an extra note in `col` copies: the kept note closest to it.
+    fn template(&self, row: &Row, decision: &Decision, col: u8) -> Option<usize> {
+        let size = decision.size as usize;
+        if size == 0 {
+            return None;
         }
-        None => {}
+        let combo = &self.combos[size][decision.combo as usize];
+        kept(row.notes.len(), size)
+            .iter()
+            .zip(combo)
+            .min_by_key(|(_, c)| c.abs_diff(col))
+            .map(|(&i, _)| row.notes.start + i)
     }
-
-    let (mut left, mut right) = (0i32, 0i32);
-
-    for note in group {
-        let d = layout[note.src] as usize;
-        let src = note.src as u8;
-
-        // A chained LN tail of the same source column is fine, anything else
-        // starting where (or before) the column is released is not.
-        let chained = note.time == state.release[d] && state.last_src[d] == src && state.last_is_ln[d];
-        if note.time <= state.release[d] && !chained {
-            cost += COST_DROP;
-            if let Some(out) = out.as_deref_mut() {
-                out.targets.push(None);
-            }
-            continue;
-        }
-
-        if state.last_src[d] != src && note.time - state.release[d] <= note.jack_gap() {
-            cost += COST_NEW_JACK;
-            if let Some(out) = out.as_deref_mut() {
-                out.new_jacks += 1;
-            }
-        }
-
-        let prev_target = state.src_target[note.src];
-        if keep_jacks
-            && prev_target != NONE
-            && prev_target as usize != d
-            && note.time - state.src_release[note.src] <= note.jack_gap()
-        {
-            cost += COST_BROKEN_JACK;
-        }
-
-        match side(d, dst) {
-            Side::Left => left += 1,
-            Side::Right => right += 1,
-            Side::Middle => {}
-        }
-
-        state.release[d] = note.end;
-        state.last_src[d] = src;
-        state.last_is_ln[d] = note.end > note.time;
-        state.holding[d] = note.holds();
-        state.src_release[note.src] = note.end;
-        state.src_target[note.src] = d as u8;
-
-        if let Some(out) = out.as_deref_mut() {
-            out.targets.push(Some(d as u8));
-        }
-    }
-
-    cost + COST_IMBALANCE * (left - right).abs() as f64
 }
 
 /// Deterministic noise in `[0, TIE_BREAK)`, so the same settings always give
-/// the same map (and the same file name stays valid).
-fn tie_break(group: usize, layout: usize) -> f64 {
-    let mut x = (group as u64) << 32 | layout as u64;
+/// the same map.
+fn tie_break(row: usize, choice: usize) -> f64 {
+    let mut x = (row as u64) << 32 | choice as u64;
     x = x.wrapping_add(0x9e37_79b9_7f4a_7c15);
     x = (x ^ (x >> 30)).wrapping_mul(0xbf58_476d_1ce4_e5b9);
     x = (x ^ (x >> 27)).wrapping_mul(0x94d0_49bb_1331_11eb);
@@ -256,31 +522,21 @@ fn tie_break(group: usize, layout: usize) -> f64 {
     (x >> 11) as f64 / (1u64 << 53) as f64 * TIE_BREAK
 }
 
-struct Beam {
-    cost: f64,
-    state: State,
-    layout: Option<usize>,
-    node: u32,
-}
-
-/// Picks a layout per group, returns the index of each one.
-fn search(groups: &[&[Note]], layouts: &[Vec<u8>], src: usize, dst: usize, keep_jacks: bool) -> Vec<usize> {
+/// Picks what to do with each row.
+fn search(ctx: &Ctx, rows: &[Row]) -> Vec<Decision> {
     // Back pointers of every beam entry, to rebuild the best path at the end.
-    let mut nodes: Vec<(u32, u16)> = Vec::new();
-    let mut beam = vec![Beam { cost: 0.0, state: State::new(src, dst), layout: None, node: u32::MAX }];
-    let mut scratch = State::new(src, dst);
-    let mut candidates: Vec<(f64, usize, usize)> = Vec::new();
+    let mut nodes: Vec<(u32, Decision)> = Vec::new();
+    let mut beam: Vec<(f64, State, u32)> = vec![(0.0, State::new(), u32::MAX)];
+    let mut candidates: Vec<(f64, usize, Decision)> = Vec::new();
+    let mut scratch: Vec<(f64, Decision)> = Vec::new();
 
-    for (gi, group) in groups.iter().enumerate() {
+    for (ri, row) in rows.iter().enumerate() {
         candidates.clear();
 
-        for (bi, entry) in beam.iter().enumerate() {
-            let prev = entry.layout.map(|l| layouts[l].as_slice());
-            for (li, layout) in layouts.iter().enumerate() {
-                scratch.clone_from(&entry.state);
-                let cost = place(&mut scratch, group, layout, prev, keep_jacks, dst, None);
-                candidates.push((entry.cost + cost + tie_break(gi, li), bi, li));
-            }
+        for (bi, (cost, state, _)) in beam.iter().enumerate() {
+            scratch.clear();
+            ctx.candidates(state, row, ri, &mut scratch);
+            candidates.extend(scratch.iter().map(|&(c, d)| (cost + c, bi, d)));
         }
 
         let keep = BEAM_WIDTH.min(candidates.len());
@@ -291,24 +547,21 @@ fn search(groups: &[&[Note]], layouts: &[Vec<u8>], src: usize, dst: usize, keep_
 
         beam = candidates
             .iter()
-            .map(|&(cost, bi, li)| {
-                let parent = &beam[bi];
-                let mut state = parent.state.clone();
-                let prev = parent.layout.map(|l| layouts[l].as_slice());
-                place(&mut state, group, &layouts[li], prev, keep_jacks, dst, None);
-                nodes.push((parent.node, li as u16));
-                Beam { cost, state, layout: Some(li), node: (nodes.len() - 1) as u32 }
+            .map(|&(cost, bi, decision)| {
+                let (_, parent, parent_node) = &beam[bi];
+                let mut state = *parent;
+                ctx.commit(&mut state, row, &decision);
+                nodes.push((*parent_node, decision));
+                (cost, state, (nodes.len() - 1) as u32)
             })
             .collect();
     }
 
-    let best = beam.iter().min_by(|a, b| a.cost.total_cmp(&b.cost)).map_or(u32::MAX, |b| b.node);
-
-    let mut path = Vec::with_capacity(groups.len());
-    let mut node = best;
+    let mut node = beam.iter().min_by(|a, b| a.0.total_cmp(&b.0)).map_or(u32::MAX, |b| b.2);
+    let mut path = Vec::with_capacity(rows.len());
     while node != u32::MAX {
-        let (parent, layout) = nodes[node as usize];
-        path.push(layout as usize);
+        let (parent, decision) = nodes[node as usize];
+        path.push(decision);
         node = parent;
     }
     path.reverse();
@@ -327,13 +580,54 @@ fn set_x(obj: &mut HitObject, x: f32) {
     }
 }
 
-/// Extra notes copied next to the existing ones, into the keys the layout
-/// left empty, as `(max per group, min gap in beats)`.
-fn fill_settings(density: Density) -> Option<(usize, f64)> {
-    match density {
-        Density::None => None,
-        Density::Dense => Some((1, 1.0)),
-        Density::MoreDense => Some((2, JACK_BEATS)),
+/// Marks the rows that are part of a real trill: single notes alternating
+/// between the same two columns for [`TRILL_MIN_NOTES`] notes or more, fast.
+/// Shorter back-and-forths are just what streams look like on few keys.
+fn mark_trills(rows: &mut [Row], notes: &[Note]) {
+    let single = |row: &Row| (row.notes.len() == 1).then(|| notes[row.notes.start].src);
+
+    // Length of the alternation ending at each row.
+    let mut run = vec![0usize; rows.len()];
+    for i in 2..rows.len() {
+        let (a, b, c) = (single(&rows[i - 2]), single(&rows[i - 1]), single(&rows[i]));
+        let fast = rows[i].time - rows[i - 1].time <= rows[i].beat_len * TRILL_MAX_GAP_BEATS
+            && rows[i - 1].time - rows[i - 2].time <= rows[i].beat_len * TRILL_MAX_GAP_BEATS;
+        if let (Some(a), Some(b), Some(c)) = (a, b, c) {
+            if fast && a == c && a != b {
+                run[i] = if run[i - 1] > 0 { run[i - 1] + 1 } else { 3 };
+            }
+        }
+    }
+
+    // Marks every run long enough, walking back from where each one ends.
+    let mut i = rows.len();
+    while i > 0 {
+        i -= 1;
+        if run[i] >= TRILL_MIN_NOTES {
+            let start = i + 1 - run[i];
+            for row in &mut rows[start..=i] {
+                row.trill = true;
+            }
+            i = start;
+        }
+    }
+}
+
+/// How strong a position in the beat is: on the beat, on a half, on a
+/// quarter, or anything else.
+fn beat_strength(time: f64, tp_time: f64, beat_len: f64) -> f64 {
+    let frac = ((time - tp_time) / beat_len).rem_euclid(1.0);
+    let tolerance = 3.0 / beat_len;
+    let near = |x: f64| (frac - x).abs() < tolerance || (frac - x + 1.0).abs() < tolerance;
+
+    if near(0.0) {
+        1.0
+    } else if near(0.5) {
+        0.7
+    } else if near(0.25) || near(0.75) {
+        0.45
+    } else {
+        0.25
     }
 }
 
@@ -342,23 +636,18 @@ pub fn apply(beatmap: &mut Beatmap, params: &KeyConverterParams) -> Result<()> {
         bail!("the key converter only works on osu!mania maps");
     }
 
-    let src = beatmap.circle_size.round().clamp(1.0, MAX_KEYS as f32) as usize;
-    let dst = params.target_keys as usize;
-    if !(1..=MAX_KEYS).contains(&dst) {
-        bail!("the key converter supports 1K to {}K, not {}K", MAX_KEYS, dst);
+    let src_keys = beatmap.circle_size.round().clamp(1.0, MAX_KEYS as f32) as usize;
+    let dst_keys = params.target_keys as usize;
+    if !(1..=MAX_KEYS).contains(&dst_keys) {
+        bail!("the key converter supports 1K to {}K, not {}K", MAX_KEYS, dst_keys);
     }
-    if src == dst {
-        log::warn!("key converter: the map is already {}K, left as is", dst);
+    if src_keys == dst_keys {
+        log::warn!("key converter: the map is already {}K, left as is", dst_keys);
         return Ok(());
     }
 
-    let layouts = layouts(src, dst);
-    if layouts.is_empty() {
-        bail!("no way to map {}K onto {}K", src, dst);
-    }
-
     // The beat grid. Gimmick maps use fake BPMs (0.001, 100000...), which are
-    // skipped: they would cut the map into groups of a few ms.
+    // skipped.
     let main_beat_len = naming::main_bpm(beatmap).map_or(500.0, |bpm| 60_000.0 / bpm);
     let mut grid: Vec<(f64, f64)> = beatmap
         .control_points
@@ -371,118 +660,85 @@ pub fn apply(beatmap: &mut Beatmap, params: &KeyConverterParams) -> Result<()> {
         grid.push((0.0, main_beat_len));
     }
 
-    let beats = params.beats_per_pattern.max(1) as f64;
+    // Rows: the notes that start at the same time, sorted by column.
+    let mut notes: Vec<Note> = Vec::new();
+    let mut rows: Vec<Row> = Vec::new();
 
-    let mut notes = Vec::new();
-    let mut keys = Vec::new();
     for (idx, obj) in beatmap.hit_objects.iter().enumerate() {
         let (x, end) = match &obj.kind {
             HitObjectKind::Circle(circle) => (circle.pos.x, obj.start_time),
             HitObjectKind::Hold(hold) => (hold.pos_x, obj.start_time + hold.duration),
             _ => continue,
         };
+        let src = ((x * src_keys as f32 / 512.0).floor().max(0.0) as usize).min(src_keys - 1) as u8;
         let time = obj.start_time;
-        let tp = grid.partition_point(|&(t, _)| t <= time + GRID_LENIENCY_MS).saturating_sub(1);
-        let (tp_time, beat_len) = grid[tp];
 
-        notes.push(Note {
-            idx,
-            time,
-            end,
-            src: ((x * src as f32 / 512.0).floor().max(0.0) as usize).min(src - 1),
-            beat_len,
-        });
-        keys.push((tp, ((time - tp_time + GRID_LENIENCY_MS) / (beat_len * beats)).floor() as i64));
-    }
-
-    // Groups are runs of notes in the same stretch of the grid.
-    let mut groups: Vec<&[Note]> = Vec::new();
-    let mut start = 0;
-    for i in 1..=notes.len() {
-        if i == notes.len() || keys[i] != keys[start] {
-            if i > start {
-                groups.push(&notes[start..i]);
+        match rows.last_mut() {
+            Some(row) if (time - row.time).abs() < 1.0 => row.notes.end += 1,
+            _ => {
+                let tp = grid.partition_point(|&(t, _)| t <= time + GRID_LENIENCY_MS).saturating_sub(1);
+                let (tp_time, beat_len) = grid[tp];
+                rows.push(Row {
+                    time,
+                    notes: notes.len()..notes.len() + 1,
+                    beat_len,
+                    strength: beat_strength(time, tp_time, beat_len),
+                    trill: false,
+                });
             }
-            start = i;
+        }
+        notes.push(Note { idx, end, src });
+    }
+
+    for row in &mut rows {
+        notes[row.notes.clone()].sort_by_key(|n| n.src);
+        if row.notes.len() > 1 {
+            row.strength = (row.strength + 0.3).min(1.0);
         }
     }
 
-    let path = search(&groups, &layouts, src, dst, params.keep_jacks);
+    mark_trills(&mut rows, &notes);
 
-    // Replays the chosen layouts to know where each note goes.
-    let mut state = State::new(src, dst);
-    let mut placed: Vec<Option<u8>> = vec![None; beatmap.hit_objects.len()];
-    let mut new_jacks = 0;
-    let mut prev: Option<usize> = None;
+    // Extra notes only make sense with more keys.
+    let fill = fill_settings(params.density).filter(|_| dst_keys > src_keys);
+    let ctx = Ctx {
+        notes: &notes,
+        combos: combinations(dst_keys),
+        src_keys,
+        dst_keys,
+        weights: weights(params.style),
+        keep_jacks: params.keep_jacks,
+        fill,
+    };
 
-    for (group, &li) in groups.iter().zip(&path) {
-        let mut out = Placement::default();
-        place(&mut state, group, &layouts[li], prev.map(|l| layouts[l].as_slice()), params.keep_jacks, dst, Some(&mut out));
-        for (note, target) in group.iter().zip(out.targets) {
-            placed[note.idx] = target;
-        }
-        new_jacks += out.new_jacks;
-        prev = Some(li);
-    }
+    let path = search(&ctx, &rows);
 
+    let mut targets: Vec<Option<u8>> = vec![None; beatmap.hit_objects.len()];
     let mut extra: Vec<HitObject> = Vec::new();
 
-    if let Some((max_per_group, gap_beats)) = fill_settings(params.density).filter(|_| dst > src) {
-        // Per target column, the (start, end) of its notes, sorted.
-        let mut occupied: Vec<Vec<(f64, f64)>> = vec![Vec::new(); dst];
-        for note in &notes {
-            if let Some(d) = placed[note.idx] {
-                occupied[d as usize].push((note.time, note.end));
+    for (row, decision) in rows.iter().zip(&path) {
+        let size = decision.size as usize;
+        if size > 0 {
+            let combo = &ctx.combos[size][decision.combo as usize];
+            for (&i, &col) in kept(row.notes.len(), size).iter().zip(combo) {
+                targets[notes[row.notes.start + i].idx] = Some(col);
             }
         }
-
-        let free = |column: &[(f64, f64)], start: f64, end: f64, gap: f64| {
-            let i = column.partition_point(|&(s, _)| s < start);
-            let after_prev = i == 0 || column[i - 1].1 + gap < start;
-            let before_next = i == column.len() || end + gap < column[i].0;
-            after_prev && before_next
-        };
-
-        for group in &groups {
-            let used: Vec<usize> = group.iter().filter_map(|n| placed[n.idx]).map(usize::from).collect();
-            let mut taken = used.clone();
-            let mut made = 0;
-
-            for note in group.iter() {
-                if made >= max_per_group {
-                    break;
-                }
-                let Some(d) = placed[note.idx].map(usize::from) else { continue };
-
-                let candidates = [d.checked_sub(1), Some(d + 1).filter(|&c| c < dst)];
-                for c in candidates.into_iter().flatten() {
-                    if taken.contains(&c) || side(c, dst) != side(d, dst) {
-                        continue;
-                    }
-                    if !free(&occupied[c], note.time, note.end, note.beat_len * gap_beats) {
-                        continue;
-                    }
-
-                    let mut copy = beatmap.hit_objects[note.idx].clone();
-                    set_x(&mut copy, column_x(c, dst));
-                    extra.push(copy);
-
-                    let at = occupied[c].partition_point(|&(s, _)| s < note.time);
-                    occupied[c].insert(at, (note.time, note.end));
-                    taken.push(c);
-                    made += 1;
-                    break;
-                }
+        for &col in &decision.extras[..decision.n_extras as usize] {
+            if let Some(n) = ctx.template(row, decision, col) {
+                let mut copy = beatmap.hit_objects[notes[n].idx].clone();
+                set_x(&mut copy, column_x(col as usize, dst_keys));
+                extra.push(copy);
             }
         }
     }
 
     let total = beatmap.hit_objects.len();
     let mut objects: Vec<HitObject> = Vec::with_capacity(total + extra.len());
-    for (mut obj, target) in std::mem::take(&mut beatmap.hit_objects).into_iter().zip(&placed) {
+    for (mut obj, target) in std::mem::take(&mut beatmap.hit_objects).into_iter().zip(&targets) {
         match (&obj.kind, target) {
-            (HitObjectKind::Circle(_) | HitObjectKind::Hold(_), Some(d)) => {
-                set_x(&mut obj, column_x(*d as usize, dst));
+            (HitObjectKind::Circle(_) | HitObjectKind::Hold(_), Some(col)) => {
+                set_x(&mut obj, column_x(*col as usize, dst_keys));
                 objects.push(obj);
             }
             (HitObjectKind::Circle(_) | HitObjectKind::Hold(_), None) => {}
@@ -496,17 +752,15 @@ pub fn apply(beatmap: &mut Beatmap, params: &KeyConverterParams) -> Result<()> {
     objects.sort_by(|a, b| a.start_time.total_cmp(&b.start_time));
 
     beatmap.hit_objects = objects;
-    beatmap.circle_size = dst as f32;
+    beatmap.circle_size = dst_keys as f32;
 
     log::debug!(
-        "key converter: {}K -> {}K, {} group(s), {} layout(s), {} dropped, {} added, {} new jack(s)",
-        src,
-        dst,
-        groups.len(),
-        layouts.len(),
+        "key converter: {}K -> {}K, {} row(s), {} dropped, {} added",
+        src_keys,
+        dst_keys,
+        rows.len(),
         dropped,
-        added,
-        new_jacks
+        added
     );
 
     Ok(())
@@ -517,21 +771,14 @@ mod tests {
     use super::*;
 
     #[test]
-    fn layouts_keep_order_and_hands() {
-        // Two keys per hand, each into 5: like the original 4K -> 10K pairs.
-        assert_eq!(layouts(4, 10).len(), 100);
-        // 7K -> 8K: the skipped key decides where the middle one goes.
-        assert_eq!(layouts(7, 8).len(), 8);
-        assert!(layouts(7, 8).iter().all(|l| l.windows(2).all(|w| w[0] < w[1])));
-        // Going down folds columns, still in order and on their hand.
-        for layout in layouts(7, 4) {
-            assert!(layout.windows(2).all(|w| w[0] <= w[1]));
-            assert!(layout[..3].iter().all(|&d| d < 2));
-            assert!(layout[4..].iter().all(|&d| d >= 2));
-        }
+    fn keeps_the_outer_notes_of_a_chord() {
+        assert_eq!(kept(4, 4), vec![0, 1, 2, 3]);
+        assert_eq!(kept(4, 2), vec![0, 3]);
+        assert_eq!(kept(5, 3), vec![0, 2, 4]);
+        assert_eq!(kept(3, 1), vec![1]);
     }
 
-    /// A 4K map at 120 BPM with streams, jacks, chords and LNs, generated
+    /// A map at 120 BPM with streams, jacks, chords and LNs, generated
     /// deterministically.
     fn map(keys: usize) -> String {
         let mut osu = format!(
@@ -539,7 +786,7 @@ mod tests {
             keys
         );
         let mut seed = 7u64;
-        let mut busy = vec![0i64; keys];
+        let mut busy = vec![-1i64; keys];
         for step in 0..400i64 {
             let time = step * 125;
             seed = seed.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
@@ -563,6 +810,49 @@ mod tests {
         osu
     }
 
+    fn stream(cols: &[usize]) -> String {
+        let mut osu = String::from(
+            "osu file format v14\n\n[General]\nMode: 3\n\n[Difficulty]\nCircleSize:4\n\n[TimingPoints]\n0,500,4,1,0,60,1,0\n\n[HitObjects]\n",
+        );
+        for (step, col) in cols.iter().enumerate() {
+            osu.push_str(&format!("{},192,{},1,0,0:0:0:0:\n", col * 128 + 64, step * 125));
+        }
+        osu
+    }
+
+    /// Columns of a converted map, one per note.
+    fn columns(beatmap: &Beatmap, keys: usize) -> Vec<usize> {
+        beatmap.hit_objects.iter().map(|o| column(o, keys)).collect()
+    }
+
+    #[test]
+    fn keeps_real_trills() {
+        let (_, beatmap) = convert(&stream(&[0, 1, 0, 1, 0, 1, 0, 1, 0, 1]), 7, Density::None, PatternStyle::Spread);
+        let cols = columns(&beatmap, 7);
+        assert!(cols.windows(3).all(|w| w[0] == w[2] && w[0] != w[1]), "{:?}", cols);
+    }
+
+    #[test]
+    fn rolls_short_back_and_forths() {
+        // A 4K stream that comes back to the same columns, like the one in
+        // Black dress: on 7K it should roll over the keys instead.
+        let (_, beatmap) = convert(&stream(&[1, 2, 3, 0, 2, 1, 0, 3, 2, 1, 2, 1, 3, 2, 0, 1, 2, 0]), 7, Density::None, PatternStyle::Spread);
+        let cols = columns(&beatmap, 7);
+        let back_and_forths = cols.windows(3).filter(|w| w[0] == w[2]).count();
+        assert!(back_and_forths <= 1, "{:?}", cols);
+    }
+
+    /// A 4K stair, 0123 0123..., in 1/4s at 120 BPM.
+    fn stair() -> String {
+        let mut osu = String::from(
+            "osu file format v14\n\n[General]\nMode: 3\n\n[Difficulty]\nCircleSize:4\n\n[TimingPoints]\n0,500,4,1,0,60,1,0\n\n[HitObjects]\n",
+        );
+        for step in 0..64 {
+            osu.push_str(&format!("{},192,{},1,0,0:0:0:0:\n", (step % 4) * 128 + 64, step * 125));
+        }
+        osu
+    }
+
     fn column(obj: &HitObject, keys: usize) -> usize {
         let x = match &obj.kind {
             HitObjectKind::Circle(c) => c.pos.x,
@@ -572,60 +862,76 @@ mod tests {
         ((x * keys as f32 / 512.0) as usize).min(keys - 1)
     }
 
-    /// No two notes overlap or stack in a column.
-    fn assert_playable(beatmap: &Beatmap, keys: usize) {
+    /// Checks no two notes overlap or stack in a key, and returns how many
+    /// jacks (1/4 apart or closer) there are.
+    fn check(beatmap: &Beatmap, keys: usize) -> usize {
         let mut release = vec![f64::NEG_INFINITY; keys];
+        let mut jacks = 0;
         for obj in &beatmap.hit_objects {
             let col = column(obj, keys);
-            assert!(obj.start_time > release[col], "overlap in column {} at {}", col, obj.start_time);
+            assert!(obj.start_time > release[col], "overlap in key {} at {}", col, obj.start_time);
+            if obj.start_time - release[col] <= 500.0 * JACK_BEATS {
+                jacks += 1;
+            }
             release[col] = match &obj.kind {
                 HitObjectKind::Hold(h) => obj.start_time + h.duration,
                 _ => obj.start_time,
             };
         }
+        jacks
     }
 
-    fn convert(src: usize, dst: usize, density: Density) -> (usize, Beatmap) {
-        let mut beatmap = rosu_map::from_str::<Beatmap>(&map(src)).unwrap();
-        let before = beatmap.hit_objects.len();
-        let params = KeyConverterParams { target_keys: dst as u8, density, beats_per_pattern: 1, keep_jacks: true };
+    fn convert(osu: &str, dst: usize, density: Density, style: PatternStyle) -> (Beatmap, Beatmap) {
+        let original = rosu_map::from_str::<Beatmap>(osu).unwrap();
+        let mut beatmap = original.clone();
+        let params = KeyConverterParams { target_keys: dst as u8, density, style, keep_jacks: true };
         apply(&mut beatmap, &params).unwrap();
-        (before, beatmap)
+        (original, beatmap)
     }
 
     #[test]
-    fn expanding_keeps_every_note() {
+    fn expanding_keeps_every_note_and_adds_no_jacks() {
         for (src, dst) in [(4, 7), (4, 10), (7, 8), (7, 10), (4, 5), (6, 9)] {
-            let (before, beatmap) = convert(src, dst, Density::None);
+            let (original, beatmap) = convert(&map(src), dst, Density::None, PatternStyle::Balanced);
             assert_eq!(beatmap.circle_size, dst as f32);
-            assert_eq!(beatmap.hit_objects.len(), before, "{}K -> {}K", src, dst);
-            assert_playable(&beatmap, dst);
+            assert_eq!(beatmap.hit_objects.len(), original.hit_objects.len(), "{}K -> {}K", src, dst);
+            assert!(check(&beatmap, dst) <= check(&original, src), "{}K -> {}K", src, dst);
         }
     }
 
     #[test]
-    fn expanding_uses_the_new_keys() {
-        let (_, beatmap) = convert(4, 10, Density::None);
-        let mut used = [false; 10];
+    fn expanding_uses_every_key_evenly() {
+        let (_, beatmap) = convert(&map(4), 7, Density::None, PatternStyle::Balanced);
+        let mut used = [0usize; 7];
         for obj in &beatmap.hit_objects {
-            used[column(obj, 10)] = true;
+            used[column(obj, 7)] += 1;
         }
-        assert!(used.iter().all(|&u| u));
+        let even = beatmap.hit_objects.len() / 7;
+        assert!(used.iter().all(|&n| n > even / 2), "{:?}", used);
     }
 
     #[test]
-    fn density_adds_notes() {
-        let (before, beatmap) = convert(4, 10, Density::MoreDense);
-        assert!(beatmap.hit_objects.len() > before);
-        assert_playable(&beatmap, 10);
+    fn stairs_keep_their_direction() {
+        let (_, beatmap) = convert(&stair(), 7, Density::None, PatternStyle::Balanced);
+        let cols: Vec<usize> = beatmap.hit_objects.iter().map(|o| column(o, 7)).collect();
+        // Within each 0123 the target goes right too.
+        let rising = cols.chunks(4).filter(|c| c.windows(2).all(|w| w[0] < w[1])).count();
+        assert!(rising >= 15, "{:?}", cols);
+    }
+
+    #[test]
+    fn density_adds_notes_without_jacks() {
+        let (original, beatmap) = convert(&map(4), 10, Density::MoreDense, PatternStyle::Balanced);
+        assert!(beatmap.hit_objects.len() > original.hit_objects.len());
+        assert!(check(&beatmap, 10) <= check(&original, 4));
     }
 
     #[test]
     fn reducing_stays_playable() {
         for (src, dst) in [(7, 4), (10, 7), (4, 1)] {
-            let (_, beatmap) = convert(src, dst, Density::None);
+            let (_, beatmap) = convert(&map(src), dst, Density::MoreDense, PatternStyle::Balanced);
             assert_eq!(beatmap.circle_size, dst as f32);
-            assert_playable(&beatmap, dst);
+            check(&beatmap, dst);
         }
     }
 }

@@ -195,17 +195,17 @@
             </div>
 
             <div class="setting">
-              <span class="setting-title">Change pattern</span>
+              <span class="setting-title">Style</span>
               <tui-segmented
                 size="s"
-                [activeItemIndex]="patternIndex(entry.task.params.beatsPerPattern)"
-                (activeItemIndexChange)="onKeyChange(entry.id, entry.task.params, { beatsPerPattern: patternOptions[$event].beats })"
+                [activeItemIndex]="styleIndex(entry.task.params.style)"
+                (activeItemIndexChange)="onKeyChange(entry.id, entry.task.params, { style: styleOptions[$event].value })"
               >
-                @for (option of patternOptions; track option.beats) {
+                @for (option of styleOptions; track option.value) {
                   <button type="button">{{ option.label }}</button>
                 }
               </tui-segmented>
-              <span class="setting-hint">How often the notes move to other keys. Longer keeps patterns together.</span>
+              <span class="setting-hint">{{ styleOptions[styleIndex(entry.task.params.style)].hint }}</span>
             </div>
 
             @if (sourceKeys() === null || entry.task.params.targetKeys > sourceKeys()!) {
@@ -220,7 +220,10 @@
                     <button type="button">{{ option.label }}</button>
                   }
                 </tui-segmented>
-                <span class="setting-hint">Copies some notes into the free keys next to them, to make use of the extra keys.</span>
+                <span class="setting-hint">
+                  Widens chords into the key next to them, on the same hand. Some: on the beats and chords. More:
+                  almost every row.
+                </span>
               </div>
             } @else {
               <div appearance="info" size="s" tuiNotification>

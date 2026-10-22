@@ -3,7 +3,7 @@ use rosu_map::{Beatmap, section::general::GameMode};
 use tauri::Emitter;
 use crate::commands::trainer::{
     audio_processing,
-    model::{DifficultySettings, RunTrainerRequest, TrainerTaskParams, TrainerProgress},
+    model::{Density, DifficultySettings, RunTrainerRequest, TrainerTaskParams, TrainerProgress},
     naming, osu_fixups, pipeline, storyboard, video,
 };
 
@@ -53,6 +53,16 @@ pub async fn run_trainer(app: tauri::AppHandle, request: RunTrainerRequest) -> R
     let mut request = request;
     if beatmap.mode == GameMode::Mania {
         request.difficulty.cs = original_difficulty.cs;
+    }
+
+    // Extra notes only apply when converting to more keys; dropped here so
+    // the diff name does not claim them either.
+    for task in request.tasks.iter_mut() {
+        if let TrainerTaskParams::KeyConverter(params) = &mut task.task {
+            if params.target_keys as f64 <= original_difficulty.cs.round() {
+                params.density = Density::None;
+            }
+        }
     }
 
     beatmap.hp_drain_rate = request.difficulty.hp as f32;
