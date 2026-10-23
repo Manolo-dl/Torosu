@@ -33,6 +33,11 @@
 //!   A full row of the source (a quad on 4K) only grows by a note or so, as
 //!   in tyrcs' Lolit speed, not into a wall.
 //!
+//! - **Fewer keys**: chords shrink with the key count, as hand-made 4K maps
+//!   of the same songs do against their 7K versions (Delta Dan, Lolit speed,
+//!   H.A.R.D.C.O.R.E.): 2 notes -> 1, 3 or 4 -> 2, 5 or 6 -> 3. Notes are
+//!   dropped rather than turned into jacks.
+//!
 //! A note that cannot be placed (every key it could go to is held) is dropped,
 //! so the output is always a valid map.
 
@@ -69,6 +74,9 @@ const GRID_LENIENCY_MS: f64 = 2.0;
 const FLOW_BEATS: f64 = 2.0;
 
 const COST_DROP: f64 = 150.0;
+/// Going down in keys, dropping one more note than the row's share: cheaper
+/// than a new jack, so the map thins out instead of jacking.
+const COST_DROP_REDUCING: f64 = 60.0;
 const COST_NEW_JACK: f64 = 100.0;
 const COST_BROKEN_JACK: f64 = 40.0;
 /// Reward for an extra note on a downbeat or a chord; less elsewhere.
@@ -219,6 +227,9 @@ struct Row {
     grouped: bool,
     /// Full: how many extra notes this row should get.
     quota: u8,
+    /// How many of its notes fit on the target keys: all of them, unless
+    /// going down in keys.
+    share: u8,
 }
 
 const NONE: u8 = u8::MAX;
@@ -519,10 +530,17 @@ impl Ctx<'_> {
         let costs = self.note_costs(state, row);
         let extra_costs = self.extra_costs(state, row);
 
-        for size in (1..=k.min(self.dst_keys)).rev() {
+        // Going up, fewer notes are only tried when they do not all fit. Going
+        // down, every size up to the row's share competes, so a note can be
+        // dropped to avoid a jack.
+        let reducing = self.dst_keys < self.src_keys;
+        let share = (row.share as usize).min(self.dst_keys);
+        let drop_cost = if reducing { COST_DROP_REDUCING } else { COST_DROP };
+
+        for size in (1..=share).rev() {
             let keep = kept(k, size);
             let src_pos = self.source_pos(row, &keep);
-            let dropped = (k - size) as f64 * COST_DROP;
+            let dropped = (share - size) as f64 * drop_cost;
             let before = out.len();
 
             for (ci, combo) in self.combos[size].iter().enumerate() {
@@ -543,25 +561,28 @@ impl Ctx<'_> {
                 out.push((cost + extra_cost + tie_break(row_idx, ci), decision));
             }
 
-            if out.len() > before {
+            if out.len() > before && !reducing {
                 return;
             }
         }
 
         // Every key is held: the whole row is dropped.
-        out.push((k as f64 * COST_DROP, Decision::DROPPED));
+        out.push((share as f64 * drop_cost, Decision::DROPPED));
     }
 
     /// Whether `decision`, taken from a row with the same source columns, can
     /// place this row too: every key it uses is free.
     fn fits(&self, state: &State, row: &Row, decision: &Decision) -> bool {
         let size = decision.size as usize;
-        if size != row.notes.len() {
+        if size == 0 || size > row.notes.len() {
             return false;
         }
         let notes = &self.notes[row.notes.clone()];
         let combo = &self.combos[size][decision.combo as usize];
-        notes.iter().zip(combo).all(|(note, &col)| self.free(state, col as usize, row, note.src))
+        kept(notes.len(), size)
+            .iter()
+            .zip(combo)
+            .all(|(&i, &col)| self.free(state, col as usize, row, notes[i].src))
             && decision.extras[..decision.n_extras as usize].iter().all(|&col| row.time > state.release[col as usize])
     }
 
@@ -832,6 +853,7 @@ pub fn apply(beatmap: &mut Beatmap, params: &KeyConverterParams) -> Result<()> {
                     copy: 0,
                     grouped: false,
                     quota: 0,
+                    share: 0,
                 });
             }
         }
@@ -849,6 +871,18 @@ pub fn apply(beatmap: &mut Beatmap, params: &KeyConverterParams) -> Result<()> {
 
     // Extra notes only make sense with more keys.
     let fill = fill_settings(params.density).filter(|_| dst_keys > src_keys);
+
+    // Going down, each row keeps its size times the key ratio, rounded, at
+    // least one note: hand-made maps do it that consistently.
+    for row in rows.iter_mut() {
+        let k = row.notes.len();
+        row.share = if dst_keys < src_keys {
+            let size = (k as f64 * dst_keys as f64 / src_keys as f64).round() as usize;
+            size.clamp(1, k.min(dst_keys)) as u8
+        } else {
+            k.min(dst_keys) as u8
+        };
+    }
 
     // Full: each row's chord grows to its size times the key ratio. The
     // fraction is dithered per row, so the average comes out right.
@@ -1146,6 +1180,25 @@ mod tests {
         // 7/4 * 0.9, give or take what does not fit.
         assert!((1.4..=1.65).contains(&ratio), "{}", ratio);
         check(&beatmap, 7);
+    }
+
+    #[test]
+    fn reducing_shrinks_chords_without_jacks() {
+        // A 7K hand trill, like the one in Ice Angel: on 4K it should become a
+        // jumptrill, not three keys jacking every row.
+        let mut osu = String::from(
+            "osu file format v14\n\n[General]\nMode: 3\n\n[Difficulty]\nCircleSize:7\n\n[TimingPoints]\n0,500,4,1,0,60,1,0\n\n[HitObjects]\n",
+        );
+        for step in 0..16 {
+            let cols: &[usize] = if step % 2 == 0 { &[0, 1, 2] } else { &[4, 5, 6] };
+            for col in cols {
+                osu.push_str(&format!("{},192,{},1,0,0:0:0:0:\n", (col * 512 + 256) / 7, step * 125));
+            }
+        }
+        let (_, beatmap) = convert(&osu, 4, Density::None);
+        let rows = key_rows(&beatmap, 4);
+        assert!(rows.iter().all(|r| r.len() == 2), "{:?}", rows);
+        assert_eq!(check(&beatmap, 4), 0, "{:?}", rows);
     }
 
     #[test]
