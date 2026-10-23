@@ -26,15 +26,48 @@ export interface FlnConverterParams {
     reworkExistingLn: boolean;
 }
 
-/** Extra notes added to fill the new keys when converting to more keys. */
-export type KeyDensity = 'none' | 'dense' | 'moreDense' | 'full';
+/**
+ * Extra notes added to fill the new keys when converting to more keys. `auto` learns the row sizes
+ * from hand-made maps and also applies when converting to fewer keys.
+ */
+export type KeyDensity = 'none' | 'dense' | 'moreDense' | 'full' | 'auto';
 
 export interface KeyConverterParams {
     targetKeys: number;
     density: KeyDensity;
     /** Keeps the map's jacks on a single key instead of splitting them. */
     keepJacks: boolean;
+    /** How the target keys are played; `null` for the usual playstyle of the key count. */
+    playstyle: string | null;
 }
+
+/** The playstyles of each key count, the usual one first (see `analysis/layout.rs`). */
+export const PLAYSTYLES: Record<number, { name: string; hint: string }[]> = {
+    3: [
+        { name: '1+1+1', hint: 'Indexes and a thumb.' },
+        { name: '2+1', hint: 'Two keys on the left hand, one on the right.' },
+    ],
+    5: [
+        { name: '2+1+2', hint: 'Thumb on the middle key.' },
+        { name: '3+2', hint: 'Middle key with the left index.' },
+        { name: '2+3', hint: 'Middle key with the right index.' },
+    ],
+    6: [
+        { name: '3+3', hint: 'Three fingers per hand.' },
+        { name: '2+1+1+2', hint: 'Both thumbs on the middle keys.' },
+    ],
+    8: [
+        { name: '4+4', hint: 'Four fingers per hand.' },
+        { name: '3+2+3', hint: 'Both thumbs on the middle keys.' },
+        { name: '1+7', hint: '7K with a scratch on the left, IIDX style.' },
+        { name: '7+1', hint: '7K with a scratch on the right.' },
+    ],
+    9: [
+        { name: '4+1+4', hint: "Thumb on the middle key, pop'n style." },
+        { name: '5+4', hint: 'Middle key with the left thumb.' },
+        { name: '4+5', hint: 'Middle key with the right thumb.' },
+    ],
+};
 
 export type TrainerTaskParams =
     | { type: 'RateChange'; params: RateChangeParams }

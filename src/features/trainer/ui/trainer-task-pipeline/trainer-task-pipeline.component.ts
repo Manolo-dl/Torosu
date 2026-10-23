@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TASK_LABELS } from '@features/trainer';
-import { FlnConverterParams, KeyConverterParams, KeyDensity, RateChangeParams, TrainerTaskType } from '@features/trainer/models/trainer.model';
+import { FlnConverterParams, KeyConverterParams, KeyDensity, PLAYSTYLES, RateChangeParams, TrainerTaskType } from '@features/trainer/models/trainer.model';
 import { TrainerStore } from '@features/trainer/stores/trainer.store';
 import { TosuStore } from '@entities/tosu';
 import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDropList } from '@angular/cdk/drag-drop';
@@ -9,6 +9,12 @@ import { TuiButton, TuiCheckbox, TuiDataList, TuiDropdown, TuiIcon, TuiInput, Tu
 import { TuiSegmented } from '@taiga-ui/kit';
 import { TuiCardLarge } from '@taiga-ui/layout';
 import { TrainerNoteLengthComponent } from '../trainer-note-length/trainer-note-length.component';
+
+interface DensityOption {
+  value: KeyDensity;
+  label: string;
+  hint: string;
+}
 
 @Component({
   selector: 'app-trainer-task-pipeline',
@@ -39,7 +45,7 @@ export class TrainerTaskPipelineComponent {
   sourceKeys = computed(() => (this.isMania() ? Math.round(this.tosu.data()?.beatmap?.stats?.cs?.original ?? 0) || null : null));
 
   readonly keyOptions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-  readonly densityOptions: { value: KeyDensity; label: string; hint: string }[] = [
+  readonly densityOptions: DensityOption[] = [
     { value: 'none', label: 'None', hint: 'Only the notes of the original map.' },
     { value: 'dense', label: 'Some', hint: 'Widens chords into the key next to them, on the beats and chords.' },
     { value: 'moreDense', label: 'More', hint: 'Widens chords into the keys next to them, on almost every row.' },
@@ -47,6 +53,25 @@ export class TrainerTaskPipelineComponent {
       value: 'full',
       label: 'Full',
       hint: 'Chords grow with the key count, like hand-made conversions: jumps become hands and hands become quints. Handstreams stay handstreams, and the map gets much harder.',
+    },
+    {
+      value: 'auto',
+      label: 'Auto',
+      hint: 'Learned from hand-made maps: each pattern gets as many notes as mappers give it on this key count, calm parts stay calm and dense parts get denser. Trills and jacks are reinterpreted, not always copied.',
+    },
+  ];
+
+  /** With fewer keys there are no extra notes, only how many notes each row keeps. */
+  readonly reducingOptions: DensityOption[] = [
+    {
+      value: 'none',
+      label: 'Key ratio',
+      hint: 'Chords shrink with the key count (on 7K to 4K, 3 or 4 notes become 2) and notes are dropped rather than turned into jacks.',
+    },
+    {
+      value: 'auto',
+      label: 'Auto',
+      hint: 'Learned from hand-made maps: each row keeps as many notes as mappers keep for that pattern and part of the map.',
     },
   ];
 
@@ -76,9 +101,12 @@ export class TrainerTaskPipelineComponent {
         break;
       case 'KeyConverter': {
         const source = this.sourceKeys() ?? 4;
+        const targetKeys = source < 7 ? 7 : source < 10 ? 10 : 7;
+        // Auto by default; 7K and up to 9K/10K already convert well without extra notes.
+        const density: KeyDensity = source >= 7 && targetKeys >= 9 ? 'none' : 'auto';
         this.trainer.addTask({
           type: 'KeyConverter',
-          params: { targetKeys: source < 7 ? 7 : source < 10 ? 10 : 7, density: 'none', keepJacks: true },
+          params: { targetKeys, density, keepJacks: true, playstyle: null },
         });
         break;
       }
@@ -108,8 +136,38 @@ export class TrainerTaskPipelineComponent {
     this.trainer.updateTaskParams(id, { ...params, ...change });
   }
 
-  densityIndex(density: KeyDensity): number {
-    return this.densityOptions.findIndex(o => o.value === density);
+  /** Changing the key count resets the playstyle, and the extra notes that no longer apply. */
+  onTargetKeys(id: string, params: KeyConverterParams, targetKeys: number) {
+    const reducing = this.isReducing(targetKeys);
+    const density = reducing && params.density !== 'auto' ? 'none' : params.density;
+    this.onKeyChange(id, params, { targetKeys, density, playstyle: null });
+  }
+
+  isReducing(targetKeys: number): boolean {
+    const source = this.sourceKeys();
+    return source !== null && targetKeys < source;
+  }
+
+  densityOptionsFor(targetKeys: number): DensityOption[] {
+    return this.isReducing(targetKeys) ? this.reducingOptions : this.densityOptions;
+  }
+
+  densityIndex(options: DensityOption[], density: KeyDensity): number {
+    return Math.max(0, options.findIndex(o => o.value === density));
+  }
+
+  playstyles(targetKeys: number): { name: string; hint: string }[] {
+    return PLAYSTYLES[targetKeys] ?? [];
+  }
+
+  playstyleIndex(params: KeyConverterParams): number {
+    return Math.max(0, this.playstyles(params.targetKeys).findIndex(p => p.name === params.playstyle));
+  }
+
+  /** The usual playstyle is sent as `null`, so the diff name only mentions the others. */
+  onPlaystyle(id: string, params: KeyConverterParams, index: number) {
+    const playstyle = index === 0 ? null : this.playstyles(params.targetKeys)[index].name;
+    this.onKeyChange(id, params, { playstyle });
   }
 
   onFlnChange(id: string, params: FlnConverterParams, change: Partial<FlnConverterParams>) {

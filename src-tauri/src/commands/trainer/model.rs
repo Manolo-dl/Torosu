@@ -55,6 +55,9 @@ pub enum Density {
     MoreDense,
     /// Chords grow with the key count, so handstreams stay handstreams.
     Full,
+    /// Rows as big as hand-made maps make them for each pattern and part of
+    /// the map, learned from real maps. Also applies when going down in keys.
+    Auto,
 }
 
 #[derive(Clone, Deserialize)]
@@ -64,6 +67,10 @@ pub struct KeyConverterParams {
     pub density: Density,
     /// Keeps the map's jacks on a single key instead of splitting them.
     pub keep_jacks: bool,
+    /// How the target keys are played (see `analysis::layout`); the usual
+    /// playstyle of the key count when missing.
+    #[serde(default)]
+    pub playstyle: Option<String>,
 }
 
 #[derive(Deserialize)]

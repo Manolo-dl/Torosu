@@ -186,7 +186,7 @@
               <tui-segmented
                 size="s"
                 [activeItemIndex]="keyOptions.indexOf(entry.task.params.targetKeys)"
-                (activeItemIndexChange)="onKeyChange(entry.id, entry.task.params, { targetKeys: keyOptions[$event] })"
+                (activeItemIndexChange)="onTargetKeys(entry.id, entry.task.params, keyOptions[$event])"
               >
                 @for (keys of keyOptions; track keys) {
                   <button type="button" [disabled]="keys === sourceKeys()">{{ keys }}K</button>
@@ -194,24 +194,37 @@
               </tui-segmented>
             </div>
 
-            @if (sourceKeys() === null || entry.task.params.targetKeys > sourceKeys()!) {
+            @let options = densityOptionsFor(entry.task.params.targetKeys);
+            @let densityAt = densityIndex(options, entry.task.params.density);
+            <div class="setting">
+              <span class="setting-title">{{ isReducing(entry.task.params.targetKeys) ? 'Notes per row' : 'Extra notes' }}</span>
+              <tui-segmented
+                size="s"
+                [activeItemIndex]="densityAt"
+                (activeItemIndexChange)="onKeyChange(entry.id, entry.task.params, { density: options[$event].value })"
+              >
+                @for (option of options; track option.value) {
+                  <button type="button">{{ option.label }}</button>
+                }
+              </tui-segmented>
+              <span class="setting-hint">{{ options[densityAt].hint }}</span>
+            </div>
+
+            @let playstyles = this.playstyles(entry.task.params.targetKeys);
+            @if (playstyles.length > 1) {
+              @let playstyleAt = playstyleIndex(entry.task.params);
               <div class="setting">
-                <span class="setting-title">Extra notes</span>
+                <span class="setting-title">Playstyle</span>
                 <tui-segmented
                   size="s"
-                  [activeItemIndex]="densityIndex(entry.task.params.density)"
-                  (activeItemIndexChange)="onKeyChange(entry.id, entry.task.params, { density: densityOptions[$event].value })"
+                  [activeItemIndex]="playstyleAt"
+                  (activeItemIndexChange)="onPlaystyle(entry.id, entry.task.params, $event)"
                 >
-                  @for (option of densityOptions; track option.value) {
-                    <button type="button">{{ option.label }}</button>
+                  @for (playstyle of playstyles; track playstyle.name) {
+                    <button type="button">{{ playstyle.name }}</button>
                   }
                 </tui-segmented>
-                <span class="setting-hint">{{ densityOptions[densityIndex(entry.task.params.density)].hint }}</span>
-              </div>
-            } @else {
-              <div appearance="info" size="s" tuiNotification>
-                With fewer keys, chords shrink with the key count (on 7K to 4K, 3 or 4 notes become 2) and notes are
-                dropped rather than turned into jacks, like hand-made versions of the same songs.
+                <span class="setting-hint">{{ playstyles[playstyleAt].hint }}</span>
               </div>
             }
 

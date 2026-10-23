@@ -120,7 +120,7 @@ pub fn version(
     parts.join(" ")
 }
 
-/// `(10K)`, `(10K More Dense)`, `(7K, split jacks)`... Every setting that changes
+/// `(10K)`, `(10K More Dense)`, `(9K Auto 5+4)`, `(7K, split jacks)`... Every setting that changes
 /// the notes is in the name.
 fn key_tag(params: &KeyConverterParams) -> String {
     let mut tag = format!("({}K", params.target_keys);
@@ -129,6 +129,10 @@ fn key_tag(params: &KeyConverterParams) -> String {
         Density::Dense => tag.push_str(" Dense"),
         Density::MoreDense => tag.push_str(" More Dense"),
         Density::Full => tag.push_str(" Full"),
+        Density::Auto => tag.push_str(" Auto"),
+    }
+    if let Some(playstyle) = &params.playstyle {
+        tag.push_str(&format!(" {}", playstyle));
     }
     if !params.keep_jacks {
         tag.push_str(", split jacks");

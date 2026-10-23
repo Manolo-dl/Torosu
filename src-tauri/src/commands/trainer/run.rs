@@ -56,10 +56,10 @@ pub async fn run_trainer(app: tauri::AppHandle, request: RunTrainerRequest) -> R
     }
 
     // Extra notes only apply when converting to more keys; dropped here so
-    // the diff name does not claim them either.
+    // the diff name does not claim them either. Auto applies both ways.
     for task in request.tasks.iter_mut() {
         if let TrainerTaskParams::KeyConverter(params) = &mut task.task {
-            if params.target_keys as f64 <= original_difficulty.cs.round() {
+            if params.target_keys as f64 <= original_difficulty.cs.round() && params.density != Density::Auto {
                 params.density = Density::None;
             }
         }
