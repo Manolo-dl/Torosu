@@ -13,7 +13,3 @@ pub fn get_beatmapset_folder(osu_path: &str, folder_name: &str) -> Result<Beatma
 
     Ok(BeatmapsetFolder { folder_path: folder_path.to_string_lossy().into_owned() })
 }
-
-pub fn check_beatmapset_folder_exists(folder_path: &str) -> bool {
-    Path::new(folder_path).exists()
-}

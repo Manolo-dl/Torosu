@@ -1,9 +1,10 @@
-import { patchState, signalStore, withComputed, withMethods, withState } from "@ngrx/signals";
+import { patchState, signalStore, withComputed, withHooks, withMethods, withState } from "@ngrx/signals";
 import { SelectedDiff } from "./pack.model";
 import { invoke } from "@tauri-apps/api/core";
 import { computed, inject } from "@angular/core";
 import { OsuDbStore } from "@entities/osu-db";
 import { OsuCollection } from "@entities/collection";
+import { ConfigurationStore } from "@entities/configuration";
 import { TuiNotificationService } from '@taiga-ui/core';
 
 interface PackStoreState {
@@ -60,6 +61,18 @@ export const PackStore = signalStore(
         hasEmptyNames: computed(() =>
             store.selectedDiffs().some(d => d.newDiffName.trim() === '')
         ),
+
+        /** Original sets the diffs come from; each brings its own audio and background. */
+        setCount: computed(() => new Set(store.selectedDiffs().map(d => d.folderName)).size),
+    })),
+
+    withComputed((store, config = inject(ConfigurationStore)) => ({
+        /** Packs the selection is split into, as the backend does with `max_sets_per_pack`. */
+        packCount: computed(() => {
+            const sets = store.setCount();
+            const max = config.config()?.packs.max_sets_per_pack ?? 0;
+            return max > 0 && sets > max ? Math.ceil(sets / max) : 1;
+        }),
     })),
 
     withMethods((store, alerts = inject(TuiNotificationService), osuDb = inject(OsuDbStore)) => ({
@@ -131,7 +144,10 @@ export const PackStore = signalStore(
                     }
                 });
                 patchState(store, { isCreating: false });
-                alerts.open(`Pack ${store.title()} created successfully!`, { appearance: 'positive' }).subscribe();
+                const message = store.packCount() > 1
+                    ? `Pack ${store.title()} created successfully in ${store.packCount()} parts!`
+                    : `Pack ${store.title()} created successfully!`;
+                alerts.open(message, { appearance: 'positive' }).subscribe();
                 patchState(store, initialState);
             } catch (error) {
                 patchState(store, { isCreating: false });
@@ -152,4 +168,12 @@ export const PackStore = signalStore(
             patchState(store, { titleValid });
         }
     })),
+
+    withHooks({
+        onInit() {
+            // For `packCount`; the backend reads the setting on its own.
+            const config = inject(ConfigurationStore);
+            if (!config.isLoaded()) config.loadConfig();
+        },
+    }),
 )

@@ -19,5 +19,9 @@
   [loading]="store.isCreating()"
   (click)="onCreate()"
 >
-  Create pack ({{ store.selectedDiffs().length }} diffs)
+  @if (store.packCount() > 1) {
+    Create {{ store.packCount() }} packs ({{ store.setCount() }} sets, {{ store.selectedDiffs().length }} diffs)
+  } @else {
+    Create pack ({{ store.selectedDiffs().length }} diffs)
+  }
 </button>

@@ -47,6 +47,12 @@
                     tuiTab
                     type="button"
                 >
+                    Packs
+                </button>
+                <button
+                    tuiTab
+                    type="button"
+                >
                     Trainer
                 </button>
             </tui-tabs>
@@ -210,8 +216,54 @@
             }
 
             @case (2) {
+                <section>
+                    <h3 tuiTitle="s">Create Packs</h3>
+                    <label tuiCell>
+                        <span tuiTitle>
+                            Keep backgrounds
+                            <span tuiSubtitle>Copy each diff's background into the pack</span>
+                        </span>
+                        <input
+                            tuiSwitch
+                            type="checkbox"
+                            [(ngModel)]="draft.packs.keep_background"
+                        />
+                    </label>
+                    <tui-textfield>
+                        <label tuiLabel>Max sets per pack (0 never splits)</label>
+                        <input
+                            tuiInputNumber
+                            [min]="0"
+                            [step]="1"
+                            [(ngModel)]="draft.packs.max_sets_per_pack"
+                        />
+                    </tui-textfield>
+                </section>
+            }
+
+            @case (3) {
                 <p class="empty">No trainer settings available yet.</p>
             }
         }
     </div>
+
+    <footer>
+        <button
+            appearance="secondary"
+            size="m"
+            tuiButton
+            type="button"
+            (click)="open.set(false)"
+        >
+            Cancel
+        </button>
+        <button
+            size="m"
+            tuiButton
+            type="button"
+            (click)="save()"
+        >
+            Save
+        </button>
+    </footer>
 </tui-drawer>

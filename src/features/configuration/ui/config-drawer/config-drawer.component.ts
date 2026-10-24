@@ -19,6 +19,10 @@ const DEFAULT_CONFIG: AppConfig = {
     skip_video: false,
     max_concurrent_downloads: 1,
   },
+  packs: {
+    keep_background: true,
+    max_sets_per_pack: 10,
+  },
   sqlite_db: true,
   open_file: false,
 };
@@ -37,7 +41,7 @@ export class ConfigDrawerComponent {
   readonly faGears = faGears;
   readonly tools = USER_ITEMS.filter(item => item.route !== '/');
 
-  // Local copy edited by the form; not sent to the backend yet
+  // Local copy edited by the form; sent to the backend on save
   draft: AppConfig = structuredClone(DEFAULT_CONFIG);
 
   async toggle() {
@@ -49,6 +53,11 @@ export class ConfigDrawerComponent {
     if (!this.store.isLoaded()) await this.store.loadConfig();
     this.draft = structuredClone(this.store.config() ?? DEFAULT_CONFIG);
     this.open.set(true);
+  }
+
+  async save() {
+    await this.store.updateConfig(this.draft);
+    this.open.set(false);
   }
 
   async pickOsuPath() {

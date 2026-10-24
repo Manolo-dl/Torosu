@@ -11,6 +11,9 @@ pub struct AppConfig {
     #[serde(default)]
     pub downloader: DownloaderConfig,
 
+    #[serde(default)]
+    pub packs: PacksConfig,
+
     #[serde(default = "default_true")]
     pub sqlite_db: bool,
 
@@ -42,9 +45,22 @@ pub struct DownloaderConfig {
     pub max_concurrent_downloads: u32,
 }
 
+#[derive(Deserialize, Serialize, Clone)]
+pub struct PacksConfig {
+    /// Copy each diff's background into the pack instead of leaving it without one.
+    #[serde(default = "default_true")]
+    pub keep_background: bool,
+
+    /// Above this many original sets (each with its own audio and background)
+    /// the pack is split into several; 0 never splits.
+    #[serde(default = "default_max_sets_per_pack")]
+    pub max_sets_per_pack: u32,
+}
+
 fn default_true() -> bool { true }
 fn default_false() -> bool { false }
 fn default_max_concurrent_downloads() -> u32 { 1 }
+fn default_max_sets_per_pack() -> u32 { 10 }
 
 // Implemented by hand so the defaults match the serde ones above: a derived
 // Default would set `sqlite_db` to false, and that value is then written to
@@ -55,8 +71,18 @@ impl Default for AppConfig {
             osu_path: None,
             excluded_tools: Vec::new(),
             downloader: DownloaderConfig::default(),
+            packs: PacksConfig::default(),
             sqlite_db: default_true(),
             open_file: default_false(),
+        }
+    }
+}
+
+impl Default for PacksConfig {
+    fn default() -> Self {
+        Self {
+            keep_background: default_true(),
+            max_sets_per_pack: default_max_sets_per_pack(),
         }
     }
 }
