@@ -22,7 +22,7 @@
           </button>
           <tui-expand>
             <div class="sets">
-              @for (set of group.sets; track set.beatmapsetId) {
+              @for (set of group.sets; track set.folderName) {
                 <app-beatmap-set-card [set]="set" />
               } @empty {
                 <p class="empty">No installed beatmaps found</p>

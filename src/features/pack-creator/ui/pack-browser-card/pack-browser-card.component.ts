@@ -1,6 +1,6 @@
 import { DecimalPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
-import { OsuBeatmapSet, OsuDiff } from '@entities/osu-db';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
+import { OsuBeatmapSet, OsuDiff, setStatus } from '@entities/osu-db';
 import { PackStore } from '@entities/pack';
 import { starBg, starFg } from '@shared/utils';
 import { TuiButton, TuiExpand, TuiIcon } from '@taiga-ui/core';
@@ -19,6 +19,7 @@ export class PackBrowserCardComponent {
   readonly store = inject(PackStore);
 
   readonly expanded = signal(false);
+  readonly status = computed(() => setStatus(this.set()));
   readonly starBg = starBg;
   readonly starFg = starFg;
 
@@ -34,7 +35,7 @@ export class PackBrowserCardComponent {
 
     this.store.toggleDiff({
       md5: diff.md5,
-      beatmapsetId: set.beatmapsetId,
+      folderName: set.folderName,
       fileName: diff.fileName,
       audio: diff.audio,
       newDiffName: newDiffName,

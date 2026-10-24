@@ -1,6 +1,6 @@
 import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, Input, signal } from '@angular/core';
-import { OsuBeatmapSet, OsuDiff } from '@entities/osu-db/osu-db.model';
+import { OsuBeatmapSet, OsuDiff, setStatus } from '@entities/osu-db/osu-db.model';
 import { openUrl } from '@tauri-apps/plugin-opener';
 import { modeChar, modeColor, starBg, starFg } from '@shared/utils';
 import { TuiExpand, TuiIcon, TuiLink } from '@taiga-ui/core';
@@ -23,8 +23,13 @@ export class BeatmapSetCardComponent {
     this.expanded.update(v => !v);
   }
 
+  get status() {
+    return setStatus(this.set);
+  }
+
   openSet(event: Event) {
     event.stopPropagation();
+    if (this.set.beatmapsetId <= 0) return;
     openUrl(`https://osu.ppy.sh/beatmapsets/${this.set.beatmapsetId}`);
   }
 

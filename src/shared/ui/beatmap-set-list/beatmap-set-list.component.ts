@@ -16,7 +16,7 @@ export class BeatmapSetListComponent {
   @Input() emptyText = 'No beatmaps';
   @Input() listHeight = 'calc(100vh - 320px)';
 
-  trackSet(_: number, set: OsuBeatmapSet): number {
-    return set.beatmapsetId;
+  trackSet(_: number, set: OsuBeatmapSet): string {
+    return set.folderName;
   }
 }

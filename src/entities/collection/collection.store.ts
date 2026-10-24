@@ -28,30 +28,31 @@ export const CollectionStore = signalStore(
 
     withComputed((store, osuDb = inject(OsuDbStore)) => {
         const collectionsWithBeatmaps = computed(() => {
-            const setsByMd5 = osuDb.beatmapSetsByMd5();
+            // Exported as links, so only what is on the website, with the diffs of the collection.
+            const setsByMd5 = osuDb.submittedSetsByMd5();
             return store.collections().map(col => {
-                const seenIds = new Set<number>();
-                const sets = col.md5s
-                    .map(md5 => setsByMd5.get(md5))
-                    .filter((set): set is OsuBeatmapSet => set !== undefined)
-                    .filter(set => {
-                        if (seenIds.has(set.beatmapsetId)) return false;
-                        seenIds.add(set.beatmapsetId);
-                        return true;
-                    });
+                const md5s = new Set(col.md5s);
+                const seenFolders = new Set<string>();
+                const sets: OsuBeatmapSet[] = [];
+                for (const md5 of md5s) {
+                    const set = setsByMd5.get(md5);
+                    if (!set || seenFolders.has(set.folderName)) continue;
+                    seenFolders.add(set.folderName);
+                    sets.push({ ...set, diffs: set.diffs.filter(d => md5s.has(d.md5)) });
+                }
                 return { name: col.name, sets };
             });
         });
 
         const selectedSets = computed(() => {
             const selected = store.selectedCollections();
-            const seen = new Set<number>();
+            const seen = new Set<string>();
             const sets: OsuBeatmapSet[] = [];
             for (const col of collectionsWithBeatmaps()) {
                 if (!selected.includes(col.name)) continue;
                 for (const set of col.sets) {
-                    if (seen.has(set.beatmapsetId)) continue;
-                    seen.add(set.beatmapsetId);
+                    if (seen.has(set.folderName)) continue;
+                    seen.add(set.folderName);
                     sets.push(set);
                 }
             }

@@ -18,7 +18,7 @@ export class PackBrowserComponent {
 
   readonly store = inject(PackStore);
 
-  trackSet(_index: number, set: OsuBeatmapSet): number {
-    return set.beatmapsetId;
+  trackSet(_index: number, set: OsuBeatmapSet): string {
+    return set.folderName;
   }
 }

@@ -87,7 +87,7 @@ fn read_from_osudb(osu_path: &str) -> Result<Vec<OsuBeatmapSet>, String> {
             e.to_string()
         })?;
 
-    let mut sets: HashMap<u32, OsuBeatmapSet> = HashMap::new();
+    let mut sets: HashMap<String, OsuBeatmapSet> = HashMap::new();
 
     for b in db.beatmaps {
 
@@ -96,9 +96,12 @@ fn read_from_osudb(osu_path: &str) -> Result<Vec<OsuBeatmapSet>, String> {
             None => continue,
         };
 
-        if b.beatmapset_id < 0 { continue; }
+        let folder_name = match b.folder_name {
+            Some(f) if !f.is_empty() => f,
+            _ => continue,
+        };
 
-        if matches!(b.status, RankedStatus::Unknown | RankedStatus::Unsubmitted | RankedStatus::Unused) { continue; }
+        if matches!(b.status, RankedStatus::Unused) { continue; }
 
         let stars = match b.mode {
             Mode::Standard => &b.std_ratings,
@@ -120,6 +123,7 @@ fn read_from_osudb(osu_path: &str) -> Result<Vec<OsuBeatmapSet>, String> {
             RankedStatus::Approved => "approved",
             RankedStatus::Qualified => "qualified",
             RankedStatus::PendingWipGraveyard => "unranked",
+            RankedStatus::Unsubmitted => "unsubmitted",
             _ => "unknown",
         }.to_string();
 
@@ -138,17 +142,22 @@ fn read_from_osudb(osu_path: &str) -> Result<Vec<OsuBeatmapSet>, String> {
             file_name: b.file_name.unwrap_or_default(),
             audio: b.audio.unwrap_or_default(),
             creator: b.creator.unwrap_or_default(),
+            status,
         };
 
-        sets.entry(b.beatmapset_id as u32)
+        let set = sets.entry(folder_name.clone())
             .or_insert_with(|| OsuBeatmapSet {
-                beatmapset_id: b.beatmapset_id as u32,
+                folder_name,
+                beatmapset_id: 0,
                 title: b.title_ascii.unwrap_or_default(),
                 artist: b.artist_ascii.unwrap_or_default(),
-                status: status.to_string(),
                 diffs: Vec::new(),
-            })
-            .diffs.push(diff);
+            });
+
+        // Unsubmitted diffs (e.g. a rate of a ranked map) have no id or -1;
+        // the set keeps the id of the diffs that do.
+        set.beatmapset_id = set.beatmapset_id.max(b.beatmapset_id.max(0) as u32);
+        set.diffs.push(diff);
     }
 
     Ok(sets.into_values().collect())

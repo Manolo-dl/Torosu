@@ -15,10 +15,10 @@ export class CollectionExportService {
     const collections = this.store.collections().filter(c => selected.includes(c.name));
 
     if (format === 'urls') {
-      const setIdByMd5 = this.osuDb.beatmapSetIdByMd5();
+      const setsByMd5 = this.osuDb.submittedSetsByMd5();
       const sections: string[] = [];
       for (const col of collections) {
-        const setIds = new Set(col.md5s.map(md5 => setIdByMd5.get(md5)).filter(id => id != null));
+        const setIds = new Set(col.md5s.map(md5 => setsByMd5.get(md5)?.beatmapsetId).filter(id => id != null));
         if (setIds.size === 0) continue;
         const lines = [`- ${col.name}`, ...[...setIds].map(id => `https://osu.ppy.sh/beatmapsets/${id}`)];
         sections.push(lines.join('\n'));

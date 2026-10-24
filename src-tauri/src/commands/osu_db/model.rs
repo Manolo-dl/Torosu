@@ -8,15 +8,15 @@ pub struct OsuDbMeta {
 
 #[derive(FromRow)]
 pub struct BeatmapSetRow {
+    pub folder_name: String,
     pub beatmapset_id: i64,
     pub title: String,
     pub artist: String,
-    pub status: String,
 }
 
 #[derive(FromRow)]
 pub struct DiffRow {
-    pub beatmapset_id: i64,
+    pub folder_name: String,
     pub md5: String,
     pub diff_name: String,
     pub mode: i64,
@@ -30,9 +30,9 @@ pub struct DiffRow {
     pub file_name: String,
     pub audio: String,
     pub creator: String,
+    pub status: String,
 }
 
-#[derive(FromRow)]
 pub struct BeatmapsetFolder {
     pub folder_path: String,
 }
@@ -54,14 +54,18 @@ pub struct OsuDiff {
     pub file_name: String,
     pub audio: String,
     pub creator: String,
+    /// Per diff: a ranked set can hold diffs that were never uploaded (e.g. rates).
+    pub status: String,
 }
 
+/// A folder of `Songs`. Unsubmitted sets have `beatmapset_id` 0, so the folder
+/// is what identifies a set.
 #[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OsuBeatmapSet {
+    pub folder_name: String,
     pub beatmapset_id: u32,
     pub title: String,
     pub artist: String,
-    pub status: String,
     pub diffs: Vec<OsuDiff>,
 }

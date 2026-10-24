@@ -23,8 +23,9 @@ export class BeatmapExportControlsComponent {
   readonly formats = FORMATS;
 
   async export() {
-    const lines = this.store.filteredBeatmaps()
-      .map(s => this.exportService.formatLine(s.beatmapsetId, 'urls'));
+    // A set downloaded twice is in two folders with the same id.
+    const ids = new Set(this.store.filteredBeatmaps().map(s => s.beatmapsetId));
+    const lines = [...ids].map(id => this.exportService.formatLine(id, 'urls'));
     await this.exportService.saveToFile(lines.join('\n'), 'beatmaps.txt');
   }
 }

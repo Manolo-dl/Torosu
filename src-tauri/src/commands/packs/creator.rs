@@ -1,11 +1,11 @@
 use std::{fs, path::Path};
-use crate::{AppConfigState, DbState};
+use crate::AppConfigState;
 use crate::commands::osu_db::folders::get_beatmapset_folder;
 
 #[derive(serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SelectedDiff {
-    pub beatmapset_id: u32,
+    pub folder_name: String,
     pub file_name: String,
     pub audio: String,
     pub new_diff_name: String,
@@ -22,20 +22,15 @@ pub struct PackRequest {
 #[tauri::command]
 pub async fn create_pack(
     request: PackRequest,
-    db_state: tauri::State<'_, DbState>,
     config_state: tauri::State<'_, AppConfigState>,
 ) -> Result<(), String> {
 
     log::debug!("create_pack called with title={}, creator={}, {} diffs", request.title, request.final_creator, request.diffs.len());
 
-    let pool = &db_state.pool;
-
     let osu_path = config_state.config.lock().unwrap()
         .osu_path.clone()
         .ok_or("osu! path not set")?;
 
-    let use_sqlite = config_state.config.lock().unwrap().sqlite_db.clone();
-    
     let safe_title = sanitize(&request.title);
     let temp_dir = std::env::temp_dir().join(format!("osu-pack-{}", safe_title));
 
@@ -46,9 +41,9 @@ pub async fn create_pack(
     })?;
 
     for (index, diff) in request.diffs.iter().enumerate() {
-        log::debug!("processing diff {}/{}: beatmapset_id={}, file_name={}", index + 1, request.diffs.len(), diff.beatmapset_id, diff.file_name);
+        log::debug!("processing diff {}/{}: folder_name={}, file_name={}", index + 1, request.diffs.len(), diff.folder_name, diff.file_name);
 
-        let folder = get_beatmapset_folder(pool, use_sqlite, &osu_path, diff.beatmapset_id, &diff.file_name).await?;
+        let folder = get_beatmapset_folder(&osu_path, &diff.folder_name)?;
         let osu_file_path = Path::new(&folder.folder_path).join(&diff.file_name);
 
         let content = fs::read_to_string(&osu_file_path).map_err(|e| {

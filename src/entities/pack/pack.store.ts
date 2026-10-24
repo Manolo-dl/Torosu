@@ -100,7 +100,7 @@ export const PackStore = signalStore(
                 if (!set || !diff) continue;
                 newDiffs.push({
                     md5: diff.md5,
-                    beatmapsetId: set.beatmapsetId,
+                    folderName: set.folderName,
                     fileName: diff.fileName,
                     audio: diff.audio,
                     newDiffName: `[${diff.creator}] ${set.artist} - ${set.title} (${diff.diffName})`,

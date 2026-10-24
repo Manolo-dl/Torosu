@@ -1,6 +1,6 @@
 export interface SelectedDiff {
     md5: string,
-    beatmapsetId: number,
+    folderName: string,
     fileName: string,
     audio: string
     newDiffName: string

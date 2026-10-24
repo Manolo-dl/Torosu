@@ -1,4 +1,4 @@
-<div class="card" [attr.data-status]="set.status" (click)="toggleExpand($event)">
+<div class="card" [attr.data-status]="status" (click)="toggleExpand($event)">
   <div class="body">
     <div class="head">
       <div class="titles">
@@ -7,7 +7,7 @@
       </div>
 
       <div class="side">
-        <span size="s" tuiBadge class="status">{{ set.status }}</span>
+        <span size="s" tuiBadge class="status">{{ status }}</span>
         <div class="side-bottom">
           <div class="pips">
             @for (mode of uniqueModes(set.diffs); track mode) {
