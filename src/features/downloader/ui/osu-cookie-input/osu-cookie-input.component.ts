@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { form, maxLength, minLength, required, FormRoot, FormField } from '@angular/forms/signals';
 import { signal } from '@angular/core';
 import { UserStore } from '@entities/user';
+import { ConfigurationStore } from '@entities/configuration';
 import { StatefulInputComponent } from "@shared/ui";
 import { TuiButton, TuiNotificationDirective, TuiTitle } from '@taiga-ui/core';
 import { TuiBadge } from '@taiga-ui/kit';
@@ -15,6 +16,7 @@ import { TuiBadge } from '@taiga-ui/kit';
 })
 export class OsuCookieInputComponent {
   readonly userStore = inject(UserStore);
+  readonly config = inject(ConfigurationStore);
 
   readonly osuCookieForm = form(
     signal({ osuSession: '' }),

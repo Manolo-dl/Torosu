@@ -22,6 +22,12 @@ pub struct AppConfigState {
     pub config: Mutex<AppConfig>,
 }
 
+/// The osu_session cookie in use; it only reaches the configuration file
+/// with `save_session`.
+pub struct SessionState {
+    pub osu_session: Mutex<Option<String>>,
+}
+
 pub fn run() {
     // reqwest is built without a bundled crypto provider; share ring with the updater
     let _ = rustls::crypto::ring::default_provider().install_default();
@@ -36,6 +42,7 @@ pub fn run() {
 
             // Load Configuration
             let config = commands::config::file::read_config();
+            app.manage(SessionState { osu_session: Mutex::new(config.downloader.osu_session.clone()) });
             app.manage(AppConfigState { config: Mutex::new(config) });
 
             // Database connection

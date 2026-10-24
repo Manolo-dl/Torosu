@@ -5,7 +5,7 @@ use tokio::io::AsyncWriteExt;
 use std::sync::Arc;
 use tokio::sync::Semaphore;
 
-use crate::AppConfigState;
+use crate::{AppConfigState, SessionState};
 
 const MAX_SIZE: u64 = 200 * 1024 * 1024;
 const DELAY_BETWEEN_DOWNLOADS_MS: u64 = 1000; // ~1 req/seg, osu! documentation recommendation
@@ -34,10 +34,13 @@ pub async fn start_downloads(
         )
     };
 
-    let osu_session = downloader_config
+    let osu_session = app
+        .state::<SessionState>()
         .osu_session
+        .lock()
+        .unwrap()
         .clone()
-        .ok_or("osu_session not set in configuration")?;
+        .ok_or("osu_session cookie not set")?;
 
     let songs_folder = downloader_config
         .output_path
@@ -268,15 +271,20 @@ fn sanitize_filename(name: &str) -> String {
 }
 
 #[tauri::command]
-pub fn get_osu_session(state: tauri::State<'_, AppConfigState>) -> Option<String> {
-    state.config.lock().unwrap().downloader.osu_session.clone()
+pub fn get_osu_session(session: tauri::State<'_, SessionState>) -> Option<String> {
+    session.osu_session.lock().unwrap().clone()
 }
 
+/// Sets the cookie in use. It's saved in the configuration only with
+/// `save_session`; otherwise it lasts until Torosu closes.
 #[tauri::command]
 pub fn set_osu_session(
     session: Option<String>,
     state: tauri::State<'_, AppConfigState>,
+    current: tauri::State<'_, SessionState>,
 ) -> Result<(), String> {
-    state.config.lock().unwrap().downloader.osu_session = session;
+    let mut config = state.config.lock().unwrap();
+    config.downloader.osu_session = if config.downloader.save_session { session.clone() } else { None };
+    *current.osu_session.lock().unwrap() = session;
     Ok(())
 }

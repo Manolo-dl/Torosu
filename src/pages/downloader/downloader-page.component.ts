@@ -3,6 +3,7 @@ import { BeatmapImportComponent, BeatmapQueueComponent } from "@features/beatmap
 import { OsuCookieInputComponent } from '@features/downloader';
 import { OsuDbStore } from '@entities/osu-db';
 import { ConfigurationStore } from '@entities/configuration';
+import { UserStore } from '@entities/user';
 import { TuiTitle, TuiNotificationDirective, TuiButton } from "@taiga-ui/core";
 import { TuiAccordion } from '@taiga-ui/kit';
 
@@ -25,6 +26,7 @@ interface Step {
 })
 export class DownloaderPageComponent implements OnInit {
   readonly osuDb = inject(OsuDbStore);
+  readonly userStore = inject(UserStore);
   private readonly config = inject(ConfigurationStore);
 
   /** With `load_library` on, the library loads by itself to skip maps already owned. */
@@ -103,7 +105,7 @@ export class DownloaderPageComponent implements OnInit {
           desc: 'Error file: If enabled, a file with the failed downloads will be created in the output folder',
         },
         {
-          desc: 'Osu session: The osu session cookie, if not set, the downloader will not work',
+          desc: 'Save cookie: If enabled, the osu session cookie is kept when Torosu closes; otherwise it only lasts for the session',
         },
         {
           desc: 'Output path: The path where the downloaded files will be saved, if not set, the default osu! songs folder will be used',

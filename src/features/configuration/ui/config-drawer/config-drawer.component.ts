@@ -19,6 +19,7 @@ const DEFAULT_CONFIG: AppConfig = {
   downloader: {
     notify: false,
     error_file: true,
+    save_session: false,
     load_library: false,
     skip_video: false,
     max_concurrent_downloads: 1,

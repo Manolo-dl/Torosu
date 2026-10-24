@@ -14,6 +14,11 @@
     </span>
     <div tuiSubtitle>
       The <strong>osu_session</strong> cookie is required to download beatmaps.
+      @if (config.config()?.downloader?.save_session) {
+        It is saved and kept when Torosu closes.
+      } @else {
+        It is only kept for this session; turn on <strong>Save cookie</strong> in the downloader settings to keep it.
+      }
     </div>
   </div>
 </div>
@@ -26,7 +31,7 @@
     [placeholder]="'Enter your osu_session cookie'" />
 
   <div class="button-group">
-    <button size="m" tuiButton type="submit">Save cookie</button>
+    <button size="m" tuiButton type="submit">Use cookie</button>
     @if (userStore.user()?.osuSession) {
       <button
         appearance="negative"

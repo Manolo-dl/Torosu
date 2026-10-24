@@ -29,8 +29,14 @@ pub struct DownloaderConfig {
     #[serde(default = "default_true")]
     pub error_file: bool,
 
+    /// The osu_session cookie as saved in the file, only with `save_session`;
+    /// the one in use is in `SessionState`.
     #[serde(default)]
     pub osu_session: Option<String>,
+
+    /// Keep the cookie between sessions. Off, it's forgotten on close.
+    #[serde(default = "default_false")]
+    pub save_session: bool,
 
     #[serde(default)]
     pub output_path: Option<String>,
@@ -93,6 +99,7 @@ impl Default for DownloaderConfig {
             notify: false,
             error_file: true,
             osu_session: None,
+            save_session: default_false(),
             output_path: None,
             load_library: false,
             skip_video: false,

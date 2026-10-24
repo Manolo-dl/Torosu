@@ -115,15 +115,17 @@
             @case (1) {
                 <section>
                     <h3 tuiTitle="s">Account</h3>
-                    <tui-textfield>
-                        <label tuiLabel>osu! session cookie</label>
+                    <label tuiCell>
+                        <span tuiTitle>
+                            Save cookie
+                            <span tuiSubtitle>Keep the osu_session cookie when Torosu closes. Off, it lasts only for this session</span>
+                        </span>
                         <input
-                            autocomplete="off"
-                            tuiInput
-                            type="password"
-                            [(ngModel)]="draft.downloader.osu_session"
+                            tuiSwitch
+                            type="checkbox"
+                            [(ngModel)]="draft.downloader.save_session"
                         />
-                    </tui-textfield>
+                    </label>
                 </section>
 
                 <section>

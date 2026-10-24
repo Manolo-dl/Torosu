@@ -61,14 +61,17 @@
     </div>
   }
 
-  <section>
-    <h2 tuiTitle="m">Import</h2>
-    <app-beatmap-import />
-  </section>
+  <!-- Nothing can be downloaded without the cookie. -->
+  @if (userStore.user()?.osuSession) {
+    <section>
+      <h2 tuiTitle="m">Import</h2>
+      <app-beatmap-import />
+    </section>
 
-  <section>
-    <h2 tuiTitle="m">Download Queue</h2>
-    <app-beatmap-queue />
-  </section>
+    <section>
+      <h2 tuiTitle="m">Download Queue</h2>
+      <app-beatmap-queue />
+    </section>
+  }
 
 </div>
