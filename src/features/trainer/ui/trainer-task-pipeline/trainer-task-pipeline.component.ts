@@ -49,33 +49,26 @@ export class TrainerTaskPipelineComponent {
   readonly keyOptions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
   readonly densityOptions: DensityOption[] = [
     { value: 'none', label: 'None', hint: 'Only the notes of the original map.' },
-    { value: 'dense', label: 'Some', hint: 'Widens chords into the key next to them, on the beats and chords.' },
-    { value: 'moreDense', label: 'More', hint: 'Widens chords into the keys next to them, on almost every row.' },
+    {
+      value: 'dense',
+      label: 'Some',
+      hint: 'Adds a note on the beats and chords: next to the chord up to 7K, where its hand is going on 8K and more.',
+    },
+    {
+      value: 'moreDense',
+      label: 'More',
+      hint: 'Adds notes on almost every row: next to the chord up to 7K, where its hand is going on 8K and more, mostly in the denser parts.',
+    },
     {
       value: 'full',
       label: 'Full',
       hint: 'Chords grow with the key count, like hand-made conversions: jumps become hands and hands become quints. Handstreams stay handstreams, and the map gets much harder.',
     },
-    {
-      value: 'auto',
-      label: 'Auto',
-      hint: 'Learned from hand-made maps: each pattern gets as many notes as mappers give it on this key count, calm parts stay calm and dense parts get denser. Trills and jacks are reinterpreted, not always copied.',
-    },
   ];
 
-  /** With fewer keys there are no extra notes, only how many notes each row keeps. */
-  readonly reducingOptions: DensityOption[] = [
-    {
-      value: 'none',
-      label: 'Key ratio',
-      hint: 'Chords shrink with the key count (on 7K to 4K, 3 or 4 notes become 2) and notes are dropped rather than turned into jacks.',
-    },
-    {
-      value: 'auto',
-      label: 'Auto',
-      hint: 'Learned from hand-made maps: each row keeps as many notes as mappers keep for that pattern and part of the map.',
-    },
-  ];
+  /** With fewer keys there are no extra notes: each row keeps its share of notes. */
+  readonly reducingHint =
+    'Chords shrink with the key count (on 7K to 4K, 3 or 4 notes become 2) and notes are dropped rather than turned into jacks.';
 
   newBpm(rate: number): number | null {
     const bpm = this.originalBpm();
@@ -104,11 +97,9 @@ export class TrainerTaskPipelineComponent {
       case 'KeyConverter': {
         const source = this.sourceKeys() ?? 4;
         const targetKeys = source < 7 ? 7 : source < 10 ? 10 : 7;
-        // Auto by default; 7K and up to 9K/10K already convert well without extra notes.
-        const density: KeyDensity = source >= 7 && targetKeys >= 9 ? 'none' : 'auto';
         this.trainer.addTask({
           type: 'KeyConverter',
-          params: { targetKeys, density, keepJacks: true, playstyle: null },
+          params: { targetKeys, density: 'none', keepJacks: true, playstyle: null },
         });
         break;
       }
@@ -140,8 +131,7 @@ export class TrainerTaskPipelineComponent {
 
   /** Changing the key count resets the playstyle, and the extra notes that no longer apply. */
   onTargetKeys(id: string, params: KeyConverterParams, targetKeys: number) {
-    const reducing = this.isReducing(targetKeys);
-    const density = reducing && params.density !== 'auto' ? 'none' : params.density;
+    const density = this.isReducing(targetKeys) ? 'none' : params.density;
     this.onKeyChange(id, params, { targetKeys, density, playstyle: null });
   }
 
@@ -150,12 +140,8 @@ export class TrainerTaskPipelineComponent {
     return source !== null && targetKeys < source;
   }
 
-  densityOptionsFor(targetKeys: number): DensityOption[] {
-    return this.isReducing(targetKeys) ? this.reducingOptions : this.densityOptions;
-  }
-
-  densityIndex(options: DensityOption[], density: KeyDensity): number {
-    return Math.max(0, options.findIndex(o => o.value === density));
+  densityIndex(density: KeyDensity): number {
+    return Math.max(0, this.densityOptions.findIndex(o => o.value === density));
   }
 
   playstyles(targetKeys: number): { name: string; hint: string }[] {

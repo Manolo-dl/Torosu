@@ -4,7 +4,6 @@
 
 pub mod layout;
 pub mod patterns;
-pub mod style;
 pub mod zones;
 
 #[cfg(test)]

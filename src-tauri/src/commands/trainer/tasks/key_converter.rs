@@ -38,12 +38,13 @@
 //!   H.A.R.D.C.O.R.E.): 2 notes -> 1, 3 or 4 -> 2, 5 or 6 -> 3. Notes are
 //!   dropped rather than turned into jacks.
 //!
-//! - **Auto** learns all of that from hand-made maps instead (see
-//!   `analysis::style`): each row gets as many notes as mappers give that
-//!   pattern of the source in that part of the map (rests stay calm, peaks get
-//!   denser), shares keys with the rows before it and splits between the hands
-//!   as they do. Repeated patterns are only copied when the style agrees:
-//!   mappers rarely keep a 4K jumptrill a jumptrill on 7K.
+//! - **Wide hands** (4 keys or more each: 8K, 9K, 10K): each hand plays its
+//!   own patterns, as in hand-made 10K maps, instead of the hands taking
+//!   turns as on 7K. A hand goes on with its stair or stays on three of its
+//!   keys (pinky-ring-middle, ...), and no pills are made where the source has
+//!   none: open chords stay open. Extra notes go on any key that suits what
+//!   its hand plays rather than next to the chord, mostly in the denser parts
+//!   of the source.
 //!
 //! The hands come from the playstyle of the target (`analysis::layout`): on
 //! 9K `5+4` the middle key is the left thumb's, on `4+1+4` either thumb's.
@@ -64,7 +65,6 @@ use crate::commands::trainer::{
     analysis::{
         layout::{self, Hand, Layout},
         patterns::{self, Pattern},
-        style::Style,
         zones::Zone,
     },
     model::{Density, KeyConverterParams},
@@ -163,23 +163,34 @@ const W_EXTRA_JACK: f64 = 40.0;
 /// the other. More than Full's reward, so phases stay on their own hand; the
 /// middle key goes with whichever phase gets it first.
 const W_HAND_TWICE: f64 = 30.0;
-/// Full and Auto: reward, in those rows, for mirroring the previous row on
+/// Full: reward, in those rows, for mirroring the previous row on
 /// the other hand (`OO.` then `.OO`), as 45% of the rows of hand-made 7K
 /// jumptrills do.
 const W_MIRROR: f64 = 2.0;
 
-/// Auto: per note a row is off the size drawn for it (see `Style::quota`).
-const W_STYLE_QUOTA: f64 = 8.0;
-/// Auto: weights of the learned style, on negative log probabilities.
-const W_STYLE_SIZE: f64 = 0.5;
-const W_STYLE_OVERLAP: f64 = 3.0;
-const W_STYLE_SPLIT: f64 = 1.5;
-/// Auto: reward for copying a repeated pattern, low enough for the style to
-/// choose something else.
-const W_COPY_STYLED: f64 = 4.0;
-/// Auto: the share of [`W_FRESH`] left. Hand-made maps come back to the keys
-/// of 2 rows ago far more than the plain conversion lets them.
-const FRESH_STYLED: f64 = 0.25;
+// Wide hands (4 keys or more each: 8K 4+4, 9K, 10K), measured against
+// hand-made 10K maps (see `corpus_feel`). There each hand plays patterns of
+// its own: stairs, runs on three of its keys (pinky-ring-middle, ...), open
+// chords rather than pills. With 7K's three keys a hand, rows grow into the
+// keys next to them instead, as hand conversions do.
+
+/// Wide hands: reward for a hand going on with its stair, to the next key the
+/// way it went last.
+const W_HAND_ROLL: f64 = 0.7;
+/// Wide hands: reward for a hand staying on three next keys for three rows.
+const W_HAND_GROUP: f64 = 1.0;
+/// Wide hands: a pill (two next keys of one hand) where the source has none.
+/// Open chords stay open, as when mappers adapt a 7K pattern to 10K, and
+/// pills of the source may stay pills.
+const W_PILL: f64 = 1.0;
+/// Wide hands, Dense and More dense: the share of the reward for extra notes
+/// in each density zone of the source (Break, Calm, Normal, Dense, Peak). The
+/// calm parts stay calm and the dense ones get denser.
+const ZONE_FILL: [f64; 5] = [0.0, 0.2, 0.6, 1.0, 1.2];
+/// Wide hands, Dense and More dense: the share of the reward a second extra
+/// note in a row keeps. Two more notes in every row of a stream leave no room
+/// for patterns on 10K: they come out as pills or as a checkerboard.
+const SECOND_EXTRA_WIDE: f64 = 0.25;
 
 #[derive(Clone, Copy)]
 struct Fill {
@@ -199,8 +210,6 @@ fn fill_settings(density: Density) -> Option<Fill> {
         Density::Dense => Some(Fill { max: 1, min_strength: 0.7, gap_beats: 0.5, scaled: false }),
         Density::MoreDense => Some(Fill { max: 2, min_strength: 0.0, gap_beats: JACK_BEATS, scaled: false }),
         Density::Full => Some(Fill { max: MAX_EXTRAS, min_strength: 0.0, gap_beats: 0.0, scaled: true }),
-        // The style decides how many.
-        Density::Auto => Some(Fill { max: MAX_EXTRAS, min_strength: 0.0, gap_beats: 0.0, scaled: false }),
     }
 }
 
@@ -274,12 +283,12 @@ struct Row {
     /// How many of its notes fit on the target keys: all of them, unless
     /// going down in keys.
     share: u8,
-    /// Auto: the pattern, density zone and beat position of the source here,
-    /// and the size drawn for the row.
+    /// Two of its notes on next columns of the same hand (a pill).
+    pill: bool,
+    /// The pattern, density zone and beat position of the source here.
     pattern: Pattern,
     zone: Zone,
     beat: u8,
-    target: u8,
 }
 
 const NONE: u8 = u8::MAX;
@@ -304,6 +313,8 @@ struct State {
     last_roll: i8,
     /// The last rows, newest first.
     history: [Past; HISTORY],
+    /// Wide hands: what each hand (left, right) played last.
+    hands: [HandPast; 2],
 }
 
 impl State {
@@ -318,6 +329,7 @@ impl State {
             single: None,
             last_roll: 0,
             history: [Past { time: f64::NEG_INFINITY, src: 0, dst: 0, decision: Decision::DROPPED }; HISTORY],
+            hands: [HandPast { time: f64::NEG_INFINITY, ..Default::default() }; 2],
         }
     }
 }
@@ -334,6 +346,23 @@ struct Decision {
 
 impl Decision {
     const DROPPED: Self = Self { size: 0, combo: 0, extras: [0; MAX_EXTRAS], n_extras: 0 };
+}
+
+/// The last row a hand played (its keys, as a mask of the target), the one
+/// before it if linked, and which way the hand went to get there (±1, else 0).
+#[derive(Clone, Copy, Default)]
+struct HandPast {
+    time: f64,
+    mask: u16,
+    prev: u16,
+    dir: i8,
+}
+
+/// The middle of the keys of a mask.
+fn center(mask: u16) -> f64 {
+    let keys = (0..16).filter(|k| mask & 1 << k != 0);
+    let (sum, n) = keys.fold((0, 0), |(s, n), k| (s + k, n + 1));
+    sum as f64 / n.max(1) as f64
 }
 
 /// A row already placed: its source and target columns as bit masks.
@@ -354,8 +383,10 @@ struct Ctx<'a> {
     fill: Option<Fill>,
     src_hands: [Hand; MAX_KEYS],
     dst_hands: [Hand; MAX_KEYS],
-    /// Auto: the learned style.
-    style: Option<Style>,
+    /// The keys of the left and right hand of the target, the middle key aside,
+    /// and whether both have 4 keys or more (see [`W_HAND_ROLL`]).
+    dst_groups: [u16; 2],
+    wide: bool,
 }
 
 fn pos(col: usize, keys: usize) -> f64 {
@@ -365,7 +396,6 @@ fn pos(col: usize, keys: usize) -> f64 {
 impl Ctx<'_> {
     fn fresh(&self, state: &State, col: usize, row: &Row) -> f64 {
         let weight = if row.notes.len() > 1 || row.quota > 0 { W_FRESH_CHORDS } else { W_FRESH };
-        let weight = if self.style.is_some() { weight * FRESH_STYLED } else { weight };
         weight * (-(row.time - state.release[col]) / row.beat_len).exp()
     }
 
@@ -398,7 +428,7 @@ impl Ctx<'_> {
         (0..self.dst_keys).filter(|&c| prev & 1 << c != 0).fold(0, |m, c| m | hand_bit(self.dst_hands[c]))
     }
 
-    /// Full and Auto, where the source alternates hands: a reward for a row
+    /// With extra notes, where the source alternates hands: a reward for a row
     /// mirroring the previous one, the middle key aside.
     fn mirror_cost(&self, state: &State, row: &Row, mask: u32) -> f64 {
         if self.fill.is_none() || !self.alternating(state, row) {
@@ -413,13 +443,45 @@ impl Ctx<'_> {
         }
     }
 
+    /// Wide hands: the cost of what each hand plays in a row of `mask`. A pill
+    /// costs where the source has none; going on with the hand's stair, or
+    /// staying on three of its keys, is rewarded.
+    fn hand_cost(&self, state: &State, row: &Row, mask: u32) -> f64 {
+        if !self.wide {
+            return 0.0;
+        }
+        let link = patterns::link_ms(row.beat_len);
+        let pills = self.dst_groups.iter().map(|&g| (mask as u16 & g & ((mask as u16 & g) >> 1)).count_ones()).sum::<u32>();
+        // Where the source has a pill it may stay one; hand-made 10K maps have
+        // fewer pills than 7K ones, so it is not pushed to.
+        let mut cost = if row.pill { 0.0 } else { W_PILL * pills as f64 };
+        for (past, &group) in state.hands.iter().zip(&self.dst_groups) {
+            let m = mask as u16 & group;
+            if m == 0 {
+                continue;
+            }
+            if past.mask == 0 || row.time - past.time > link {
+                continue;
+            }
+            let step = center(m) - center(past.mask);
+            if (0.5..=1.5).contains(&step.abs()) && past.dir != 0 && step.signum() as i8 == past.dir {
+                cost -= W_HAND_ROLL;
+            }
+            let used = m | past.mask | past.prev;
+            if past.prev != 0 && 16 - used.leading_zeros() - used.trailing_zeros() <= 3 {
+                cost -= W_HAND_GROUP;
+            }
+        }
+        cost
+    }
+
     /// Cost of each source note of the row in each target key, `INFINITY`
     /// where it cannot go.
     fn note_costs(&self, state: &State, row: &Row) -> [[f64; MAX_KEYS]; MAX_KEYS] {
         let mut costs = [[f64::INFINITY; MAX_KEYS]; MAX_KEYS];
         let jack_gap = row.beat_len * JACK_BEATS;
         let busy = self.busy_hands(state, row);
-        // Full and Auto: in jumptrills the middle key is an accent on the
+        // With extra notes, in jumptrills the middle key is an accent on the
         // beat, not every other row.
         let accent_only = self.fill.is_some() && row.beat != 0 && self.alternating(state, row);
 
@@ -449,10 +511,7 @@ impl Ctx<'_> {
                     cost += COST_BROKEN_JACK;
                 }
                 if !keeps_jack {
-                    // The style has its own say on keys coming back.
-                    if self.style.is_none() {
-                        cost += self.repeat_cost(state, row, src, col);
-                    }
+                    cost += self.repeat_cost(state, row, src, col);
                     if state.last_src[col] != note.src && row.time - state.release[col] <= jack_gap {
                         cost += COST_NEW_JACK;
                     }
@@ -514,8 +573,8 @@ impl Ctx<'_> {
         let jack_gap = row.beat_len * JACK_BEATS;
         let reward = if fill.scaled {
             FULL_REWARD
-        } else if self.style.is_some() {
-            0.0
+        } else if self.wide {
+            EXTRA_REWARD * row.strength * ZONE_FILL[Zone::ALL.iter().position(|&z| z == row.zone).unwrap_or(2)]
         } else {
             EXTRA_REWARD * row.strength
         };
@@ -536,30 +595,45 @@ impl Ctx<'_> {
     }
 
     /// The best extra notes for a row placed in `combo`: the chord grows
-    /// into the keys next to it, on the same hand, one note at a time. Full
-    /// takes any free key instead, so big chords stay open (`O.O.O.O`, not
-    /// `OOOO...`), as in hand conversions of handstreams.
-    fn pick_extras(&self, row: &Row, combo: &[u8], extra_costs: &[f64; MAX_KEYS]) -> ([u8; MAX_EXTRAS], u8, f64) {
+    /// into the keys next to it, on the same hand, one note at a time. Full,
+    /// and any density on wide hands, take any free key instead, so big chords
+    /// stay open (`O.O.O.O`, not `OOOO...`), as in hand conversions of
+    /// handstreams; on wide hands a pill costs [`W_PILL`] more.
+    fn pick_extras(&self, state: &State, row: &Row, combo: &[u8], extra_costs: &[f64; MAX_KEYS]) -> ([u8; MAX_EXTRAS], u8, f64) {
         let mut extras = [0u8; MAX_EXTRAS];
         let Some(fill) = self.fill else { return (extras, 0, 0.0) };
         let max = if fill.scaled { row.quota as usize } else { fill.max };
 
         // Full spreads the extras over any key, except in repeated patterns.
-        let anywhere = fill.scaled && !row.grouped;
+        let anywhere = (fill.scaled || self.wide) && !row.grouped;
 
         let mut n = 0;
         let mut total = 0.0;
         while n < max {
-            let mut best: Option<(f64, u8)> = None;
+            // The cost the choice is made on, the key, and the cost it adds
+            // (what each hand plays is costed with the whole row later).
+            let mut best: Option<(f64, u8, f64)> = None;
             if anywhere {
+                let taken: Vec<u8> = combo.iter().chain(&extras[..n]).copied().collect();
+                // Wide hands: an extra note goes on with what its hand plays.
+                let mask = taken.iter().fold(0u32, |m, &c| m | 1 << c);
+                let hand_now = self.hand_cost(state, row, mask);
                 for next in 0..self.dst_keys as u8 {
-                    let cost = extra_costs[next as usize];
+                    let mut added = extra_costs[next as usize];
+                    if !added.is_finite() {
+                        continue;
+                    }
+                    if n > 0 && !fill.scaled {
+                        added += EXTRA_REWARD * if self.wide { 1.0 - SECOND_EXTRA_WIDE } else { 0.5 };
+                    }
+                    let hand = if self.wide { self.hand_cost(state, row, mask | 1 << next) - hand_now } else { 0.0 };
+                    let cost = added + hand;
                     if cost < 0.0
                         && !combo.contains(&next)
                         && !extras[..n].contains(&next)
-                        && best.is_none_or(|(b, _)| cost < b)
+                        && best.is_none_or(|(b, _, _)| cost < b)
                     {
-                        best = Some((cost, next));
+                        best = Some((cost, next, added));
                     }
                 }
             }
@@ -573,15 +647,15 @@ impl Ctx<'_> {
                         && !combo.contains(&next)
                         && !extras[..n].contains(&next)
                         && same_hand(self.dst_hands[col as usize], self.dst_hands[next as usize])
-                        && best.is_none_or(|(b, _)| cost < b)
+                        && best.is_none_or(|(b, _, _)| cost < b)
                     {
-                        best = Some((cost, next));
+                        best = Some((cost, next, cost));
                     }
                 }
             }
-            let Some((cost, col)) = best else { break };
+            let Some((_, col, added)) = best else { break };
             extras[n] = col;
-            total += cost;
+            total += added;
             n += 1;
         }
         (extras, n as u8, total)
@@ -633,18 +707,12 @@ impl Ctx<'_> {
     fn candidates(&self, state: &State, row: &Row, row_idx: usize, out: &mut Vec<(f64, Decision)>) {
         let k = row.notes.len();
 
-        // A repeated pattern copies the row it repeats, whenever it fits. With
-        // a learned style, only when the style has nothing better: hand-made
-        // maps vary the chords of a jumptrill within each hand, and the hands
-        // are kept apart by `busy_hands`.
+        // A repeated pattern copies the row it repeats, whenever it fits.
         if row.copy > 0 {
             let past = state.history[row.copy as usize - 1].decision;
             if self.fits(state, row, &past) {
-                if self.style.is_none() {
-                    out.push((-W_COPY, past));
-                    return;
-                }
-                out.push((self.style_cost(state, row, self.mask_of(&past)) - W_COPY_STYLED, past));
+                out.push((-W_COPY, past));
+                return;
             }
         }
 
@@ -654,18 +722,14 @@ impl Ctx<'_> {
         // Going up, fewer notes are only tried when they do not all fit. Going
         // down, every size up to the row's share competes, so a note can be
         // dropped to avoid a jack.
-        // With a learned style, going down, the style says how many notes
-        // stay instead of the key ratio.
         let reducing = self.dst_keys < self.src_keys;
-        let styled = self.style.is_some();
-        let share = if styled { k.min(self.dst_keys) } else { (row.share as usize).min(self.dst_keys) };
+        let share = (row.share as usize).min(self.dst_keys);
         let drop_cost = if reducing { COST_DROP_REDUCING } else { COST_DROP };
-        let drop_note = if styled && reducing { 0.0 } else { drop_cost };
 
         for size in (1..=share).rev() {
             let keep = kept(k, size);
             let src_pos = self.source_pos(row, &keep);
-            let dropped = (share - size) as f64 * drop_note;
+            let dropped = (share - size) as f64 * drop_cost;
             let before = out.len();
 
             for (ci, combo) in self.combos[size].iter().enumerate() {
@@ -680,16 +744,12 @@ impl Ctx<'_> {
                 let dst_pos = combo.iter().map(|&c| pos(c as usize, self.dst_keys)).sum::<f64>() / size as f64;
                 cost += self.flow_cost(state, row, src_pos, dst_pos, self.single(row, &keep, combo));
 
-                if styled {
-                    self.styled_candidates(state, row, row_idx, (size, ci), cost, &extra_costs, out);
-                    continue;
-                }
-
-                let (extras, n_extras, extra_cost) = self.pick_extras(row, combo, &extra_costs);
+                let (extras, n_extras, extra_cost) = self.pick_extras(state, row, combo, &extra_costs);
                 let decision = Decision { size: size as u8, combo: ci as u16, extras, n_extras };
-                let mirror = self.mirror_cost(state, row, self.mask_of(&decision));
+                let mask = self.mask_of(&decision);
+                let shaped = self.mirror_cost(state, row, mask) + self.hand_cost(state, row, mask);
 
-                out.push((cost + extra_cost + mirror + tie_break(row_idx, ci), decision));
+                out.push((cost + extra_cost + shaped + tie_break(row_idx, ci), decision));
             }
 
             if out.len() > before && !reducing {
@@ -699,62 +759,6 @@ impl Ctx<'_> {
 
         // Every key is held: the whole row is dropped.
         out.push((share as f64 * drop_cost, Decision::DROPPED));
-    }
-
-    /// With a learned style: the row as it is, then with one extra note more
-    /// at a time, each in the key that suits the style best, each a candidate.
-    fn styled_candidates(
-        &self,
-        state: &State,
-        row: &Row,
-        row_idx: usize,
-        (size, ci): (usize, usize),
-        cost: f64,
-        extra_costs: &[f64; MAX_KEYS],
-        out: &mut Vec<(f64, Decision)>,
-    ) {
-        let mut mask = self.combos[size][ci].iter().fold(0u32, |m, &c| m | 1 << c);
-        let mut decision = Decision { size: size as u8, combo: ci as u16, extras: [0; MAX_EXTRAS], n_extras: 0 };
-        let noise = tie_break(row_idx, ci);
-        let shaped = |mask: u32| self.style_cost(state, row, mask) + self.mirror_cost(state, row, mask);
-        out.push((cost + shaped(mask) + noise, decision));
-
-        let max = if self.fill.is_some() { MAX_EXTRAS.min(self.dst_keys - size) } else { 0 };
-        let mut extra = 0.0;
-        for n in 0..max {
-            let best = (0..self.dst_keys)
-                .filter(|&c| mask & 1 << c == 0 && extra_costs[c].is_finite())
-                .map(|c| (extra_costs[c] + shaped(mask | 1 << c), c))
-                .min_by(|a, b| a.0.total_cmp(&b.0));
-            let Some((_, col)) = best else { break };
-            extra += extra_costs[col];
-            mask |= 1 << col;
-            decision.extras[n] = col as u8;
-            decision.n_extras = n as u8 + 1;
-            out.push((cost + extra + shaped(mask) + noise, decision));
-        }
-    }
-
-    /// Cost of a target row against the learned style: its size for the
-    /// pattern and zone of the source, the keys it shares with the rows
-    /// before it, and how it splits between the hands.
-    fn style_cost(&self, state: &State, row: &Row, mask: u32) -> f64 {
-        let Some(style) = &self.style else { return 0.0 };
-        let size = mask.count_ones() as usize;
-        let mut cost = W_STYLE_QUOTA * size.abs_diff(row.target as usize) as f64
-            + W_STYLE_SIZE * style.size_cost(row.pattern, row.notes.len(), row.zone, row.beat, size);
-
-        let link = patterns::link_ms(row.beat_len);
-        let [prev, back2, ..] = &state.history;
-        if prev.dst != 0 && row.time - prev.time <= link {
-            let shared = (prev.dst as u32 & mask).count_ones() as usize;
-            cost += W_STYLE_OVERLAP * style.overlap_cost(1, row.pattern, size, shared);
-            if back2.dst != 0 && prev.time - back2.time <= link {
-                let shared = (back2.dst as u32 & mask).count_ones() as usize;
-                cost += W_STYLE_OVERLAP * style.overlap_cost(2, row.pattern, size, shared);
-            }
-        }
-        cost + W_STYLE_SPLIT * style.split_cost(row.pattern, mask)
     }
 
     /// The target keys of a decision.
@@ -826,6 +830,20 @@ impl Ctx<'_> {
         let dst_mask = self.mask_of(decision) as u16;
         state.history.rotate_right(1);
         state.history[0] = Past { time: row.time, src: src_mask, dst: dst_mask, decision: *decision };
+
+        if self.wide {
+            let link = patterns::link_ms(row.beat_len);
+            for (past, &group) in state.hands.iter_mut().zip(&self.dst_groups) {
+                let m = dst_mask & group;
+                if m == 0 {
+                    continue;
+                }
+                let linked = past.mask != 0 && row.time - past.time <= link;
+                let step = if linked { center(m) - center(past.mask) } else { 0.0 };
+                let dir = if step.abs() > 0.25 { step.signum() as i8 } else { 0 };
+                *past = HandPast { time: row.time, mask: m, prev: if linked { past.mask } else { 0 }, dir };
+            }
+        }
 
         for &col in &decision.extras[..decision.n_extras as usize] {
             let end = self.template(row, decision, col).map_or(row.time, |n| self.notes[n].end);
@@ -1020,16 +1038,10 @@ pub fn apply(beatmap: &mut Beatmap, params: &KeyConverterParams) -> Result<()> {
         grid.push((0.0, main_beat_len));
     }
 
-    // The patterns and density zones of the source, and for Auto the style
-    // learned for these key counts.
-    let auto = params.density == Density::Auto;
+    // The patterns and density zones of the source.
     let src_layout = layout::layout(src_keys, None);
     let dst_layout = layout::layout(dst_keys, params.playstyle.as_deref());
     let source = Some(patterns::label(beatmap, &src_layout));
-    let style = if auto { Style::load(src_keys, dst_keys) } else { None };
-    if auto && style.is_none() {
-        log::warn!("key converter: no learned style for {}K -> {}K, converting without it", src_keys, dst_keys);
-    }
     let source_at = |time: f64| -> (Pattern, Zone, u8) {
         let Some(source) = &source else { return (Pattern::Sparse, Zone::Normal, 0) };
         let i = source.rows.partition_point(|r| r.time < time - 0.5);
@@ -1068,27 +1080,32 @@ pub fn apply(beatmap: &mut Beatmap, params: &KeyConverterParams) -> Result<()> {
                     grouped: false,
                     quota: 0,
                     share: 0,
+                    pill: false,
                     pattern,
                     zone,
                     beat,
-                    target: 0,
                 });
             }
         }
         notes.push(Note { idx, end, src });
     }
 
+    let src_hands = hands(&src_layout);
     for row in &mut rows {
         notes[row.notes.clone()].sort_by_key(|n| n.src);
         if row.notes.len() > 1 {
             row.strength = (row.strength + 0.3).min(1.0);
         }
+        row.pill = notes[row.notes.clone()].windows(2).any(|w| {
+            let (a, b) = (w[0].src as usize, w[1].src as usize);
+            b == a + 1 && src_hands[a] != Hand::Either && src_hands[a] == src_hands[b]
+        });
     }
 
     mark_patterns(&mut rows, &notes, params.keep_jacks);
 
-    // Extra notes only make sense with more keys, and Auto needs its style.
-    let fill = fill_settings(params.density).filter(|_| dst_keys > src_keys && (!auto || style.is_some()));
+    // Extra notes only make sense with more keys.
+    let fill = fill_settings(params.density).filter(|_| dst_keys > src_keys);
 
     // Going down, each row keeps its size times the key ratio, rounded, at
     // least one note: hand-made maps do it that consistently.
@@ -1115,22 +1132,19 @@ pub fn apply(beatmap: &mut Beatmap, params: &KeyConverterParams) -> Result<()> {
             row.quota = size.saturating_sub(k).min(dst_keys - k.min(dst_keys)).min(MAX_EXTRAS) as u8;
         }
     }
-    // Auto: each row draws its size from the style, with noise of its own so
-    // the sizes come out as often as in hand-made maps.
-    if let Some(style) = &style {
-        for (i, row) in rows.iter_mut().enumerate() {
-            let u = tie_break(i, u32::MAX as usize - 1) / TIE_BREAK;
-            let size = style.quota(row.pattern, row.notes.len(), row.zone, row.beat, u);
-            row.target = size.clamp(1, dst_keys) as u8;
-        }
-    }
     // The two rows a trill or jumptrill alternates get the same size, so
-    // both hands play the same chords. Auto draws them, as mappers vary them.
+    // both hands play the same chords.
     for i in 1..rows.len() {
-        if rows[i].trill && rows[i - 1].trill && rows[i].copy == 0 && !auto {
-            (rows[i].quota, rows[i].target) = (rows[i - 1].quota, rows[i - 1].target);
+        if rows[i].trill && rows[i - 1].trill && rows[i].copy == 0 {
+            rows[i].quota = rows[i - 1].quota;
         }
     }
+
+    // The two hands of the target, the middle key aside.
+    let dst_hands = hands(&dst_layout);
+    let hand_mask = |hand: Hand| (0..dst_keys).filter(|&c| dst_hands[c] == hand).fold(0u16, |m, c| m | 1 << c);
+    let dst_groups = [hand_mask(Hand::Left), hand_mask(Hand::Right)];
+    let wide = dst_groups.iter().all(|g| g.count_ones() >= 4);
 
     let ctx = Ctx {
         notes: &notes,
@@ -1139,9 +1153,10 @@ pub fn apply(beatmap: &mut Beatmap, params: &KeyConverterParams) -> Result<()> {
         dst_keys,
         keep_jacks: params.keep_jacks,
         fill,
-        src_hands: hands(&src_layout),
-        dst_hands: hands(&dst_layout),
-        style,
+        src_hands,
+        dst_hands,
+        dst_groups,
+        wide,
     };
 
     let path = search(&ctx, &rows);
@@ -1440,35 +1455,15 @@ mod tests {
     }
 
     #[test]
-    fn auto_stays_playable_both_ways() {
-        for (src, dst) in [(4, 7), (7, 4), (4, 10), (7, 10), (10, 7), (6, 7), (4, 6)] {
-            let (original, beatmap) = convert(&map(src), dst, Density::Auto);
-            assert_eq!(beatmap.circle_size, dst as f32);
-            check(&beatmap, dst);
-            let ratio = beatmap.hit_objects.len() as f64 / original.hit_objects.len() as f64;
-            // Going up it adds notes, going down it drops some, never wildly.
-            if dst > src {
-                assert!((1.0..=2.0).contains(&ratio), "{}K -> {}K: {}", src, dst, ratio);
-            } else {
-                assert!((0.4..=1.0).contains(&ratio), "{}K -> {}K: {}", src, dst, ratio);
-            }
-        }
-    }
-
-    #[test]
     fn jumptrills_keep_a_hand_per_phase() {
         // A long 4K jumptrill: on 7K each phase stays on its own hand, the
-        // middle key with one of them at most, in every mode. None and Full
-        // repeat the same two rows; Auto varies them within each hand, as
-        // tyrcs' and Arona's 7K maps do.
+        // middle key with one of them at most, repeating the same two rows.
         let trill: Vec<&[usize]> = (0..32).map(|i| if i % 2 == 0 { &[0, 1][..] } else { &[2, 3][..] }).collect();
-        for density in [Density::None, Density::Full, Density::Auto] {
+        for density in [Density::None, Density::Full] {
             let (_, beatmap) = convert(&rows_map(&trill), 7, density);
             check(&beatmap, 7);
             let rows = key_rows(&beatmap, 7);
-            if density != Density::Auto {
-                assert!(rows.windows(3).all(|w| w[0] == w[2]), "{:?}", rows);
-            }
+            assert!(rows.windows(3).all(|w| w[0] == w[2]), "{:?}", rows);
             let side = |r: &[usize]| r.iter().filter(|&&c| c != 3).fold(0, |m, &c| m | if c < 3 { 1 } else { 2 });
             for w in rows.windows(2) {
                 assert!(side(&w[0]) & side(&w[1]) == 0, "{:?}", rows);
@@ -1488,6 +1483,26 @@ mod tests {
             let mut beatmap = original.clone();
             apply(&mut beatmap, &params).unwrap();
             check(&beatmap, 9);
+        }
+    }
+
+    /// Share of the chords with two next keys on one hand of a 10K map.
+    fn pill_rate(beatmap: &Beatmap) -> f64 {
+        let rows = key_rows(beatmap, 10);
+        let chords: Vec<&Vec<usize>> = rows.iter().filter(|r| r.len() > 1).collect();
+        let pills = chords.iter().filter(|r| r.windows(2).any(|w| w[1] == w[0] + 1 && (w[0] < 5) == (w[1] < 5))).count();
+        pills as f64 / chords.len().max(1) as f64
+    }
+
+    #[test]
+    fn wide_hands_keep_chords_open() {
+        // 7K -> 10K: extra notes no longer grow every chord into a pill (More
+        // dense made 99% of them pills), and the plain conversion makes few.
+        for (name, density) in [("None", Density::None), ("MoreDense", Density::MoreDense), ("Full", Density::Full)] {
+            let (_, beatmap) = convert(&map(7), 10, density);
+            check(&beatmap, 10);
+            let rate = pill_rate(&beatmap);
+            assert!(rate < 0.4, "{}: {:.2}", name, rate);
         }
     }
 

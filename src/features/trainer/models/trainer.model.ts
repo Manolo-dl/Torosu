@@ -28,11 +28,8 @@ export interface FlnConverterParams {
     reworkExistingLn: boolean;
 }
 
-/**
- * Extra notes added to fill the new keys when converting to more keys. `auto` learns the row sizes
- * from hand-made maps and also applies when converting to fewer keys.
- */
-export type KeyDensity = 'none' | 'dense' | 'moreDense' | 'full' | 'auto';
+/** Extra notes added to fill the new keys when converting to more keys. */
+export type KeyDensity = 'none' | 'dense' | 'moreDense' | 'full';
 
 export interface KeyConverterParams {
     targetKeys: number;

@@ -9,14 +9,14 @@
 //!   chord sizes, how the notes split between the hands, the most common
 //!   rows, and how many keys a row shares with the one before it and the one
 //!   two rows back.
-//! - `corpus_style`: learns the style tables of the key converter's Auto
-//!   mode (see `style`), from every set but the test ones. `WRITE_STYLE=1`
-//!   writes them over `style.json`, `ALL_SETS=1` learns from the test sets
-//!   too.
 //! - `corpus_pairs`: for the test sets with diffs of both key counts of
 //!   `PAIR` (`4,7` by default), what the patterns of the source become in the
 //!   hand-made target (rows at the same time) and in the key converter's
 //!   output, and how dense each zone of the source gets.
+//! - `corpus_feel`: hand-made 7K and 10K maps next to 7K -> 10K converts, on
+//!   what players notice: pills, hands taking turns or playing their own
+//!   patterns, the outer keys. `CONVERTS_ONLY=1` skips the hand-made maps.
+//! - `corpus_compare`: a passage of `MAP` next to its 10K converts, as text.
 
 use std::{
     collections::{BTreeMap, HashMap},
@@ -30,7 +30,6 @@ use serde::Serialize;
 use super::{
     layout::{Layout, layout},
     patterns::{Labelled, Pattern, key_count, label, link_ms, modifier},
-    style::StyleTable,
     zones::Zone,
 };
 use crate::commands::trainer::{
@@ -91,7 +90,7 @@ fn parse(path: &Path) -> Option<Beatmap> {
 
 /// Diffs made from another diff of the set: rate edits (`1.1x`, `x1.2`,
 /// `[0,9x Rate]`) and the trainer's own output (`(7K Auto)`, `(trainer)`),
-/// which would teach the style what the converter already does.
+/// which would mix what the converter already does into the statistics.
 fn is_edit(version: &str) -> bool {
     let b = version.as_bytes();
     let rate = (0..b.len()).any(|i| {
@@ -399,8 +398,8 @@ fn corpus_patterns() {
     println!("\nwritten to {}", path.display());
 }
 
-/// Sets whose folder name hashes to 0 mod 5 are kept out of the learned
-/// style, to evaluate it on maps it has not seen.
+/// A fifth of the sets, picked by folder name: a fixed sample for the runs
+/// that convert maps, which would take long on every set.
 fn is_test_set(files: &[PathBuf]) -> bool {
     let name = files.first().and_then(|p| p.parent()).and_then(|p| p.file_name()).unwrap_or_default();
     let hash = name.as_encoded_bytes().iter().fold(0xcbf2_9ce4_8422_2325u64, |h, &b| (h ^ b as u64).wrapping_mul(0x100_0000_01b3));
@@ -463,111 +462,6 @@ fn offset(src: &Labelled, dst: &Labelled) -> f64 {
     // Rounding splits a shift over two ms: count each with its neighbours.
     let score = |k: i64| (-1..=1).map(|d| votes.get(&(k + d)).copied().unwrap_or(0)).sum::<u32>();
     votes.keys().copied().max_by_key(|&k| (score(k), -k.abs())).unwrap_or(0) as f64
-}
-
-fn groups_of(keys: usize) -> Vec<u32> {
-    layout(keys, None).groups().iter().map(|g| g.mask).collect()
-}
-
-/// The converter's key counts.
-const CONVERTER_KEYS: std::ops::RangeInclusive<usize> = 1..=10;
-/// Tables need at least this many maps, or sets for a pair of key counts.
-const MIN_MAPS: u32 = 50;
-const MIN_SETS: u32 = 30;
-
-#[derive(Default)]
-struct StyleAcc {
-    own: BTreeMap<usize, StyleTable>,
-    pairs: BTreeMap<(usize, usize), StyleTable>,
-    sets: BTreeMap<(usize, usize), u64>,
-}
-
-#[test]
-#[ignore = "reads a whole Songs folder; run by hand"]
-fn corpus_style() {
-    let all = std::env::var_os("ALL_SETS").is_some();
-    let sets: Vec<Vec<PathBuf>> = mania_sets(&songs_dir()).into_iter().filter(|s| all || !is_test_set(s)).collect();
-    println!("learning from {} sets", sets.len());
-
-    let acc: StyleAcc = parallel(
-        &sets,
-        |acc: &mut StyleAcc, files| {
-            let diffs: Vec<Beatmap> =
-                files.iter().filter_map(|p| parse(p)).filter(|b| CONVERTER_KEYS.contains(&key_count(b))).collect();
-            let labelled: Vec<Labelled> = diffs.iter().map(|b| label(b, &layout(key_count(b), None))).collect();
-
-            for l in &labelled {
-                let groups = groups_of(l.keys);
-                let table = acc.own.entry(l.keys).or_insert_with(|| StyleTable { dst_keys: l.keys as u8, ..Default::default() });
-                table.maps += 1;
-                for j in 0..l.rows.len() {
-                    table.add_row(l.labels[j].pattern, 0, l.zones[j], l.rows[j].beat, l, j, &groups);
-                }
-            }
-
-            let mut keys: Vec<usize> = labelled.iter().map(|l| l.keys).collect();
-            keys.sort();
-            keys.dedup();
-            for &a in &keys {
-                for &b in keys.iter().filter(|&&b| b != a) {
-                    let groups = groups_of(b);
-                    let table = acc
-                        .pairs
-                        .entry((a, b))
-                        .or_insert_with(|| StyleTable { src_keys: a as u8, dst_keys: b as u8, ..Default::default() });
-                    for (si, di) in paired(&diffs, a, b) {
-                        let (src, dst) = (&labelled[si], &labelled[di]);
-                        table.maps += 1;
-                        for (i, j) in aligned(src, dst) {
-                            let s = &src.rows[i];
-                            table.add_row(src.labels[i].pattern, s.mask.count_ones(), src.zones[i], s.beat, dst, j, &groups);
-                        }
-                    }
-                    *acc.sets.entry((a, b)).or_insert(0) += 1;
-                }
-            }
-        },
-        |total, part| {
-            for (k, t) in part.own {
-                total.own.entry(k).or_default().merge(t);
-                let mine = total.own.get_mut(&k).unwrap();
-                mine.dst_keys = k as u8;
-            }
-            for (k, t) in part.pairs {
-                let mine = total.pairs.entry(k).or_default();
-                mine.merge(t);
-                (mine.src_keys, mine.dst_keys) = (k.0 as u8, k.1 as u8);
-            }
-            add_counts(&mut total.sets, part.sets);
-        },
-    );
-
-    let mut tables: Vec<StyleTable> = Vec::new();
-    for (keys, mut t) in acc.own {
-        if t.maps >= MIN_MAPS {
-            println!("{}K: {} maps", keys, t.maps);
-            t.prune();
-            tables.push(t);
-        }
-    }
-    for ((a, b), mut t) in acc.pairs {
-        let sets = acc.sets.get(&(a, b)).copied().unwrap_or(0);
-        if sets >= MIN_SETS as u64 {
-            println!("{}K -> {}K: {} sets, {} diff pairs", a, b, sets, t.maps);
-            t.prune();
-            tables.push(t);
-        }
-    }
-
-    let json = serde_json::to_string(&tables).unwrap();
-    let path = out_dir().join("style.json");
-    std::fs::write(&path, &json).unwrap();
-    println!("written to {} ({} KB)", path.display(), json.len() / 1024);
-    if std::env::var_os("WRITE_STYLE").is_some() {
-        let dst = Path::new(env!("CARGO_MANIFEST_DIR")).join("src/commands/trainer/analysis/style.json");
-        std::fs::write(&dst, &json).unwrap();
-        println!("written to {}", dst.display());
-    }
 }
 
 /// What each pattern of `src` becomes in `dst`, for the rows they share.
@@ -689,7 +583,6 @@ fn corpus_pairs() {
         ("hand-made", None),
         ("converted", Some(Density::None)),
         ("converted Full", Some(Density::Full)),
-        ("converted Auto", Some(Density::Auto)),
     ];
 
     let results: Vec<Translation> = parallel(
@@ -913,7 +806,7 @@ fn find_diff(songs: &Path, suffix: &str) -> Option<PathBuf> {
 fn corpus_references() {
     let songs = songs_dir();
     let (src_layout, dst_layout) = (layout(4, None), layout(7, None));
-    let modes = [("None", Density::None), ("Full", Density::Full), ("Auto", Density::Auto)];
+    let modes = [("None", Density::None), ("Full", Density::Full)];
 
     for (src_name, ref_name) in REFERENCES {
         let (Some(src_path), Some(ref_path)) = (find_diff(&songs, src_name), find_diff(&songs, ref_name)) else {
@@ -1126,7 +1019,7 @@ impl HandTrillAgg {
 fn corpus_hand_trills() {
     let sets = mania_sets(&songs_dir());
     let seven = layout(7, None);
-    let modes = [("hand-made 7K", None), ("4K -> 7K Full", Some(Density::Full)), ("4K -> 7K Auto", Some(Density::Auto))];
+    let modes = [("hand-made 7K", None), ("4K -> 7K Full", Some(Density::Full))];
     let aggs: Vec<HandTrillAgg> = parallel(
         &sets,
         |acc: &mut Vec<HandTrillAgg>, files| {
@@ -1162,5 +1055,460 @@ fn corpus_hand_trills() {
     println!("\nhand-alternating runs of 8+ rows, mostly chords:");
     for ((name, _), agg) in modes.iter().zip(&aggs) {
         agg.print(name);
+    }
+}
+
+/// What a row is part of, for [`Feel`]: single-note streams, chordstreams,
+/// jumptrills and brackets, chordjacks.
+const FAMILIES: [&str; 4] = ["streams", "chordstreams", "jumptrills", "chordjacks"];
+
+fn family(pattern: Pattern) -> Option<usize> {
+    match pattern {
+        Pattern::Stream | Pattern::Roll | Pattern::Trill => Some(0),
+        Pattern::Jumpstream | Pattern::Handstream | Pattern::Chordstream => Some(1),
+        Pattern::Jumptrill | Pattern::Bracket => Some(2),
+        Pattern::Jack | Pattern::Chordjack | Pattern::DenseChordjack => Some(3),
+        _ => None,
+    }
+}
+
+#[derive(Default, Clone, Copy)]
+struct FeelCounts {
+    rows: u64,
+    notes: u64,
+    /// Rows of 2+ notes.
+    chords: u64,
+    /// Chords with two next keys on the same hand (a pill).
+    pills: u64,
+    /// Chords on both hands.
+    split: u64,
+    /// A hand playing 2+ notes in a row, and how often they are all next to
+    /// each other (a closed chord, `OO.` rather than `O.O`).
+    hand_chords: u64,
+    closed: u64,
+    outer: u64,
+    pinky: u64,
+    /// Linked rows, both on some hand: how often the busier hand changes (the
+    /// hands taking turns, as 7K chordstreams do), and how often both hands
+    /// play in both rows (each hand with its own pattern).
+    pairs: u64,
+    flips: u64,
+    both: u64,
+}
+
+impl FeelCounts {
+    fn merge(&mut self, b: FeelCounts) {
+        self.rows += b.rows;
+        self.notes += b.notes;
+        self.chords += b.chords;
+        self.pills += b.pills;
+        self.split += b.split;
+        self.hand_chords += b.hand_chords;
+        self.closed += b.closed;
+        self.outer += b.outer;
+        self.pinky += b.pinky;
+        self.pairs += b.pairs;
+        self.flips += b.flips;
+        self.both += b.both;
+    }
+}
+
+/// How a map uses the hands and the keys, measured for the feedback on
+/// 7K -> 10K converts: pills, hands taking turns, outer keys left aside.
+#[derive(Default)]
+struct Feel {
+    maps: u64,
+    families: [FeelCounts; 4],
+    /// Rows and notes in each density zone.
+    zones: [(u64, u64); 5],
+    /// Runs of 4 rows of one hand that stay on its outer three keys (pinky,
+    /// ring, middle), its middle three, its inner three, or go wider.
+    windows: [u64; 4],
+    /// Chordstream chords of 2, 3 and 4 notes: rows, pills, closed hands.
+    by_size: [(u64, u64, u64); 3],
+    /// In chordstreams, the pattern each hand plays on its own.
+    hand_patterns: BTreeMap<Pattern, u64>,
+    /// In chordstreams, how far a hand moves from one of its rows to the next
+    /// (in keys, between the middles of its notes: 0, 1, 2, 3+), and how often
+    /// it keeps going the same way.
+    steps: [u64; 4],
+    same_way: u64,
+    turns_back: u64,
+    /// Chordstream rows, and how many of them each hand plays in.
+    duty_rows: u64,
+    duty: u64,
+}
+
+impl Feel {
+    fn merge(&mut self, b: Feel) {
+        self.maps += b.maps;
+        for (a, b) in self.families.iter_mut().zip(b.families) {
+            a.merge(b);
+        }
+        for (a, b) in self.zones.iter_mut().zip(b.zones) {
+            a.0 += b.0;
+            a.1 += b.1;
+        }
+        for (a, b) in self.windows.iter_mut().zip(b.windows) {
+            *a += b;
+        }
+        for (a, b) in self.by_size.iter_mut().zip(b.by_size) {
+            a.0 += b.0;
+            a.1 += b.1;
+            a.2 += b.2;
+        }
+        add_counts(&mut self.hand_patterns, b.hand_patterns);
+        for (a, b) in self.steps.iter_mut().zip(b.steps) {
+            *a += b;
+        }
+        self.same_way += b.same_way;
+        self.turns_back += b.turns_back;
+        self.duty_rows += b.duty_rows;
+        self.duty += b.duty;
+    }
+
+    fn add(&mut self, l: &Labelled, layout: &Layout) {
+        use super::layout::{Digit, Hand};
+        self.maps += 1;
+
+        // The hands (the middle key aside) and how far each key is from the
+        // outside of its hand: 0 pinky ... 4 thumb.
+        let hands: Vec<u32> = layout
+            .groups()
+            .iter()
+            .map(|g| g.mask)
+            .filter(|&m| (0..layout.keys()).any(|k| m & 1 << k != 0 && layout.fingers[k].hand != Hand::Either))
+            .collect();
+        let place = |k: usize| match layout.fingers[k].digit {
+            Digit::Pinky | Digit::Scratch => 0u32,
+            Digit::Ring => 1,
+            Digit::Middle => 2,
+            Digit::Index => 3,
+            Digit::Thumb => 4,
+        };
+        let outer = layout.digit_mask(Digit::Pinky) | layout.digit_mask(Digit::Ring);
+        let pinky = layout.digit_mask(Digit::Pinky);
+        let linked = |a: usize, b: usize| l.rows[b].time - l.rows[a].time <= link_ms(l.rows[b].beat_len);
+        let busier = |mask: u32| -> i32 {
+            match hands.as_slice() {
+                [left, right] => ((mask & left).count_ones() as i32 - (mask & right).count_ones() as i32).signum(),
+                _ => 0,
+            }
+        };
+
+        for (i, row) in l.rows.iter().enumerate() {
+            let size = row.mask.count_ones() as u64;
+            let z = Zone::ALL.iter().position(|&z| z == l.zones[i]).unwrap_or(0);
+            self.zones[z].0 += 1;
+            self.zones[z].1 += size;
+
+            let in_phrase = (i > 0 && linked(i - 1, i)) || (i + 1 < l.rows.len() && linked(i, i + 1));
+            let Some(f) = family(l.labels[i].pattern).filter(|_| in_phrase) else { continue };
+            let pill = hands.iter().any(|&h| (row.mask & h) & ((row.mask & h) >> 1) != 0);
+            let closed_hand = hands.iter().any(|&h| {
+                let m = row.mask & h;
+                m.count_ones() >= 2 && (31 - m.leading_zeros()) - m.trailing_zeros() + 1 == m.count_ones()
+            });
+            if f == 1 {
+                if (2..=4).contains(&size) {
+                    let b = &mut self.by_size[size as usize - 2];
+                    b.0 += 1;
+                    b.1 += pill as u64;
+                    b.2 += closed_hand as u64;
+                }
+                self.duty_rows += 1;
+                self.duty += hands.iter().filter(|&&h| row.mask & h != 0).count() as u64;
+            }
+            let c = &mut self.families[f];
+            c.rows += 1;
+            c.notes += size;
+            c.outer += (row.mask & outer).count_ones() as u64;
+            c.pinky += (row.mask & pinky).count_ones() as u64;
+            if size >= 2 {
+                c.chords += 1;
+                c.pills += pill as u64;
+                c.split += (hands.iter().filter(|&&h| row.mask & h != 0).count() > 1) as u64;
+            }
+            for &h in &hands {
+                let m = row.mask & h;
+                if m.count_ones() >= 2 {
+                    c.hand_chords += 1;
+                    let (lo, hi) = (m.trailing_zeros(), 31 - m.leading_zeros());
+                    c.closed += (hi - lo + 1 == m.count_ones()) as u64;
+                }
+            }
+            if i > 0 && linked(i - 1, i) {
+                let prev = l.rows[i - 1].mask;
+                let (a, b) = (busier(prev), busier(row.mask));
+                c.pairs += 1;
+                c.flips += (a != 0 && b != 0 && a != b) as u64;
+                c.both += (hands.len() == 2 && hands.iter().all(|&h| prev & h != 0 && row.mask & h != 0)) as u64;
+            }
+        }
+
+        // What each hand plays on its own, in chordstreams.
+        let chordstream = |i: usize| family(l.labels[i].pattern) == Some(1);
+        for g in &l.groups {
+            if !hands.contains(&g.group.mask) {
+                continue;
+            }
+            for (&i, label) in g.rows.iter().zip(&g.labels) {
+                if chordstream(i) {
+                    *self.hand_patterns.entry(label.pattern).or_insert(0) += 1;
+                }
+            }
+            let middle = |i: usize| {
+                let keys: Vec<f64> = (0..layout.keys()).filter(|&k| l.rows[i].mask & g.group.mask & 1 << k != 0).map(|k| k as f64).collect();
+                keys.iter().sum::<f64>() / keys.len() as f64
+            };
+            let mut last_dir = 0.0f64;
+            for w in g.rows.windows(2) {
+                let (a, b) = (w[0], w[1]);
+                if !chordstream(b) || !linked(a, b) {
+                    last_dir = 0.0;
+                    continue;
+                }
+                let d = middle(b) - middle(a);
+                self.steps[(d.abs().round() as usize).min(3)] += 1;
+                if d.abs() > 0.25 && last_dir.abs() > 0.25 {
+                    if d.signum() == last_dir.signum() {
+                        self.same_way += 1;
+                    } else {
+                        self.turns_back += 1;
+                    }
+                }
+                last_dir = d;
+            }
+        }
+
+        // Where each hand's patterns sit, on hands of 5 keys.
+        for &h in &hands {
+            let places: u32 = (0..layout.keys()).filter(|k| h & 1 << k != 0).fold(0, |m, k| m | 1 << place(k));
+            if places != 0b11111 {
+                continue;
+            }
+            let rows: Vec<usize> = (0..l.rows.len()).filter(|&i| l.rows[i].mask & h != 0).collect();
+            for w in rows.windows(4) {
+                if !w.windows(2).all(|p| linked(p[0], p[1])) {
+                    continue;
+                }
+                let used = w.iter().flat_map(|&i| (0..layout.keys()).filter(move |&k| l.rows[i].mask & h & 1 << k != 0)).fold(0u32, |m, k| m | 1 << place(k));
+                let slot = if used & !0b00111 == 0 && used & 1 != 0 {
+                    0
+                } else if used & !0b11100 == 0 && used & 0b10000 != 0 {
+                    2
+                } else if used & !0b01110 == 0 {
+                    1
+                } else {
+                    3
+                };
+                self.windows[slot] += 1;
+            }
+        }
+    }
+
+    fn print(&self, name: &str) {
+        let r = |a: u64, b: u64| pct(a as f64 / b.max(1) as f64);
+        println!("\n  {} ({} maps)", name, self.maps);
+        let total: u64 = self.families.iter().map(|c| c.rows).sum();
+        for (f, c) in FAMILIES.iter().zip(&self.families) {
+            println!(
+                "    {:<13} {:>4} of rows | size {:.2} | pills {:>4} split {:>4} closed {:>4} of chords | outer {:>4} pinky {:>4} of notes | turns {:>4} both hands {:>4}",
+                f,
+                r(c.rows, total),
+                c.notes as f64 / c.rows.max(1) as f64,
+                r(c.pills, c.chords),
+                r(c.split, c.chords),
+                r(c.closed, c.hand_chords),
+                r(c.outer, c.notes),
+                r(c.pinky, c.notes),
+                r(c.flips, c.pairs),
+                r(c.both, c.pairs),
+            );
+        }
+        let zones = Zone::ALL
+            .iter()
+            .zip(&self.zones)
+            .map(|(z, &(rows, notes))| format!("{:?} {:.2}", z, notes as f64 / rows.max(1) as f64))
+            .collect::<Vec<_>>()
+            .join(", ");
+        println!("    row size by zone: {}", zones);
+        let sizes = self
+            .by_size
+            .iter()
+            .enumerate()
+            .map(|(i, &(rows, pills, closed))| format!("{} notes: pills {} closed {}", i + 2, r(pills, rows), r(closed, rows)))
+            .collect::<Vec<_>>()
+            .join(" | ");
+        println!("    chordstream chords by size: {}", sizes);
+        let hp = dist(&self.hand_patterns.iter().map(|(p, &c)| (format!("{:?}", p), c)).collect(), 6);
+        println!("    a hand on its own in chordstreams: {}", hp.iter().map(|(p, x)| format!("{} {}", p, pct(*x))).collect::<Vec<_>>().join(", "));
+        let steps: u64 = self.steps.iter().sum();
+        println!(
+            "    a hand's steps: 0 {} 1 {} 2 {} 3+ {} | keeps its way {} | hands per row {:.2}",
+            r(self.steps[0], steps),
+            r(self.steps[1], steps),
+            r(self.steps[2], steps),
+            r(self.steps[3], steps),
+            r(self.same_way, self.same_way + self.turns_back),
+            self.duty as f64 / self.duty_rows.max(1) as f64,
+        );
+        let w = self.windows.iter().sum::<u64>();
+        if w > 0 {
+            println!(
+                "    4-row runs of a hand: outer keys {} middle {} inner {} wider {}",
+                r(self.windows[0], w),
+                r(self.windows[1], w),
+                r(self.windows[2], w),
+                r(self.windows[3], w)
+            );
+        }
+    }
+}
+
+/// What hand-made 7K and 10K maps look like next to 7K -> 10K converts, on
+/// what the feedback on them talks about (see [`Feel`]). The converts are of
+/// the test sets' 7K maps, `LIMIT` of them (300 by default). `MAP` also shows
+/// that map's converts.
+#[test]
+#[ignore = "reads a whole Songs folder; run by hand"]
+fn corpus_feel() {
+    let sets = mania_sets(&songs_dir());
+    let limit: usize = std::env::var("LIMIT").ok().and_then(|s| s.parse().ok()).unwrap_or(300);
+    let (seven, ten) = (layout(7, None), layout(10, None));
+    let modes = [("None", Density::None), ("MoreDense", Density::MoreDense), ("Full", Density::Full)];
+
+    let both = sets
+        .iter()
+        .filter(|files| {
+            let keys: Vec<usize> = files.iter().filter_map(|p| parse(p)).map(|b| key_count(&b)).collect();
+            keys.contains(&7) && keys.contains(&10)
+        })
+        .count();
+    println!("{} sets with hand-made 7K and 10K diffs", both);
+
+    let sevens: Vec<PathBuf> = sets.iter().filter(|f| is_test_set(f)).flatten().cloned().collect();
+    let sevens: Vec<Beatmap> = sevens.iter().filter_map(|p| parse(p)).filter(|b| key_count(b) == 7).take(limit).collect();
+
+    // `CONVERTS_ONLY=1` skips the hand-made maps, which do not change between runs.
+    let hand_sets: &[Vec<PathBuf>] = if std::env::var_os("CONVERTS_ONLY").is_some() { &[] } else { &sets };
+    let hand_made: Vec<Feel> = parallel(
+        hand_sets,
+        |acc: &mut Vec<Feel>, files| {
+            if acc.is_empty() {
+                acc.resize_with(2, Feel::default);
+            }
+            for beatmap in files.iter().filter_map(|p| parse(p)) {
+                match key_count(&beatmap) {
+                    7 => acc[0].add(&label(&beatmap, &seven), &seven),
+                    10 => acc[1].add(&label(&beatmap, &ten), &ten),
+                    _ => {}
+                }
+            }
+        },
+        |total: &mut Vec<Feel>, part| {
+            if total.is_empty() {
+                total.resize_with(2, Feel::default);
+            }
+            for (t, p) in total.iter_mut().zip(part) {
+                t.merge(p);
+            }
+        },
+    );
+
+    let converts: Vec<Feel> = parallel(
+        &sevens,
+        |acc: &mut Vec<Feel>, beatmap| {
+            if acc.is_empty() {
+                acc.resize_with(modes.len(), Feel::default);
+            }
+            for (slot, (_, density)) in modes.iter().enumerate() {
+                let mut b = beatmap.clone();
+                let params = KeyConverterParams { target_keys: 10, density: *density, keep_jacks: true, playstyle: None };
+                if key_converter::apply(&mut b, &params).is_ok() {
+                    acc[slot].add(&label(&b, &ten), &ten);
+                }
+            }
+        },
+        |total: &mut Vec<Feel>, part| {
+            if total.is_empty() {
+                total.resize_with(modes.len(), Feel::default);
+            }
+            for (t, p) in total.iter_mut().zip(part) {
+                t.merge(p);
+            }
+        },
+    );
+
+    if let [seven, ten] = hand_made.as_slice() {
+        seven.print("hand-made 7K");
+        ten.print("hand-made 10K");
+    }
+    for ((name, _), feel) in modes.iter().zip(&converts) {
+        feel.print(&format!("7K -> 10K {}", name));
+    }
+
+    if let Ok(name) = std::env::var("MAP") {
+        let path = find_diff(&songs_dir(), &name).expect("map not found");
+        let beatmap = rosu_map::from_path::<Beatmap>(&path).unwrap();
+        let mut feel = Feel::default();
+        feel.add(&label(&beatmap, &seven), &seven);
+        feel.print(&name);
+        for (mode, density) in modes {
+            let mut b = beatmap.clone();
+            let params = KeyConverterParams { target_keys: 10, density, keep_jacks: true, playstyle: None };
+            key_converter::apply(&mut b, &params).unwrap();
+            let mut feel = Feel::default();
+            feel.add(&label(&b, &ten), &ten);
+            feel.print(&format!("{} -> 10K {}", name, mode));
+        }
+    }
+}
+
+/// A passage of `MAP` (`FROM` ms, `ROWS` rows) next to its 10K converts and,
+/// with `OLD`, another 10K diff of the set (an earlier convert), as text, the
+/// first row at the bottom as in the editor.
+#[test]
+#[ignore = "reads a map from a Songs folder; run by hand"]
+fn corpus_compare() {
+    let songs = songs_dir();
+    let name = std::env::var("MAP").expect("MAP: the end of the .osu file name");
+    let from: f64 = std::env::var("FROM").ok().and_then(|s| s.parse().ok()).unwrap_or(0.0);
+    let count: usize = std::env::var("ROWS").ok().and_then(|s| s.parse().ok()).unwrap_or(32);
+    let source = rosu_map::from_path::<Beatmap>(&find_diff(&songs, &name).expect("map not found")).unwrap();
+    let keys = key_count(&source);
+
+    let mut columns: Vec<(String, Beatmap)> = vec![(format!("{}K", keys), source.clone())];
+    if let Ok(old) = std::env::var("OLD") {
+        columns.push(("old".into(), rosu_map::from_path::<Beatmap>(&find_diff(&songs, &old).expect("OLD not found")).unwrap()));
+    }
+    for (mode, density) in [("None", Density::None), ("MoreDense", Density::MoreDense), ("Full", Density::Full)] {
+        let mut b = source.clone();
+        let params = KeyConverterParams { target_keys: 10, density, keep_jacks: true, playstyle: None };
+        key_converter::apply(&mut b, &params).unwrap();
+        columns.push((mode.into(), b));
+    }
+
+    let labelled: Vec<(String, Labelled, Layout)> = columns
+        .into_iter()
+        .map(|(n, b)| {
+            let layout = layout(key_count(&b), None);
+            (n, label(&b, &layout), layout)
+        })
+        .collect();
+    let times: Vec<f64> = labelled[0].1.rows.iter().map(|r| r.time).filter(|&t| t >= from).take(count).collect();
+    let header = labelled.iter().map(|(n, _, l)| format!("{:<w$}", n, w = l.keys() + 2)).collect::<Vec<_>>().join("  ");
+    println!("\n{:>8}  {}", "ms", header);
+    for &t in times.iter().rev() {
+        let cells = labelled
+            .iter()
+            .map(|(_, l, layout)| {
+                let row = l.rows.iter().find(|r| (r.time - t).abs() < ALIGN_MS);
+                let text = row.map_or_else(|| " ".repeat(layout.keys() + layout.groups().len() - 1), |r| shape(r.mask, layout));
+                format!("{:<w$}", text, w = layout.keys() + 2)
+            })
+            .collect::<Vec<_>>()
+            .join("  ");
+        println!("{:>8.0}  {}", t, cells);
     }
 }
