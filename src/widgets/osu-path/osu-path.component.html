@@ -1,34 +1,29 @@
-<div class="container">
-    <h3 tuiTitle="m">Osu! folder</h3>
-    <div class="path">
-        @if (osuPath.isLoading()) {
-            <span [tuiSkeleton]="true">Loading osu! path...</span>
-        } @else {
-            <span>{{ osuPath.osuPathLabel() }}</span>
-        }
+<div appearance="warning" size="m" tuiNotification>
+    <div tuiTitle>
+        osu! folder not found
+        <span tuiSubtitle>
+            Every tool needs it. Select the folder that has <strong>osu!.db</strong>, or open osu! and detect it again.
+        </span>
     </div>
-    <button
-        size="m"
-        appearance="flat"
-        type="button"
-        tuiButton
-        [disabled]="osuPath.isLoading()"
-        (click)="osuPath.selectManually()"
-    >
-        {{ osuPath.selectLabel() }}
-    </button>
-
-    @if (osuPath.error()) {
+    <div class="actions">
         <button
-            size="m"
-            appearance="flat"
-            type="button"
+            size="s"
             tuiButton
+            type="button"
             [disabled]="osuPath.isLoading()"
-            (click)="osuPath.detect()"
+            (click)="osuPath.selectManually()"
+        >
+            Select folder
+        </button>
+        <button
+            appearance="secondary"
+            size="s"
+            tuiButton
+            type="button"
+            [loading]="osuPath.isLoading()"
+            (click)="osuPath.retry()"
         >
             Detect
         </button>
-        <span class="hint">Make sure osu! is running for auto-detection to work.</span>
-    }
+    </div>
 </div>

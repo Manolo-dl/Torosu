@@ -24,4 +24,6 @@ export class SidebarComponent {
   readonly userItems = computed<NavItem[]>(() => USER_ITEMS.filter(item => !this.config.excludedTools().has(item.route)));
   readonly devItems: NavItem[] = DEV_ITEMS;
   readonly appItems: NavItem[] = APP_ITEMS;
+  /** Changelog, Github, Issues and Support: hidden for now, they have no pages yet. */
+  readonly showAppItems = false;
 }

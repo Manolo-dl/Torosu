@@ -93,6 +93,12 @@ fn save_detected_path(state: &tauri::State<AppConfigState>, path: &str) {
 // save osu! path when selected manually by the user
 #[tauri::command]
 pub fn save_osu_path(app: tauri::AppHandle, path: String) -> Result<(), String> {
+    // Every tool reads osu!.db, so a folder without it is not osu!'s.
+    if !Path::new(&path).join("osu!.db").is_file() {
+        log::warn!("refused osu! path {:?}: no osu!.db in it", path);
+        return Err(format!("{} is not an osu! folder: it has no osu!.db", path));
+    }
+
     allow_songs_in_asset_scope(&app, &path);
 
     let config_state = app.state::<AppConfigState>();

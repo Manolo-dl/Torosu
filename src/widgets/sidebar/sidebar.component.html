@@ -15,19 +15,21 @@
         }
     </ul>
 
-    <ul>
-        @for (item of appItems; track item.route) {
-            <li>
-                <a
-                [routerLink]="item.route"
-                routerLinkActive="active"
-                [routerLinkActiveOptions]="{ exact: item.route === '/' }"
-                [class.disabled]="item.disabled"
-                >
-                    <fa-icon [icon]=item.icon />
-                    <span>{{ item.label }}</span>
-                </a>
-            </li>
-        }
-    </ul>
+    @if (showAppItems) {
+        <ul>
+            @for (item of appItems; track item.route) {
+                <li>
+                    <a
+                    [routerLink]="item.route"
+                    routerLinkActive="active"
+                    [routerLinkActiveOptions]="{ exact: item.route === '/' }"
+                    [class.disabled]="item.disabled"
+                    >
+                        <fa-icon [icon]=item.icon />
+                        <span>{{ item.label }}</span>
+                    </a>
+                </li>
+            }
+        </ul>
+    }
 </nav>

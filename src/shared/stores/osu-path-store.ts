@@ -15,45 +15,53 @@ export const OsuPathStore = signalStore(
   withState<OsuPathState>({ path: null, error: null, isLoading: false }),
 
   withComputed((store) => ({
-    selectLabel: computed(() => store.error() ? 'Select manually' : 'Change path'),
-    osuPathLabel: computed(() => store.path() ? store.path() : 'osu! path not detected'),
+    /** Detection ran and found no osu! folder: the app asks for one. */
+    missing: computed(() => !store.path() && store.error() !== null),
   })),
 
   withMethods((store, alerts = inject(TuiNotificationService)) => {
     let detectPromise: Promise<void> | undefined;
 
-    async function doDetect() {
+    /** Finds the folder (saved, from the running osu!, or the usual places). Quiet
+     * unless `announce`: the folder is found on every start. */
+    async function doDetect(announce: boolean) {
       patchState(store, { isLoading: true });
       try {
         const path = await invoke<string>('get_osu_path');
-        alerts.open('Osu! path detected', { appearance: 'positive' }).subscribe();
-
-        patchState(store, { path, error: null });
         await invoke('save_osu_path', { path });
-        alerts.open('Osu! path saved', { appearance: 'positive' }).subscribe();
+        patchState(store, { path, error: null });
+        if (announce) alerts.open('osu! folder found', { appearance: 'positive' }).subscribe();
       } catch (error) {
-        alerts.open('Failed to detect Osu! path', { appearance: 'negative' }).subscribe();
-        patchState(store, { error: error as string });
+        if (announce) alerts.open('osu! folder not found', { appearance: 'negative' }).subscribe();
+        patchState(store, { error: String(error) });
         detectPromise = undefined;
       } finally {
         patchState(store, { isLoading: false });
       }
     }
 
+    /** Checks the folder and uses it from now on; throws if it is not osu!'s. */
+    async function setPath(path: string) {
+      await invoke('save_osu_path', { path });
+      patchState(store, { path, error: null });
+      detectPromise = Promise.resolve();
+    }
+
     return {
       async detect(): Promise<void> {
         if (!detectPromise) {
-          detectPromise = doDetect();
+          detectPromise = doDetect(false);
         }
         return detectPromise;
       },
 
-      /** A path set in the configuration: used from now on, and its Songs folder can be read. */
-      async setPath(path: string) {
-        patchState(store, { path, error: null });
-        detectPromise = Promise.resolve();
-        await invoke('save_osu_path', { path });
+      /** Detection asked for by the user. */
+      async retry(): Promise<void> {
+        detectPromise = doDetect(true);
+        return detectPromise;
       },
+
+      setPath,
 
       async selectManually() {
         const selected = await open({
@@ -61,17 +69,13 @@ export const OsuPathStore = signalStore(
           multiple: false,
           title: 'Select your osu! folder',
         });
+        if (!selected) return;
 
-        if (selected) {
-          patchState(store, { path: selected as string, error: null });
-          detectPromise = Promise.resolve();
-          try {
-            await invoke('save_osu_path', { path: selected });
-            alerts.open('Osu! path saved', { appearance: 'positive' }).subscribe();
-          } catch (e) {
-            alerts.open('Failed to save osu! path', { appearance: 'negative' }).subscribe();
-            console.error('Failed to save osu! path:', e);
-          }
+        try {
+          await setPath(selected as string);
+          alerts.open('osu! folder saved', { appearance: 'positive' }).subscribe();
+        } catch (e) {
+          alerts.open(String(e), { appearance: 'negative' }).subscribe();
         }
       },
     };

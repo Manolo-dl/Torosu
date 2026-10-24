@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { TuiDrawer, TuiTabsHorizontal, TuiTab, TuiSwitch, TuiInputNumber } from "@taiga-ui/kit";
 import { open as openDialog } from '@tauri-apps/plugin-dialog';
 import { TuiHeader, TuiNavComponent } from "@taiga-ui/layout";
-import { TuiTitle, TuiPopup, TuiButton, TuiCell, TuiInput, TuiLabel } from "@taiga-ui/core";
+import { TuiTitle, TuiPopup, TuiButton, TuiCell, TuiInput, TuiLabel, TuiNotificationService } from "@taiga-ui/core";
 import { FaIconComponent } from "@fortawesome/angular-fontawesome";
 import { faGears } from '@fortawesome/free-solid-svg-icons';
 import { Router } from '@angular/router';
@@ -44,6 +44,7 @@ export class ConfigDrawerComponent {
   private readonly osuPath = inject(OsuPathStore);
   private readonly osuDb = inject(OsuDbStore);
   private readonly collections = inject(CollectionStore);
+  private readonly alerts = inject(TuiNotificationService);
 
   readonly open = signal(false);
   readonly activeTab = signal(0);
@@ -65,14 +66,23 @@ export class ConfigDrawerComponent {
   }
 
   async save() {
-    const previousPath = this.store.config()?.osu_path;
+    // A new osu! folder is checked first: nothing is saved if it is not osu!'s.
+    const path = this.draft.osu_path;
+    const pathChanged = !!path && path !== this.store.config()?.osu_path;
+    if (pathChanged) {
+      try {
+        await this.osuPath.setPath(path);
+      } catch (e) {
+        this.alerts.open(String(e), { appearance: 'negative' }).subscribe();
+        return;
+      }
+    }
+
     await this.store.updateConfig(this.draft);
     this.open.set(false);
 
-    // A new osu! folder: the library and collections loaded are the old one's.
-    const path = this.draft.osu_path;
-    if (path && path !== previousPath) {
-      await this.osuPath.setPath(path);
+    // The library and collections loaded are the old folder's.
+    if (pathChanged) {
       this.osuDb.reset();
       this.collections.reset();
     }

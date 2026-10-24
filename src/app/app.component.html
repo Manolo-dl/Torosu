@@ -9,7 +9,9 @@
   <div class="app-body">
     <app-sidebar />
     <main class="app-content">
-      <app-osu-path />
+      @if (osuPath.missing()) {
+        <app-osu-path />
+      }
       <div class="page-outlet">
         <router-outlet />
       </div>
