@@ -6,6 +6,57 @@
 
   <!-- Right -->
   <div class="actions">
+    @if (update.available(); as available) {
+      <button
+        size="m"
+        appearance="flat"
+        tuiButton
+        type="button"
+        class="update"
+        [attr.aria-label]="'Update to ' + available.version"
+        [tuiDropdown]="updatePanel"
+        [(tuiDropdownOpen)]="updateOpen"
+      >
+        <fa-icon [icon]="faCircleArrowUp" />
+      </button>
+
+      <ng-template #updatePanel>
+        <div class="update-panel">
+          <div tuiTitle>
+            <span>
+              Torosu {{ available.version }}
+              <span appearance="info" size="s" tuiBadge>New</span>
+            </span>
+            <span tuiSubtitle>You have {{ available.currentVersion }}. Torosu restarts once it is installed.</span>
+          </div>
+
+          @if (available.notes) {
+            <p class="notes">{{ available.notes }}</p>
+          }
+
+          @if (update.installing()) {
+            <progress
+              size="s"
+              tuiProgressBar
+              [max]="100"
+              [value]="update.percent() ?? 0"
+            ></progress>
+          }
+
+          <button
+            iconStart="@tui.download"
+            size="m"
+            tuiButton
+            type="button"
+            [loading]="update.installing()"
+            (click)="update.install()"
+          >
+            Update and restart
+          </button>
+        </div>
+      </ng-template>
+    }
+
     <button
       size="m"
       appearance="flat"

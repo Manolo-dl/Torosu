@@ -20,3 +20,28 @@ header {
     gap: 0.5rem;
   }
 }
+
+.update {
+  color: var(--tui-status-positive);
+}
+
+.update-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  inline-size: 20rem;
+  padding: 1rem;
+
+  .notes {
+    margin: 0;
+    max-block-size: 12rem;
+    overflow: auto;
+    white-space: pre-wrap;
+    color: var(--tui-text-secondary);
+    font: var(--tui-font-text-s);
+  }
+
+  progress {
+    inline-size: 100%;
+  }
+}

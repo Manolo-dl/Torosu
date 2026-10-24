@@ -2,7 +2,6 @@ use std::{path::PathBuf, sync::{Mutex, atomic::AtomicBool}};
 use sqlx::SqlitePool;
 use tauri::Manager;
 use tauri_plugin_log::{Target, TargetKind};
-use tauri_plugin_updater::UpdaterExt;
 
 use crate::commands::config::model::AppConfig;
 use crate::commands::osu_reader::ReaderSnapshot;
@@ -20,6 +19,11 @@ pub struct OsuReaderState {
 
 pub struct AppConfigState {
     pub config: Mutex<AppConfig>,
+}
+
+/// The update found by `check_update`, waiting for the user to install it.
+pub struct UpdateState {
+    pub pending: Mutex<Option<tauri_plugin_updater::Update>>,
 }
 
 /// The osu_session cookie in use; it only reaches the configuration file
@@ -61,13 +65,8 @@ pub fn run() {
 
             app.manage(DbState { pool });
 
-            // Update check
-            let handle = app.handle().clone();
-            tauri::async_runtime::spawn(async move {
-                if let Err(e) = update(handle).await {
-                    log::error!("failed to check for updates: {e}");
-                }
-            });
+            // Updates are offered by the frontend (see `check_update`).
+            app.manage(UpdateState { pending: Mutex::new(None) });
 
             // osu! memory reader, started by the first page that needs it
             app.manage(OsuReaderState {
@@ -118,6 +117,8 @@ pub fn run() {
             commands::system::osu_path::get_osu_path,
             commands::system::osu_path::save_osu_path,
             commands::system::songs_file::read_songs_file,
+            commands::system::update::check_update,
+            commands::system::update::install_update,
             commands::collections::reader::read_osu_collections,
             commands::collections::reader::write_text_file,
             commands::collections::writer::import_collections,
@@ -152,35 +153,6 @@ pub fn run() {
         }) 
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
-}
-
-async fn update(app: tauri::AppHandle) -> tauri_plugin_updater::Result<()> {
-    if let Some(update) = app
-        .updater_builder()
-        .timeout(std::time::Duration::from_secs(30))
-        .build()?
-        .check()
-        .await?
-    {
-        let mut downloaded = 0;
-
-        update
-            .download_and_install(
-                |chunk_length, content_length| {
-                    downloaded += chunk_length;
-                    log::info!("downloaded {downloaded} of {content_length:?}");
-                },
-                || {
-                    log::info!("download complete, installing update...");
-                },
-            )
-            .await?;
-
-        log::info!("update installed");
-        app.restart();
-    }
-
-    Ok(())
 }
 
 pub fn app_root_dir() -> PathBuf {
