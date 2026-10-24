@@ -17,6 +17,8 @@
 //!   what players notice: pills, hands taking turns or playing their own
 //!   patterns, the outer keys. `CONVERTS_ONLY=1` skips the hand-made maps.
 //! - `corpus_compare`: a passage of `MAP` next to its 10K converts, as text.
+//! - `corpus_columns`: how often hand-made 9K and 10K maps use each column,
+//!   the outer ones above all, next to 4K and 7K converts to them.
 
 use std::{
     collections::{BTreeMap, HashMap},
@@ -1510,5 +1512,161 @@ fn corpus_compare() {
             .collect::<Vec<_>>()
             .join("  ");
         println!("{:>8.0}  {}", t, cells);
+    }
+}
+
+/// How a set of maps uses each column.
+#[derive(Default, Clone)]
+struct ColumnAgg {
+    maps: u64,
+    keys: usize,
+    /// Notes per column, and the sum over the maps of each column's share of
+    /// its map (so every map weighs the same).
+    notes: [u64; 18],
+    shares: [f64; 18],
+    /// Notes in the outer columns (first and last) in single-note rows and in
+    /// chords, against all the notes in each.
+    outer_single: u64,
+    single: u64,
+    outer_chord: u64,
+    chord: u64,
+    /// Maps whose outer columns get over 1.3 times the notes of an average
+    /// column.
+    heavy: u64,
+}
+
+/// See [`ColumnAgg::heavy`].
+const HEAVY_OUTER: f64 = 1.3;
+
+impl ColumnAgg {
+    fn add(&mut self, l: &Labelled) {
+        let keys = l.keys;
+        self.keys = keys;
+        self.maps += 1;
+        let mut notes = [0u64; 18];
+        let outer = 1u32 | 1 << (keys - 1);
+        for row in &l.rows {
+            for (k, n) in notes.iter_mut().enumerate().take(keys) {
+                *n += (row.mask >> k & 1) as u64;
+            }
+            let size = row.mask.count_ones() as u64;
+            let o = (row.mask & outer).count_ones() as u64;
+            if size == 1 {
+                self.single += 1;
+                self.outer_single += o;
+            } else {
+                self.chord += size;
+                self.outer_chord += o;
+            }
+        }
+        let total: u64 = notes.iter().sum();
+        for k in 0..keys {
+            self.notes[k] += notes[k];
+            self.shares[k] += notes[k] as f64 / total.max(1) as f64;
+        }
+        let outer = (notes[0] + notes[keys - 1]) as f64 / 2.0;
+        self.heavy += (outer > HEAVY_OUTER * total as f64 / keys as f64) as u64;
+    }
+
+    fn merge(&mut self, b: ColumnAgg) {
+        self.maps += b.maps;
+        self.keys = self.keys.max(b.keys);
+        for k in 0..18 {
+            self.notes[k] += b.notes[k];
+            self.shares[k] += b.shares[k];
+        }
+        self.outer_single += b.outer_single;
+        self.single += b.single;
+        self.outer_chord += b.outer_chord;
+        self.chord += b.chord;
+        self.heavy += b.heavy;
+    }
+
+    fn print(&self, name: &str) {
+        let keys = self.keys;
+        let shares: Vec<f64> = (0..keys).map(|k| self.shares[k] / self.maps.max(1) as f64).collect();
+        let even = 1.0 / keys as f64;
+        let cols = shares.iter().map(|s| format!("{:>4.1}", s * 100.0)).collect::<Vec<_>>().join(" ");
+        let outer = (shares[0] + shares[keys - 1]) / 2.0;
+        println!(
+            "  {:<22} {:>5} maps | columns % [{}] | outer columns {:.2}x a column | maps over {}x {} | outer in single notes {} / in chords {}",
+            name,
+            self.maps,
+            cols,
+            outer / even,
+            HEAVY_OUTER,
+            pct(self.heavy as f64 / self.maps.max(1) as f64),
+            pct(self.outer_single as f64 / self.single.max(1) as f64),
+            pct(self.outer_chord as f64 / self.chord.max(1) as f64),
+        );
+    }
+}
+
+/// How often hand-made 9K and 10K maps use each column, the outer ones
+/// above all, next to 4K and 7K converts to 9K and 10K (`LIMIT` source maps
+/// of each key count from the test sets, 200 by default).
+#[test]
+#[ignore = "reads a whole Songs folder; run by hand"]
+fn corpus_columns() {
+    let sets = mania_sets(&songs_dir());
+    let limit: usize = std::env::var("LIMIT").ok().and_then(|s| s.parse().ok()).unwrap_or(200);
+    let targets = [9usize, 10];
+    let modes = [("None", Density::None), ("MoreDense", Density::MoreDense), ("Full", Density::Full)];
+
+    let hand_made: BTreeMap<usize, ColumnAgg> = parallel(
+        &sets,
+        |acc: &mut BTreeMap<usize, ColumnAgg>, files| {
+            for beatmap in files.iter().filter_map(|p| parse(p)) {
+                let keys = key_count(&beatmap);
+                if targets.contains(&keys) {
+                    acc.entry(keys).or_default().add(&label(&beatmap, &layout(keys, None)));
+                }
+            }
+        },
+        |total, part| {
+            for (k, agg) in part {
+                total.entry(k).or_default().merge(agg);
+            }
+        },
+    );
+
+    let test_maps: Vec<Beatmap> = sets.iter().filter(|f| is_test_set(f)).flatten().filter_map(|p| parse(p)).collect();
+    let sources: Vec<Beatmap> = [4usize, 7]
+        .iter()
+        .flat_map(|&keys| test_maps.iter().filter(move |b| key_count(b) == keys).take(limit).cloned())
+        .collect();
+
+    // Keyed by (source keys, target keys, mode).
+    let converts: BTreeMap<(usize, usize, usize), ColumnAgg> = parallel(
+        &sources,
+        |acc: &mut BTreeMap<(usize, usize, usize), ColumnAgg>, beatmap| {
+            let src = key_count(beatmap);
+            for &dst in &targets {
+                for (m, (_, density)) in modes.iter().enumerate() {
+                    let mut b = beatmap.clone();
+                    let params = KeyConverterParams { target_keys: dst as u8, density: *density, keep_jacks: true, playstyle: None };
+                    if key_converter::apply(&mut b, &params).is_ok() {
+                        acc.entry((src, dst, m)).or_default().add(&label(&b, &layout(dst, None)));
+                    }
+                }
+            }
+        },
+        |total, part| {
+            for (k, agg) in part {
+                total.entry(k).or_default().merge(agg);
+            }
+        },
+    );
+
+    for &dst in &targets {
+        println!("\n=== {}K ({})", dst, layout(dst, None).name);
+        if let Some(agg) = hand_made.get(&dst) {
+            agg.print("hand-made");
+        }
+        for ((src, d, m), agg) in &converts {
+            if *d == dst {
+                agg.print(&format!("{}K -> {}K {}", src, dst, modes[*m].0));
+            }
+        }
     }
 }

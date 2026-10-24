@@ -1,9 +1,12 @@
 //! Playstyles: which finger of which hand plays each key.
 //!
 //! Every key count has its usual ways to be played, and the patterns of a map
-//! only make sense against one of them: on 9K a `4+1+4` player hits the
-//! middle key with a thumb, a `5+4` player with the left one. osu! 7K is
-//! always `3+1+3`. The analysis groups
+//! only make sense against one of them: on 8K a `3+2+3` player hits the two
+//! middle keys with the thumbs, a `1+7` player has a scratch on the left.
+//! osu! 7K is always `3+1+3`.
+//!
+//! A mirrored playstyle (`2+3` for `3+2`, `7+1` for `1+7`) is not listed:
+//! players get it with osu!'s Mirror mod. The analysis groups
 //! the keys by hand (and by player in co-op), so each group gets its own
 //! patterns.
 //!
@@ -184,25 +187,16 @@ pub fn layouts(keys: usize) -> Vec<Layout> {
         5 => &[
             ("2+1+2", "Thumb on the middle key", "L3 L2 T R2 R3"),
             ("3+2", "Middle key with the left index", "L4 L3 L2 R2 R3"),
-            ("2+3", "Middle key with the right index", "L3 L2 R2 R3 R4"),
         ],
-        6 => &[
-            ("3+3", "Three fingers per hand", "L4 L3 L2 R2 R3 R4"),
-            ("2+1+1+2", "Both thumbs on the middle keys", "L3 L2 L1 R1 R2 R3"),
-        ],
+        6 => &[("3+3", "Three fingers per hand", "L4 L3 L2 R2 R3 R4")],
         // osu! 7K is always played 3+1+3.
         7 => &[("3+1+3", "Thumb on the middle key", "L4 L3 L2 T R2 R3 R4")],
         8 => &[
             ("4+4", "Four fingers per hand", "L5 L4 L3 L2 R2 R3 R4 R5"),
             ("3+2+3", "Both thumbs on the middle keys", "L4 L3 L2 L1 R1 R2 R3 R4"),
             ("1+7", "7K with a scratch on the left (IIDX)", "LS L4 L3 L2 T R2 R3 R4"),
-            ("7+1", "7K with a scratch on the right", "L4 L3 L2 T R2 R3 R4 RS"),
         ],
-        9 => &[
-            ("4+1+4", "Thumb on the middle key (pop'n)", "L5 L4 L3 L2 T R2 R3 R4 R5"),
-            ("5+4", "Middle key with the left thumb", "L5 L4 L3 L2 L1 R2 R3 R4 R5"),
-            ("4+5", "Middle key with the right thumb", "L5 L4 L3 L2 R1 R2 R3 R4 R5"),
-        ],
+        9 => &[("4+1+4", "Thumb on the middle key (pop'n)", "L5 L4 L3 L2 T R2 R3 R4 R5")],
         10 => &[("5+5", "Every finger, thumbs in the middle", "L5 L4 L3 L2 L1 R1 R2 R3 R4 R5")],
         _ => &[],
     };

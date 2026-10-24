@@ -120,7 +120,7 @@ pub fn version(
     parts.join(" ")
 }
 
-/// `(10K)`, `(10K More Dense)`, `(9K Full 5+4)`, `(7K, split jacks)`... Every setting that changes
+/// `(10K)`, `(10K More Dense)`, `(8K Full 1+7)`, `(7K, split jacks)`... Every setting that changes
 /// the notes is in the name.
 fn key_tag(params: &KeyConverterParams) -> String {
     let mut tag = format!("({}K", params.target_keys);

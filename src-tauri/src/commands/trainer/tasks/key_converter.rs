@@ -47,7 +47,8 @@
 //!   of the source.
 //!
 //! The hands come from the playstyle of the target (`analysis::layout`): on
-//! 9K `5+4` the middle key is the left thumb's, on `4+1+4` either thumb's.
+//! 8K `3+2+3` the two middle keys are the thumbs', on `1+7` the first key is
+//! a scratch.
 //!
 //! A note that cannot be placed (every key it could go to is held) is dropped,
 //! so the output is always a valid map.
@@ -1473,16 +1474,16 @@ mod tests {
     }
 
     #[test]
-    fn playstyle_moves_the_middle_key() {
-        // 5+4: the middle key is the left thumb's, so left notes may use it
-        // freely.
-        let mut params = KeyConverterParams { target_keys: 9, density: Density::None, keep_jacks: true, playstyle: None };
+    fn every_8k_playstyle_stays_playable() {
+        // Every 8K playstyle moves the hands (3+2+3: the middle keys are the
+        // thumbs'; 1+7: the first key is a scratch), and all stay playable.
+        let mut params = KeyConverterParams { target_keys: 8, density: Density::None, keep_jacks: true, playstyle: None };
         let original = rosu_map::from_str::<Beatmap>(&map(4)).unwrap();
-        for playstyle in [None, Some("5+4".to_string()), Some("4+5".to_string())] {
+        for playstyle in [None, Some("3+2+3".to_string()), Some("1+7".to_string())] {
             params.playstyle = playstyle;
             let mut beatmap = original.clone();
             apply(&mut beatmap, &params).unwrap();
-            check(&beatmap, 9);
+            check(&beatmap, 8);
         }
     }
 
