@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
 import { BeatmapImportComponent, BeatmapQueueComponent } from "@features/beatmap-search";
 import { OsuCookieInputComponent } from '@features/downloader';
 import { OsuDbStore } from '@entities/osu-db';
+import { ConfigurationStore } from '@entities/configuration';
 import { TuiTitle, TuiNotificationDirective, TuiButton } from "@taiga-ui/core";
 import { TuiAccordion } from '@taiga-ui/kit';
 
@@ -22,8 +23,17 @@ interface Step {
   styleUrl: './downloader-page.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class DownloaderPageComponent {
+export class DownloaderPageComponent implements OnInit {
   readonly osuDb = inject(OsuDbStore);
+  private readonly config = inject(ConfigurationStore);
+
+  /** With `load_library` on, the library loads by itself to skip maps already owned. */
+  async ngOnInit() {
+    if (!this.config.isLoaded()) await this.config.loadConfig();
+    if (this.config.config()?.downloader.load_library && !this.osuDb.isLoaded() && !this.osuDb.isLoading()) {
+      await this.loadLibrary();
+    }
+  }
 
   async loadLibrary() {
     await this.osuDb.load();
@@ -99,7 +109,7 @@ export class DownloaderPageComponent {
           desc: 'Output path: The path where the downloaded files will be saved, if not set, the default osu! songs folder will be used',
         },
         {
-          desc: 'Load library: If enabled, the osu! library will be loaded on startup, this is useful for checking if the map is already downloaded',
+          desc: 'Load library: If enabled, the osu! library is loaded when you open the downloader, this is useful for checking if the map is already downloaded',
         },
         {
           desc: 'Skip video: If enabled, the video will not be downloaded, this is useful for saving bandwidth and disk space',

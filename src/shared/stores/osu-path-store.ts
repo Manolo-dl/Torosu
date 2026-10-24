@@ -48,6 +48,13 @@ export const OsuPathStore = signalStore(
         return detectPromise;
       },
 
+      /** A path set in the configuration: used from now on, and its Songs folder can be read. */
+      async setPath(path: string) {
+        patchState(store, { path, error: null });
+        detectPromise = Promise.resolve();
+        await invoke('save_osu_path', { path });
+      },
+
       async selectManually() {
         const selected = await open({
           directory: true,

@@ -1,6 +1,6 @@
 <nav>
     <ul>
-        @for (item of (navStore.isUserMode() ? userItems : devItems); track item.route) {
+        @for (item of (navStore.isUserMode() ? userItems() : devItems); track item.route) {
             <li>
                 <a
                 [routerLink]="item.route"

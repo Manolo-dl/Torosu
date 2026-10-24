@@ -1,6 +1,7 @@
-import { patchState, signalStore, withMethods, withState } from "@ngrx/signals";
+import { patchState, signalStore, withComputed, withMethods, withState } from "@ngrx/signals";
 import { AppConfig } from "./configuration.model";
 import { invoke } from "@tauri-apps/api/core";
+import { computed } from "@angular/core";
 
 interface ConfigState {
     config: AppConfig | null;
@@ -18,6 +19,11 @@ export const ConfigurationStore = signalStore(
     { providedIn: 'root' },
 
     withState(initialState),
+
+    withComputed((store) => ({
+        /** Routes of the tools turned off in the configuration. */
+        excludedTools: computed(() => new Set(store.config()?.excluded_tools ?? [])),
+    })),
 
     withMethods((store) => ({
         async loadConfig() {

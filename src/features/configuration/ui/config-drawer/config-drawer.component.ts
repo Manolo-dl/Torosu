@@ -6,8 +6,12 @@ import { TuiHeader, TuiNavComponent } from "@taiga-ui/layout";
 import { TuiTitle, TuiPopup, TuiButton, TuiCell, TuiInput, TuiLabel } from "@taiga-ui/core";
 import { FaIconComponent } from "@fortawesome/angular-fontawesome";
 import { faGears } from '@fortawesome/free-solid-svg-icons';
+import { Router } from '@angular/router';
 import { AppConfig, ConfigurationStore } from '@entities/configuration';
 import { USER_ITEMS } from '@entities/nav-item';
+import { OsuDbStore } from '@entities/osu-db';
+import { CollectionStore } from '@entities/collection';
+import { OsuPathStore } from '@shared/stores';
 
 // Mirrors the serde defaults in src-tauri/src/commands/config/model.rs
 const DEFAULT_CONFIG: AppConfig = {
@@ -35,6 +39,10 @@ const DEFAULT_CONFIG: AppConfig = {
 })
 export class ConfigDrawerComponent {
   private readonly store = inject(ConfigurationStore);
+  private readonly router = inject(Router);
+  private readonly osuPath = inject(OsuPathStore);
+  private readonly osuDb = inject(OsuDbStore);
+  private readonly collections = inject(CollectionStore);
 
   readonly open = signal(false);
   readonly activeTab = signal(0);
@@ -56,8 +64,23 @@ export class ConfigDrawerComponent {
   }
 
   async save() {
+    const previousPath = this.store.config()?.osu_path;
     await this.store.updateConfig(this.draft);
     this.open.set(false);
+
+    // A new osu! folder: the library and collections loaded are the old one's.
+    const path = this.draft.osu_path;
+    if (path && path !== previousPath) {
+      await this.osuPath.setPath(path);
+      this.osuDb.reset();
+      this.collections.reset();
+    }
+
+    // The tool open was just turned off.
+    const url = this.router.url;
+    if ([...this.store.excludedTools()].some(route => url === route || url.startsWith(`${route}/`))) {
+      await this.router.navigate(['/']);
+    }
   }
 
   async pickOsuPath() {

@@ -60,7 +60,7 @@ pub struct PacksConfig {
 fn default_true() -> bool { true }
 fn default_false() -> bool { false }
 fn default_max_concurrent_downloads() -> u32 { 1 }
-fn default_max_sets_per_pack() -> u32 { 10 }
+fn default_max_sets_per_pack() -> u32 { 0 }
 
 // Implemented by hand so the defaults match the serde ones above: a derived
 // Default would set `sqlite_db` to false, and that value is then written to

@@ -5,6 +5,7 @@ import { logResolver } from "@entities/log";
 import { osuPathGuard } from "@shared/guards";
 import { databaseResolver } from "@entities/database";
 import { osuReaderResolver } from "@entities/osu-reader";
+import { toolEnabledGuard } from "@entities/configuration";
 
 export const routes: Routes = [
     {
@@ -14,6 +15,7 @@ export const routes: Routes = [
     {
         path: 'user',
         canActivate: [osuPathGuard],
+        canActivateChild: [toolEnabledGuard],
         children: [
             {
                 path: 'downloader',
