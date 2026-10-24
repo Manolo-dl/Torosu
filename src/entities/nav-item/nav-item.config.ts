@@ -21,7 +21,7 @@ export const USER_ITEMS: NavItem[] = [
 export const DEV_ITEMS: NavItem[] = [
     { label: 'logs', route: '/dev/logs', icon: faFileLines },
     { label: 'database', route: '/dev/database', icon: faDatabase },
-    { label: 'tosu-data', route: '/dev/tosu-data', icon: faNetworkWired }
+    { label: 'osu-data', route: '/dev/osu-data', icon: faNetworkWired }
 ];
 
 export const APP_ITEMS: NavItem[] = [

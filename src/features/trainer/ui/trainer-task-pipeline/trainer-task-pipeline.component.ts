@@ -1,9 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { TASK_LABELS } from '@features/trainer';
+import { TASK_LABELS, taskSupportsMode } from '@features/trainer';
 import { FlnConverterParams, KeyConverterParams, KeyDensity, PLAYSTYLES, RateChangeParams, TrainerTaskType } from '@features/trainer/models/trainer.model';
 import { TrainerStore } from '@features/trainer/stores/trainer.store';
-import { TosuStore } from '@entities/tosu';
+import { OsuReaderStore } from '@entities/osu-reader';
 import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDropList } from '@angular/cdk/drag-drop';
 import { TuiButton, TuiCheckbox, TuiDataList, TuiDropdown, TuiIcon, TuiInput, TuiNotificationDirective, TuiTitle } from '@taiga-ui/core';
 import { TuiSegmented } from '@taiga-ui/kit';
@@ -26,7 +26,7 @@ interface DensityOption {
 export class TrainerTaskPipelineComponent {
 
   readonly trainer = inject(TrainerStore);
-  readonly tosu = inject(TosuStore);
+  readonly reader = inject(OsuReaderStore);
 
   taskLabels = TASK_LABELS;
   availableTasks: TrainerTaskType[] = ['RateChange', 'SVNormalizer', 'FlnConverter', 'KeyConverter'];
@@ -34,15 +34,17 @@ export class TrainerTaskPipelineComponent {
 
   availableTasksFiltered = computed(() => {
     const existingTypes = new Set(this.trainer.tasks().map(t => t.task.type));
-    return this.availableTasks.filter(type => !existingTypes.has(type));
+    const mode = this.reader.originalMode();
+    return this.availableTasks.filter(type => !existingTypes.has(type) && taskSupportsMode(type, mode));
   });
 
-  originalBpm = computed(() => this.tosu.data()?.beatmap?.stats?.bpm?.common ?? null);
+  originalBpm = computed(() => {
+    const bpm = this.reader.data()?.attributes?.bpm.common;
+    return bpm ? Math.round(bpm * 100) / 100 : null;
+  });
 
-  isMania = computed(() => this.tosu.data()?.beatmap?.mode?.number === 3);
-
-  /** Key count of the current map: in mania it is the CS. */
-  sourceKeys = computed(() => (this.isMania() ? Math.round(this.tosu.data()?.beatmap?.stats?.cs?.original ?? 0) || null : null));
+  /** Key count of the current map, only for osu!mania maps. */
+  sourceKeys = computed(() => this.reader.data()?.attributes?.keyCount ?? null);
 
   readonly keyOptions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
   readonly densityOptions: DensityOption[] = [

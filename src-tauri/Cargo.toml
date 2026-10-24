@@ -20,7 +20,6 @@ tauri-build = { version = "2", features = [] }
 [dependencies]
 tauri = { version = "2", default-features = false, features = ["wry", "compression", "common-controls-v6", "x11", "protocol-asset"] }
 tauri-plugin-opener = "2"
-tauri-plugin-shell = "2.5.0"
 tauri-plugin-updater = { version = "2.14.0", default-features = false, features = ["rustls-tls"] }
 tauri-plugin-log = "2.10.1"
 tauri-plugin-notification = "2.7.0"
@@ -41,11 +40,10 @@ log = "0.4.34"
 tokio = { version = "1.54.0", features = ["fs", "io-util", "macros", "net", "sync", "time"] }
 zip = { version = "8.6.0", default-features = false }
 futures-util = { version = "0.3.34", default-features = false }
-tokio-tungstenite = { version = "0.30.0", default-features = false, features = ["connect"] }
 reqwest = { version = "0.13.5", default-features = false, features = ["rustls-no-provider", "stream"] }
 rustls = { version = "0.23", default-features = false, features = ["ring"] }
 vorbis_rs = "0.5.6"
-osu-memory-reader = "0.1.0"
+osu-memory-reader = { version = "0.1.0", features = ["serde", "difficulty"] }
 
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration

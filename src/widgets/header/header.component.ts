@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { NavStore } from '@entities/nav-item';
-//import { TuiBadge, TuiStatus } from '@taiga-ui/kit';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faSun, faMoon, faGears } from '@fortawesome/free-solid-svg-icons';
 import { TUI_DARK_MODE, TuiButton } from "@taiga-ui/core";

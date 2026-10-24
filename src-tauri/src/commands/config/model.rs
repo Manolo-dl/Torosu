@@ -9,9 +9,6 @@ pub struct AppConfig {
     pub excluded_tools: Vec<String>,
 
     #[serde(default)]
-    pub tosu: TosuConfig,
-
-    #[serde(default)]
     pub downloader: DownloaderConfig,
 
     #[serde(default = "default_true")]
@@ -19,15 +16,6 @@ pub struct AppConfig {
 
     #[serde(default = "default_false")]
     pub open_file: bool,
-}
-
-#[derive(Deserialize, Serialize, Clone)]
-pub struct TosuConfig {
-    #[serde(default = "default_true")]
-    pub auto_start: bool,
-
-    #[serde(default = "default_true")]
-    pub kill_on_exit: bool, // Kill the process only when started by the app, not if it was already running
 }
 
 #[derive(Deserialize, Serialize, Clone)]
@@ -66,19 +54,9 @@ impl Default for AppConfig {
         Self {
             osu_path: None,
             excluded_tools: Vec::new(),
-            tosu: TosuConfig::default(),
             downloader: DownloaderConfig::default(),
             sqlite_db: default_true(),
             open_file: default_false(),
-        }
-    }
-}
-
-impl Default for TosuConfig { 
-    fn default() -> Self {
-        Self {
-            auto_start: true,
-            kill_on_exit: true,
         }
     }
 }

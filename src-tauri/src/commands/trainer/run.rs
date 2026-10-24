@@ -163,8 +163,7 @@ pub async fn run_trainer(app: tauri::AppHandle, request: RunTrainerRequest) -> R
     let osz_path = songs_dir.join(osz_name);
 
     // If there is a RateChange task, process the audio on a dedicated blocking
-    // thread so the tokio runtime (and with it tosu's websocket listener) is not
-    // stalled.
+    // thread so the tokio runtime is not stalled.
 
     let mut audio_entry: Option<(String, Vec<u8>)> = None;
 

@@ -1,24 +1,24 @@
 <div class="banner">
-  @if (tosu.backgroundUrl(); as url) {
+  @if (reader.backgroundUrl(); as url) {
     <img alt="" class="background" [src]="url" />
   }
 
   <div class="overlay">
     <div tuiTitle="m" class="info">
       <span class="title">
-        {{ tosu.title() }} <span class="artist">— {{ tosu.artist() }}</span>
+        {{ reader.title() }} <span class="artist">— {{ reader.artist() }}</span>
       </span>
-      <span tuiSubtitle>{{ tosu.version() }} · mapped by {{ tosu.mapper() }}</span>
+      <span tuiSubtitle>{{ reader.version() }} · mapped by {{ reader.mapper() }}</span>
     </div>
 
     <span
       size="l"
       tuiBadge
       class="stars"
-      [style.background]="starBg(tosu.stars())"
-      [style.color]="starFg(tosu.stars())"
+      [style.background]="starBg(reader.stars())"
+      [style.color]="starFg(reader.stars())"
     >
-      ★ {{ tosu.stars() | number:'1.2-2' }}
+      ★ {{ reader.stars() | number:'1.2-2' }}
     </span>
   </div>
 </div>

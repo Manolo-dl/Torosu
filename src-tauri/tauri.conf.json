@@ -37,7 +37,10 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "externalBin": ["binaries/tosu"],
+    "resources": {
+      "../THIRD-PARTY-NOTICES.md": "licenses/THIRD-PARTY-NOTICES.md",
+      "licenses/osu-memory-reader/": "licenses/osu-memory-reader/"
+    },
     "createUpdaterArtifacts": true,
     "windows": {
       "nsis": {

@@ -1,3 +1,5 @@
+import type { Ruleset } from '@entities/osu-reader';
+
 export type DifficultyKey = 'hp' | 'cs' | 'od' | 'ar';
 
 export type TrainerTaskType = 'RateChange' | 'SVNormalizer' | 'FlnConverter' | 'KeyConverter';
@@ -86,6 +88,20 @@ export const TASK_LABELS: Record<TrainerTaskType, string> = {
     FlnConverter: 'FLN Converter',
     KeyConverter: 'Key Converter',
 };
+
+/** Modes each task works on. The map's own mode counts, not osu!'s automatic converts. */
+export const TASK_MODES: Record<TrainerTaskType, readonly Ruleset[] | 'all'> = {
+    RateChange: 'all',
+    SVNormalizer: 'all',
+    FlnConverter: ['mania'],
+    KeyConverter: ['mania'],
+};
+
+/** Whether a task can run on a map made for `mode`; `null` (unknown mode) only allows the ones for every mode. */
+export function taskSupportsMode(type: TrainerTaskType, mode: Ruleset | null): boolean {
+    const modes = TASK_MODES[type];
+    return modes === 'all' || (mode !== null && modes.includes(mode));
+}
 
 export interface DifficultyStat {
     value: number;

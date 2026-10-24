@@ -126,12 +126,6 @@
           }
 
           @if (entry.task.type === 'FlnConverter') {
-            @if (!isMania()) {
-              <div appearance="warning" size="s" tuiNotification>
-                The FLN converter only works on <strong>osu!mania</strong> maps.
-              </div>
-            }
-
             <p class="description">
               Turns every note into a long note held until just before the next note in its column.
             </p>
@@ -165,12 +159,6 @@
           }
 
           @if (entry.task.type === 'KeyConverter') {
-            @if (!isMania()) {
-              <div appearance="warning" size="s" tuiNotification>
-                The key converter only works on <strong>osu!mania</strong> maps.
-              </div>
-            }
-
             <p class="description">
               Moves the notes to another number of keys. Streams roll over the new keys, while real trills, jacks
               and chords keep their shape.

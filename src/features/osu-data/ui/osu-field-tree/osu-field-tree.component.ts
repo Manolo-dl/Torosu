@@ -1,13 +1,13 @@
 import { Component, input, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
-    selector: 'app-tosu-field-tree',
+    selector: 'app-osu-field-tree',
     imports: [],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    templateUrl: './tosu-field-tree.component.html',
-    styleUrl: './tosu-field-tree.component.less',
+    templateUrl: './osu-field-tree.component.html',
+    styleUrl: './osu-field-tree.component.less',
 })
-export class TosuFieldTreeComponent {
+export class OsuFieldTreeComponent {
     value = input<unknown>();
 
     isObject(v: unknown): boolean {

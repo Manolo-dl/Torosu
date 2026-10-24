@@ -8,9 +8,9 @@
             <span appearance="neutral" size="s" tuiBadge>{{ typeLabel(section[1]) }}</span>
           </span>
         </button>
-        <!-- Rendered only while open: tosu pushes updates several times per second -->
+        <!-- Rendered only while open, so big sections cost nothing while closed -->
         <tui-expand>
-          <app-tosu-field-tree *tuiItem [value]="section[1]" />
+          <app-osu-field-tree *tuiItem [value]="section[1]" />
         </tui-expand>
       }
     </tui-accordion>

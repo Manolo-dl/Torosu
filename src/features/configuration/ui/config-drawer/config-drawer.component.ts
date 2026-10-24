@@ -12,7 +12,6 @@ import { USER_ITEMS } from '@entities/nav-item';
 // Mirrors the serde defaults in src-tauri/src/commands/config/model.rs
 const DEFAULT_CONFIG: AppConfig = {
   excluded_tools: [],
-  tosu: { auto_start: true, kill_on_exit: true },
   downloader: {
     notify: false,
     error_file: true,

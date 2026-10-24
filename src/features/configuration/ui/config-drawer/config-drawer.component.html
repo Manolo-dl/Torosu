@@ -41,12 +41,6 @@
                     tuiTab
                     type="button"
                 >
-                    Tosu
-                </button>
-                <button
-                    tuiTab
-                    type="button"
-                >
                     Downloader
                 </button>
                 <button
@@ -113,34 +107,6 @@
             }
 
             @case (1) {
-                <section>
-                    <h3 tuiTitle="s">Process</h3>
-                    <label tuiCell>
-                        <span tuiTitle>
-                            Auto start
-                            <span tuiSubtitle>Launch tosu when Torosu starts</span>
-                        </span>
-                        <input
-                            tuiSwitch
-                            type="checkbox"
-                            [(ngModel)]="draft.tosu.auto_start"
-                        />
-                    </label>
-                    <label tuiCell>
-                        <span tuiTitle>
-                            Kill on exit
-                            <span tuiSubtitle>Only if tosu was started by Torosu</span>
-                        </span>
-                        <input
-                            tuiSwitch
-                            type="checkbox"
-                            [(ngModel)]="draft.tosu.kill_on_exit"
-                        />
-                    </label>
-                </section>
-            }
-
-            @case (2) {
                 <section>
                     <h3 tuiTitle="s">Account</h3>
                     <tui-textfield>
@@ -243,7 +209,7 @@
                 </section>
             }
 
-            @case (3) {
+            @case (2) {
                 <p class="empty">No trainer settings available yet.</p>
             }
         }

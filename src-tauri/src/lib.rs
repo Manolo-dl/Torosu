@@ -1,11 +1,11 @@
-use std::{path::PathBuf, sync::{Arc, Mutex, atomic::AtomicBool}};
+use std::{path::PathBuf, sync::{Mutex, atomic::AtomicBool}};
 use sqlx::SqlitePool;
 use tauri::Manager;
-use tauri_plugin_shell::{ShellExt, process::CommandChild};
 use tauri_plugin_log::{Target, TargetKind};
 use tauri_plugin_updater::UpdaterExt;
 
 use crate::commands::config::model::AppConfig;
+use crate::commands::osu_reader::ReaderSnapshot;
 
 mod commands;
 
@@ -13,13 +13,9 @@ pub struct DbState {
     pub pool: SqlitePool,
 }
 
-pub struct TosuProcess {
-    pub child: Mutex<Option<CommandChild>>,
-}
-
-pub struct TosuListenerState {
+pub struct OsuReaderState {
     pub started: AtomicBool,
-    pub shutdown: Arc<AtomicBool>,
+    pub snapshot: Mutex<ReaderSnapshot>,
 }
 
 pub struct AppConfigState {
@@ -66,58 +62,11 @@ pub fn run() {
                 }
             });
 
-            // Tosu sidecar management
-            app.manage(TosuListenerState {
+            // osu! memory reader, started by the first page that needs it
+            app.manage(OsuReaderState {
                 started: AtomicBool::new(false),
-                shutdown: Arc::new(AtomicBool::new(false)),
+                snapshot: Mutex::new(ReaderSnapshot::new()),
             });
-
-            // Start tosu sidecar if enabled and not already running
-            let app_handle = app.handle().clone();
-            let config_state = app.state::<AppConfigState>();
-            let tosu_config = config_state.config.lock().unwrap().tosu.clone();
-
-            if tosu_config.auto_start {
-                log::info!("auto_start is enabled, starting tosu sidecar if not running");
-                tauri::async_runtime::spawn(async move {
-                    if is_tosu_running().await {
-                        log::info!("tosu is already running, not spawning a new instance");
-                    } else {
-                        match app_handle.shell().sidecar("tosu") {
-                            Ok(sidecar_command) => {
-                                let sidecar_command = sidecar_command
-                                    .env("OPEN_DASHBOARD_ON_STARTUP", "false");
-
-                                match sidecar_command.spawn() {
-                                    Ok((mut rx, child)) => {
-                                        app_handle.manage(TosuProcess { child: Mutex::new(Some(child)) });
-
-                                        use tauri_plugin_shell::process::CommandEvent;
-                                        while let Some(event) = rx.recv().await {
-                                            match event {
-                                                CommandEvent::Stdout(line) => {
-                                                    log::debug!("[tosu] {}", String::from_utf8_lossy(&line));
-                                                }
-                                                CommandEvent::Stderr(line) => {
-                                                    log::warn!("[tosu] {}", String::from_utf8_lossy(&line));
-                                                }
-                                                CommandEvent::Terminated(payload) => {
-                                                    log::warn!("[tosu] process terminated: {:?}", payload);
-                                                }
-                                                _ => {}
-                                            }
-                                        }
-                                    }
-                                    Err(e) => log::error!("failed to spawn tosu sidecar: {e}"),
-                                }
-                            }
-                            Err(e) => log::error!("failed to create tosu sidecar command: {e}"),
-                        }
-                    }
-                });
-            } else {
-                log::info!("auto_start is disabled, not starting tosu sidecar");
-            }
 
             Ok(())
         })
@@ -152,7 +101,6 @@ pub fn run() {
             ])
             .build()
         )
-        .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
@@ -176,7 +124,7 @@ pub fn run() {
             commands::dev::database::get_database_tables,
             commands::dev::database::get_table_columns,
             commands::dev::database::execute_query,
-            commands::tosu::listener::connect_tosu,
+            commands::osu_reader::connect_osu_reader,
             commands::trainer::run::run_trainer,
             commands::trainer::video::is_ffmpeg_available
         ])
@@ -186,15 +134,6 @@ pub fn run() {
                 
                 let config_state = window.app_handle().state::<AppConfigState>();
                 let config = config_state.config.lock().unwrap().clone();
-                
-                if config.tosu.kill_on_exit {
-                    if let Some(state) = window.app_handle().try_state::<TosuProcess>() {
-                        if let Some(child) = state.child.lock().unwrap().take() {
-                            let _ = child.kill();
-                            log::info!("tosu sidecar killed on close");
-                        }
-                    }
-                }
 
                 if let Err(e) = commands::config::file::write_config(&config) {
                     log::error!("failed to write configuration.toml on close: {e}");
@@ -235,12 +174,6 @@ async fn update(app: tauri::AppHandle) -> tauri_plugin_updater::Result<()> {
     }
 
     Ok(())
-}
-
-async fn is_tosu_running() -> bool {
-    tokio::net::TcpStream::connect(commands::tosu::TOSU_ADDR)
-        .await
-        .is_ok()
 }
 
 pub fn app_root_dir() -> PathBuf {

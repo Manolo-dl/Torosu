@@ -1,0 +1,16 @@
+<header>
+  <h1 tuiTitle="l">
+    osu! Data
+    <span tuiSubtitle>Selected beatmap, read from the osu! memory</span>
+  </h1>
+  <app-osu-reader-status />
+</header>
+
+@let status = store.status();
+@if (status.state === 'error') {
+  <div appearance="negative" tuiNotification>
+    {{ status.message }}
+  </div>
+}
+
+<app-osu-data-sections />

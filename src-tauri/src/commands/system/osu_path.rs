@@ -23,33 +23,20 @@ pub async fn get_osu_path(
     Ok(path)
 }
 
-async fn get_osu_path_from_tosu() -> Result<String, String> {
-
-    let url = format!("http://{}/json/v2", crate::commands::tosu::TOSU_ADDR);
-
-    let body = reqwest::get(url)
-        .await
-        .map_err(|e| {
-            log::error!("error fetching from tosu: {}", e);
-            e.to_string()
-        })?
-        .text()
-        .await
-        .map_err(|e| {
-            log::error!("error fetching text from tosu: {}", e);
+async fn get_osu_path_from_memory() -> Result<String, String> {
+    tauri::async_runtime::spawn_blocking(|| {
+        let reader = osu_memory_reader::OsuReader::attach().map_err(|e| {
+            log::debug!("osu! path not read from memory: {}", e);
             e.to_string()
         })?;
 
-    let json: serde_json::Value = serde_json::from_str(&body)
-        .map_err(|e| e.to_string())?;
-
-    let game_path = json
-        .get("folders")
-        .and_then(|f| f.get("game"))
-        .and_then(|g| g.as_str())
-        .ok_or_else(|| "tosu response missing folders.game".to_string())?;
-
-    Ok(game_path.to_string())
+        reader
+            .game_folder()
+            .map(|path| path.to_string_lossy().into_owned())
+            .ok_or_else(|| "osu! is running but its folder was not found".to_string())
+    })
+    .await
+    .map_err(|e| e.to_string())?
 }
 
 async fn resolve_osu_path(app: &tauri::AppHandle) -> Result<String, String> {
@@ -64,8 +51,8 @@ async fn resolve_osu_path(app: &tauri::AppHandle) -> Result<String, String> {
         return Ok(path);
     }
 
-    // 2. Check path with tosu
-    if let Ok(path) = get_osu_path_from_tosu().await {
+    // 2. Check path of the running osu!
+    if let Ok(path) = get_osu_path_from_memory().await {
         save_detected_path(&config_state, &path);
         return Ok(path);
     }
