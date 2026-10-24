@@ -2947,6 +2947,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "osu-memory-reader"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2e13fb7c05c0c065a7fe1c44c1d152fcc64f7ed9846d0ae092e3ad19253b7608"
+dependencies = [
+ "windows-sys 0.61.2",
+]
+
+[[package]]
 name = "osynic_osudb"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5184,6 +5193,7 @@ dependencies = [
  "chrono",
  "futures-util",
  "log",
+ "osu-memory-reader",
  "osynic_osudb",
  "reqwest",
  "rosu-map",
