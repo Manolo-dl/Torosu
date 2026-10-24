@@ -1,35 +1,42 @@
-<h1 tuiTitle="l">Torosu</h1>
-<p>All the tools you would need for osu! in the same place.</p>
+<header class="hero">
+  <div tuiTitle="l">
+    <span class="name">
+      Torosu
+      @if (version(); as version) {
+        <span appearance="neutral" size="m" tuiBadge>v{{ version }}</span>
+      }
+    </span>
+    <span tuiSubtitle>All the tools you would need for osu! in the same place.</span>
+  </div>
 
-<div
-    appearance="warning"
-    size="l"
-    tuiNotification
->
-    <div
-        tuiTitle
-        [style.padding-inline-end.rem]="2"
-    >
-        Support
-        <div tuiSubtitle>This application is made specifically for osu! Stable. All features are not tested for Lazer</div>
+  <div class="facts">
+    <span appearance="info" size="m" tuiBadge>Made for osu! stable</span>
+    <span class="fact">Lazer is not supported: the tools read and write osu! stable's files.</span>
+  </div>
+
+  @if (osuPath.path(); as path) {
+    <div class="folder">
+      <tui-icon icon="@tui.folder" />
+      <span class="path" [title]="path">{{ path }}</span>
+      <span class="hint">Change it in the settings</span>
     </div>
-    <button
-        iconStart="@tui.x"
-        tuiIconButton
-        type="button"
-    >
-        Close
-    </button>
-</div>
+  }
+</header>
 
-<h1 tuiTitle="l">Features</h1>
-<div>
-    <button
-        tuiAppearance="floating"
-        tuiSurface
-        type="button"
-    >
-    <h3 tuiTitle="m">Downloader</h3>
-    <p tuiSubtitle>Download osu! maps with ease</p>
-    </button>
-</div>
+<section>
+  <h2 tuiTitle="m">Tools</h2>
+  <div class="tools">
+    @for (tool of tools(); track tool.route) {
+      <a appearance="floating" tuiCardLarge="compact" class="tool" [routerLink]="tool.route">
+        <span class="icon"><fa-icon [icon]="tool.icon" /></span>
+        <span tuiTitle>
+          {{ tool.label }}
+          <span tuiSubtitle>{{ tool.description }}</span>
+        </span>
+        <tui-icon icon="@tui.arrow-right" class="arrow" />
+      </a>
+    } @empty {
+      <p class="empty">Every tool is turned off. Turn them on in the settings, under General.</p>
+    }
+  </div>
+</section>
