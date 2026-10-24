@@ -38,6 +38,7 @@
       "icons/icon.ico"
     ],
     "resources": {
+      "../LICENSE": "licenses/LICENSE",
       "../THIRD-PARTY-NOTICES.md": "licenses/THIRD-PARTY-NOTICES.md",
       "licenses/osu-memory-reader/": "licenses/osu-memory-reader/"
     },

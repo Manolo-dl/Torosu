@@ -1,6 +1,7 @@
 # Third-party notices
 
-Torosu includes the following third-party software.
+Torosu itself is licensed under the MIT License (see `LICENSE`). It includes
+the following third-party software, under its own license.
 
 ## osu-memory-reader
 
