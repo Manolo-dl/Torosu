@@ -2,7 +2,7 @@ import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, Input, signal } from '@angular/core';
 import { OsuBeatmapSet, OsuDiff, setStatus } from '@entities/osu-db/osu-db.model';
 import { openUrl } from '@tauri-apps/plugin-opener';
-import { modeChar, modeColor, starBg, starFg } from '@shared/utils';
+import { modeColor, modeIcon, starBg, starFg } from '@shared/utils';
 import { TuiExpand, TuiIcon, TuiLink } from '@taiga-ui/core';
 import { TuiBadge } from '@taiga-ui/kit';
 
@@ -51,6 +51,6 @@ export class BeatmapSetCardComponent {
 
   readonly diffBg = starBg;
   readonly diffFg = starFg;
-  readonly modeChar = modeChar;
+  readonly modeIcon = modeIcon;
   readonly modeColor = modeColor;
 }

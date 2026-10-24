@@ -11,14 +11,26 @@
       <span tuiSubtitle>{{ reader.version() }} · mapped by {{ reader.mapper() }}</span>
     </div>
 
-    <span
-      size="l"
-      tuiBadge
-      class="stars"
-      [style.background]="starBg(reader.stars())"
-      [style.color]="starFg(reader.stars())"
-    >
-      ★ {{ reader.stars() | number:'1.2-2' }}
-    </span>
+    <div class="side">
+      @let current = mode();
+      @if (current !== null) {
+        <tui-icon
+          class="mode"
+          [icon]="modeIcon(current)"
+          [style.color]="modeColor(current)"
+          [attr.title]="modeName()"
+          [attr.aria-label]="modeName()"
+        />
+      }
+      <span
+        size="l"
+        tuiBadge
+        class="stars"
+        [style.background]="starBg(reader.stars())"
+        [style.color]="starFg(reader.stars())"
+      >
+        ★ {{ reader.stars() | number:'1.2-2' }}
+      </span>
+    </div>
   </div>
 </div>

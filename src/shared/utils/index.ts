@@ -1,1 +1,1 @@
-export { starBg, starFg, modeChar, modeColor } from './osu-colors';
+export { starBg, starFg, modeIcon, modeColor } from './osu-colors';

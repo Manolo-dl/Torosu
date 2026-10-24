@@ -4,6 +4,7 @@ import { BeatmapExporterStore, ModeFilters, emptyModeFilters } from '@features/e
 import { TuiButton, TuiExpand, TuiIcon, TuiInput, TuiTitle } from '@taiga-ui/core';
 import { TuiChip, TuiSegmented, TuiSwitch } from '@taiga-ui/kit';
 import { TuiCardLarge } from '@taiga-ui/layout';
+import { modeIcon } from '@shared/utils';
 
 export interface ModeConfig {
   label: string;
@@ -34,10 +35,10 @@ export class BeatmapFiltersComponent {
   readonly store = inject(BeatmapExporterStore);
 
   readonly modeConfigs: ModeConfig[] = [
-    { label: 'Standard', value: 0, icon: '●', color: '#ff66ab', hasAr: true,  csLabel: 'CS'   },
-    { label: 'Taiko',    value: 1, icon: '◉', color: '#e05555', hasAr: false, csLabel: null    },
-    { label: 'Catch',    value: 2, icon: '✿', color: '#66bbff', hasAr: true,  csLabel: 'CS'   },
-    { label: 'Mania',    value: 3, icon: '⊞', color: '#c966ff', hasAr: false, csLabel: 'Keys' },
+    { label: 'Standard', value: 0, icon: modeIcon(0), color: '#ff66ab', hasAr: true,  csLabel: 'CS'   },
+    { label: 'Taiko',    value: 1, icon: modeIcon(1), color: '#e05555', hasAr: false, csLabel: null    },
+    { label: 'Catch',    value: 2, icon: modeIcon(2), color: '#66bbff', hasAr: true,  csLabel: 'CS'   },
+    { label: 'Mania',    value: 3, icon: modeIcon(3), color: '#c966ff', hasAr: false, csLabel: 'Keys' },
   ];
 
   readonly statuses = ['Ranked', 'Loved', 'Approved', 'Qualified', 'Unranked'];

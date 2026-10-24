@@ -67,8 +67,20 @@
     }
   }
 
-  .stars {
+  .side {
+    display: flex;
     flex-shrink: 0;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  // Over the background image, like the text.
+  .mode {
+    font-size: 1.75rem;
+    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.6));
+  }
+
+  .stars {
     font-weight: 700;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
   }

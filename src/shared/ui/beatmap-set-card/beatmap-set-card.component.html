@@ -11,7 +11,7 @@
         <div class="side-bottom">
           <div class="pips">
             @for (mode of uniqueModes(set.diffs); track mode) {
-              <span class="pip-mode" [style.color]="modeColor(mode)">{{ modeChar(mode) }}</span>
+              <tui-icon class="pip-mode" [icon]="modeIcon(mode)" [style.color]="modeColor(mode)" />
               @for (diff of visibleDiffsForMode(set.diffs, mode); track diff.md5) {
                 <span class="pip" [style.background]="diffBg(diff.stars)"></span>
               }
@@ -29,7 +29,7 @@
       <div class="diffs">
         @for (diff of sortedDiffs(set.diffs); track diff.md5) {
           <div class="diff">
-            <span class="mode" [style.color]="modeColor(diff.mode)">{{ modeChar(diff.mode) }}</span>
+            <tui-icon class="mode" [icon]="modeIcon(diff.mode)" [style.color]="modeColor(diff.mode)" />
             <span
               size="s"
               tuiBadge

@@ -21,7 +21,7 @@
       [style.--mode-color]="m.color"
     >
       <div class="mode-header" (click)="toggleExpand(m.value)">
-        <span class="mode-icon">{{ m.icon }}</span>
+        <tui-icon class="mode-icon" [icon]="m.icon" />
         <span class="mode-label">{{ m.label }}</span>
         <input
           size="s"
