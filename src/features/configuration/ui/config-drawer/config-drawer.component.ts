@@ -30,6 +30,7 @@ const DEFAULT_CONFIG: AppConfig = {
   },
   sqlite_db: true,
   open_file: false,
+  dev_mode: false,
 };
 
 @Component({

@@ -5,6 +5,8 @@ export interface AppConfig {
     packs: PacksConfig;
     sqlite_db: boolean;
     open_file: boolean;
+    /** Shows the developer pages (logs, database, osu! data). */
+    dev_mode: boolean;
 }
 
 export interface PacksConfig {

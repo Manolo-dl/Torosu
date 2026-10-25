@@ -2,20 +2,27 @@ import { computed, inject } from "@angular/core";
 import { patchState, signalStore, withComputed, withHooks, withMethods, withState } from "@ngrx/signals";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import { TuiNotificationService } from '@taiga-ui/core';
 import { UpdateInfo, UpdateProgress } from "./update.model";
+
+/** Where the releases are, to update by hand when the app can't (e.g. the Arch package). */
+const RELEASES_URL = 'https://github.com/Manolo-dl/Torosu/releases/latest';
 
 interface UpdateState {
     /** The newer version found at startup, if any. */
     available: UpdateInfo | null;
     installing: boolean;
     progress: UpdateProgress | null;
+    /** The app could not install it itself: it has to be downloaded. */
+    failed: boolean;
 }
 
 const initialState: UpdateState = {
     available: null,
     installing: false,
     progress: null,
+    failed: false,
 };
 
 /** Offers the updates found at startup; nothing is installed until the user asks. */
@@ -47,7 +54,7 @@ export const UpdateStore = signalStore(
         /** Downloads and installs the update; the app restarts when it is done. */
         async install() {
             if (!store.available() || store.installing()) return;
-            patchState(store, { installing: true, progress: null });
+            patchState(store, { installing: true, progress: null, failed: false });
 
             const unlisten = await listen<UpdateProgress>('update:progress', event => {
                 patchState(store, { progress: event.payload });
@@ -56,11 +63,15 @@ export const UpdateStore = signalStore(
                 await invoke('install_update');
             } catch (e) {
                 console.error('install_update failed', e);
-                alerts.open('Failed to install the update.', { appearance: 'negative' }).subscribe();
-                patchState(store, { installing: false, progress: null });
+                alerts.open('Torosu could not update itself. Download the new version from the releases page.', { appearance: 'negative' }).subscribe();
+                patchState(store, { installing: false, progress: null, failed: true });
             } finally {
                 unlisten();
             }
+        },
+
+        openReleases() {
+            openUrl(RELEASES_URL).catch(e => console.error('failed to open the releases page', e));
         },
     })),
 

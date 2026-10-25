@@ -1,12 +1,16 @@
 [package]
 name = "torosu"
 version = "1.0.0"
-description = "A Tauri App"
+description = "osu! stable tools in one app: beatmap downloader, collections, packs and a map trainer"
 license = "MIT"
-authors = ["you"]
+authors = ["Manolo-dl"]
+repository = "https://github.com/Manolo-dl/Torosu"
+homepage = "https://github.com/Manolo-dl/Torosu"
+readme = "../README.md"
+keywords = ["osu", "osu-mania", "beatmap", "tauri"]
+categories = ["games"]
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+publish = false
 
 [lib]
 # The `_lib` suffix may seem redundant but it is necessary

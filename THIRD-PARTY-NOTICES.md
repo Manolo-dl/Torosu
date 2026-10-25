@@ -28,7 +28,7 @@ texts and notice are distributed with Torosu, in
 
 The LGPL lets you replace the library with your own modified version. The
 complete source code of Torosu is available at
-<https://github.com/Manolo-dl/osu-tools-v2>. To build Torosu with a modified
+<https://github.com/Manolo-dl/Torosu>. To build Torosu with a modified
 copy of osu-memory-reader:
 
 1. Clone Torosu and the library, for example next to each other.

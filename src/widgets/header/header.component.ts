@@ -1,4 +1,6 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked } from '@angular/core';
+import { Router } from '@angular/router';
+import { ConfigurationStore } from '@entities/configuration';
 import { UpdateStore } from '@entities/update';
 import { NavStore } from '@entities/nav-item';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -22,4 +24,20 @@ export class HeaderComponent {
   readonly faCircleArrowUp = faCircleArrowUp;
   readonly update = inject(UpdateStore);
   readonly updateOpen = signal(false);
+  private readonly config = inject(ConfigurationStore);
+  private readonly router = inject(Router);
+
+  /** Developer mode is turned on in the settings. */
+  readonly devMode = computed(() => this.config.config()?.dev_mode ?? false);
+
+  constructor() {
+    // Turned off while on the developer pages: back to the tools.
+    effect(() => {
+      if (this.devMode()) return;
+      untracked(() => {
+        this.navStore.userMode();
+        if (this.router.url.startsWith('/dev')) this.router.navigate(['/']);
+      });
+    });
+  }
 }

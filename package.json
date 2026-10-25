@@ -1,6 +1,10 @@
 {
   "name": "torosu",
   "version": "1.0.0",
+  "description": "osu! stable tools in one app: beatmap downloader, collections, packs and a map trainer",
+  "author": "Manolo-dl",
+  "license": "MIT",
+  "repository": "github:Manolo-dl/Torosu",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",

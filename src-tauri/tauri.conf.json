@@ -30,6 +30,12 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "publisher": "Manolo-dl",
+    "homepage": "https://github.com/Manolo-dl/Torosu",
+    "copyright": "Copyright (c) 2026 Manolo-dl",
+    "category": "Utility",
+    "shortDescription": "osu! stable tools in one app",
+    "longDescription": "Torosu puts the tools you would need for osu! stable in one place: a beatmap downloader, collection import and export, beatmap packs and a trainer that changes the rate, the stats, the long notes or the key count of the map selected in osu!.",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -53,7 +59,7 @@
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEQ2OTU0RjVGM0U2OTY0QzQKUldURVpHaytYMCtWMWpOa0R6c3RnT0NINThQN0crb3BiMkVJZU5RL0xRZHRYWnpQQmV0VmptdjUK",
       "endpoints": [
-        "https://github.com/Manolo-dl/osu-tools-v2/releases/latest/download/latest.json"
+        "https://github.com/Manolo-dl/Torosu/releases/latest/download/latest.json"
       ],
       "windows": {
         "installMode": "passive"

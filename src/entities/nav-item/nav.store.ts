@@ -23,6 +23,9 @@ export const NavStore = signalStore(
             const currentMode = store.mode();
             const newMode = currentMode === 'user' ? 'dev' : 'user';
             patchState(store, { mode: newMode });
-        }
+        },
+
+        /** Back to the tools, e.g. when developer mode is turned off. */
+        userMode: () => patchState(store, { mode: 'user' }),
     })),
 )

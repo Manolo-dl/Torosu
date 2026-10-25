@@ -43,16 +43,26 @@
             ></progress>
           }
 
-          <button
-            iconStart="@tui.download"
-            size="m"
-            tuiButton
-            type="button"
-            [loading]="update.installing()"
-            (click)="update.install()"
-          >
-            Update and restart
-          </button>
+          @if (update.failed()) {
+            <p class="notes">
+              Torosu could not install it itself, as with the Arch Linux package. Download it from the releases page
+              and install it as you did the first time.
+            </p>
+            <button iconStart="@tui.external-link" size="m" tuiButton type="button" (click)="update.openReleases()">
+              Open the releases page
+            </button>
+          } @else {
+            <button
+              iconStart="@tui.download"
+              size="m"
+              tuiButton
+              type="button"
+              [loading]="update.installing()"
+              (click)="update.install()"
+            >
+              Update and restart
+            </button>
+          }
         </div>
       </ng-template>
     }
@@ -67,15 +77,17 @@
       <fa-icon [icon]="icon()" />
     </button>
 
-    <button
-      size="m"
-      appearance="flat"
-      tuiButton
-      type="button"
-      (click)="navStore.toggleMode()"
-    >
-      {{ navStore.isDevMode() }}
-    </button>
+    @if (devMode()) {
+      <button
+        size="m"
+        appearance="flat"
+        tuiButton
+        type="button"
+        (click)="navStore.toggleMode()"
+      >
+        {{ navStore.isDevMode() }}
+      </button>
+    }
 
     <app-config-drawer />
   </div>

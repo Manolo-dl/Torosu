@@ -19,6 +19,10 @@ pub struct AppConfig {
 
     #[serde(default = "default_false")]
     pub open_file: bool,
+
+    /// Shows the developer pages (logs, database, osu! data).
+    #[serde(default = "default_false")]
+    pub dev_mode: bool,
 }
 
 #[derive(Deserialize, Serialize, Clone)]
@@ -80,6 +84,7 @@ impl Default for AppConfig {
             packs: PacksConfig::default(),
             sqlite_db: default_true(),
             open_file: default_false(),
+            dev_mode: default_false(),
         }
     }
 }

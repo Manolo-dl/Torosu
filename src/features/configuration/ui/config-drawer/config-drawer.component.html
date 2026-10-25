@@ -94,6 +94,17 @@
                             [(ngModel)]="draft.sqlite_db"
                         />
                     </label>
+                    <label tuiCell>
+                        <span tuiTitle>
+                            Developer mode
+                            <span tuiSubtitle>Show the button for the developer pages: logs, database and osu! data</span>
+                        </span>
+                        <input
+                            tuiSwitch
+                            type="checkbox"
+                            [(ngModel)]="draft.dev_mode"
+                        />
+                    </label>
                 </section>
 
                 <section>
