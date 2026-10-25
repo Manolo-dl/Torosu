@@ -4,6 +4,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { computed, inject } from "@angular/core";
 import { TuiNotificationService } from '@taiga-ui/core';
+import { save } from '@tauri-apps/plugin-dialog';
 
 interface OsuReaderStoreState {
     data: SelectedBeatmap | null;
@@ -12,6 +13,7 @@ interface OsuReaderStoreState {
     started: boolean;
     /** `blob:` URL of the current beatmap background, see `loadBackground`. */
     backgroundUrl: string | null;
+    exporting: boolean;
 }
 
 const initialState: OsuReaderStoreState = {
@@ -19,6 +21,7 @@ const initialState: OsuReaderStoreState = {
     status: { state: 'waiting' },
     started: false,
     backgroundUrl: null,
+    exporting: false,
 }
 
 const IMAGE_TYPES: Record<string, string> = {
@@ -101,6 +104,32 @@ export const OsuReaderStore = signalStore(
         }
 
         return {
+            /** Saves the set folder of the selected beatmap as an .osz, where the user picks. */
+            async exportOsz() {
+                const data = store.data();
+                if (!data?.paths || store.exporting()) return;
+
+                const { setId, artist, title } = data.beatmap;
+                // Same name osu! gives exported sets.
+                const name = `${setId > 0 ? `${setId} ` : ''}${artist} - ${title}.osz`.replace(/[\\/:*?"<>|]/g, '_');
+                const path = await save({
+                    filters: [{ name: 'osu! beatmap set', extensions: ['osz'] }],
+                    defaultPath: name,
+                });
+                if (!path) return;
+
+                patchState(store, { exporting: true });
+                try {
+                    await invoke('export_selected_osz', { path });
+                    alerts.open(`Exported ${name}`, { appearance: 'positive' }).subscribe();
+                } catch (e) {
+                    console.error('export_selected_osz failed', e);
+                    alerts.open(`Failed to export the beatmap: ${e}`, { appearance: 'negative' }).subscribe();
+                } finally {
+                    patchState(store, { exporting: false });
+                }
+            },
+
             async connect() {
                 if (store.started()) return;
                 patchState(store, { started: true });

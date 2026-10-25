@@ -2,15 +2,15 @@ import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { OsuReaderStore, Ruleset } from '@entities/osu-reader';
 import { modeColor, modeIcon, starBg, starFg } from '@shared/utils';
-import { TuiIcon, TuiTitle } from '@taiga-ui/core';
-import { TuiBadge } from '@taiga-ui/kit';
+import { TuiButton, TuiIcon, TuiTitle } from '@taiga-ui/core';
+import { TuiBadge, TuiButtonLoading } from '@taiga-ui/kit';
 
 const RULESETS: Ruleset[] = ['osu', 'taiko', 'fruits', 'mania'];
 const MODE_NAMES = ['osu!', 'osu!taiko', 'osu!catch', 'osu!mania'];
 
 @Component({
   selector: 'app-trainer-beatmap-header',
-  imports: [DecimalPipe, TuiBadge, TuiIcon, TuiTitle],
+  imports: [DecimalPipe, TuiBadge, TuiButton, TuiButtonLoading, TuiIcon, TuiTitle],
   templateUrl: './beatmap-header.component.html',
   styleUrl: './beatmap-header.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,
