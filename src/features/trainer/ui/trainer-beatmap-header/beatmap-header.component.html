@@ -31,6 +31,20 @@
       >
         ★ {{ reader.stars() | number:'1.2-2' }}
       </span>
+      @if (reader.data()?.paths) {
+        <button
+          appearance="floating"
+          iconStart="@tui.download"
+          size="s"
+          tuiIconButton
+          type="button"
+          title="Export as .osz"
+          [loading]="reader.exporting()"
+          (click)="reader.exportOsz()"
+        >
+          Export as .osz
+        </button>
+      }
     </div>
   </div>
 </div>

@@ -1,3 +1,5 @@
+pub mod export;
+
 use std::{path::PathBuf, sync::atomic::Ordering, thread, time::Duration};
 
 use osu_memory_reader::{Beatmap, BeatmapAttributes, BeatmapPaths, Error, OsuReader};

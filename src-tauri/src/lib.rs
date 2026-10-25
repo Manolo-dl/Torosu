@@ -133,6 +133,7 @@ pub fn run() {
             commands::dev::database::get_table_columns,
             commands::dev::database::execute_query,
             commands::osu_reader::connect_osu_reader,
+            commands::osu_reader::export::export_selected_osz,
             commands::trainer::run::run_trainer,
             commands::trainer::video::is_ffmpeg_available
         ])
