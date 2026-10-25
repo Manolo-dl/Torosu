@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "torosu",
+        "title": "Torosu",
         "width": 800,
         "height": 600,
         "dragDropEnabled": true,
