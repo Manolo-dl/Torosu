@@ -1,20 +1,35 @@
-<nav aria-label="Main navigation">
-    <ul role="list">
-
-        @for (item of (navStore.isUserMode() ? userItems : devItems); track item.route) {
+<nav>
+    <ul>
+        @for (item of (navStore.isUserMode() ? userItems() : devItems); track item.route) {
             <li>
                 <a
                 [routerLink]="item.route"
                 routerLinkActive="active"
                 [routerLinkActiveOptions]="{ exact: item.route === '/' }"
                 [class.disabled]="item.disabled"
-                [attr.aria-disabled]="item.disabled ?? false"
-                [attr.aria-label]="item.label"
                 >
-                    <ng-icon [name]="item.icon" size="18" aria-hidden="true" />
-                    <span class="label">{{ item.label }}</span>
+                    <fa-icon [icon]=item.icon />
+                    <span>{{ item.label }}</span>
                 </a>
             </li>
         }
     </ul>
+
+    @if (showAppItems) {
+        <ul>
+            @for (item of appItems; track item.route) {
+                <li>
+                    <a
+                    [routerLink]="item.route"
+                    routerLinkActive="active"
+                    [routerLinkActiveOptions]="{ exact: item.route === '/' }"
+                    [class.disabled]="item.disabled"
+                    >
+                        <fa-icon [icon]=item.icon />
+                        <span>{{ item.label }}</span>
+                    </a>
+                </li>
+            }
+        </ul>
+    }
 </nav>

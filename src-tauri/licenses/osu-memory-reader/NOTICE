@@ -1,0 +1,36 @@
+osu-memory-reader
+Copyright (C) 2026 Manolo-dl
+
+This project is a modified version of parts of tosu
+(https://github.com/tosuapp/tosu), version 4.26.3
+(commit 1d811dd90af00c7f0d8551a0735d9ce779a6e773).
+
+tosu is Copyright (C) 2023-2026 Mikhail Babynichev and contributors,
+licensed under the GNU Lesser General Public License version 3.
+
+Modifications (October 2026):
+- Ported the osu! stable memory reader from TypeScript and C++ to Rust.
+- Kept only the selected beatmap, the songs folder and the beatmap file paths;
+  removed the HTTP/WebSocket server, overlays, PP calculation, osu!lazer
+  support and all other game state readers.
+- Exposed the result as a Rust library crate with its own public API.
+- Added translation of Windows paths through Wine drive mappings on Linux.
+
+Origin of each file:
+  src/stable.rs           packages/tosu/src/memory/stable.ts
+  src/paths.rs            packages/tosu/src/instances/osuInstance.ts,
+                          packages/tosu/src/states/beatmap.ts
+  src/beatmap.rs          packages/common/enums/osu.ts
+  src/pattern.rs          packages/tsprocess/lib/memory/memory.h,
+                          packages/tsprocess/src/process.ts
+  src/process/mod.rs      packages/tsprocess/lib/memory/memory.h,
+                          packages/tsprocess/lib/functions.cc,
+                          packages/tsprocess/src/process.ts
+  src/process/linux.rs    packages/tsprocess/lib/memory/memory_linux.cc,
+                          packages/tsprocess/src/process.ts
+  src/process/windows.rs  packages/tsprocess/lib/memory/memory_windows.cc
+  src/lib.rs, src/error.rs, src/difficulty.rs, examples/watch.rs:
+                          new in this project.
+
+This project is licensed under the GNU Lesser General Public License version 3
+(LGPL-3.0-only). See COPYING.LESSER and COPYING.

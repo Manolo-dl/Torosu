@@ -2,26 +2,18 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Capability for the main window",
-  "windows": [
-    "main"
-  ],
+  "windows": ["main"],
   "permissions": [
     "core:default",
-    "opener:default",
-    "shell:allow-open",
-    "dialog:allow-open",
-    "store:allow-get",
-    "store:allow-set",
-    "store:allow-delete",
-    "log:allow-log",
+    "core:window:allow-minimize",
+    "core:window:allow-toggle-maximize",
+    "core:window:allow-close",
     "core:window:allow-start-dragging",
-    "core:app:allow-version",
-    "os:default",
-    "fs:default",
-    "fs:allow-read-file",
-    "fs:allow-home-read-recursive",
-    "notification:default",
-    "updater:default",
-    "log:default"
+    "opener:default",
+    "dialog:allow-open",
+    "dialog:allow-save",
+    "os:allow-platform",
+    "fs:allow-read-text-file",
+    "notification:allow-is-permission-granted"
   ]
 }

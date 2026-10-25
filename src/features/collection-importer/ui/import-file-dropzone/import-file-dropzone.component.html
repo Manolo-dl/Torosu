@@ -1,15 +1,30 @@
-<div
-  appTxtFileDrop
-  (fileContent)="onFileContent($event)"
-  #dropzone="appTxtFileDrop"
-  class="dropzone"
-  [class.drag-over]="dropzone.isDragOver()"
->
-  <span class="dropzone-icon">↓</span>
-  <span class="dropzone-label">Drop a <code>.txt</code> file with collections here</span>
-  <span class="dropzone-or">or</span>
-  <label class="dropzone-browse">
-    Browse file
-    <input type="file" accept=".txt" (change)="onFileSelect($event)" hidden />
+<div appearance="floating" tuiCardLarge="compact">
+  <h3 tuiTitle>
+    File
+    <span tuiSubtitle>One collection per block, with beatmap hashes or links.</span>
+  </h3>
+  <label
+    appTxtFileDrop
+    #dropzone="appTxtFileDrop"
+    tuiInputFiles
+    [class.drag-over]="dropzone.isDragOver()"
+    (fileContent)="onFileContent($event)"
+  >
+    <input
+      accept=".txt"
+      tuiInputFiles
+      [ngModel]="null"
+      (ngModelChange)="onFileSelect($event)"
+    />
+    <ng-template let-dragged>
+      <div class="content">
+        <tui-icon icon="@tui.file-text" />
+        @if (dragged || dropzone.isDragOver()) {
+          <span>Drop the <code>.txt</code> file here</span>
+        } @else {
+          <span>Drop a <code>.txt</code> file here or <a tuiLink>browse</a></span>
+        }
+      </div>
+    </ng-template>
   </label>
 </div>

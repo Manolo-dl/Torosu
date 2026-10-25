@@ -15,6 +15,7 @@ export const NavStore = signalStore(
 
     withComputed((store) => ({
         isUserMode: computed(() => store.mode() === 'user'),
+        isDevMode: computed(() => store.mode() === 'dev' ? 'Dev Mode' : 'User Mode'),
     })),
 
     withMethods((store) => ({
@@ -22,6 +23,9 @@ export const NavStore = signalStore(
             const currentMode = store.mode();
             const newMode = currentMode === 'user' ? 'dev' : 'user';
             patchState(store, { mode: newMode });
-        }
+        },
+
+        /** Back to the tools, e.g. when developer mode is turned off. */
+        userMode: () => patchState(store, { mode: 'user' }),
     })),
 )

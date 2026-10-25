@@ -1,30 +1,30 @@
-import { Component, inject, OnDestroy, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { ImportCollectionParserService } from '@features/collection-importer/import-collection-parser.service';
 import { ImportCollectionStore } from '@features/collection-importer/import-collections.store';
 import { TxtFileDropDirective } from '@shared/directives';
-import { getCurrentWindow } from '@tauri-apps/api/window';
-import { readTextFile } from '@tauri-apps/plugin-fs';
+import { TuiIcon, TuiLink, TuiTitle } from '@taiga-ui/core';
+import { TuiFiles } from '@taiga-ui/kit';
+import { TuiCardLarge } from '@taiga-ui/layout';
 
 @Component({
   selector: 'app-import-file-dropzone',
-  imports: [TxtFileDropDirective],
+  imports: [FormsModule, TxtFileDropDirective, TuiCardLarge, TuiFiles, TuiIcon, TuiLink, TuiTitle],
   templateUrl: './import-file-dropzone.component.html',
-  styleUrl: './import-file-dropzone.component.css',
+  styleUrl: './import-file-dropzone.component.less',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ImportFileDropzoneComponent {
   private store = inject(ImportCollectionStore);
   private parser = inject(ImportCollectionParserService);
-  
+
   onFileContent(content: string) {
     const parsed = this.parser.parse(content);
     this.store.setParsed(parsed);
   }
 
-  onFileSelect(event: Event) {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
+  onFileSelect(file: File | null) {
     if (file) this.readFile(file);
-    input.value = '';
   }
 
   private readFile(file: File) {

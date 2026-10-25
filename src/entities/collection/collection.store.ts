@@ -3,7 +3,8 @@ import { OsuCollection } from "./collection.model";
 import { computed, inject } from "@angular/core";
 import { OsuDbStore } from "@entities/osu-db";
 import { OsuBeatmapSet } from "@entities/osu-db/osu-db.model";
-import { OsuPathStore, ToastStore } from "@shared/stores"; 
+import { OsuPathStore } from "@shared/stores"; 
+import { TuiNotificationService } from '@taiga-ui/core';
 import { invoke } from "@tauri-apps/api/core";
 
 
@@ -26,30 +27,19 @@ export const CollectionStore = signalStore(
     withState(initialState),
 
     withComputed((store, osuDb = inject(OsuDbStore)) => {
-
         const collectionsWithBeatmaps = computed(() => {
-            const setsByMd5 = osuDb.beatmapSetsByMd5();
-            const exportableIds = osuDb.exportableBeatmapSetIdByMd5();
-
+            // Exported as links, so only what is on the website, with the diffs of the collection.
+            const setsByMd5 = osuDb.submittedSetsByMd5();
             return store.collections().map(col => {
-                const md5sInCollection = new Set(col.md5s);
+                const md5s = new Set(col.md5s);
                 const seenFolders = new Set<string>();
                 const sets: OsuBeatmapSet[] = [];
-
-                for (const md5 of col.md5s) {
-                    if (!exportableIds.has(md5)) continue; // filtra md5 no exportables sin repetir la lógica de status
-
+                for (const md5 of md5s) {
                     const set = setsByMd5.get(md5);
-                    if (!set) continue;
-                    if (seenFolders.has(set.folderName)) continue;
-
-                    const diffs = set.diffs.filter(d => md5sInCollection.has(d.md5) && exportableIds.has(d.md5));
-                    if (diffs.length === 0) continue;
-
+                    if (!set || seenFolders.has(set.folderName)) continue;
                     seenFolders.add(set.folderName);
-                    sets.push({ ...set, diffs });
+                    sets.push({ ...set, diffs: set.diffs.filter(d => md5s.has(d.md5)) });
                 }
-
                 return { name: col.name, sets };
             });
         });
@@ -81,12 +71,12 @@ export const CollectionStore = signalStore(
         };
     }),
 
-    withMethods((store, osuPath = inject(OsuPathStore), toast = inject(ToastStore)) => ({
+    withMethods((store, osuPath = inject(OsuPathStore), alerts = inject(TuiNotificationService)) => ({
 
         async load() {
             const path = osuPath.path();
             if (!path) {
-                toast.show('error', 'Osu! path not set');
+                alerts.open('Osu! path not set', { appearance: 'negative' }).subscribe();
                 throw new Error("Osu! path not set");
             }
 
@@ -94,11 +84,11 @@ export const CollectionStore = signalStore(
 
             try {
                 const collections = await invoke<OsuCollection[]>("read_osu_collections");
-                toast.show('success', `Loaded ${collections.length} collections`);
+                alerts.open(`Loaded ${collections.length} collections`, { appearance: 'positive' }).subscribe();
                 patchState(store, { collections, isLoaded: true, isLoading: false });
             } catch (error) {
                 patchState(store, { isLoading: false });
-                toast.show('error', `Failed to load collections`);
+                alerts.open(`Failed to load collections`, { appearance: 'negative' }).subscribe();
                 throw error;
             }
         },

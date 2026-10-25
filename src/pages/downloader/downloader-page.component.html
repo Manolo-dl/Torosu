@@ -1,35 +1,77 @@
-<div class="downloader-page">
-
-  <header class="page-header">
-    <h1 class="page-title">Downloader</h1>
+<div class="page-container">
+  <header>
+    <h1 tuiTitle="l">Downloader</h1>
     <p class="page-desc">Download beatmap sets directly to your Songs folder.</p>
   </header>
 
-  <section class="section">
-    <h2 class="section-title">Session</h2>
+  <section>
+    <tui-accordion>
+      @for (item of downloaderInfo; track $index) {
+        <button
+          type="button"
+          [tuiAccordion]="false"
+        >
+        {{ item.title }}
+        </button>
+        <tui-expand>
+          <div class="step-container">
+            @for (step of item.steps; track $index) {
+              <div class="step">
+                <span><strong>{{ $index + 1 }}.</strong> {{ step.desc }}</span>
+                @if (step.image) {
+                  <img [src]="step.image" alt="Step {{ $index + 1 }}" />
+                }
+              </div>
+            }
+          </div>
+        </tui-expand>
+      }
+    </tui-accordion>
+  </section>
+
+  <section>
+    <h2 tuiTitle="m">Osu Session</h2>
     <app-osu-cookie-input />
   </section>
 
   @if (!osuDb.isLoaded()) {
-    <div class="notice">
-      <div class="notice-body">
-        <strong>Library not loaded</strong>
-        <span>Load your osu! library to automatically skip maps you already own.</span>
+    <div
+      size="l"
+      tuiNotification
+    >
+      <div
+        tuiTitle="m"
+        [style.padding-inline-end.rem]="2"
+      >
+        Library not loaded
+        <div tuiSubtitle>Load your osu! library to automatically skip maps you already own.</div>
+        <div>
+          <button
+          type="button"
+            appearance="primary"
+            size="m"
+            tuiButton
+            [disabled]="osuDb.isLoading()"
+            (click)="loadLibrary()"
+          >
+            {{ osuDb.isLoading() ? 'Loading…' : 'Load library' }}
+          </button>
+        </div>
       </div>
-      <button class="btn-load" [disabled]="osuDb.isLoading()" (click)="loadLibrary()">
-        {{ osuDb.isLoading() ? 'Loading…' : 'Load library' }}
-      </button>
     </div>
   }
 
-  <section class="section">
-    <h2 class="section-title">Import</h2>
-    <app-beatmap-import />
-  </section>
+  <!-- Nothing can be downloaded without the cookie. -->
+  @if (userStore.user()?.osuSession) {
+    <section>
+      <h2 tuiTitle="m">Import</h2>
+      <app-beatmap-import />
+    </section>
 
-  <section class="section">
-    <h2 class="section-title">Download Queue</h2>
-    <app-beatmap-queue />
-  </section>
+    <section>
+      <h2 tuiTitle="m">Download Queue</h2>
+      <app-beatmap-queue />
+    </section>
+  }
 
 </div>

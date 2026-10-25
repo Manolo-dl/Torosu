@@ -1,12 +1,15 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { ImportCollectionStore } from '@features/collection-importer';
+import { ImportCollectionStore } from '@features/collection-importer/import-collections.store';
 import { BeatmapSetCardComponent } from '@shared/ui';
+import { TuiExpand, TuiScrollbar, TuiTitle } from '@taiga-ui/core';
+import { TuiAccordion, TuiBadge } from '@taiga-ui/kit';
+import { TuiCardLarge } from '@taiga-ui/layout';
 
 @Component({
   selector: 'app-import-preview',
-  imports: [BeatmapSetCardComponent],
+  imports: [BeatmapSetCardComponent, TuiAccordion, TuiBadge, TuiCardLarge, TuiExpand, TuiScrollbar, TuiTitle],
   templateUrl: './import-preview.component.html',
-  styleUrl: './import-preview.component.css',
+  styleUrl: './import-preview.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ImportPreviewComponent {

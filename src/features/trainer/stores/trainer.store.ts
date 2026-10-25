@@ -1,8 +1,7 @@
 import { effect, inject, untracked } from "@angular/core";
-import { TosuStore } from "@entities/tosu";
+import { OsuReaderStore } from "@entities/osu-reader";
 import { patchState, signalStore, withHooks, withMethods, withState } from "@ngrx/signals";
-import { DifficultyKey, DifficultyStat, MirrorParams, RateChangeParams, TrainerTask, TrainerTaskParams } from "../models/trainer.model";
-import { OsuPathStore } from "@shared/stores";
+import { DifficultyKey, DifficultyStat, FlnConverterParams, KeyConverterParams, RateChangeParams, TrainerTask, TrainerTaskParams, taskSupportsMode } from "../models/trainer.model";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 
@@ -14,6 +13,8 @@ interface TrainerState {
     tasks: TrainerTask[];
     creating: boolean;
     progress: number;
+    /** Whether the system ffmpeg is there, needed to scale the video. */
+    ffmpegAvailable: boolean;
 }
 
 const initialState: TrainerState = {
@@ -24,13 +25,14 @@ const initialState: TrainerState = {
     tasks: [],
     creating: false,
     progress: 0,
+    ffmpegAvailable: false,
 };
 
 export const TrainerStore = signalStore(
     { providedIn: 'root' },
     withState(initialState),
 
-    withMethods((store, tosu = inject(TosuStore), osuPath = inject(OsuPathStore)) => ({
+    withMethods((store, reader = inject(OsuReaderStore)) => ({
 
         setValue(stat: DifficultyKey, value: number) {
             patchState(store, {
@@ -53,7 +55,7 @@ export const TrainerStore = signalStore(
             patchState(store, { tasks: store.tasks().filter(task => task.id !== id) });
         },
 
-        updateTaskParams(id: string, params: RateChangeParams | MirrorParams | {}) {
+        updateTaskParams(id: string, params: RateChangeParams | FlnConverterParams | KeyConverterParams | {}) {
             patchState(store, {
                 tasks: store.tasks().map(t =>
                     t.id === id ? { ...t, task: { ...t.task, params } as TrainerTaskParams } : t
@@ -69,29 +71,26 @@ export const TrainerStore = signalStore(
         },
 
         reset() {
-            const data = tosu.data();
-            const stats = data?.beatmap.stats;
+            const beatmap = reader.data()?.beatmap;
 
             patchState(store, {
-                hp: { value : stats?.hp.original ?? 5, locked: false },
-                cs: { value : stats?.cs.original ?? 5, locked: false },
-                od: { value : stats?.od.original ?? 5, locked: false },
-                ar: { value : stats?.ar.original ?? 5, locked: false },
+                hp: { value : beatmap?.hp ?? 5, locked: false },
+                cs: { value : beatmap?.cs ?? 5, locked: false },
+                od: { value : beatmap?.od ?? 5, locked: false },
+                ar: { value : beatmap?.ar ?? 5, locked: false },
                 tasks: [],
             });
         },
 
         async createMap() {
-            const data = tosu.data();
-            if (!data) return;
+            const osuFilePath = reader.data()?.paths?.osu;
+            if (!osuFilePath) return;
 
             patchState(store, { creating: true, progress: 0 });
 
             const unlisten = await listen<{ percent: number }>('trainer-progress', event => {
                 patchState(store, { progress: event.payload.percent });
             });
-
-            const osuFilePath = `${osuPath.path()}/Songs/${data.directPath.beatmapFile}`;
 
             invoke('run_trainer', {
                 request: {
@@ -115,32 +114,43 @@ export const TrainerStore = signalStore(
 
     withHooks({
         onInit(store) {
-            const tosu = inject(TosuStore);
+            const reader = inject(OsuReaderStore);
+
+            invoke<boolean>('is_ffmpeg_available')
+                .then(ffmpegAvailable => patchState(store, { ffmpegAvailable }))
+                .catch(() => patchState(store, { ffmpegAvailable: false }));
+
             let lastBeatmapId: string | null = null;
 
             effect(() => {
-                const data = tosu.data();
+                const data = reader.data();
                 if (!data) return;
 
-                const currentBeatmapId = data.directPath.beatmapFile;
+                const currentBeatmapId = data.beatmap.checksum;
 
                 if (currentBeatmapId === lastBeatmapId) return;
                 lastBeatmapId = currentBeatmapId;
 
-                const stats = data.beatmap.stats;
+                const beatmap = data.beatmap;
+                const mode = data.attributes?.originalMode ?? null;
 
                 untracked(() => {
                     (['hp', 'cs', 'ar', 'od'] as const).forEach((stat) => {
 
                         const current = store[stat]();
-                        const newValue = stats[stat].original;
+                        const newValue = beatmap[stat];
 
                         if (!current.locked && current.value !== newValue) {
                             patchState(store, {
-                                [stat]: { ...current, value: stats[stat].original }
+                                [stat]: { ...current, value: newValue }
                             });
                         }
                     });
+
+                    // Tasks for another mode (e.g. the key converter after picking an
+                    // osu!standard map) can't run on this map.
+                    const tasks = store.tasks().filter(t => taskSupportsMode(t.task.type, mode));
+                    if (tasks.length !== store.tasks().length) patchState(store, { tasks });
                 });
             });
         },

@@ -1,7 +1,6 @@
-import { effect } from "@angular/core";
 import { User } from "./user.model";
 import { patchState, signalStore, withHooks, withMethods, withState } from "@ngrx/signals";
-import { Store } from '@tauri-apps/plugin-store';
+import { invoke } from '@tauri-apps/api/core';
 
 interface UserState {
     user: User | null;
@@ -18,36 +17,26 @@ export const UserStore = signalStore(
     withMethods((store) => ({
         updateUser(partial: Partial<User>) {
             const current = store.user();
-            patchState(store, { user: current ? { ...current, ...partial } : partial as User });
+            const updated = current ? { ...current, ...partial } : partial as User;
+            patchState(store, { user: updated });
+            if ('osuSession' in partial) {
+                invoke('set_osu_session', { session: partial.osuSession ?? null }).catch(() => {});
+            }
         },
 
         clearSession() {
             patchState(store, { user: null });
+            invoke('set_osu_session', { session: null }).catch(() => {});
         },
     })),
 
     withHooks({
         onInit(store) {
-            (async () => {
-                try {
-                    const tauriStore = await Store.load('auth.json');
-                    const user = await tauriStore.get<User>('user');
-                    if (user) patchState(store, { user });
-                } catch {}
-            })();
-
-            effect(async () => {
-                const user = store.user();
-                try {
-                    const tauriStore = await Store.load('auth.json');
-                    if (user) {
-                        await tauriStore.set('user', user);
-                    } else {
-                        await tauriStore.delete('user');
-                    }
-                    await tauriStore.save();
-                } catch {}
-            });
+            invoke<string | null>('get_osu_session')
+                .then(session => {
+                    if (session) patchState(store, { user: { osuSession: session } });
+                })
+                .catch(() => {});
         }
     })
 );

@@ -1,0 +1,35 @@
+@if (isObject(value())) {
+  <div class="tree">
+    @for (entry of entries(value()); track entry[0]) {
+      <div class="row">
+        <span class="key">{{ entry[0] }}</span>
+        @if (isObject(entry[1]) || isArray(entry[1])) {
+          <span class="type">{{ typeLabel(entry[1]) }}</span>
+          <div class="children">
+            <app-osu-field-tree [value]="entry[1]" />
+          </div>
+        } @else {
+          <span class="value" [attr.data-type]="valueType(entry[1])">{{ formatValue(entry[1]) }}</span>
+        }
+      </div>
+    }
+  </div>
+} @else if (isArray(value())) {
+  <div class="tree">
+    @for (item of asArray(value()); track $index) {
+      <div class="row">
+        <span class="key index">[{{ $index }}]</span>
+        @if (isObject(item) || isArray(item)) {
+          <span class="type">{{ typeLabel(item) }}</span>
+          <div class="children">
+            <app-osu-field-tree [value]="item" />
+          </div>
+        } @else {
+          <span class="value" [attr.data-type]="valueType(item)">{{ formatValue(item) }}</span>
+        }
+      </div>
+    }
+  </div>
+} @else {
+  <span class="value" [attr.data-type]="valueType(value())">{{ formatValue(value()) }}</span>
+}

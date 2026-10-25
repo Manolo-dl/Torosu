@@ -1,30 +1,24 @@
 use std::collections::HashSet;
 
-use crate::OsuState;
+use osynic_osudb::entity::collection::{collection::Collection, collectiondb::CollectionDB};
 
-#[derive(serde::Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct ImportCollection {
-    pub name: String,
-    pub md5s: Vec<String>,
-}
+use crate::{AppConfigState, commands::collections::model::ImportCollection};
 
 #[tauri::command]
 pub async fn import_collections(
-    osu_state: tauri::State<'_, OsuState>,
+    config_state: tauri::State<'_, AppConfigState>,
     collections: Vec<ImportCollection>
 ) -> Result<(), String> {
 
-    let osu_path = {
-        let path = osu_state.path.lock().unwrap();
-        path.as_ref().ok_or("osu! path not set")?.clone()
-    };
+    let osu_path = config_state.config.lock().unwrap()
+        .osu_path.clone()
+        .ok_or("osu! path not set")?;
 
     let collection_path = std::path::Path::new(&osu_path).join("collection.db");
 
     log::debug!("reading collection.db for import at {:?}", collection_path);
 
-    let mut collection_list = osu_db::CollectionList::from_file(&collection_path)
+    let mut collection_list = CollectionDB::from_file(&collection_path)
         .map_err(|e| {
             log::error!("Failed to parse collection.db: {:?}", e);
             format!("Failed to parse collection.db: {:?}", e)
@@ -53,7 +47,7 @@ pub async fn import_collections(
             }
             None => {
                 let count = import.md5s.len();
-                collection_list.collections.push(osu_db::collection::Collection {
+                collection_list.collections.push(Collection {
                     name: Some(import.name.clone()),
                     beatmap_hashes: import.md5s.into_iter().map(Some).collect(),
                 });

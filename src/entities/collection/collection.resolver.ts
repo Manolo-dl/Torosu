@@ -1,15 +1,15 @@
 import { inject } from '@angular/core';
 import type { ResolveFn } from '@angular/router';
 import { CollectionStore } from './collection.store';
-import { ToastStore } from '@shared/stores';
+import { TuiNotificationService } from '@taiga-ui/core';
 
 export const collectionResolver: ResolveFn<void> = async () => {
 
   const store = inject(CollectionStore);
-  const toast = inject(ToastStore);
+  const alerts = inject(TuiNotificationService);
 
   if (!store.isLoaded()) {
-    toast.show('info', 'Loading collections, please wait...');
+    alerts.open('Loading collections, please wait...', { appearance: 'info' }).subscribe();
     await store.load();
   }
 };

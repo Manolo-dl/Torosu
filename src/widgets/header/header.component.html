@@ -1,17 +1,94 @@
 <header>
-  <div class="header-left">
-    <span class="app-name">osu-tools</span>
+  <!-- Left -->
+  <div>
+    <h1>Torosu</h1>
   </div>
-  <div class="header-right">
-    <button class="btn-theme" (click)="themeService.toggle()" [title]="themeLabel">
-      <ng-icon [name]="themeIcon" size="18" />
+
+  <!-- Right -->
+  <div class="actions">
+    @if (update.available(); as available) {
+      <button
+        size="m"
+        appearance="flat"
+        tuiButton
+        type="button"
+        class="update"
+        [attr.aria-label]="'Update to ' + available.version"
+        [tuiDropdown]="updatePanel"
+        [(tuiDropdownOpen)]="updateOpen"
+      >
+        <fa-icon [icon]="faCircleArrowUp" />
+      </button>
+
+      <ng-template #updatePanel>
+        <div class="update-panel">
+          <div tuiTitle>
+            <span>
+              Torosu {{ available.version }}
+              <span appearance="info" size="s" tuiBadge>New</span>
+            </span>
+            <span tuiSubtitle>You have {{ available.currentVersion }}. Torosu restarts once it is installed.</span>
+          </div>
+
+          @if (available.notes) {
+            <p class="notes">{{ available.notes }}</p>
+          }
+
+          @if (update.installing()) {
+            <progress
+              size="s"
+              tuiProgressBar
+              [max]="100"
+              [value]="update.percent() ?? 0"
+            ></progress>
+          }
+
+          @if (update.failed()) {
+            <p class="notes">
+              Torosu could not install it itself, as with the Arch Linux package. Download it from the releases page
+              and install it as you did the first time.
+            </p>
+            <button iconStart="@tui.external-link" size="m" tuiButton type="button" (click)="update.openReleases()">
+              Open the releases page
+            </button>
+          } @else {
+            <button
+              iconStart="@tui.download"
+              size="m"
+              tuiButton
+              type="button"
+              [loading]="update.installing()"
+              (click)="update.install()"
+            >
+              Update and restart
+            </button>
+          }
+        </div>
+      </ng-template>
+    }
+
+    <button
+      size="m"
+      appearance="flat"
+      tuiButton
+      type="button"
+      (click)="darkMode.update(dark => !dark)"
+    >
+      <fa-icon [icon]="icon()" />
     </button>
-    <button class="btn-ghost" (click)="navStore.toggleMode()">
-      @if (navStore.isUserMode()) {
-        Dev Mode
-      } @else {
-        User Mode
-      }
-    </button>
+
+    @if (devMode()) {
+      <button
+        size="m"
+        appearance="flat"
+        tuiButton
+        type="button"
+        (click)="navStore.toggleMode()"
+      >
+        {{ navStore.isDevMode() }}
+      </button>
+    }
+
+    <app-config-drawer />
   </div>
 </header>

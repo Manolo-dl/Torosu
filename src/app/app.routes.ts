@@ -4,7 +4,8 @@ import { osuDbResolver } from "@entities/osu-db";
 import { logResolver } from "@entities/log";
 import { osuPathGuard } from "@shared/guards";
 import { databaseResolver } from "@entities/database";
-import { tosuResolver } from "@entities/tosu";
+import { osuReaderResolver } from "@entities/osu-reader";
+import { devModeGuard, toolEnabledGuard } from "@entities/configuration";
 
 export const routes: Routes = [
     {
@@ -14,6 +15,7 @@ export const routes: Routes = [
     {
         path: 'user',
         canActivate: [osuPathGuard],
+        canActivateChild: [toolEnabledGuard],
         children: [
             {
                 path: 'downloader',
@@ -42,12 +44,13 @@ export const routes: Routes = [
             {
                 path: 'trainer',
                 loadComponent: () => import('@pages/trainer').then(m => m.TrainerPageComponent),
-                resolve: { tosu: tosuResolver }
+                resolve: { osuReader: osuReaderResolver }
             }
         ]
     },
     {
         path: 'dev',
+        canActivate: [devModeGuard],
         children: [
             {
                 path: 'logs',
@@ -60,9 +63,9 @@ export const routes: Routes = [
                 resolve: { tables: databaseResolver }
             },
             {
-                path: 'tosu-data',
-                loadComponent: () => import('@pages/tosu-data').then(m => m.TosuDataPage),
-                resolve: { tosu: tosuResolver }
+                path: 'osu-data',
+                loadComponent: () => import('@pages/osu-data').then(m => m.OsuDataPage),
+                resolve: { osuReader: osuReaderResolver }
             }
         ]
     },

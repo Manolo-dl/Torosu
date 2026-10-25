@@ -1,39 +1,8 @@
 use std::collections::HashMap;
-use sqlx::{FromRow, SqlitePool};
-use super::reader::{OsuBeatmapSet, OsuDiff};
 
-#[derive(FromRow)]
-pub struct OsuDbMeta {
-    pub last_modified: i64,
-    pub file_size: i64,
-}
+use sqlx::SqlitePool;
 
-#[derive(FromRow)]
-struct BeatmapSetRow {
-    pub folder_name: String,
-    pub beatmapset_id: i64,
-    pub title: String,
-    pub artist: String,
-}
-
-#[derive(FromRow)]
-struct DiffRow {
-    pub folder_name: String,
-    pub md5: String,
-    pub diff_name: String,
-    pub mode: i64,
-    pub length: i64,
-    pub stars: f64,
-    pub last_played: i64,
-    pub circle_size: f64,
-    pub approach_rate: f64,
-    pub hp_drain: f64,
-    pub overall_difficulty: f64,
-    pub file_name: String,
-    pub audio: String,
-    pub creator: String,
-    pub status: String,
-}
+use crate::commands::osu_db::model::{BeatmapSetRow, DiffRow, OsuBeatmapSet, OsuDbMeta, OsuDiff};
 
 pub async fn get_meta(pool: &SqlitePool) -> Option<OsuDbMeta> {
     sqlx::query_as::<_, OsuDbMeta>(
@@ -95,11 +64,11 @@ pub async fn get_beatmapsets(pool: &SqlitePool) -> Result<Vec<OsuBeatmapSet>, sq
     }
 
     let result = sets.into_iter().map(|set| OsuBeatmapSet {
-        folder_name: set.folder_name.clone(),
+        diffs: diffs_by_folder.remove(&set.folder_name).unwrap_or_default(),
+        folder_name: set.folder_name,
         beatmapset_id: set.beatmapset_id as u32,
         title: set.title,
         artist: set.artist,
-        diffs: diffs_by_folder.remove(&set.folder_name).unwrap_or_default(),
     }).collect();
 
     Ok(result)
@@ -108,44 +77,12 @@ pub async fn get_beatmapsets(pool: &SqlitePool) -> Result<Vec<OsuBeatmapSet>, sq
 pub async fn save_beatmapsets(pool: &SqlitePool, sets: &[OsuBeatmapSet]) -> Result<(), sqlx::Error> {
     let mut tx = pool.begin().await?;
 
-    let existing_folders: Vec<String> = sqlx::query_as::<_, (String,)>(
-        "SELECT folder_name FROM beatmapsets"
-    )
-    .fetch_all(&mut *tx)
-    .await?
-    .into_iter()
-    .map(|(f,)| f)
-    .collect();
-
-    let existing_set: std::collections::HashSet<String> = existing_folders.into_iter().collect();
-
-    let new_folders: std::collections::HashSet<String> = sets.iter()
-        .map(|s| s.folder_name.clone())
-        .collect();
-
-    for folder in existing_set.difference(&new_folders) {
-        sqlx::query("DELETE FROM diffs WHERE folder_name = $1")
-            .bind(folder)
-            .execute(&mut *tx)
-            .await?;
-
-        sqlx::query("DELETE FROM beatmapset_folders WHERE folder_name = $1")
-            .bind(folder)
-            .execute(&mut *tx)
-            .await?;
-
-        sqlx::query("DELETE FROM beatmapsets WHERE folder_name = $1")
-            .bind(folder)
-            .execute(&mut *tx)
-            .await?;
-    }
+    // Sets are replaced as a whole: a folder that changed (a new rate, a
+    // diff that got ranked) must not keep its old diffs.
+    sqlx::query("DELETE FROM diffs").execute(&mut *tx).await?;
+    sqlx::query("DELETE FROM beatmapsets").execute(&mut *tx).await?;
 
     for set in sets {
-
-        if existing_set.contains(&set.folder_name) {
-            continue;
-        }
-
         sqlx::query(
             "INSERT INTO beatmapsets (folder_name, beatmapset_id, title, artist)
              VALUES ($1, $2, $3, $4)"
@@ -159,7 +96,8 @@ pub async fn save_beatmapsets(pool: &SqlitePool, sets: &[OsuBeatmapSet]) -> Resu
 
         for diff in &set.diffs {
             sqlx::query(
-                "INSERT INTO diffs (md5, folder_name, diff_name, mode, length, stars,
+                // osu!.db can list the same .osu file twice; keep the first one.
+                "INSERT OR IGNORE INTO diffs (md5, folder_name, diff_name, mode, length, stars,
                  last_played, circle_size, approach_rate, hp_drain, overall_difficulty, file_name, audio, creator, status)
                  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)"
             )
@@ -189,6 +127,7 @@ pub async fn save_beatmapsets(pool: &SqlitePool, sets: &[OsuBeatmapSet]) -> Resu
 
 pub async fn init_schema(pool: &SqlitePool) -> Result<(), sqlx::Error> {
 
+    // 6 matches main (0.6.1), which already moved to this schema.
     const CURRENT_VERSION: i64 = 6;
 
     sqlx::query(
@@ -240,6 +179,7 @@ pub async fn init_schema(pool: &SqlitePool) -> Result<(), sqlx::Error> {
     .execute(pool)
     .await?;
 
+    // Not unique: unsubmitted sets all have id 0.
     sqlx::query(
         "CREATE INDEX IF NOT EXISTS idx_beatmapsets_beatmapset_id ON beatmapsets(beatmapset_id)"
     )
@@ -274,16 +214,6 @@ pub async fn init_schema(pool: &SqlitePool) -> Result<(), sqlx::Error> {
         "INSERT INTO schema_version (id, version) VALUES (1, $1)
             ON CONFLICT(id) DO UPDATE SET version = $1"
     ).bind(CURRENT_VERSION)
-    .execute(pool)
-    .await?;
-
-    sqlx::query(
-        "CREATE TABLE IF NOT EXISTS beatmapset_folders (
-            folder_name TEXT PRIMARY KEY,
-            folder_path TEXT NOT NULL,
-            FOREIGN KEY (folder_name) REFERENCES beatmapsets(folder_name)
-        )"
-    )
     .execute(pool)
     .await?;
 

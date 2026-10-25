@@ -1,13 +1,13 @@
-<div class="summary">
-  <span class="section-title">Summary</span>
+<div appearance="floating" tuiCardLarge="compact">
+  <h3 tuiTitle>Summary</h3>
   <div class="metrics">
-    <div class="metric">
-      <span class="metric-label">Selected</span>
-      <span class="metric-value">{{ store.selectedCount() }}</span>
+    <div tuiTitle>
+      <span tuiSubtitle>Selected</span>
+      <strong>{{ store.selectedCount() }}</strong>
     </div>
-    <div class="metric">
-      <span class="metric-label">Total beatmapsets</span>
-      <span class="metric-value">{{ store.totalSelectedSets() }}</span>
+    <div tuiTitle>
+      <span tuiSubtitle>Total beatmapsets</span>
+      <strong>{{ store.totalSelectedSets() }}</strong>
     </div>
   </div>
 </div>

@@ -1,7 +1,7 @@
 import { patchState, signalStore, withComputed, withHooks, withMethods, withState } from "@ngrx/signals";
 import { DatabaseColumn, DatabaseTable } from "./database.model";
 import { computed, effect, inject } from "@angular/core";
-import { ToastStore } from "@shared/stores";
+import { TuiNotificationService } from '@taiga-ui/core';
 import { invoke } from "@tauri-apps/api/core";
 
 interface DatabaseState {
@@ -68,7 +68,7 @@ export const DatabaseStore = signalStore(
         })
     })),
 
-    withMethods((store, toast = inject(ToastStore)) => ({
+    withMethods((store, alerts = inject(TuiNotificationService)) => ({
         async load() {
             if (store.isLoaded()) return;
 
@@ -82,10 +82,10 @@ export const DatabaseStore = signalStore(
                     })
                 );
 
-                toast.show('success', 'Database tables loaded successfully');
+                alerts.open('Database tables loaded successfully', { appearance: 'positive' }).subscribe();
                 patchState(store, { tables, isLoaded: true });
             } catch (error) {
-                toast.show('error', 'Failed to load database tables');
+                alerts.open('Failed to load database tables', { appearance: 'negative' }).subscribe();
                 patchState(store, { isLoaded: false });
                 throw error;
             }
@@ -115,7 +115,7 @@ export const DatabaseStore = signalStore(
                 const results = await invoke<Record<string, unknown>[]>('execute_query', { query });
                 patchState(store, { results: { [store.selectedTable()!]: results }, isQuerying: false });
             } catch (error) {
-                toast.show('error', 'Failed to execute query');
+                alerts.open('Failed to execute query', { appearance: 'negative' }).subscribe();
                 patchState(store, { isQuerying: false });
                 throw error;
             }

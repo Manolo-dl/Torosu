@@ -1,17 +1,5 @@
 use sqlx::SqlitePool;
-use sqlx::FromRow;
-use super::reader::OsuCollection;
-
-#[derive(FromRow)]
-pub struct CollectionMeta {
-    pub last_modified: i64,
-    pub file_size: i64,
-}
-
-#[derive(FromRow)]
-struct CollectionRow {
-    pub name: String,
-}
+use crate::commands::collections::model::{CollectionMeta, CollectionRow, OsuCollection};
 
 pub async fn get_meta(pool: &SqlitePool) -> Option<CollectionMeta> {
     sqlx::query_as::<_, CollectionMeta>(
@@ -69,7 +57,7 @@ pub async fn save_collections(pool: &SqlitePool, collections: &[OsuCollection]) 
     sqlx::query("DELETE FROM collections").execute(&mut *tx).await?;
 
     for col in collections {
-        sqlx::query("INSERT INTO collections (name) VALUES ($1)")
+        sqlx::query("INSERT OR IGNORE INTO collections (name) VALUES ($1)")
             .bind(&col.name)
             .execute(&mut *tx)
             .await?;

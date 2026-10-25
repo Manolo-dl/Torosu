@@ -1,0 +1,22 @@
+@if (store.data()) {
+  <div appearance="floating" tuiCardLarge="compact">
+    <tui-accordion size="s" [closeOthers]="false">
+      @for (section of sections(); track section[0]) {
+        <button type="button" [tuiAccordion]="false">
+          <span class="section">
+            <span class="name">{{ section[0] }}</span>
+            <span appearance="neutral" size="s" tuiBadge>{{ typeLabel(section[1]) }}</span>
+          </span>
+        </button>
+        <!-- Rendered only while open, so big sections cost nothing while closed -->
+        <tui-expand>
+          <app-osu-field-tree *tuiItem [value]="section[1]" />
+        </tui-expand>
+      }
+    </tui-accordion>
+  </div>
+} @else {
+  <div appearance="floating" tuiCardLarge="compact">
+    <p class="empty">No data received yet.</p>
+  </div>
+}

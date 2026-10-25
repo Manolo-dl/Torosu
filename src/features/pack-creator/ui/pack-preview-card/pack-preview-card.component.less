@@ -1,0 +1,19 @@
+// Fixed height: must match itemSize of the virtual scroll in pack-preview.
+:host {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  block-size: 36px;
+  padding-inline-end: 0.75rem;
+
+  tui-textfield {
+    flex: 1;
+    min-inline-size: 0;
+  }
+
+  .error {
+    font-size: 1.125rem;
+    color: var(--tui-status-negative);
+    cursor: help;
+  }
+}

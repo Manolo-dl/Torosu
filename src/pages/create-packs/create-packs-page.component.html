@@ -1,29 +1,20 @@
-<div class="pack-creator-page">
+<header>
+  <h1 tuiTitle="l">
+    Pack Creator
+    <span tuiSubtitle>Combine difficulties from different beatmaps into a custom pack.</span>
+  </h1>
+</header>
 
-  <header class="page-header">
-    <h1 class="page-title">Pack Creator</h1>
-    <p class="page-desc">Combine difficulties from different beatmaps into a custom pack.</p>
-  </header>
+<div class="layout">
+  <section class="browser">
+    <app-pack-collection-adder />
+    <app-pack-search-input />
+    <app-pack-browser />
+  </section>
 
-  <div class="pack-layout">
-
-    <!-- Left: Browser -->
-    <section class="browser-section">
-      <app-pack-collection-adder />
-      <app-pack-search-input />
-      <app-pack-browser />
-    </section>
-
-    <!-- Right: Pack in progress -->
-    <section class="pack-section">
-      <app-pack-preview />
-
-      <div class="pack-form">
-        <app-pack-details-form />
-        <app-create-pack-button />
-      </div>
-    </section>
-
-  </div>
-
+  <section class="pack">
+    <app-pack-preview />
+    <app-pack-details-form />
+    <app-create-pack-button />
+  </section>
 </div>

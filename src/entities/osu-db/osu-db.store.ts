@@ -1,8 +1,9 @@
 import { computed, inject } from "@angular/core";
 import { patchState, signalStore, withComputed, withMethods, withState } from "@ngrx/signals";
-import { OsuPathStore, ToastStore } from "@shared/stores"; 
+import { OsuPathStore } from "@shared/stores"; 
+import { TuiNotificationService } from '@taiga-ui/core';
 import { invoke } from "@tauri-apps/api/core";
-import { OsuBeatmapSet, OsuDiff } from "./osu-db.model";
+import { OsuBeatmapSet, OsuDiff, isSubmitted } from "./osu-db.model";
 
 interface OsuDbState {
     beatmapSets: OsuBeatmapSet[];
@@ -16,10 +17,6 @@ const initialState: OsuDbState = {
     isLoaded: false,
 };
 
-function isExportable(d: OsuDiff): boolean {
-    return d.status !== 'unsubmitted' && d.status !== 'unknown';
-}
-
 export const OsuDbStore = signalStore(
     { providedIn: 'root' },
     withState(initialState),
@@ -30,16 +27,6 @@ export const OsuDbStore = signalStore(
             for (const set of store.beatmapSets()) {
                 for (const diff of set.diffs) {
                     map.set(diff.md5, diff);
-                }
-            }
-            return map;
-        }),
-
-        folderNameByMd5: computed(() => {
-            const map = new Map<string, string>();
-            for (const set of store.beatmapSets()) {
-                for (const diff of set.diffs) {
-                    map.set(diff.md5, set.folderName);
                 }
             }
             return map;
@@ -81,46 +68,45 @@ export const OsuDbStore = signalStore(
             return counts;
         }),
 
-        localFolderNames: computed(() => new Set(store.beatmapSets().map(s => s.folderName))),
-
-        beatmapSetsByFolderName: computed(() => new Map(store.beatmapSets().map(s => [s.folderName, s]))),
-
-        // Un set es exportable si tiene al menos una diff con status real (no unsubmitted/unknown)
-        exportableBeatmapSets: computed(() =>
-            store.beatmapSets().filter(s => s.diffs.some(isExportable))
+        /**
+         * Only what is on the osu! website, for the tools that link to or download
+         * sets: sets without an id are left out, and so are the diffs of the other
+         * sets that were never uploaded (e.g. rates). Create Packs uses `beatmapSets`.
+         */
+        submittedBeatmapSets: computed(() =>
+            store.beatmapSets()
+                .filter(set => set.beatmapsetId > 0)
+                .map(set => ({ ...set, diffs: set.diffs.filter(isSubmitted) }))
+                .filter(set => set.diffs.length > 0)
         ),
-
-        exportableBeatmapSetsById: computed(() => {
-            const map = new Map<number, OsuBeatmapSet>();
-            for (const set of store.beatmapSets()) {
-                if (set.diffs.some(isExportable)) {
-                    map.set(set.beatmapsetId, set);
-                }
-            }
-            return map;
-        }),
-
-        // Por diff individual: solo entra si ESA diff concreta es exportable
-        exportableBeatmapSetIdByMd5: computed(() => {
-            const map = new Map<string, number>();
-            for (const set of store.beatmapSets()) {
-                for (const diff of set.diffs) {
-                    if (isExportable(diff)) {
-                        map.set(diff.md5, set.beatmapsetId);
-                    }
-                }
-            }
-            return map;
-        }),
     })),
 
     withComputed((store) => ({
-        localExportableBeatmapSetIds: computed(() =>
-            new Set(store.exportableBeatmapSetsById().keys())
-        ),
+        submittedSetsByMd5: computed(() => {
+            const map = new Map<string, OsuBeatmapSet>();
+            for (const set of store.submittedBeatmapSets()) {
+                for (const diff of set.diffs) {
+                    map.set(diff.md5, set);
+                }
+            }
+            return map;
+        }),
+
+        /** An id can be in several folders (e.g. the set downloaded twice). */
+        submittedSetsById: computed(() => {
+            const map = new Map<number, OsuBeatmapSet[]>();
+            for (const set of store.submittedBeatmapSets()) {
+                const sets = map.get(set.beatmapsetId);
+                if (sets) sets.push(set);
+                else map.set(set.beatmapsetId, [set]);
+            }
+            return map;
+        }),
+
+        localSubmittedSetIds: computed(() => new Set(store.submittedBeatmapSets().map(s => s.beatmapsetId))),
     })),
 
-    withMethods((store, osuPath = inject(OsuPathStore), toast = inject(ToastStore)) => ({
+    withMethods((store, osuPath = inject(OsuPathStore), alerts = inject(TuiNotificationService)) => ({
         setBeatmapSets(beatmapSets: OsuBeatmapSet[]) {
             patchState(store, { beatmapSets, isLoaded: true, isLoading: false });
         },
@@ -136,7 +122,7 @@ export const OsuDbStore = signalStore(
         async load() {
             const path = osuPath.path();
             if (!path) {
-                toast.show('error', 'Osu! path not set');
+                alerts.open('Osu! path not set', { appearance: 'negative' }).subscribe();
                 throw new Error("Osu! path not set");
             } 
 
@@ -144,11 +130,11 @@ export const OsuDbStore = signalStore(
 
             try {
                 const beatmapSets = await invoke<OsuBeatmapSet[]>('read_osu_db_full');
-                toast.show('success', `Loaded ${beatmapSets.length} beatmap sets from osu!.db`);
+                alerts.open(`Loaded ${beatmapSets.length} beatmap sets from osu!.db`, { appearance: 'positive' }).subscribe();
                 patchState(store, { beatmapSets, isLoaded: true, isLoading: false });
             } catch (error) {
                 patchState(store, { isLoading: false });
-                toast.show('error', `Failed to load osu!.db`);
+                alerts.open(`Failed to load osu!.db`, { appearance: 'negative' }).subscribe();
                 throw error;
             }
         }

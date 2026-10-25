@@ -1,13 +1,17 @@
-import { DecimalPipe, NgClass } from '@angular/common';
-import { Component, inject, input, signal } from '@angular/core';
-import { OsuBeatmapSet, OsuDiff } from '@entities/osu-db';
+import { DecimalPipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
+import { OsuBeatmapSet, OsuDiff, setStatus } from '@entities/osu-db';
 import { PackStore } from '@entities/pack';
+import { starBg, starFg } from '@shared/utils';
+import { TuiButton, TuiExpand, TuiIcon } from '@taiga-ui/core';
+import { TuiBadge } from '@taiga-ui/kit';
 
 @Component({
   selector: 'app-pack-browser-card',
-  imports: [DecimalPipe, NgClass],
+  imports: [DecimalPipe, TuiBadge, TuiButton, TuiExpand, TuiIcon],
   templateUrl: './pack-browser-card.component.html',
-  styleUrl: './pack-browser-card.component.css',
+  styleUrl: './pack-browser-card.component.less',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PackBrowserCardComponent {
 
@@ -15,15 +19,9 @@ export class PackBrowserCardComponent {
   readonly store = inject(PackStore);
 
   readonly expanded = signal(false);
-
-  setStatus(): string {
-    const priority = ['ranked', 'approved', 'qualified', 'loved', 'unranked', 'unsubmitted', 'unknown'];
-    const statuses = new Set(this.set().diffs.map(d => d.status));
-    for (const p of priority) {
-      if (statuses.has(p)) return p;
-    }
-    return 'unknown';
-  }
+  readonly status = computed(() => setStatus(this.set()));
+  readonly starBg = starBg;
+  readonly starFg = starFg;
 
   toggleExpand(event: Event) {
     event.stopPropagation();

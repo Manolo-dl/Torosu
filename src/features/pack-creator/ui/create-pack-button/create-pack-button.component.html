@@ -1,23 +1,27 @@
-<div class="actions-row">
-  <button
-    class="reset-btn"
-    [disabled]="store.isCreating()"
-    (click)="store.clear()"
-  >
-    Reset
-  </button>
-
-  <button
-    class="create-pack-btn"
-    [disabled]="store.isCreating() || store.selectedDiffs().length === 0 || !store.titleValid()
+<button
+  appearance="secondary"
+  size="m"
+  tuiButton
+  type="button"
+  [disabled]="store.isCreating()"
+  (click)="store.clear()"
+>
+  Reset
+</button>
+<button
+  iconStart="@tui.package"
+  size="m"
+  tuiButton
+  type="button"
+  [disabled]="store.selectedDiffs().length === 0 || !store.titleValid()
     || !store.finalCreator() || store.duplicateNames().size > 0
     || store.hasEmptyNames()"
-    (click)="onCreate()"
-  >
-    @if (store.isCreating()) {
-      Creating...
-    } @else {
-      Create Pack ({{ store.selectedDiffs().length }} diffs)
-    }
-  </button>
-</div>
+  [loading]="store.isCreating()"
+  (click)="onCreate()"
+>
+  @if (store.packCount() > 1) {
+    Create {{ store.packCount() }} packs ({{ store.setCount() }} sets, {{ store.selectedDiffs().length }} diffs)
+  } @else {
+    Create pack ({{ store.selectedDiffs().length }} diffs)
+  }
+</button>

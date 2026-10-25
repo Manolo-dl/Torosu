@@ -1,11 +1,12 @@
 import { ChangeDetectionStrategy, Component, input, model } from '@angular/core';
+import { TuiError, TuiInput } from '@taiga-ui/core';
 import { DisabledReason, ValidationError, WithOptionalFieldTree } from '@angular/forms/signals';
 
 @Component({
   selector: 'app-stateful-input',
-  imports: [],
+  imports: [TuiInput, TuiError],
   templateUrl: './stateful-input.component.html',
-  styleUrl: './stateful-input.component.css',
+  styleUrl: './stateful-input.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StatefulInputComponent {

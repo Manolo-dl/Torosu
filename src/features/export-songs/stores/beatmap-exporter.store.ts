@@ -54,7 +54,7 @@ export const BeatmapExporterStore = signalStore(
         filteredBeatmaps: computed(() => {
             const { excludedModes, modeFilters, lastPlayed } = store.filters();
 
-            return osuDb.beatmapSets().filter(set => {
+            return osuDb.submittedBeatmapSets().filter(set => {
                 return set.diffs.some(d => {
                     if (lastPlayed !== null && d.lastPlayed !== lastPlayed) return false;
                     if (excludedModes.includes(d.mode)) return false;
@@ -108,4 +108,4 @@ export const BeatmapExporterStore = signalStore(
             patchState(store, { filters: initialState.filters });
         },
     }))
-);
+)

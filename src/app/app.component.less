@@ -1,0 +1,35 @@
+tui-root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+  background: var(--tui-background-base);
+  color: var(--tui-text-primary);
+}
+
+.app-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.app-content {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.page-outlet {
+  flex: 1;
+  padding: 1.8rem;
+  overflow-y: auto;
+  background: var(--tui-background-base);
+}

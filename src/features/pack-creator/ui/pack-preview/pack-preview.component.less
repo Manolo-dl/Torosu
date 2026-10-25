@@ -1,0 +1,26 @@
+:host {
+  display: block;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.viewport {
+  block-size: calc(100vh - 36rem);
+  min-block-size: 10rem;
+  overflow-x: hidden;
+
+  ::ng-deep .cdk-virtual-scroll-content-wrapper {
+    inline-size: 100%;
+  }
+}
+
+.empty {
+  padding: 2rem 1rem;
+  text-align: center;
+  color: var(--tui-text-tertiary);
+  font: var(--tui-typography-body-s);
+}

@@ -1,45 +1,48 @@
-<div class="song-card" [ngClass]="setStatus()" (click)="toggleExpand($event)">
-  <div class="status-bar"></div>
-  <div class="card-body">
-
-    <div class="card-head">
-      <div class="card-titles">
-        <span class="song-title" (click)="openSet($event)">{{ set.title }}</span>
-        <span class="song-artist">{{ set.artist }}</span>
+<div class="card" [attr.data-status]="status" (click)="toggleExpand($event)">
+  <div class="body">
+    <div class="head">
+      <div class="titles">
+        <button tuiLink type="button" class="title" (click)="openSet($event)">{{ set.title }}</button>
+        <span class="artist">{{ set.artist }}</span>
       </div>
-      <div class="card-side">
-        <span class="status-badge">{{ setStatus() }}</span>
-        <div class="card-side-bottom">
-          <div class="diff-pips">
+
+      <div class="side">
+        <span size="s" tuiBadge class="status">{{ status }}</span>
+        <div class="side-bottom">
+          <div class="pips">
             @for (mode of uniqueModes(set.diffs); track mode) {
-              <span class="diff-pip-mode" [style.color]="modeColor(mode)">{{ modeChar(mode) }}</span>
+              <tui-icon class="pip-mode" [icon]="modeIcon(mode)" [style.color]="modeColor(mode)" />
               @for (diff of visibleDiffsForMode(set.diffs, mode); track diff.md5) {
-                <span class="diff-pip" [style.background]="diffBg(diff.stars)"></span>
+                <span class="pip" [style.background]="diffBg(diff.stars)"></span>
               }
               @if (extraDiffsForMode(set.diffs, mode) > 0) {
-                <span class="diff-pip-extra">+{{ extraDiffsForMode(set.diffs, mode) }}</span>
+                <span class="pip-extra">+{{ extraDiffsForMode(set.diffs, mode) }}</span>
               }
             }
           </div>
-          <span class="expand-chevron" [class.open]="expanded()">▾</span>
+          <tui-icon icon="@tui.chevron-down" class="chevron" [class.open]="expanded()" />
         </div>
       </div>
     </div>
 
-    <div class="diff-drawer" [class.open]="expanded()">
-      <div class="diff-separator"></div>
-      @for (diff of sortedDiffs(set.diffs); track diff.md5) {
-        <div class="diff-row">
-          <span class="mode-icon" [style.color]="modeColor(diff.mode)">{{ modeChar(diff.mode) }}</span>
-          <span class="star-badge"
-            [style.background]="diffBg(diff.stars)"
-            [style.color]="diffFg(diff.stars)">
-            ★ {{ diff.stars | number:'1.2-2' }}
-          </span>
-          <span class="diff-name">{{ diff.diffName }}</span>
-        </div>
-      }
-    </div>
-
+    <tui-expand [expanded]="expanded()">
+      <div class="diffs">
+        @for (diff of sortedDiffs(set.diffs); track diff.md5) {
+          <div class="diff">
+            <tui-icon class="mode" [icon]="modeIcon(diff.mode)" [style.color]="modeColor(diff.mode)" />
+            <span
+              size="s"
+              tuiBadge
+              class="stars"
+              [style.background]="diffBg(diff.stars)"
+              [style.color]="diffFg(diff.stars)"
+            >
+              ★ {{ diff.stars | number:'1.2-2' }}
+            </span>
+            <span class="name">{{ diff.diffName }}</span>
+          </div>
+        }
+      </div>
+    </tui-expand>
   </div>
 </div>

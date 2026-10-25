@@ -2,7 +2,7 @@ import { computed, inject } from "@angular/core";
 import { CollectionStore } from "@entities/collection";
 import { OsuDbStore } from "@entities/osu-db";
 import { patchState, signalStore, withComputed, withMethods, withState } from "@ngrx/signals";
-import { ToastStore } from "@shared/stores";
+import { TuiNotificationService } from '@taiga-ui/core';
 import { invoke } from "@tauri-apps/api/core";
 import { ParsedImport } from "./import-collection-parser.service";
 
@@ -28,12 +28,11 @@ export const ImportCollectionStore = signalStore(
 
         // Resolve beatmapsetIds from URL-format imports to all their diffs' md5s
         const resolved = computed(() => {
-            const bySetId = osuDB.exportableBeatmapSetsById();
+            const bySetId = osuDB.submittedSetsById();
             return store.parsedImports().map(imp => {
-                const urlMd5s = imp.beatmapsetIds.flatMap(id => {
-                    const set = bySetId.get(id);
-                    return set ? set.diffs.map(d => d.md5) : [];
-                });
+                const urlMd5s = imp.beatmapsetIds.flatMap(id =>
+                    (bySetId.get(id) ?? []).flatMap(set => set.diffs.map(d => d.md5))
+                );
                 return { name: imp.name, md5s: [...imp.md5s, ...urlMd5s] };
             });
         });
@@ -79,7 +78,7 @@ export const ImportCollectionStore = signalStore(
         };
     }),
 
-    withMethods((store, toast = inject(ToastStore)) => ({
+    withMethods((store, alerts = inject(TuiNotificationService)) => ({
         setParsed(parsedImports: ParsedImport[]) {
             patchState(store, { parsedImports });
         },
@@ -96,10 +95,10 @@ export const ImportCollectionStore = signalStore(
 
             try {
                 await invoke('import_collections', { collections });
-                toast.show('success', 'Collections imported successfully');
+                alerts.open('Collections imported successfully', { appearance: 'positive' }).subscribe();
                 patchState(store, initialState);
             } catch (error) {
-                toast.show('error', 'Failed to import collections');
+                alerts.open('Failed to import collections', { appearance: 'negative' }).subscribe();
                 patchState(store, { isImporting: false });
                 throw error;
             }
