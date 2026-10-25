@@ -85,6 +85,15 @@ pnpm tauri build    # build the installers into src-tauri/target/release/bundle
 
 The backend tests run with `cargo test --lib` in `src-tauri`.
 
+## Acknowledgements
+
+These projects showed the way for some of Torosu's tools. Torosu's code is its own, written from their ideas:
+
+- [cosutrainer](https://github.com/hwsmm/cosutrainer) by hwsmm: the rate change, of the map and of its audio.
+- [osuLNmaster](https://github.com/Yasha-jin/osuLNmaster) by Yasha-jin: the FLN converter.
+- [osu-mania-converter](https://github.com/kyarufan/osu-mania-converter) by kyarufan and [krr-s-osumania-anyKeys-converter](https://github.com/krrcream/krr-s-osumania-anyKeys-converter) by krrcream: ideas on how to build a key converter.
+- [tosu](https://github.com/tosuapp/tosu): reading osu!'s memory, through [osu-memory-reader](https://github.com/Manolo-dl/Osu-memory-reader) (see the license below).
+
 ## License
 
 Torosu is licensed under the [MIT License](LICENSE). It includes third-party software under its own license, listed in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
