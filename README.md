@@ -33,7 +33,15 @@ Run `torosu_<v>_x64-setup.exe`. Windows 10 and 11 (64-bit) are supported.
 | --- | --- |
 | Ubuntu 22.04+ / Debian 12+ | `sudo apt install ./torosu_<v>_amd64.deb` |
 | Fedora | `sudo dnf install ./torosu-<v>-1.x86_64.rpm` |
-| Arch Linux and any other | `chmod +x torosu_<v>_amd64.AppImage && ./torosu_<v>_amd64.AppImage` |
+| Arch Linux and any other | the install script below |
+
+The install script sets up the AppImage for your user, ready to open from the app launcher: it downloads the latest one to `~/.local/share/torosu`, adds the launcher entry, its icon and a `torosu` command, installs `fuse2` on Arch if it is missing, and offers to let the Trainer read osu!'s memory (see below). The AppImage then updates itself from the app.
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/Manolo-dl/Torosu/main/install.sh | bash
+```
+
+To read it before running it, download [install.sh](install.sh) and run `bash install.sh`. `bash install.sh --uninstall` removes Torosu again, keeping your settings.
 
 osu! is expected to run under Wine, for example with [osu-winello](https://github.com/NelloKudo/osu-winello).
 
@@ -47,7 +55,7 @@ sudo setcap cap_sys_ptrace=eip /usr/bin/torosu
 
 Run it again after each update: the new version replaces the file, and the permission with it.
 
-An AppImage can't keep that permission. With the AppImage, allow it for every program until the next reboot instead:
+An AppImage can't keep that permission. With the AppImage, allow it for every program instead, until the next reboot (the install script can make it permanent):
 
 ```sh
 echo 0 | sudo tee /proc/sys/kernel/yama/ptrace_scope
