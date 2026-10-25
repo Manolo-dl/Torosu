@@ -1,0 +1,87 @@
+:host {
+  display: block;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+// The banner always sits on the beatmap background image (or a dark fallback),
+// so its text stays white in both themes.
+.banner {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 32 / 9;
+  min-block-size: 10rem;
+  max-block-size: 18rem;
+  inline-size: 100%;
+  border-radius: var(--tui-radius-l);
+  box-shadow: var(--tui-shadow-small);
+  background: #1f1f24;
+
+  .background {
+    position: absolute;
+    inset: 0;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+    // osu! backgrounds usually keep the subject a bit above the centre.
+    object-position: center 35%;
+    animation: fade-in 300ms ease-out;
+  }
+
+  // Only the bottom is darkened, behind the text; the rest of the image is
+  // left untouched.
+  .overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.25rem;
+    background: linear-gradient(0deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.35) 35%, rgba(0, 0, 0, 0) 65%);
+  }
+
+  .info {
+    min-inline-size: 0;
+    color: #fff;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+
+    .title {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-weight: 700;
+    }
+
+    .artist {
+      font-weight: 400;
+      color: rgba(255, 255, 255, 0.75);
+    }
+
+    [tuiSubtitle] {
+      color: rgba(255, 255, 255, 0.75);
+    }
+  }
+
+  .side {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  // Over the background image, like the text.
+  .mode {
+    font-size: 1.75rem;
+    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.6));
+  }
+
+  .stars {
+    font-weight: 700;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+  }
+}

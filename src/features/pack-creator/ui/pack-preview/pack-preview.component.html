@@ -1,16 +1,23 @@
-<div class="preview-panel">
-  <div class="panel-header">
-    <span class="section-title">Pack Preview</span>
-    <span class="diff-count">{{ store.selectedDiffs().length }} diffs</span>
-  </div>
+<div appearance="floating" tuiCardLarge="compact">
+  <header>
+    <h3 tuiTitle>Pack Preview</h3>
+    <span appearance="info" tuiBadge>{{ store.selectedDiffs().length }} diffs</span>
+  </header>
 
   @if (store.selectedDiffs().length === 0) {
-    <div class="empty">Add diffs from the browser to build your pack</div>
+    <p class="empty">Add diffs from the browser to build your pack</p>
   } @else {
-    <div class="pack-list">
-      @for (diff of store.selectedDiffs(); track trackDiff($index, diff)) {
-        <app-pack-preview-card [diff]="diff" />
-      }
-    </div>
+    <!-- itemSize must match the fixed height of app-pack-preview-card -->
+    <cdk-virtual-scroll-viewport
+      itemSize="36"
+      tuiScrollRef
+      class="viewport"
+    >
+      <tui-scroll-controls />
+      <app-pack-preview-card
+        *cdkVirtualFor="let diff of store.selectedDiffs(); trackBy: trackDiff"
+        [diff]="diff"
+      />
+    </cdk-virtual-scroll-viewport>
   }
 </div>

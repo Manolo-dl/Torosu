@@ -1,11 +1,13 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { CollectionStore } from '@entities/collection';
+import { TuiTitle } from '@taiga-ui/core';
+import { TuiCardLarge } from '@taiga-ui/layout';
 
 @Component({
   selector: 'app-collection-summary',
-  imports: [],
+  imports: [TuiCardLarge, TuiTitle],
   templateUrl: './collection-summary.component.html',
-  styleUrl: './collection-summary.component.css',
+  styleUrl: './collection-summary.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CollectionSummaryComponent {

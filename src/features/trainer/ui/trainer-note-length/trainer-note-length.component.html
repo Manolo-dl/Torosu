@@ -1,0 +1,23 @@
+<span class="title">{{ label() }}</span>
+
+<div class="controls">
+  <tui-segmented size="s" [activeItemIndex]="activeIndex()" (activeItemIndexChange)="onSegment($event)">
+    @for (divisor of divisors; track divisor) {
+      <button type="button">1/{{ divisor }}</button>
+    }
+    <button type="button">ms</button>
+  </tui-segmented>
+
+  @if (value().unit === 'ms') {
+    <tui-textfield tuiTextfieldSize="s" [tuiTextfieldCleaner]="false" class="ms">
+      <input min="0" step="1" tuiInput type="number" [value]="value().value" (change)="onMsInput($any($event.target).value)" />
+    </tui-textfield>
+  }
+</div>
+
+<span class="hint">
+  {{ hint() }}
+  @if (approxMs() !== null) {
+    (1/{{ value().value }} beat ≈ {{ approxMs() }} ms at {{ bpm() }} BPM)
+  }
+</span>

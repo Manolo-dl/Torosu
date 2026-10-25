@@ -4,7 +4,10 @@
 fn main() {
     #[cfg(target_os = "linux")]
     {
-        std::env::set_var("WEBKIT_DISABLE_COMPOSITING_MODE", "1");
+        if std::env::var("WAYLAND_DISPLAY").is_ok() {
+            std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
+            //std::env::set_var("WEBKIT_DISABLE_COMPOSITING_MODE", "1");
+        }
     }
-    onisu_lib::run()
+    torosu_lib::run()
 }

@@ -1,8 +1,13 @@
 //! Fixups applied to the output of `Beatmap::encode_to_string()`, which is not
 //! quite a `.osu` that osu! stable accepts.
 
-pub fn sanitize(osu: String, set_id: i32) -> String {
-    let osu = restore_beatmap_set_id(osu, set_id);
+/// `set_id` is `None` when the diff is exported as a new set, so osu! does not
+/// merge it into the original one.
+pub fn sanitize(osu: String, set_id: Option<i32>) -> String {
+    let osu = match set_id {
+        Some(id) => restore_beatmap_set_id(osu, id),
+        None => osu,
+    };
     let osu = fix_general_sample_set(osu);
     let osu = fix_combo_colours(osu);
     let osu = strip_orphan_inherited_timing_points(osu);

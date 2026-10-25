@@ -3,12 +3,14 @@ import { form, required, validateAsync, FormField, debounce } from '@angular/for
 import { invoke } from '@tauri-apps/api/core';
 import { StatefulInputComponent } from "@shared/ui";
 import { PackStore } from '@entities/pack';
+import { TuiTitle } from '@taiga-ui/core';
+import { TuiCardLarge } from '@taiga-ui/layout';
 
 @Component({
   selector: 'app-pack-details-form',
-  imports: [StatefulInputComponent, FormField],
+  imports: [StatefulInputComponent, FormField, TuiCardLarge, TuiTitle],
   templateUrl: './pack-details-form.component.html',
-  styleUrl: './pack-details-form.component.css',
+  styleUrl: './pack-details-form.component.less',
 })
 export class PackDetailsFormComponent {
 

@@ -1,0 +1,122 @@
+// Shared look for beatmap set cards (status colour bar, titles, badge, diff list).
+// Usage inside a component stylesheet: @import 'shared/styles/osu-card'; .osu-card();
+
+@ranked: #6699ff;
+@approved: #33dd99;
+@loved: #ff66ab;
+@qualified: #aaaaff;
+@unranked: #ffaa44;
+
+.ellipsis() {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.status-color(@color) {
+  --status-color: @color;
+}
+
+.osu-card() {
+  .card {
+    --status-color: var(--tui-text-tertiary);
+
+    display: flex;
+    border-radius: var(--tui-radius-s);
+    border-inline-start: 3px solid var(--status-color);
+    background: var(--tui-background-elevation-2);
+    cursor: pointer;
+    transition: background var(--tui-duration, 0.3s);
+
+    &:hover {
+      background: var(--tui-background-elevation-3);
+    }
+
+    &[data-status='ranked'] { .status-color(@ranked); }
+    &[data-status='approved'] { .status-color(@approved); }
+    &[data-status='loved'] { .status-color(@loved); }
+    &[data-status='qualified'] { .status-color(@qualified); }
+    &[data-status='unranked'] { .status-color(@unranked); }
+  }
+
+  .body {
+    flex: 1;
+    min-inline-size: 0;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
+
+    .titles {
+      flex: 1;
+      min-inline-size: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+
+      .title {
+        .ellipsis();
+        max-inline-size: 100%;
+        font: var(--tui-typography-body-s);
+        font-weight: 600;
+        text-align: start;
+        color: var(--tui-text-primary);
+      }
+
+      .artist {
+        .ellipsis();
+        font: var(--tui-typography-body-xs);
+        color: var(--tui-text-secondary);
+      }
+    }
+
+    .status {
+      text-transform: uppercase;
+      color: var(--status-color);
+      background: color-mix(in srgb, var(--status-color) 12%, transparent);
+    }
+  }
+
+  .chevron {
+    font-size: 0.875rem;
+    color: var(--tui-text-tertiary);
+    transition: transform 0.2s ease, color 0.15s;
+
+    &.open {
+      transform: rotate(180deg);
+      color: var(--tui-text-action);
+    }
+  }
+
+  .diffs {
+    margin-block-start: 0.4rem;
+    padding-block-start: 0.35rem;
+    border-top: 1px solid var(--tui-border-normal);
+
+    .diff {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 2px 0;
+      min-inline-size: 0;
+
+      .stars {
+        flex-shrink: 0;
+        min-inline-size: 3.25rem;
+        justify-content: center;
+        font-weight: 700;
+      }
+
+      .name {
+        .ellipsis();
+        flex: 1;
+        min-inline-size: 0;
+        font: var(--tui-typography-body-s);
+      }
+    }
+  }
+}

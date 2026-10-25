@@ -6,11 +6,11 @@
     "analytics": false
   },
   "projects": {
-    "onisu": {
+    "torosu": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
-          "style": "css"
+          "style": "less"
         }
       },
       "root": "",
@@ -21,17 +21,28 @@
           "builder": "@angular/build:application",
           "options": {
             "browser": "src/main.ts",
-            "polyfills": ["zone.js"],
             "tsConfig": "tsconfig.app.json",
-            "inlineStyleLanguage": "scss",
+            "inlineStyleLanguage": "less",
             "assets": [
               {
                 "glob": "**/*",
                 "input": "src/assets",
                 "output": "assets"
+              },
+              {
+                "glob": "**/*",
+                "input": "node_modules/@taiga-ui/icons/src",
+                "output": "assets/taiga-ui/icons"
               }
             ],
-            "styles": ["src/styles.css"]
+            "stylePreprocessorOptions": {
+              "includePaths": ["src"]
+            },
+            "styles": [
+              "@taiga-ui/styles/taiga-ui-theme.less",
+              "@taiga-ui/styles/taiga-ui-fonts.less",
+              "src/styles.css"
+            ]
           },
           "configurations": {
             "production": {
@@ -47,15 +58,7 @@
                   "maximumError": "8kB"
                 }
               ],
-              "outputHashing": "all",
-              "optimization": {
-                "scripts": true,
-                "styles": {
-                  "minify": true,
-                  "inlineCritical": false
-                },
-                "fonts": false
-              }
+              "outputHashing": "all"
             },
             "development": {
               "optimization": false,
@@ -72,31 +75,13 @@
           },
           "configurations": {
             "production": {
-              "buildTarget": "onisu:build:production"
+              "buildTarget": "torosu:build:production"
             },
             "development": {
-              "buildTarget": "onisu:build:development"
+              "buildTarget": "torosu:build:development"
             }
           },
           "defaultConfiguration": "development"
-        },
-        "storybook": {
-          "builder": "@storybook/angular-vite:start-storybook",
-          "options": {
-            "configDir": ".storybook",
-            "browserTarget": "onisu:build",
-            "port": 6006,
-            "styles": ["src/styles.css"]
-          }
-        },
-        "build-storybook": {
-          "builder": "@storybook/angular-vite:build-storybook",
-          "options": {
-            "configDir": ".storybook",
-            "browserTarget": "onisu:build",
-            "outputDir": "storybook-static",
-            "styles": ["src/styles.css"]
-          }
         }
       }
     }

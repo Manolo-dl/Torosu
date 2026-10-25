@@ -1,7 +1,9 @@
-<input
-  type="text"
-  class="search-input"
-  placeholder="Search by title or artist..."
-  [value]="store.searchQuery()"
-  (input)="onInput($event)"
-/>
+<tui-textfield iconStart="@tui.search" tuiTextfieldSize="m">
+  <input
+    placeholder="Search by title, artist or file name..."
+    tuiInput
+    type="search"
+    [value]="store.searchQuery()"
+    (input)="onInput($event)"
+  />
+</tui-textfield>

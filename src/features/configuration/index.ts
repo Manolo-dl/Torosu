@@ -1,0 +1,1 @@
+export { ConfigDrawerComponent } from './ui/config-drawer/config-drawer.component'

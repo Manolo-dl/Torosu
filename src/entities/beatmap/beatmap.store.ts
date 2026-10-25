@@ -21,7 +21,7 @@ export const BeatmapStore = signalStore(
 
     withComputed((store, osuDb = inject(OsuDbStore)) => ({
         queue: computed(() => {
-            const localIds = osuDb.localBeatmapSetIds();
+            const localIds = osuDb.localSubmittedSetIds();
             return store.rawQueue()
                 .filter(id => !localIds.has(id))
                 .map(id => ({
@@ -31,7 +31,7 @@ export const BeatmapStore = signalStore(
         }),
 
         skippedCount: computed(() =>
-            store.rawQueue().filter(id => osuDb.localBeatmapSetIds().has(id)).length
+            store.rawQueue().filter(id => osuDb.localSubmittedSetIds().has(id)).length
         ),
     })),
 

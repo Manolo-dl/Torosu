@@ -5,7 +5,7 @@ use tokio::io::AsyncWriteExt;
 use std::sync::Arc;
 use tokio::sync::Semaphore;
 
-use crate::AppConfigState;
+use crate::{AppConfigState, SessionState};
 
 const MAX_SIZE: u64 = 200 * 1024 * 1024;
 const DELAY_BETWEEN_DOWNLOADS_MS: u64 = 1000; // ~1 req/seg, osu! documentation recommendation
@@ -34,10 +34,13 @@ pub async fn start_downloads(
         )
     };
 
-    let osu_session = downloader_config
+    let osu_session = app
+        .state::<SessionState>()
         .osu_session
+        .lock()
+        .unwrap()
         .clone()
-        .ok_or("osu_session not set in configuration")?;
+        .ok_or("osu_session cookie not set")?;
 
     let songs_folder = downloader_config
         .output_path
@@ -230,7 +233,7 @@ async fn download_beatmap(
     })?;
 
     if open_file {
-        if let Err(e) = open::that(&final_path) {
+        if let Err(e) = tauri_plugin_opener::open_path(&final_path, None::<&str>) {
             log::error!("Failed to open file {}: {}", final_path, e);
         } else {
             log::info!("Opened file {}", final_path);
@@ -240,15 +243,19 @@ async fn download_beatmap(
     Ok(())
 }
 
+/// Extracts `filename` from a `Content-Disposition` header, e.g.
+/// `attachment; filename="123 Artist - Title.osz"`
 fn extract_filename(disposition: &str, beatmap_set_id: u64) -> String {
-    let re = regex::Regex::new(r#"filename="?([^";\n]+)"?"#).unwrap();
-    let name = if let Some(cap) = re.captures(disposition) {
-        cap[1].to_string()
-    } else {
-        return format!("{}.osz", beatmap_set_id);
-    };
+    let name = disposition
+        .split_once("filename=")
+        .map(|(_, rest)| rest.trim_start_matches('"'))
+        .and_then(|rest| rest.split(['"', ';', '\n']).next())
+        .filter(|name| !name.is_empty());
 
-    sanitize_filename(&name)
+    match name {
+        Some(name) => sanitize_filename(name),
+        None => format!("{}.osz", beatmap_set_id),
+    }
 }
 
 fn sanitize_filename(name: &str) -> String {
@@ -264,30 +271,20 @@ fn sanitize_filename(name: &str) -> String {
 }
 
 #[tauri::command]
-pub async fn append_text_file(path: String, content: String) -> Result<(), String> {
-    use std::io::Write;
-    let mut file = std::fs::OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open(&path)
-        .map_err(|e| e.to_string())?;
-
-    file.write_all(content.as_bytes()).map_err(|e| {
-        log::error!("Failed to write file {}: {}", path, e);
-        e.to_string()
-    })
+pub fn get_osu_session(session: tauri::State<'_, SessionState>) -> Option<String> {
+    session.osu_session.lock().unwrap().clone()
 }
 
-#[tauri::command]
-pub fn get_osu_session(state: tauri::State<'_, AppConfigState>) -> Option<String> {
-    state.config.lock().unwrap().downloader.osu_session.clone()
-}
-
+/// Sets the cookie in use. It's saved in the configuration only with
+/// `save_session`; otherwise it lasts until Torosu closes.
 #[tauri::command]
 pub fn set_osu_session(
     session: Option<String>,
     state: tauri::State<'_, AppConfigState>,
+    current: tauri::State<'_, SessionState>,
 ) -> Result<(), String> {
-    state.config.lock().unwrap().downloader.osu_session = session;
+    let mut config = state.config.lock().unwrap();
+    config.downloader.osu_session = if config.downloader.save_session { session.clone() } else { None };
+    *current.osu_session.lock().unwrap() = session;
     Ok(())
 }

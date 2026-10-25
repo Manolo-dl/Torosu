@@ -1,27 +1,26 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "onisu",
-  "version": "0.6.0",
-  "identifier": "com.manolo.onisu",
+  "productName": "torosu",
+  "version": "1.0.0",
+  "identifier": "com.manolo.torosu",
   "build": {
-    "beforeDevCommand": "npm run start",
+    "beforeDevCommand": "pnpm start",
     "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "npm run build",
-    "frontendDist": "../dist/onisu/browser"
+    "beforeBuildCommand": "pnpm build",
+    "frontendDist": "../dist/torosu/browser"
   },
   "app": {
-    "withGlobalTauri": true,
     "windows": [
       {
-        "title": "onisu",
+        "title": "torosu",
         "width": 800,
         "height": 600,
-        "dragDropEnabled": true
+        "dragDropEnabled": true,
+        "decorations": false
       }
     ],
     "security": {
-      "csp": "default-src 'self' ipc: http://ipc.localhost; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: asset: http://asset.localhost;",
-      "dangerousDisableAssetCspModification": false,
+      "csp": null,
       "assetProtocol": {
         "enable": true,
         "scope": []
@@ -31,6 +30,12 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "publisher": "Manolo-dl",
+    "homepage": "https://github.com/Manolo-dl/Torosu",
+    "copyright": "Copyright (c) 2026 Manolo-dl",
+    "category": "Utility",
+    "shortDescription": "osu! stable tools in one app",
+    "longDescription": "Torosu puts the tools you would need for osu! stable in one place: a beatmap downloader, collection import and export, beatmap packs and a trainer that changes the rate, the stats, the long notes or the key count of the map selected in osu!.",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -38,7 +43,11 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "externalBin": ["binaries/tosu"],
+    "resources": {
+      "../LICENSE": "licenses/LICENSE",
+      "../THIRD-PARTY-NOTICES.md": "licenses/THIRD-PARTY-NOTICES.md",
+      "licenses/osu-memory-reader/": "licenses/osu-memory-reader/"
+    },
     "createUpdaterArtifacts": true,
     "windows": {
       "nsis": {
@@ -50,7 +59,7 @@
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEQ2OTU0RjVGM0U2OTY0QzQKUldURVpHaytYMCtWMWpOa0R6c3RnT0NINThQN0crb3BiMkVJZU5RL0xRZHRYWnpQQmV0VmptdjUK",
       "endpoints": [
-        "https://github.com/Manolo-dl/osu-tools-v2/releases/latest/download/latest.json"
+        "https://github.com/Manolo-dl/Torosu/releases/latest/download/latest.json"
       ],
       "windows": {
         "installMode": "passive"

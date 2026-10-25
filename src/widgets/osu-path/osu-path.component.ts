@@ -1,22 +1,16 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
-import { OsuPathStore } from '@shared/stores'; 
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { OsuPathStore } from '@shared/stores';
+import { TuiButton, TuiNotificationDirective, TuiTitle } from "@taiga-ui/core";
+import { TuiButtonLoading } from '@taiga-ui/kit';
 
+/** Asks for the osu! folder when none was found. Once set, it is changed in the settings. */
 @Component({
   selector: 'app-osu-path',
-  imports: [],
+  imports: [TuiButton, TuiButtonLoading, TuiNotificationDirective, TuiTitle],
   templateUrl: './osu-path.component.html',
-  styleUrl: './osu-path.component.css',
+  styleUrl: './osu-path.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class OsuPathComponent implements OnInit {
-
-  osuPath = inject(OsuPathStore);
-
-  ngOnInit(): void {
-    this.osuPath.detect();
-  }
-
-  async selectManually() {
-    await this.osuPath.selectManually();
-  }
+export class OsuPathComponent {
+  readonly osuPath = inject(OsuPathStore);
 }

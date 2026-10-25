@@ -1,12 +1,14 @@
-import { Component, DestroyRef, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject } from '@angular/core';
 import { PackStore } from '@entities/pack'; 
 import { debounceTime, Subject } from 'rxjs';
+import { TuiInput } from '@taiga-ui/core';
 
 @Component({
   selector: 'app-pack-search-input',
-  imports: [],
+  imports: [TuiInput],
   templateUrl: './pack-search-input.component.html',
-  styleUrl: './pack-search-input.component.css',
+  styleUrl: './pack-search-input.component.less',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PackSearchInputComponent {
 

@@ -1,90 +1,253 @@
-<div class="pipeline-panel">
-
-  <div class="panel-header">
-    <span class="section-title">Tasks</span>
-
-    <select
-      class="add-task-select"
-      (change)="addTask($any($event.target).value); $any($event.target).value = ''"
+<div appearance="floating" tuiCardLarge="compact">
+  <header>
+    <h3 tuiTitle>Tasks</h3>
+    <button
+      iconStart="@tui.plus"
+      size="s"
+      tuiButton
+      type="button"
+      [disabled]="availableTasksFiltered().length === 0"
+      [tuiDropdown]="taskMenu"
+      [(tuiDropdownOpen)]="menuOpen"
     >
-      <option value="" disabled selected>+ Add task</option>
-      @for (type of availableTasksFiltered(); track type) {
-        <option [value]="type">{{ taskLabels[type] }}</option>
-      }
-    </select>
-  </div>
+      Add task
+    </button>
+    <ng-template #taskMenu>
+      <tui-data-list>
+        @for (type of availableTasksFiltered(); track type) {
+          <button tuiOption type="button" (click)="addTask(type)">
+            {{ taskLabels[type] }}
+          </button>
+        }
+      </tui-data-list>
+    </ng-template>
+  </header>
 
-  <div class="wip-notice">
-    Only <strong>Rate Change</strong> is currently implemented. Other tasks are coming soon.
-  </div>
-
-  <div class="task-list" cdkDropList (cdkDropListDropped)="onDrop($event)">
-
+  <div class="list" cdkDropList (cdkDropListDropped)="onDrop($event)">
     @for (entry of trainer.tasks(); track entry.id) {
-      <div class="task-item" cdkDrag>
+      <div class="task" cdkDrag>
+        <tui-icon icon="@tui.grip-vertical" class="handle" cdkDragHandle />
 
-        <span class="task-handle" cdkDragHandle>⋮⋮</span>
-
-        <div class="task-content">
-          <span class="task-label">{{ taskLabels[entry.task.type] }}</span>
+        <div class="content">
+          <span class="label">{{ taskLabels[entry.task.type] }}</span>
 
           @if (entry.task.type === 'RateChange') {
-            <div class="task-params">
-              <div class="task-field">
-                <span class="task-field-label">Rate</span>
+            <div class="params">
+              <tui-textfield tuiTextfieldSize="m" [tuiTextfieldCleaner]="false" class="rate">
+                <label tuiLabel>Rate</label>
                 <input
-                  type="number" min="0.5" max="2" step="0.05"
-                  class="task-number-input"
+                  max="2"
+                  min="0.5"
+                  step="0.05"
+                  tuiInput
+                  type="number"
                   [value]="entry.task.params.rate"
-                  (change)="onRateInput(entry.id, $any($event.target).value, entry.task.params.adjustPitch)"
+                  (change)="onRateInput(entry.id, $any($event.target).value, entry.task.params)"
                 />
-                <span class="task-field-unit">x</span>
-              </div>
+              </tui-textfield>
 
-              <div class="task-field">
-                <span class="task-field-label">BPM</span>
-                @if (originalBpm() !== null) {
-                  <span class="task-bpm-original">{{ originalBpm() }}</span>
-                  <span class="task-bpm-arrow">→</span>
-                }
+              <tui-textfield tuiTextfieldSize="m" [tuiTextfieldCleaner]="false" class="bpm">
+                <label tuiLabel>
+                  BPM
+                  @if (originalBpm() !== null) {
+                    ({{ originalBpm() }} →)
+                  }
+                </label>
                 <input
-                  type="number" min="1" step="1"
-                  class="task-number-input"
+                  min="1"
+                  step="1"
+                  tuiInput
+                  type="number"
                   [value]="newBpm(entry.task.params.rate) ?? entry.task.params.rate * 180"
-                  (change)="onBpmInput(entry.id, $any($event.target).value, entry.task.params.adjustPitch)"
+                  (change)="onBpmInput(entry.id, $any($event.target).value, entry.task.params)"
                 />
-              </div>
+              </tui-textfield>
 
-              <label class="task-checkbox">
+              <label tuiLabel class="option">
                 <input
+                  size="s"
+                  tuiCheckbox
                   type="checkbox"
-                  [checked]="entry.task.params.adjustPitch"
-                  (change)="onRateInput(entry.id, entry.task.params.rate + '', $any($event.target).checked)"
+                  [ngModel]="entry.task.params.adjustPitch"
+                  (ngModelChange)="onRateOptionChange(entry.id, entry.task.params, { adjustPitch: $event })"
                 />
-                Adjust Pitch
+                Adjust pitch
               </label>
+
+              <label tuiLabel class="option">
+                <input
+                  size="s"
+                  tuiCheckbox
+                  type="checkbox"
+                  [ngModel]="entry.task.params.scaleStoryboard"
+                  (ngModelChange)="onRateOptionChange(entry.id, entry.task.params, { scaleStoryboard: $event })"
+                />
+                Scale storyboard
+              </label>
+
+              <label tuiLabel class="option">
+                <input
+                  size="s"
+                  tuiCheckbox
+                  type="checkbox"
+                  [disabled]="!trainer.ffmpegAvailable()"
+                  [ngModel]="entry.task.params.scaleVideo && trainer.ffmpegAvailable()"
+                  (ngModelChange)="onRateOptionChange(entry.id, entry.task.params, { scaleVideo: $event })"
+                />
+                Scale video
+              </label>
+            </div>
+
+            @if (!trainer.ffmpegAvailable()) {
+              <div appearance="neutral" size="s" tuiNotification>
+                Scaling the video needs <strong>ffmpeg</strong>, which was not found. Install it and make sure it is
+                in the PATH, then restart the app.
+              </div>
+            } @else if (entry.task.params.scaleVideo) {
+              <div appearance="info" size="s" tuiNotification>
+                The video is re-encoded at the new speed, which can take a while for long videos.
+              </div>
+            }
+
+            @if (entry.task.params.scaleStoryboard) {
+              <div appearance="info" size="s" tuiNotification>
+                If the set has a shared <strong>.osb</strong> storyboard, it is used by every difficulty, so this
+                difficulty will be exported to a <strong>new beatmap set</strong> (title ending in
+                <strong>({{ entry.task.params.rate }}x SB)</strong>) to avoid overlapping with the original one.
+              </div>
+            }
+          }
+
+          @if (entry.task.type === 'SVNormalizer') {
+            <div appearance="info" size="s" tuiNotification>
+              The original SV changes are removed and an SV is set on every BPM change, so the scroll speed stays
+              the one of the main BPM. BPM changes, kiai and hitsounds are kept.
             </div>
           }
 
+          @if (entry.task.type === 'FlnConverter') {
+            <p class="description">
+              Turns every note into a long note held until just before the next note in its column.
+            </p>
 
+            <app-trainer-note-length
+              hint="How early each long note ends before the next note in the column."
+              label="Release gap"
+              [bpm]="originalBpm()"
+              [value]="entry.task.params.gap"
+              (valueChange)="onFlnChange(entry.id, entry.task.params, { gap: $event })"
+            />
+
+            <app-trainer-note-length
+              hint="Long notes that would be shorter than this stay as normal notes."
+              label="Minimum length"
+              [bpm]="originalBpm()"
+              [value]="entry.task.params.minLength"
+              (valueChange)="onFlnChange(entry.id, entry.task.params, { minLength: $event })"
+            />
+
+            <label tuiLabel class="option">
+              <input
+                size="s"
+                tuiCheckbox
+                type="checkbox"
+                [ngModel]="entry.task.params.reworkExistingLn"
+                (ngModelChange)="onFlnChange(entry.id, entry.task.params, { reworkExistingLn: $event })"
+              />
+              Also reshape the map's existing long notes
+            </label>
+          }
+
+          @if (entry.task.type === 'KeyConverter') {
+            <p class="description">
+              Moves the notes to another number of keys. Streams roll over the new keys, while real trills, jacks
+              and chords keep their shape.
+            </p>
+
+            <div class="setting">
+              <span class="setting-title">
+                Keys
+                @if (sourceKeys() !== null) {
+                  ({{ sourceKeys() }}K → {{ entry.task.params.targetKeys }}K)
+                }
+              </span>
+              <tui-segmented
+                size="s"
+                [activeItemIndex]="keyOptions.indexOf(entry.task.params.targetKeys)"
+                (activeItemIndexChange)="onTargetKeys(entry.id, entry.task.params, keyOptions[$event])"
+              >
+                @for (keys of keyOptions; track keys) {
+                  <button type="button" [disabled]="keys === sourceKeys()">{{ keys }}K</button>
+                }
+              </tui-segmented>
+            </div>
+
+            @if (isReducing(entry.task.params.targetKeys)) {
+              <div class="setting">
+                <span class="setting-title">Notes per row</span>
+                <span class="setting-hint">{{ reducingHint }}</span>
+              </div>
+            } @else {
+              @let densityAt = densityIndex(entry.task.params.density);
+              <div class="setting">
+                <span class="setting-title">Extra notes</span>
+                <tui-segmented
+                  size="s"
+                  [activeItemIndex]="densityAt"
+                  (activeItemIndexChange)="onKeyChange(entry.id, entry.task.params, { density: densityOptions[$event].value })"
+                >
+                  @for (option of densityOptions; track option.value) {
+                    <button type="button">{{ option.label }}</button>
+                  }
+                </tui-segmented>
+                <span class="setting-hint">{{ densityOptions[densityAt].hint }}</span>
+              </div>
+            }
+
+            @let playstyles = this.playstyles(entry.task.params.targetKeys);
+            @if (playstyles.length > 1) {
+              @let playstyleAt = playstyleIndex(entry.task.params);
+              <div class="setting">
+                <span class="setting-title">Playstyle</span>
+                <tui-segmented
+                  size="s"
+                  [activeItemIndex]="playstyleAt"
+                  (activeItemIndexChange)="onPlaystyle(entry.id, entry.task.params, $event)"
+                >
+                  @for (playstyle of playstyles; track playstyle.name) {
+                    <button type="button">{{ playstyle.name }}</button>
+                  }
+                </tui-segmented>
+                <span class="setting-hint">{{ playstyles[playstyleAt].hint }}</span>
+              </div>
+            }
+
+            <label tuiLabel class="option">
+              <input
+                size="s"
+                tuiCheckbox
+                type="checkbox"
+                [ngModel]="entry.task.params.keepJacks"
+                (ngModelChange)="onKeyChange(entry.id, entry.task.params, { keepJacks: $event })"
+              />
+              Keep the map's jacks on a single key
+            </label>
+          }
         </div>
 
         <button
-          class="task-remove"
+          appearance="flat"
+          iconStart="@tui.trash-2"
+          size="s"
+          tuiIconButton
           type="button"
-          title="Remove task"
           (click)="trainer.removeTask(entry.id)"
         >
-          ✕
+          Remove task
         </button>
-
       </div>
+    } @empty {
+      <p class="empty">No tasks added yet.</p>
     }
-
-    @if (trainer.tasks().length === 0) {
-      <p class="empty-state">No tasks added yet.</p>
-    }
-
   </div>
-
 </div>

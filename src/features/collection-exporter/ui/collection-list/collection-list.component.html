@@ -1,36 +1,43 @@
-<div class="collection-list">
-  <div class="list-header">
-    <span class="section-label">Collections</span>
-    <label class="select-all">
-      <input type="checkbox" [checked]="store.allSelected()" (change)="store.allSelected() ? store.clearSelection() : store.selectAll()" />
+<div appearance="floating" tuiCardLarge="compact">
+  <header>
+    <h3 tuiTitle>Collections</h3>
+    <label tuiLabel>
+      <input
+        size="s"
+        tuiCheckbox
+        type="checkbox"
+        [disabled]="store.collectionsWithBeatmaps().length === 0"
+        [ngModel]="store.allSelected()"
+        (ngModelChange)="$event ? store.selectAll() : store.clearSelection()"
+      />
       Select all
     </label>
-  </div>
+  </header>
 
   @if (store.isLoading()) {
-    <div class="loading">Loading collections...</div>
+    <tui-loader size="m" class="state" />
   } @else if (!store.isLoaded()) {
-    <div class="empty">Open a collection to get started</div>
+    <p class="state">Open a collection to get started</p>
   } @else if (store.collectionsWithBeatmaps().length === 0) {
-    <div class="empty">No collections found</div>
+    <p class="state">No collections found</p>
   } @else {
-    <ul role="list">
+    <tui-scrollbar class="list">
       @for (col of store.collectionsWithBeatmaps(); track col.name) {
-        <li
-          class="collection-item"
+        <label
+          tuiCell="s"
           [class.selected]="store.selectedCollections().includes(col.name)"
-          (click)="store.toggleSelection(col.name)"
         >
           <input
+            size="s"
+            tuiCheckbox
             type="checkbox"
-            [checked]="store.selectedCollections().includes(col.name)"
-            (click)="$event.stopPropagation()"
-            (change)="store.toggleSelection(col.name)"
+            [ngModel]="store.selectedCollections().includes(col.name)"
+            (ngModelChange)="store.toggleSelection(col.name)"
           />
           <span class="name">{{ col.name }}</span>
-          <span class="count">{{ col.sets.length }}</span>
-        </li>
+          <span appearance="neutral" size="s" tuiBadge>{{ col.sets.length }}</span>
+        </label>
       }
-    </ul>
+    </tui-scrollbar>
   }
 </div>

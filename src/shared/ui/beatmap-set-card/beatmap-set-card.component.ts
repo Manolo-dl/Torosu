@@ -1,13 +1,16 @@
-import { DecimalPipe, NgClass } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, Input, signal } from '@angular/core';
-import { OsuBeatmapSet, OsuDiff } from '@entities/osu-db/osu-db.model';
+import { OsuBeatmapSet, OsuDiff, setStatus } from '@entities/osu-db/osu-db.model';
 import { openUrl } from '@tauri-apps/plugin-opener';
+import { modeColor, modeIcon, starBg, starFg } from '@shared/utils';
+import { TuiExpand, TuiIcon, TuiLink } from '@taiga-ui/core';
+import { TuiBadge } from '@taiga-ui/kit';
 
 @Component({
   selector: 'app-beatmap-set-card',
-  imports: [DecimalPipe, NgClass],
+  imports: [DecimalPipe, TuiBadge, TuiExpand, TuiIcon, TuiLink],
   templateUrl: './beatmap-set-card.component.html',
-  styleUrl: './beatmap-set-card.component.css',
+  styleUrl: './beatmap-set-card.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BeatmapSetCardComponent {
@@ -20,8 +23,13 @@ export class BeatmapSetCardComponent {
     this.expanded.update(v => !v);
   }
 
+  get status() {
+    return setStatus(this.set);
+  }
+
   openSet(event: Event) {
     event.stopPropagation();
+    if (this.set.beatmapsetId <= 0) return;
     openUrl(`https://osu.ppy.sh/beatmapsets/${this.set.beatmapsetId}`);
   }
 
@@ -41,26 +49,8 @@ export class BeatmapSetCardComponent {
     return Math.max(0, diffs.filter(d => d.mode === mode).length - 6);
   }
 
-  diffBg(stars: number): string {
-    if (stars < 2)   return '#8bc9ff';
-    if (stars < 2.5) return '#89e066';
-    if (stars < 3.5) return '#f7eb40';
-    if (stars < 4.5) return '#f9a12e';
-    if (stars < 5.5) return '#f9504b';
-    if (stars < 6.5) return '#e06fda';
-    if (stars < 8)   return '#be4bf5';
-    return '#6c30f5';
-  }
-
-  diffFg(stars: number): string {
-    return stars >= 5 ? '#fff' : '#1a1a1a';
-  }
-
-  modeChar(mode: number): string {
-    return ['●', '◉', '✿', '⊞'][mode] ?? '●';
-  }
-
-  modeColor(mode: number): string {
-    return ['#ff66ab', '#e05555', '#66bbff', '#c966ff'][mode] ?? '#aaa';
-  }
+  readonly diffBg = starBg;
+  readonly diffFg = starFg;
+  readonly modeIcon = modeIcon;
+  readonly modeColor = modeColor;
 }

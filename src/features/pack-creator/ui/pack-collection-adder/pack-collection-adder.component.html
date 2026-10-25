@@ -1,36 +1,51 @@
-<div class="adder-panel">
-    <div class="panel-header">
-        <span class="section-title">From Collection</span>
-        @if (!collectionStore.isLoaded() && !collectionStore.isLoading()) {
-            <button class="load-btn" (click)="collectionStore.load()">Load</button>
-        }
-    </div>
-
-    @if (collectionStore.isLoading()) {
-        <div class="state-msg">Loading collections…</div>
-    } @else if (!collectionStore.isLoaded()) {
-        <div class="state-msg">Collections not loaded yet.</div>
-    } @else if (entries().length === 0) {
-        <div class="state-msg">No collections with local diffs found.</div>
-    } @else {
-        <div class="collection-list">
-            @for (entry of entries(); track entry.collection.name) {
-                <div class="collection-row">
-                    <div class="collection-info">
-                        <span class="collection-name">{{ entry.collection.name }}</span>
-                        <span class="collection-count">
-                            {{ entry.added }}/{{ entry.available }}
-                        </span>
-                    </div>
-                    <button
-                        class="add-btn"
-                        [disabled]="entry.added === entry.available"
-                        (click)="addCollection(entry)"
-                    >
-                        {{ entry.added === entry.available ? 'Added' : '+ Add' }}
-                    </button>
-                </div>
-            }
-        </div>
+<div appearance="floating" tuiCardLarge="compact">
+  <header>
+    <h3 tuiTitle>From Collection</h3>
+    @if (!collectionStore.isLoaded() && !collectionStore.isLoading()) {
+      <button
+        appearance="flat"
+        iconStart="@tui.folder-open"
+        size="xs"
+        tuiButton
+        type="button"
+        (click)="collectionStore.load()"
+      >
+        Load
+      </button>
     }
+  </header>
+
+  @if (collectionStore.isLoading()) {
+    <tui-loader size="m" class="state" />
+  } @else if (!collectionStore.isLoaded()) {
+    <p class="state">Collections not loaded yet.</p>
+  } @else if (entries().length === 0) {
+    <p class="state">No collections with local diffs found.</p>
+  } @else {
+    <tui-scrollbar class="list">
+      @for (entry of entries(); track entry.collection.name) {
+        <div class="row">
+          <span class="name">{{ entry.collection.name }}</span>
+          <span
+            size="s"
+            tuiBadge
+            [appearance]="entry.added === entry.available ? 'positive' : 'neutral'"
+          >
+            {{ entry.added }}/{{ entry.available }}
+          </span>
+          <button
+            size="xs"
+            tuiButton
+            type="button"
+            [appearance]="entry.added === entry.available ? 'flat' : 'secondary'"
+            [disabled]="entry.added === entry.available"
+            [iconStart]="entry.added === entry.available ? '@tui.check' : '@tui.plus'"
+            (click)="addCollection(entry)"
+          >
+            {{ entry.added === entry.available ? 'Added' : 'Add' }}
+          </button>
+        </div>
+      }
+    </tui-scrollbar>
+  }
 </div>

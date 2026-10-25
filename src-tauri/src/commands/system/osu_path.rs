@@ -23,35 +23,20 @@ pub async fn get_osu_path(
     Ok(path)
 }
 
-#[tauri::command]
-pub async fn get_osu_path_from_tosu(state: tauri::State<'_, AppConfigState>) -> Result<String, String> {
-
-    let tosu_config = state.config.lock().unwrap().tosu.clone();
-    let url = format!("http://{}:{}/json/v2", tosu_config.ip, tosu_config.port);
-
-    let body = reqwest::get(url)
-        .await
-        .map_err(|e| {
-            log::error!("error fetching from tosu: {}", e);
-            e.to_string()
-        })?
-        .text()
-        .await
-        .map_err(|e| {
-            log::error!("error fetching text from tosu: {}", e);
+async fn get_osu_path_from_memory() -> Result<String, String> {
+    tauri::async_runtime::spawn_blocking(|| {
+        let reader = osu_memory_reader::OsuReader::attach().map_err(|e| {
+            log::debug!("osu! path not read from memory: {}", e);
             e.to_string()
         })?;
 
-    let json: serde_json::Value = serde_json::from_str(&body)
-        .map_err(|e| e.to_string())?;
-
-    let game_path = json
-        .get("folders")
-        .and_then(|f| f.get("game"))
-        .and_then(|g| g.as_str())
-        .ok_or_else(|| "tosu response missing folders.game".to_string())?;
-
-    Ok(game_path.to_string())
+        reader
+            .game_folder()
+            .map(|path| path.to_string_lossy().into_owned())
+            .ok_or_else(|| "osu! is running but its folder was not found".to_string())
+    })
+    .await
+    .map_err(|e| e.to_string())?
 }
 
 async fn resolve_osu_path(app: &tauri::AppHandle) -> Result<String, String> {
@@ -66,8 +51,8 @@ async fn resolve_osu_path(app: &tauri::AppHandle) -> Result<String, String> {
         return Ok(path);
     }
 
-    // 2. Check path with tosu
-    if let Ok(path) = get_osu_path_from_tosu(app.state::<AppConfigState>()).await {
+    // 2. Check path of the running osu!
+    if let Ok(path) = get_osu_path_from_memory().await {
         save_detected_path(&config_state, &path);
         return Ok(path);
     }
@@ -75,7 +60,7 @@ async fn resolve_osu_path(app: &tauri::AppHandle) -> Result<String, String> {
     // 3. Check default paths
     log::debug!("checking default paths");
 
-    if let Some(local) = dirs::data_local_dir() {
+    if let Ok(local) = app.path().local_data_dir() {
         
         let candidates: Vec<PathBuf> = if cfg!(target_os = "windows") {
             vec![
@@ -108,6 +93,12 @@ fn save_detected_path(state: &tauri::State<AppConfigState>, path: &str) {
 // save osu! path when selected manually by the user
 #[tauri::command]
 pub fn save_osu_path(app: tauri::AppHandle, path: String) -> Result<(), String> {
+    // Every tool reads osu!.db, so a folder without it is not osu!'s.
+    if !Path::new(&path).join("osu!.db").is_file() {
+        log::warn!("refused osu! path {:?}: no osu!.db in it", path);
+        return Err(format!("{} is not an osu! folder: it has no osu!.db", path));
+    }
+
     allow_songs_in_asset_scope(&app, &path);
 
     let config_state = app.state::<AppConfigState>();

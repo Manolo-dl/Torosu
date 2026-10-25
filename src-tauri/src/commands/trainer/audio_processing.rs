@@ -1,7 +1,10 @@
-use std::{fs::File, io::Cursor, path::Path};
+use std::{
+    fs::File,
+    num::{NonZeroU32, NonZeroU8},
+    path::Path,
+};
 
 use anyhow::Result;
-use hound::{WavSpec, WavWriter};
 use soundtouch::{Setting, SoundTouch};
 use symphonia::core::{
     codecs::{CodecParameters, audio::AudioDecoderOptions},
@@ -9,6 +12,7 @@ use symphonia::core::{
     io::MediaSourceStream,
     meta::MetadataOptions,
 };
+use vorbis_rs::{VorbisBitrateManagementStrategy, VorbisEncoderBuilder};
 
 pub struct DecodedAudio {
     pub samples: Vec<f32>,
@@ -180,32 +184,58 @@ pub fn apply_resample(audio: &DecodedAudio, rate: f64) -> (Vec<f32>, u32) {
     (audio.samples.clone(), new_sample_rate)
 }
 
-/// Encodes the WAV in memory so it can be added straight into the .osz without
-/// going through a staging directory.
-pub fn encode_wav(samples: &[f32], sample_rate: u32, channels: u16) -> Result<Vec<u8>> {
+/// Frames per channel submitted to libvorbis per call. The libvorbis docs
+/// recommend ~1024; larger blocks don't speed it up and raise peak memory.
+const ENCODE_BLOCK_FRAMES: usize = 1024;
+
+/// Quality-based VBR (range -0.2..=1.0). 0.6 is ~192 kbit/s for 44.1 kHz stereo,
+/// on par with the MP3s osu! beatmaps usually ship.
+const VORBIS_QUALITY: f32 = 0.6;
+
+/// Encodes interleaved samples to Ogg Vorbis in memory so they can be added
+/// straight into the .osz without going through a staging directory.
+pub fn encode_audio(samples: &[f32], sample_rate: u32, channels: u16) -> Result<Vec<u8>> {
     log::debug!(
-        "encode_wav: {} samples, sample_rate={}, channels={}",
+        "encode_audio: {} samples, sample_rate={}, channels={}",
         samples.len(),
         sample_rate,
         channels
     );
 
-    let spec = WavSpec {
-        channels,
-        sample_rate,
-        bits_per_sample: 32,
-        sample_format: hound::SampleFormat::Float,
-    };
+    let sample_rate_nz = NonZeroU32::new(sample_rate)
+        .ok_or_else(|| anyhow::anyhow!("invalid sample rate: {}", sample_rate))?;
+    let channels_nz = u8::try_from(channels)
+        .ok()
+        .and_then(NonZeroU8::new)
+        .ok_or_else(|| anyhow::anyhow!("unsupported channel count: {}", channels))?;
+    let channels = channels as usize;
 
-    let mut cursor = Cursor::new(Vec::with_capacity(samples.len() * 4 + 44));
+    // ~24 KB/s covers q0.6 stereo, so the sink rarely has to reallocate.
+    let duration_secs = samples.len() as u64 / (channels as u64 * sample_rate as u64);
+    let sink = Vec::with_capacity((duration_secs as usize + 1) * 24 * 1024);
 
-    {
-        let mut writer = WavWriter::new(&mut cursor, spec)?;
-        for &sample in samples {
-            writer.write_sample(sample)?;
+    let mut encoder = VorbisEncoderBuilder::new(sample_rate_nz, channels_nz, sink)?
+        .bitrate_management_strategy(VorbisBitrateManagementStrategy::QualityVbr {
+            target_quality: VORBIS_QUALITY,
+        })
+        .build()?;
+
+    // libvorbis takes planar input: deinterleave each block into reused buffers.
+    let mut planar = vec![Vec::with_capacity(ENCODE_BLOCK_FRAMES); channels];
+
+    for chunk in samples.chunks(ENCODE_BLOCK_FRAMES * channels) {
+        for buf in planar.iter_mut() {
+            buf.clear();
         }
-        writer.finalize()?;
+        for frame in chunk.chunks_exact(channels) {
+            for (buf, &sample) in planar.iter_mut().zip(frame) {
+                buf.push(sample);
+            }
+        }
+        encoder.encode_audio_block(&planar)?;
     }
 
-    Ok(cursor.into_inner())
+    Ok(encoder.finish()?)
 }
+
+

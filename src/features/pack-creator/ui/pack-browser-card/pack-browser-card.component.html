@@ -1,33 +1,48 @@
-<div class="song-card" [ngClass]="set().status" (click)="toggleExpand($event)">
-  <div class="status-bar"></div>
-  <div class="card-body">
-
-    <div class="card-head">
-      <div class="card-titles">
-        <span class="song-title">{{ set().title }}</span>
-        <span class="song-artist">{{ set().artist }}</span>
+<div class="card" [attr.data-status]="status()" (click)="toggleExpand($event)">
+  <div class="body">
+    <div class="head">
+      <div class="titles">
+        <span class="title">{{ set().title }}</span>
+        <span class="artist">{{ set().artist }}</span>
       </div>
-      <div class="card-side">
-        <span class="status-badge">{{ set().status }}</span>
-        <span class="expand-chevron" [class.open]="expanded()">▾</span>
-      </div>
+      <span size="s" tuiBadge class="status">{{ status() }}</span>
+      <tui-icon icon="@tui.chevron-down" class="chevron" [class.open]="expanded()" />
     </div>
 
-    <div class="diff-drawer" [class.open]="expanded()">
-      <div class="diff-separator"></div>
-      @for (diff of set().diffs; track diff.md5) {
-        <div class="diff-row">
-          <span class="star-badge">★ {{ diff.stars | number:'1.2-2' }}</span>
-          <span class="diff-name">{{ diff.diffName }}</span>
-          <button
-            class="add-btn"
-            [disabled]="store.addedMd5s().has(diff.md5)"
-            (click)="addDiff(diff, $event)">
-            {{ store.addedMd5s().has(diff.md5) ? 'Added' : '+' }}
-          </button>
-        </div>
-      }
-    </div>
-
+    <tui-expand [expanded]="expanded()">
+      <div class="diffs">
+        @for (diff of set().diffs; track diff.md5) {
+          <div class="diff">
+            <span
+              size="s"
+              tuiBadge
+              class="stars"
+              [style.background]="starBg(diff.stars)"
+              [style.color]="starFg(diff.stars)"
+            >
+              ★ {{ diff.stars | number:'1.2-2' }}
+            </span>
+            <span class="name">{{ diff.diffName }}</span>
+            @if (diff.status !== status()) {
+              <span appearance="neutral" size="s" tuiBadge>{{ diff.status }}</span>
+            }
+            @if (store.addedMd5s().has(diff.md5)) {
+              <tui-icon icon="@tui.check" class="added" />
+            } @else {
+              <button
+                appearance="secondary"
+                iconStart="@tui.plus"
+                size="xs"
+                tuiIconButton
+                type="button"
+                (click)="addDiff(diff, $event)"
+              >
+                Add
+              </button>
+            }
+          </div>
+        }
+      </div>
+    </tui-expand>
   </div>
 </div>

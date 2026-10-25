@@ -1,20 +1,19 @@
 import { DecimalPipe } from '@angular/common';
-import { Component, inject } from '@angular/core';
-import { DifficultyKey } from '@features/trainer';
-import { TrainerStore } from '@features/trainer';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { DifficultyKey } from '@features/trainer/models/trainer.model';
+import { TrainerStore } from '@features/trainer/stores/trainer.store';
+import { TuiButton, TuiSlider, TuiTitle } from '@taiga-ui/core';
+import { TuiCardLarge } from '@taiga-ui/layout';
 
 @Component({
   selector: 'app-trainer-difficulty-sliders',
-  imports: [DecimalPipe],
+  imports: [DecimalPipe, FormsModule, TuiButton, TuiCardLarge, TuiSlider, TuiTitle],
   templateUrl: './difficulty-sliders.component.html',
-  styleUrl: './difficulty-sliders.component.css',
+  styleUrl: './difficulty-sliders.component.less',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TrainerDifficultySlidersComponent {
-  
   readonly trainer = inject(TrainerStore);
-
-  onSliderChange(stat: DifficultyKey, event: Event) {
-    const value = Number((event.target as HTMLInputElement).value);
-    this.trainer.setValue(stat, value);
-  }
+  readonly keys: DifficultyKey[] = ['hp', 'cs', 'ar', 'od'];
 }

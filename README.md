@@ -1,61 +1,92 @@
-# osu-tools
+<p align="center">
+  <img src="src-tauri/icons/128x128@2x.png" alt="Torosu" width="128" height="128" />
+</p>
 
-A desktop app for managing your local osu! library. Built with [Tauri v2](https://tauri.app/) and [Angular 22](https://angular.dev/).
+<h1 align="center">Torosu</h1>
+
+<p align="center">All the tools you would need for <strong>osu! stable</strong> in the same place.</p>
+
+---
 
 ## Features
 
-### Downloader
-Batch-download beatmap sets directly to your `Songs` folder. Import a `.txt` file with beatmap set URLs or IDs, then start the download. Failed downloads are saved to `failed_downloads.txt` inside your osu! folder. Requires your `osu_session` cookie (copy it from your browser's DevTools).
+- **Downloader**: download beatmap sets from a list of links straight into your Songs folder, skipping the ones you already have.
+- **Export Collections**: save your collections as beatmap links, or as a list to import on another install.
+- **Import Collections**: bring collections from a file into osu!, merged with the ones you already have.
+- **Export Song Folder**: filter your library by mode, status, stars, length and more, and export it as beatmap links.
+- **Create Packs**: put diffs from any sets, rates and unsubmitted maps too, into a pack of your own.
+- **Trainer**: change the rate, the stats, the long notes or the key count of the map selected in osu!. It reads the map straight from the game, so there is nothing to open by hand.
 
-### Export Collections
-Read your `collection.db` and export your osu! collections to a plain-text format you can share or back up.
+Torosu is made for **osu! stable**. osu!lazer is not supported: the tools read and write osu! stable's files.
 
-### Export Song Folder
-Copy beatmap sets out of your `Songs` folder by selecting them from your loaded osu! library.
+## Install
 
-### Create Packs
-Browse your loaded osu! library, select beatmap sets, and package them into `.osz` pack files. Validates against existing pack folders to avoid duplicates.
+Download the file for your system from the [latest release](https://github.com/Manolo-dl/Torosu/releases/latest). `<v>` is the version, for example `1.0.0`.
 
-### Logs *(dev)*
-View the app's log file grouped by level (DEBUG / INFO / WARN / ERROR) and target, with timestamps.
+### Windows
 
-### Database Explorer *(dev)*
-Browse the local SQLite cache (`osu_cache.db`) that stores beatmap metadata. Select a table, toggle columns, and query results live.
+Run `torosu_<v>_x64-setup.exe`. Windows 10 and 11 (64-bit) are supported.
 
-## Stack
+### Linux
 
-| Layer | Technology |
-|---|---|
-| UI | Angular 22, NgRx Signals, Angular CDK |
-| Desktop shell | Tauri v2 |
-| Backend | Rust (async via Tokio) |
-| HTTP | reqwest |
-| Database | SQLite via sqlx |
-| Icons | Phosphor Icons (ng-icons) |
+| Distribution | Install |
+| --- | --- |
+| Ubuntu 22.04+ / Debian 12+ | `sudo apt install ./torosu_<v>_amd64.deb` |
+| Fedora | `sudo dnf install ./torosu-<v>-1.x86_64.rpm` |
+| Arch Linux and any other | the install script below |
 
-## Development
+The install script sets up the AppImage for your user, ready to open from the app launcher: it downloads the latest one to `~/.local/share/torosu`, adds the launcher entry, its icon and a `torosu` command, installs `fuse2` on Arch if it is missing, and offers to let the Trainer read osu!'s memory (see below). The AppImage then updates itself from the app.
 
-```bash
-# Install JS dependencies
-npm install
-
-# Start dev server (hot reload)
-npm run tauri:linux   # Linux
-npm run tauri dev     # macOS / Windows
+```sh
+curl -fsSL https://raw.githubusercontent.com/Manolo-dl/Torosu/main/install.sh | bash
 ```
 
-Requires [Rust](https://rustup.rs/) and the [Tauri prerequisites](https://tauri.app/start/prerequisites/) for your OS.
+To read it before running it, download [install.sh](install.sh) and run `bash install.sh`. `bash install.sh --uninstall` removes Torosu again, keeping your settings.
 
-## Building
+osu! is expected to run under Wine, for example with [osu-winello](https://github.com/NelloKudo/osu-winello).
 
-```bash
-npm run tauri build
+#### Reading osu!'s memory
+
+The Trainer reads the selected map from osu!'s memory. Most distributions only let a program read another one's memory when it has the permission for it. If the Trainer shows *Can't read osu!*, give it to Torosu once:
+
+```sh
+sudo setcap cap_sys_ptrace=eip /usr/bin/torosu
 ```
 
-Produces a native installer under `src-tauri/target/release/bundle/`.
+Run it again after each update: the new version replaces the file, and the permission with it.
 
-## osu! folder detection
+An AppImage can't keep that permission. With the AppImage, allow it for every program instead, until the next reboot (the install script can make it permanent):
 
-The app auto-detects your osu! installation on startup by checking the standard paths for your OS. If detection fails, you can select the folder manually via the bar at the top of the window. The path is persisted across sessions.
+```sh
+echo 0 | sudo tee /proc/sys/kernel/yama/ptrace_scope
+```
 
-All tools are locked behind this path — nothing works until it is set.
+### Updates
+
+Torosu looks for a new version when it starts. When there is one, an icon shows up in the header: open it and choose **Update and restart**. The Windows installer, the AppImage, the `.deb` and the `.rpm` update themselves; otherwise Torosu links to the releases page.
+
+### Coming from osu-tools
+
+Torosu is the new name of osu-tools, and 1.0.0 installs as a new app: uninstall osu-tools, and set the osu! folder and the osu! session cookie again in Torosu.
+
+## First start
+
+Torosu looks for your osu! folder: the one of the running osu!, or the usual install folders. If it can't find it, it asks for it: choose the folder that has `osu!.db`. You can change it later in the settings (the gear in the header), where you can also turn tools off, set up the downloader and the packs, and save the osu! session cookie between sessions.
+
+## Building from source
+
+You need [Rust](https://www.rust-lang.org/tools/install) 1.88 or newer, [Node.js](https://nodejs.org/) 22 or newer, [pnpm](https://pnpm.io/), and the [system dependencies of Tauri](https://tauri.app/start/prerequisites/) for your platform.
+
+```sh
+pnpm install
+pnpm tauri dev      # run it
+pnpm tauri build    # build the installers into src-tauri/target/release/bundle
+```
+
+The backend tests run with `cargo test --lib` in `src-tauri`.
+
+## License
+
+Torosu is licensed under the [MIT License](LICENSE). It includes third-party software under its own license, listed in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
+
+Torosu is not affiliated with osu! or ppy Pty Ltd. "osu!" is a trademark of ppy Pty Ltd.

@@ -1,4 +1,6 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, signal } from '@angular/core';
+import { TuiButton } from '@taiga-ui/core';
+import { TuiSegmented } from '@taiga-ui/kit';
 
 export interface ExportFormat {
   value: string;
@@ -7,27 +9,22 @@ export interface ExportFormat {
 
 @Component({
   selector: 'app-export-controls',
-  imports: [],
+  imports: [TuiButton, TuiSegmented],
   templateUrl: './export-controls.component.html',
-  styleUrl: './export-controls.component.css',
+  styleUrl: './export-controls.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ExportControlsComponent implements OnInit {
+export class ExportControlsComponent {
   @Input({ required: true }) formats: ExportFormat[] = [];
   @Input() count = 0;
   @Input() countLabel = 'beatmapsets';
   @Input() disabled = false;
   @Output() doExport = new EventEmitter<string>();
 
-  readonly selectedFormat = signal('');
-
-  ngOnInit() {
-    if (this.formats.length > 0) {
-      this.selectedFormat.set(this.formats[0].value);
-    }
-  }
+  readonly selectedIndex = signal(0);
 
   export() {
-    this.doExport.emit(this.selectedFormat());
+    const format = this.formats[this.selectedIndex()];
+    if (format) this.doExport.emit(format.value);
   }
 }

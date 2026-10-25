@@ -1,0 +1,15 @@
+<div class="window-controls" data-tauri-drag-region>
+  @for (control of controls; track $index) {
+      <button
+        size="m"
+        appearance="flat"
+        tuiButton
+        type="button"
+        (click)="control.action()"
+
+        tabIndex="0"
+      >
+        <fa-icon [icon]="control.icon" />
+      </button>
+  }
+</div>

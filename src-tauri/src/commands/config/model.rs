@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Serialize, Default, Clone)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct AppConfig {
     #[serde(default)]
     pub osu_path: Option<String>,
@@ -9,31 +9,20 @@ pub struct AppConfig {
     pub excluded_tools: Vec<String>,
 
     #[serde(default)]
-    pub tosu: TosuConfig,
+    pub downloader: DownloaderConfig,
 
     #[serde(default)]
-    pub downloader: DownloaderConfig,
+    pub packs: PacksConfig,
 
     #[serde(default = "default_true")]
     pub sqlite_db: bool,
 
     #[serde(default = "default_false")]
     pub open_file: bool,
-}
 
-#[derive(Deserialize, Serialize, Clone)]
-pub struct TosuConfig {
-    #[serde(default = "default_true")]
-    pub auto_start: bool,
-
-    #[serde(default = "default_true")]
-    pub kill_on_exit: bool, // Kill the process only when started by the app, not if it was already running
-
-    #[serde(default = "default_ip")]
-    pub ip: String,
-
-    #[serde(default = "default_port")]
-    pub port: u16,
+    /// Shows the developer pages (logs, database, osu! data).
+    #[serde(default = "default_false")]
+    pub dev_mode: bool,
 }
 
 #[derive(Deserialize, Serialize, Clone)]
@@ -44,8 +33,14 @@ pub struct DownloaderConfig {
     #[serde(default = "default_true")]
     pub error_file: bool,
 
+    /// The osu_session cookie as saved in the file, only with `save_session`;
+    /// the one in use is in `SessionState`.
     #[serde(default)]
     pub osu_session: Option<String>,
+
+    /// Keep the cookie between sessions. Off, it's forgotten on close.
+    #[serde(default = "default_false")]
+    pub save_session: bool,
 
     #[serde(default)]
     pub output_path: Option<String>,
@@ -60,19 +55,45 @@ pub struct DownloaderConfig {
     pub max_concurrent_downloads: u32,
 }
 
-fn default_true() -> bool { true }
-fn default_ip() -> String { "127.0.0.1".to_string() }
-fn default_port() -> u16 { 24050 }
-fn default_false() -> bool { false }
-fn default_max_concurrent_downloads() -> u32 { 2 }
+#[derive(Deserialize, Serialize, Clone)]
+pub struct PacksConfig {
+    /// Copy each diff's background into the pack instead of leaving it without one.
+    #[serde(default = "default_true")]
+    pub keep_background: bool,
 
-impl Default for TosuConfig { 
+    /// Above this many original sets (each with its own audio and background)
+    /// the pack is split into several; 0 never splits.
+    #[serde(default = "default_max_sets_per_pack")]
+    pub max_sets_per_pack: u32,
+}
+
+fn default_true() -> bool { true }
+fn default_false() -> bool { false }
+fn default_max_concurrent_downloads() -> u32 { 1 }
+fn default_max_sets_per_pack() -> u32 { 0 }
+
+// Implemented by hand so the defaults match the serde ones above: a derived
+// Default would set `sqlite_db` to false, and that value is then written to
+// configuration.toml on close, silently disabling the cache for good.
+impl Default for AppConfig {
     fn default() -> Self {
         Self {
-            auto_start: true,
-            kill_on_exit: true,
-            ip: default_ip(),
-            port: default_port(),
+            osu_path: None,
+            excluded_tools: Vec::new(),
+            downloader: DownloaderConfig::default(),
+            packs: PacksConfig::default(),
+            sqlite_db: default_true(),
+            open_file: default_false(),
+            dev_mode: default_false(),
+        }
+    }
+}
+
+impl Default for PacksConfig {
+    fn default() -> Self {
+        Self {
+            keep_background: default_true(),
+            max_sets_per_pack: default_max_sets_per_pack(),
         }
     }
 }
@@ -83,6 +104,7 @@ impl Default for DownloaderConfig {
             notify: false,
             error_file: true,
             osu_session: None,
+            save_session: default_false(),
             output_path: None,
             load_library: false,
             skip_video: false,

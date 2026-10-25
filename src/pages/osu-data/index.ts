@@ -1,0 +1,1 @@
+export { OsuDataPage } from './osu-data-page.component';

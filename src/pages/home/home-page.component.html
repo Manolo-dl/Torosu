@@ -1,22 +1,42 @@
-<div class="home">
-
-  <div class="hero">
-    <h1 class="hero-title">osu<span class="accent">-tools</span></h1>
-    <p class="hero-subtitle">Manage your osu! library — download beatmaps, export collections, and more.</p>
+<header class="hero">
+  <div tuiTitle="l">
+    <span class="name">
+      Torosu
+      @if (version(); as version) {
+        <span appearance="neutral" size="m" tuiBadge>v{{ version }}</span>
+      }
+    </span>
+    <span tuiSubtitle>All the tools you would need for osu! in the same place.</span>
   </div>
 
-  @if (!osuPath.isLoading() && !osuPath.path()) {
-    <div class="path-warning">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-        <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-      </svg>
-      <span>
-        <strong>osu! folder not found</strong> — the tools are locked until you set it.
-        Use the <strong>osu! folder</strong> bar at the top of the screen to detect or select it manually.
-      </span>
+  <div class="facts">
+    <span appearance="info" size="m" tuiBadge>Made for osu! stable</span>
+    <span class="fact">Lazer is not supported: the tools read and write osu! stable's files.</span>
+  </div>
+
+  @if (osuPath.path(); as path) {
+    <div class="folder">
+      <tui-icon icon="@tui.folder" />
+      <span class="path" [title]="path">{{ path }}</span>
+      <span class="hint">Change it in the settings</span>
     </div>
   }
+</header>
 
-
-</div>
+<section>
+  <h2 tuiTitle="m">Tools</h2>
+  <div class="tools">
+    @for (tool of tools(); track tool.route) {
+      <a appearance="floating" tuiCardLarge="compact" class="tool" [routerLink]="tool.route">
+        <span class="icon"><fa-icon [icon]="tool.icon" /></span>
+        <span tuiTitle>
+          {{ tool.label }}
+          <span tuiSubtitle>{{ tool.description }}</span>
+        </span>
+        <tui-icon icon="@tui.arrow-right" class="arrow" />
+      </a>
+    } @empty {
+      <p class="empty">Every tool is turned off. Turn them on in the settings, under General.</p>
+    }
+  </div>
+</section>

@@ -3,6 +3,9 @@ import { CollectionStore } from '@entities/collection';
 import { OsuDbStore } from '@entities/osu-db';
 import { PackStore } from '@entities/pack';
 import { OsuCollection } from '@entities/collection';
+import { TuiButton, TuiLoader, TuiScrollbar, TuiTitle } from '@taiga-ui/core';
+import { TuiBadge } from '@taiga-ui/kit';
+import { TuiCardLarge } from '@taiga-ui/layout';
 
 interface CollectionEntry {
     collection: OsuCollection;
@@ -12,9 +15,9 @@ interface CollectionEntry {
 
 @Component({
     selector: 'app-pack-collection-adder',
-    imports: [],
+    imports: [TuiBadge, TuiButton, TuiCardLarge, TuiLoader, TuiScrollbar, TuiTitle],
     templateUrl: './pack-collection-adder.component.html',
-    styleUrl: './pack-collection-adder.component.css',
+    styleUrl: './pack-collection-adder.component.less',
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PackCollectionAdderComponent {

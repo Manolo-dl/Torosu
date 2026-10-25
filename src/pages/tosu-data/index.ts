@@ -1,1 +1,0 @@
-export { TosuDataPage } from './tosu-data-page.component';

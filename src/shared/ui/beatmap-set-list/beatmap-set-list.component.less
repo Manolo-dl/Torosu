@@ -1,0 +1,23 @@
+:host {
+  display: block;
+}
+
+.viewport {
+  overflow-x: hidden;
+
+  ::ng-deep .cdk-virtual-scroll-content-wrapper {
+    inline-size: 100%;
+  }
+
+  .item {
+    inline-size: 100%;
+    padding: 0 0.5rem;
+  }
+}
+
+.empty {
+  padding: 3rem 1.25rem;
+  text-align: center;
+  color: var(--tui-text-tertiary);
+  font: var(--tui-typography-body-s);
+}

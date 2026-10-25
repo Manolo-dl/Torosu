@@ -1,21 +1,13 @@
-<div class="database-explorer-page">
+<h1 tuiTitle="l">
+  Database Explorer
+  <span tuiSubtitle>Browse and query your local SQLite cache.</span>
+</h1>
 
-  <header class="page-header">
-    <h1 class="page-title">Database Explorer</h1>
-    <p class="page-desc">Browse and query your local SQLite cache.</p>
-  </header>
+<div class="layout">
+  <app-database-table-list class="tables" />
 
-  <div class="explorer-layout">
-
-    <aside class="left-panel">
-      <app-database-table-list />
-    </aside>
-
-    <section class="right-panel">
-      <app-database-structure />
-      <app-database-results />
-    </section>
-
-  </div>
-
+  <section class="main">
+    <app-database-structure />
+    <app-database-results />
+  </section>
 </div>

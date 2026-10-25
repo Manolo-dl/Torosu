@@ -1,23 +1,14 @@
-<div class="import-collections-page">
+<header>
+  <h1 tuiTitle="l">
+    Import Collections
+    <span tuiSubtitle>Import collections from a text file using beatmap hashes.</span>
+  </h1>
+</header>
 
-  <header class="page-header">
-    <h1 class="page-title">Import Collections</h1>
-    <p class="page-desc">Import collections from a text file using beatmap hashes.</p>
-  </header>
-
-  <div class="import-layout">
-
-    <!-- Left: File upload -->
-    <section class="upload-section">
-      <app-import-file-dropzone />
-    </section>
-
-    <!-- Right: Preview + confirm -->
-    <section class="preview-section">
-      <app-import-preview />
-      <app-import-confirm-button />
-    </section>
-
-  </div>
-
+<div class="layout">
+  <app-import-file-dropzone class="upload" />
+  <section class="preview">
+    <app-import-preview />
+    <app-import-confirm-button />
+  </section>
 </div>

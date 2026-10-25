@@ -1,33 +1,43 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { phosphorSun, phosphorMoon, phosphorDesktop } from '@ng-icons/phosphor-icons/regular';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { ThemeService, Theme } from '@shared/services';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked } from '@angular/core';
+import { Router } from '@angular/router';
+import { ConfigurationStore } from '@entities/configuration';
+import { UpdateStore } from '@entities/update';
 import { NavStore } from '@entities/nav-item';
-
-const THEME_ICON: Record<Theme, string> = {
-  dark:   'phosphorMoon',
-  light:  'phosphorSun',
-  system: 'phosphorDesktop',
-};
-
-const THEME_LABEL: Record<Theme, string> = {
-  dark:   'Dark',
-  light:  'Light',
-  system: 'System',
-};
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faSun, faMoon, faGears, faCircleArrowUp } from '@fortawesome/free-solid-svg-icons';
+import { TUI_DARK_MODE, TuiButton, TuiDropdown, TuiTitle } from "@taiga-ui/core";
+import { TuiBadge, TuiButtonLoading, TuiProgress } from '@taiga-ui/kit';
+import { ConfigDrawerComponent } from "@features/configuration";
 
 @Component({
   selector: 'app-header',
-  imports: [NgIcon],
+  imports: [FaIconComponent, TuiButton, TuiButtonLoading, TuiDropdown, TuiTitle, TuiBadge, TuiProgress, ConfigDrawerComponent],
   templateUrl: './header.component.html',
-  styleUrl: './header.component.css',
+  styleUrl: './header.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [provideIcons({ phosphorSun, phosphorMoon, phosphorDesktop })],
 })
 export class HeaderComponent {
-  readonly themeService = inject(ThemeService);
+  readonly darkMode = inject(TUI_DARK_MODE);
   readonly navStore = inject(NavStore);
+  readonly icon = computed(() => this.darkMode() ? faMoon : faSun);
+  readonly faGears = faGears;
+  readonly faCircleArrowUp = faCircleArrowUp;
+  readonly update = inject(UpdateStore);
+  readonly updateOpen = signal(false);
+  private readonly config = inject(ConfigurationStore);
+  private readonly router = inject(Router);
 
-  get themeIcon() { return THEME_ICON[this.themeService.theme()]; }
-  get themeLabel() { return THEME_LABEL[this.themeService.theme()]; }
+  /** Developer mode is turned on in the settings. */
+  readonly devMode = computed(() => this.config.config()?.dev_mode ?? false);
+
+  constructor() {
+    // Turned off while on the developer pages: back to the tools.
+    effect(() => {
+      if (this.devMode()) return;
+      untracked(() => {
+        this.navStore.userMode();
+        if (this.router.url.startsWith('/dev')) this.router.navigate(['/']);
+      });
+    });
+  }
 }

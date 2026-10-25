@@ -1,70 +1,93 @@
 [package]
-name = "onisu"
-version = "0.6.0"
-description = "A Tauri App"
-authors = ["you"]
+name = "torosu"
+version = "1.0.0"
+description = "osu! stable tools in one app: beatmap downloader, collections, packs and a map trainer"
+license = "MIT"
+authors = ["Manolo-dl"]
+repository = "https://github.com/Manolo-dl/Torosu"
+homepage = "https://github.com/Manolo-dl/Torosu"
+readme = "../README.md"
+keywords = ["osu", "osu-mania", "beatmap", "tauri"]
+categories = ["games"]
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+publish = false
 
 [lib]
 # The `_lib` suffix may seem redundant but it is necessary
 # to make the lib name unique and wouldn't conflict with the bin name.
 # This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
-name = "onisu_lib"
+name = "torosu_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "2", features = ["protocol-asset"] }
+tauri = { version = "2", default-features = false, features = ["wry", "compression", "common-controls-v6", "x11", "protocol-asset"] }
 tauri-plugin-opener = "2"
+tauri-plugin-updater = { version = "2.14.0", default-features = false, features = ["rustls-tls"] }
+tauri-plugin-log = "2.10.1"
+tauri-plugin-notification = "2.7.0"
+tauri-plugin-fs = "2.7.1"
+tauri-plugin-dialog = "2.8.3"
+tauri-plugin-os = "2.4.0"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-tauri-plugin-shell = "2.3.5"
-dirs = "6.0.0"
-tauri-plugin-store = "2.4.3"
-tauri-plugin-dialog = "2.7.1"
-log = "0.4.30"
-tauri-plugin-log = "2"
-tokio = { version = "1", features = ["full", "time"] }
-reqwest = { version = "0.13.4", features = ["cookies", "json"] }
-tauri-plugin-os = "2"
-tauri-plugin-fs = "2"
+sqlx = { version = "0.9.0", default-features = false, features = ["sqlite-bundled", "runtime-tokio", "derive"] }
+toml = "1.1.8"
+chrono = { version = "0.4.45", default-features = false, features = ["clock"] }
 osynic_osudb = "0.1.5"
-tauri-plugin-notification = "2"
-sqlx = { version = "0.9", features = ["sqlite", "runtime-tokio"] }
-futures-util = "0.3.32"
-regex = "1.12.4"
-walkdir = "2.5.0"
-chrono = "0.4.45"
-zip = "8.6.0"
-open = "5.3.5"
-osu-db = { version = "0.3.0", default-features = false }
-rosu-replay = "0.2.2"
-tokio-tungstenite = "0.30.0"
 anyhow = "1.0.104"
 rosu-map = "0.2.1"
-symphonia = { version = "0.6.0", features = ["all"] }
-hound = "3.5.1"
-soundtouch = { version = "0.5.4", features = ["bundled"] }
-toml = "1.1.4"
+soundtouch = "0.5.4"
+symphonia = { version = "0.6.1", default-features = false, features = ["mp3", "ogg", "vorbis", "wav", "pcm", "id3v2"] }
+log = "0.4.34"
+tokio = { version = "1.54.0", features = ["fs", "io-util", "macros", "net", "sync", "time"] }
+zip = { version = "8.6.0", default-features = false }
+futures-util = { version = "0.3.34", default-features = false }
+reqwest = { version = "0.13.5", default-features = false, features = ["rustls-no-provider", "stream"] }
+rustls = { version = "0.23", default-features = false, features = ["ring"] }
+vorbis_rs = "0.5.6"
+osu-memory-reader = { version = "0.1.0", features = ["serde", "difficulty"] }
 
-[target.'cfg(target_os = "linux")'.dependencies]
-webkit2gtk = { version = "2.0.2" }
 
-[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
-tauri-plugin-updater = "2"
-
+# Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration
 [profile.release]
-opt-level = 3
-lto = "fat"
 codegen-units = 1
+lto = true
+opt-level = "s"
+panic = "abort"
+strip = true
 
-# Under `tauri dev` dependencies were built unoptimized: SoundTouch (C++ through
-# the cc crate) and symphonia's decoders came out at -O0, several times slower
-# than in release. Optimizing only the dependencies does not affect the rebuild
-# time of our own code.
-[profile.dev.package."*"]
+# Keep the audio decoding/encoding hot paths fast despite opt-level = "s"
+[profile.release.package.symphonia-core]
+opt-level = 3
+
+[profile.release.package.symphonia-bundle-mp3]
+opt-level = 3
+
+[profile.release.package.symphonia-codec-vorbis]
+opt-level = 3
+
+[profile.release.package.aotuv_lancer_vorbis_sys]
+opt-level = 3
+
+# Same hot paths in `tauri dev`: at opt-level 0 the libvorbis C code and the
+# symphonia decoders are 5-15x slower than in release.
+[profile.dev.package.symphonia-core]
+opt-level = 3
+
+[profile.dev.package.symphonia-bundle-mp3]
+opt-level = 3
+
+[profile.dev.package.symphonia-codec-vorbis]
+opt-level = 3
+
+[profile.dev.package.aotuv_lancer_vorbis_sys]
+opt-level = 3
+
+[profile.dev.package.ogg_next_sys]
+opt-level = 3
+
+[profile.dev.package.soundtouch-ffi]
 opt-level = 3

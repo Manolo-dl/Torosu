@@ -1,32 +1,34 @@
-<div class="actions-bar">
+<div class="buttons">
   <button
-    class="reset-btn"
+    appearance="secondary"
+    size="m"
+    tuiButton
     type="button"
     [disabled]="trainer.creating()"
     (click)="trainer.reset()"
   >
     Reset
   </button>
-
   <button
-    class="create-btn"
+    iconStart="@tui.wand-sparkles"
+    size="m"
+    tuiButton
     type="button"
-    [disabled]="trainer.creating()"
+    [loading]="trainer.creating()"
     (click)="trainer.createMap()"
   >
-    @if (trainer.creating()) {
-      Creating...
-    } @else {
-      Create Map
-    }
+    Create map
   </button>
 </div>
 
 @if (trainer.creating()) {
-  <div class="progress-wrap">
-    <div class="progress-track">
-      <div class="progress-fill" [style.width.%]="trainer.progress()"></div>
-    </div>
-    <span class="progress-label">{{ trainer.progress() }}%</span>
+  <div class="progress">
+    <progress
+      max="100"
+      size="m"
+      tuiProgressBar
+      [value]="trainer.progress()"
+    ></progress>
+    <span class="percent">{{ trainer.progress() }}%</span>
   </div>
 }
