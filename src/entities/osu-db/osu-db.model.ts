@@ -4,7 +4,6 @@ export interface OsuDiff {
     md5: string;
     diffName: string;
     mode: number;
-    bpm: number;
     length: number;
     stars: number;
     lastPlayed: boolean;

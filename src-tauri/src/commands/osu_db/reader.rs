@@ -112,11 +112,6 @@ fn read_from_osudb(osu_path: &str) -> Result<Vec<OsuBeatmapSet>, String> {
         .map(|(_, s)| *s)
         .unwrap_or(0.0);
 
-        let bpm = b.timing_points.iter()
-            .find(|tp| !tp.inherits)
-            .map(|tp| (60000.0 / tp.bpm).round())
-            .unwrap_or(0.0);
-
         let status = match b.status {
             RankedStatus::Ranked => "ranked",
             RankedStatus::Loved => "loved",
@@ -131,7 +126,6 @@ fn read_from_osudb(osu_path: &str) -> Result<Vec<OsuBeatmapSet>, String> {
             md5,
             diff_name: b.difficulty_name.unwrap_or_default(),
             mode: b.mode.raw(),
-            bpm,
             length: b.total_time,
             stars,
             last_played: b.last_played.is_some(),

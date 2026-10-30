@@ -1,8 +1,8 @@
-use crate::{app_root_dir, commands::config::model::AppConfig};
+use std::path::Path;
 
-pub fn read_config() -> AppConfig {
+use crate::commands::config::model::AppConfig;
 
-    let path = app_root_dir().join("configuration.toml");
+pub fn read_config(path: &Path) -> AppConfig {
 
     let mut config: AppConfig = match std::fs::read_to_string(path) {
         Ok(content) => toml::from_str(&content).unwrap_or_else(|e| {
@@ -21,9 +21,7 @@ pub fn read_config() -> AppConfig {
     config
 }
 
-pub fn write_config(config: &AppConfig) -> Result<(), String> {
-     let path = app_root_dir().join("configuration.toml");
-
+pub fn write_config(path: &Path, config: &AppConfig) -> Result<(), String> {
      let toml = toml::to_string_pretty(config).map_err(|e| {
         log::error!("Failed to serialize configuration.toml: {}", e);
         e.to_string()

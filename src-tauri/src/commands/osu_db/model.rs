@@ -43,7 +43,6 @@ pub struct OsuDiff {
     pub md5: String,
     pub diff_name: String,
     pub mode: u8,
-    pub bpm: f64,
     pub length: u32,
     pub stars: f64,
     pub last_played: bool,

@@ -26,7 +26,7 @@ const DEFAULT_CONFIG: AppConfig = {
   },
   packs: {
     keep_background: true,
-    max_sets_per_pack: 10,
+    max_sets_per_pack: 0,
   },
   sqlite_db: true,
   open_file: false,

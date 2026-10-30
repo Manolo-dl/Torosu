@@ -48,7 +48,6 @@ pub async fn get_beatmapsets(pool: &SqlitePool) -> Result<Vec<OsuBeatmapSet>, sq
             md5: d.md5,
             diff_name: d.diff_name,
             mode: d.mode as u8,
-            bpm: 0.0,
             length: d.length as u32,
             stars: d.stars,
             last_played: d.last_played != 0,

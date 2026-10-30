@@ -58,7 +58,9 @@ osu-memory-reader = { version = "0.1.0", features = ["serde", "difficulty"] }
 codegen-units = 1
 lto = true
 opt-level = "s"
-panic = "abort"
+# Not `panic = "abort"`, which the guideline suggests: a library can panic on a
+# broken osu!.db, audio or video file, and the app catches that (`catch_unwind`,
+# `spawn_blocking`) to report an error instead of closing. Both need unwinding.
 strip = true
 
 # Keep the audio decoding/encoding hot paths fast despite opt-level = "s"

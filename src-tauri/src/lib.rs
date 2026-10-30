@@ -1,5 +1,5 @@
-use std::{path::PathBuf, sync::{Mutex, atomic::AtomicBool}};
-use sqlx::SqlitePool;
+use std::{path::{Path, PathBuf}, sync::{Mutex, atomic::AtomicBool}};
+use sqlx::{SqlitePool, sqlite::SqliteConnectOptions};
 use tauri::Manager;
 use tauri_plugin_log::{Target, TargetKind};
 
@@ -19,6 +19,8 @@ pub struct OsuReaderState {
 
 pub struct AppConfigState {
     pub config: Mutex<AppConfig>,
+    /// `configuration.toml`, written when the app closes.
+    pub path: PathBuf,
 }
 
 /// The update found by `check_update`, waiting for the user to install it.
@@ -40,20 +42,32 @@ pub fn run() {
         .setup(|app| {
             app.handle().plugin(tauri_plugin_updater::Builder::new().build())?;
 
-            // Application folder
-            let app_dir = app_root_dir();
-            std::fs::create_dir_all(&app_dir).unwrap();
+            // The settings and the cache live in the user's folders: a system
+            // install (the .deb or the .rpm, in /usr/bin) can't write next to
+            // the executable.
+            let config_dir = app.path().app_config_dir()?;
+            let cache_dir = app.path().app_cache_dir()?;
+            std::fs::create_dir_all(&config_dir)?;
+            std::fs::create_dir_all(&cache_dir)?;
+
+            let config_path = config_dir.join("configuration.toml");
+            let db_path = cache_dir.join("osu_cache.db");
+
+            if let Some(legacy_dir) = legacy_dir() {
+                migrate_legacy_files(&legacy_dir, &config_path, &db_path);
+            }
 
             // Load Configuration
-            let config = commands::config::file::read_config();
+            let config = commands::config::file::read_config(&config_path);
             app.manage(SessionState { osu_session: Mutex::new(config.downloader.osu_session.clone()) });
-            app.manage(AppConfigState { config: Mutex::new(config) });
+            app.manage(AppConfigState { config: Mutex::new(config), path: config_path });
 
-            // Database connection
-            let db_path = app_dir.join("osu_cache.db");
+            // Database connection. Opened from the path, not a `sqlite://` URL:
+            // sqlx decodes any `%` in it and cuts the name at a `?`.
+            let options = SqliteConnectOptions::new().filename(&db_path).create_if_missing(true);
 
             let pool = tauri::async_runtime::block_on(async {
-                SqlitePool::connect(&format!("sqlite://{}?mode=rwc", db_path.display()))
+                SqlitePool::connect_with(options)
                     .await
                     .expect("failed to connect to sqlite")
             });
@@ -144,7 +158,7 @@ pub fn run() {
                 let config_state = window.app_handle().state::<AppConfigState>();
                 let config = config_state.config.lock().unwrap().clone();
 
-                if let Err(e) = commands::config::file::write_config(&config) {
+                if let Err(e) = commands::config::file::write_config(&config_state.path, &config) {
                     log::error!("failed to write configuration.toml on close: {e}");
                 } else  {
                     log::info!("configuration.toml saved on close");
@@ -156,19 +170,117 @@ pub fn run() {
         .expect("error while running tauri application");
 }
 
-pub fn app_root_dir() -> PathBuf {
+/// Where earlier versions kept `configuration.toml` and `osu_cache.db`: next to
+/// the executable, or to the AppImage.
+fn legacy_dir() -> Option<PathBuf> {
+    if let Ok(appimage) = std::env::var("APPIMAGE") {
+        return Path::new(&appimage).parent().map(Path::to_path_buf);
+    }
 
-    // If the application is runnig in AppImage, use the AppImage directory as the root directory
-    if let Ok(appimage_path) = std::env::var("APPIMAGE") {
-        if let Some(parent) = std::path::Path::new(&appimage_path).parent() {
-            log::debug!("APPIMAGE environment variable found, using AppImage directory as root: {}", parent.display());
-            return parent.to_path_buf();
+    std::env::current_exe().ok()?.parent().map(Path::to_path_buf)
+}
+
+/// Moves the files of earlier versions out of `legacy_dir`, unless their new
+/// place already has its own.
+fn migrate_legacy_files(legacy_dir: &Path, config_path: &Path, db_path: &Path) {
+    move_legacy_file(&legacy_dir.join("configuration.toml"), config_path);
+
+    // A journal beside the cache means it was not closed cleanly, and the
+    // database is only whole together with it: the cache is rebuilt instead.
+    let journal = ["osu_cache.db-journal", "osu_cache.db-wal"]
+        .iter()
+        .any(|name| legacy_dir.join(name).exists());
+    if !journal {
+        move_legacy_file(&legacy_dir.join("osu_cache.db"), db_path);
+    }
+}
+
+fn move_legacy_file(from: &Path, to: &Path) {
+    if !from.is_file() || to.exists() {
+        return;
+    }
+
+    // A rename can't cross file systems (e.g. an AppImage on another drive).
+    let moved = std::fs::rename(from, to).or_else(|_| {
+        std::fs::copy(from, to)?;
+        std::fs::remove_file(from)
+    });
+
+    match moved {
+        Ok(()) => log::info!("moved {:?} to {:?}", from, to),
+        Err(e) => log::warn!("could not move {:?} to {:?}: {}", from, to, e),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// An empty folder in the temp dir, removed when dropped.
+    struct TestDir(PathBuf);
+
+    impl TestDir {
+        fn new(name: &str) -> Self {
+            let dir = std::env::temp_dir().join(format!("torosu-test-{}-{}", std::process::id(), name));
+            let _ = std::fs::remove_dir_all(&dir);
+            std::fs::create_dir_all(&dir).unwrap();
+            Self(dir)
+        }
+
+        fn write(&self, name: &str, content: &str) {
+            std::fs::write(self.0.join(name), content).unwrap();
+        }
+
+        fn read(&self, name: &str) -> Option<String> {
+            std::fs::read_to_string(self.0.join(name)).ok()
         }
     }
 
-    std::env::current_exe()
-        .expect("failed to get current exe path")
-        .parent()
-        .expect("failed to get parent directory")
-        .to_path_buf()
+    impl Drop for TestDir {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.0);
+        }
+    }
+
+    fn migrate(old: &TestDir, new: &TestDir) {
+        migrate_legacy_files(&old.0, &new.0.join("configuration.toml"), &new.0.join("osu_cache.db"));
+    }
+
+    #[test]
+    fn moves_the_files_of_earlier_versions() {
+        let (old, new) = (TestDir::new("move-old"), TestDir::new("move-new"));
+        old.write("configuration.toml", "dev_mode = true");
+        old.write("osu_cache.db", "cache");
+
+        migrate(&old, &new);
+
+        assert_eq!(new.read("configuration.toml").as_deref(), Some("dev_mode = true"));
+        assert_eq!(new.read("osu_cache.db").as_deref(), Some("cache"));
+        assert_eq!(old.read("configuration.toml"), None);
+        assert_eq!(old.read("osu_cache.db"), None);
+    }
+
+    #[test]
+    fn keeps_what_the_new_place_already_has() {
+        let (old, new) = (TestDir::new("keep-old"), TestDir::new("keep-new"));
+        old.write("configuration.toml", "old");
+        new.write("configuration.toml", "new");
+
+        migrate(&old, &new);
+
+        assert_eq!(new.read("configuration.toml").as_deref(), Some("new"));
+        assert_eq!(old.read("configuration.toml").as_deref(), Some("old"));
+    }
+
+    #[test]
+    fn leaves_a_cache_that_was_not_closed_cleanly() {
+        let (old, new) = (TestDir::new("journal-old"), TestDir::new("journal-new"));
+        old.write("osu_cache.db", "cache");
+        old.write("osu_cache.db-journal", "journal");
+
+        migrate(&old, &new);
+
+        assert_eq!(new.read("osu_cache.db"), None);
+        assert_eq!(old.read("osu_cache.db").as_deref(), Some("cache"));
+    }
 }
