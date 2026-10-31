@@ -68,12 +68,10 @@ use crate::commands::trainer::{
         patterns::{self, Pattern},
         zones::Zone,
     },
+    mania::{self, STABLE_MAX_KEYS},
     model::{Density, KeyConverterParams},
-    naming,
+    timing::BeatGrid,
 };
-
-/// osu! stable plays 1K to 10K.
-pub const MAX_KEYS: usize = 10;
 
 const BEAM_WIDTH: usize = 8;
 
@@ -83,9 +81,6 @@ const JACK_BEATS: f64 = 0.375;
 /// The same column in consecutive source rows up to this far apart (in beats)
 /// is a jack of the map, kept on one key: fast maps jack at 1/2.
 const SOURCE_JACK_BEATS: f64 = 0.55;
-
-/// Leniency for notes a couple of ms off the grid.
-const GRID_LENIENCY_MS: f64 = 2.0;
 
 /// Rows further apart than this (in beats) are not compared for flow.
 const FLOW_BEATS: f64 = 2.0;
@@ -229,8 +224,8 @@ fn hand_bit(hand: Hand) -> u8 {
 }
 
 /// The hand of each key of a playstyle.
-fn hands(layout: &Layout) -> [Hand; MAX_KEYS] {
-    let mut hands = [Hand::Either; MAX_KEYS];
+fn hands(layout: &Layout) -> [Hand; STABLE_MAX_KEYS] {
+    let mut hands = [Hand::Either; STABLE_MAX_KEYS];
     for (hand, finger) in hands.iter_mut().zip(&layout.fingers) {
         *hand = finger.hand;
     }
@@ -297,12 +292,12 @@ const NONE: u8 = u8::MAX;
 #[derive(Clone, Copy)]
 struct State {
     /// Per target key: when it is free again, and what was there.
-    release: [f64; MAX_KEYS],
-    last_src: [u8; MAX_KEYS],
-    last_is_ln: [bool; MAX_KEYS],
+    release: [f64; STABLE_MAX_KEYS],
+    last_src: [u8; STABLE_MAX_KEYS],
+    last_is_ln: [bool; STABLE_MAX_KEYS],
     /// Per source column: its last note, to keep its jacks on one key.
-    src_release: [f64; MAX_KEYS],
-    src_target: [u8; MAX_KEYS],
+    src_release: [f64; STABLE_MAX_KEYS],
+    src_target: [u8; STABLE_MAX_KEYS],
     /// Time and average position (0..1) of the previous row, in source and
     /// target.
     prev: Option<(f64, f64, f64)>,
@@ -321,11 +316,11 @@ struct State {
 impl State {
     fn new() -> Self {
         Self {
-            release: [f64::NEG_INFINITY; MAX_KEYS],
-            last_src: [NONE; MAX_KEYS],
-            last_is_ln: [false; MAX_KEYS],
-            src_release: [f64::NEG_INFINITY; MAX_KEYS],
-            src_target: [NONE; MAX_KEYS],
+            release: [f64::NEG_INFINITY; STABLE_MAX_KEYS],
+            last_src: [NONE; STABLE_MAX_KEYS],
+            last_is_ln: [false; STABLE_MAX_KEYS],
+            src_release: [f64::NEG_INFINITY; STABLE_MAX_KEYS],
+            src_target: [NONE; STABLE_MAX_KEYS],
             prev: None,
             single: None,
             last_roll: 0,
@@ -382,8 +377,8 @@ struct Ctx<'a> {
     dst_keys: usize,
     keep_jacks: bool,
     fill: Option<Fill>,
-    src_hands: [Hand; MAX_KEYS],
-    dst_hands: [Hand; MAX_KEYS],
+    src_hands: [Hand; STABLE_MAX_KEYS],
+    dst_hands: [Hand; STABLE_MAX_KEYS],
     /// The keys of the left and right hand of the target, the middle key aside,
     /// and whether both have 4 keys or more (see [`W_HAND_ROLL`]).
     dst_groups: [u16; 2],
@@ -478,8 +473,8 @@ impl Ctx<'_> {
 
     /// Cost of each source note of the row in each target key, `INFINITY`
     /// where it cannot go.
-    fn note_costs(&self, state: &State, row: &Row) -> [[f64; MAX_KEYS]; MAX_KEYS] {
-        let mut costs = [[f64::INFINITY; MAX_KEYS]; MAX_KEYS];
+    fn note_costs(&self, state: &State, row: &Row) -> [[f64; STABLE_MAX_KEYS]; STABLE_MAX_KEYS] {
+        let mut costs = [[f64::INFINITY; STABLE_MAX_KEYS]; STABLE_MAX_KEYS];
         let jack_gap = row.beat_len * JACK_BEATS;
         let busy = self.busy_hands(state, row);
         // With extra notes, in jumptrills the middle key is an accent on the
@@ -563,8 +558,8 @@ impl Ctx<'_> {
 
     /// Cost of an extra note in each key (negative: a reward), `INFINITY`
     /// where it does not fit.
-    fn extra_costs(&self, state: &State, row: &Row) -> [f64; MAX_KEYS] {
-        let mut costs = [f64::INFINITY; MAX_KEYS];
+    fn extra_costs(&self, state: &State, row: &Row) -> [f64; STABLE_MAX_KEYS] {
+        let mut costs = [f64::INFINITY; STABLE_MAX_KEYS];
         let Some(fill) = self.fill else { return costs };
         if row.strength < fill.min_strength {
             return costs;
@@ -600,7 +595,7 @@ impl Ctx<'_> {
     /// and any density on wide hands, take any free key instead, so big chords
     /// stay open (`O.O.O.O`, not `OOOO...`), as in hand conversions of
     /// handstreams; on wide hands a pill costs [`W_PILL`] more.
-    fn pick_extras(&self, state: &State, row: &Row, combo: &[u8], extra_costs: &[f64; MAX_KEYS]) -> ([u8; MAX_EXTRAS], u8, f64) {
+    fn pick_extras(&self, state: &State, row: &Row, combo: &[u8], extra_costs: &[f64; STABLE_MAX_KEYS]) -> ([u8; MAX_EXTRAS], u8, f64) {
         let mut extras = [0u8; MAX_EXTRAS];
         let Some(fill) = self.fill else { return (extras, 0, 0.0) };
         let max = if fill.scaled { row.quota as usize } else { fill.max };
@@ -926,10 +921,6 @@ fn search(ctx: &Ctx, rows: &[Row]) -> Vec<Decision> {
     path
 }
 
-fn column_x(col: usize, keys: usize) -> f32 {
-    ((col as f32 + 0.5) * 512.0 / keys as f32).floor()
-}
-
 fn set_x(obj: &mut HitObject, x: f32) {
     match &mut obj.kind {
         HitObjectKind::Circle(circle) => circle.pos.x = x,
@@ -1015,29 +1006,19 @@ pub fn apply(beatmap: &mut Beatmap, params: &KeyConverterParams) -> Result<()> {
         bail!("the key converter only works on osu!mania maps");
     }
 
-    let src_keys = beatmap.circle_size.round().clamp(1.0, MAX_KEYS as f32) as usize;
+    let src_keys = mania::key_count(beatmap);
     let dst_keys = params.target_keys as usize;
-    if !(1..=MAX_KEYS).contains(&dst_keys) {
-        bail!("the key converter supports 1K to {}K, not {}K", MAX_KEYS, dst_keys);
+    for keys in [src_keys, dst_keys] {
+        if !(1..=STABLE_MAX_KEYS).contains(&keys) {
+            bail!("the key converter supports 1K to {}K, not {}K", STABLE_MAX_KEYS, keys);
+        }
     }
     if src_keys == dst_keys {
         log::warn!("key converter: the map is already {}K, left as is", dst_keys);
         return Ok(());
     }
 
-    // The beat grid. Gimmick maps use fake BPMs (0.001, 100000...), which are
-    // skipped.
-    let main_beat_len = naming::main_bpm(beatmap).map_or(500.0, |bpm| 60_000.0 / bpm);
-    let mut grid: Vec<(f64, f64)> = beatmap
-        .control_points
-        .timing_points
-        .iter()
-        .filter(|tp| tp.beat_len.is_finite() && (main_beat_len / 10.0..=main_beat_len * 10.0).contains(&tp.beat_len))
-        .map(|tp| (tp.time, tp.beat_len))
-        .collect();
-    if grid.is_empty() {
-        grid.push((0.0, main_beat_len));
-    }
+    let grid = BeatGrid::new(beatmap);
 
     // The patterns and density zones of the source.
     let src_layout = layout::layout(src_keys, None);
@@ -1057,19 +1038,14 @@ pub fn apply(beatmap: &mut Beatmap, params: &KeyConverterParams) -> Result<()> {
     let mut rows: Vec<Row> = Vec::new();
 
     for (idx, obj) in beatmap.hit_objects.iter().enumerate() {
-        let (x, end) = match &obj.kind {
-            HitObjectKind::Circle(circle) => (circle.pos.x, obj.start_time),
-            HitObjectKind::Hold(hold) => (hold.pos_x, obj.start_time + hold.duration),
-            _ => continue,
-        };
-        let src = ((x * src_keys as f32 / 512.0).floor().max(0.0) as usize).min(src_keys - 1) as u8;
+        let Some((x, end)) = mania::note(obj) else { continue };
+        let src = mania::column(x, src_keys) as u8;
         let time = obj.start_time;
 
         match rows.last_mut() {
             Some(row) if (time - row.time).abs() < 1.0 => row.notes.end += 1,
             _ => {
-                let tp = grid.partition_point(|&(t, _)| t <= time + GRID_LENIENCY_MS).saturating_sub(1);
-                let (tp_time, beat_len) = grid[tp];
+                let (tp_time, beat_len) = grid.at(time);
                 let (pattern, zone, beat) = source_at(time);
                 rows.push(Row {
                     time,
@@ -1176,7 +1152,7 @@ pub fn apply(beatmap: &mut Beatmap, params: &KeyConverterParams) -> Result<()> {
         for &col in &decision.extras[..decision.n_extras as usize] {
             if let Some(n) = ctx.template(row, decision, col) {
                 let mut copy = beatmap.hit_objects[notes[n].idx].clone();
-                set_x(&mut copy, column_x(col as usize, dst_keys));
+                set_x(&mut copy, mania::column_x(col as usize, dst_keys));
                 extra.push(copy);
             }
         }
@@ -1187,7 +1163,7 @@ pub fn apply(beatmap: &mut Beatmap, params: &KeyConverterParams) -> Result<()> {
     for (mut obj, target) in std::mem::take(&mut beatmap.hit_objects).into_iter().zip(&targets) {
         match (&obj.kind, target) {
             (HitObjectKind::Circle(_) | HitObjectKind::Hold(_), Some(col)) => {
-                set_x(&mut obj, column_x(*col as usize, dst_keys));
+                set_x(&mut obj, mania::column_x(*col as usize, dst_keys));
                 objects.push(obj);
             }
             (HitObjectKind::Circle(_) | HitObjectKind::Hold(_), None) => {}
@@ -1245,7 +1221,7 @@ mod tests {
                 if busy[col] >= time {
                     continue;
                 }
-                let x = ((col as f32 + 0.5) * 512.0 / keys as f32) as i32;
+                let x = mania::column_x(col, keys) as i32;
                 if (seed >> 40) % 5 == 0 {
                     let end = time + 375;
                     busy[col] = end;
@@ -1353,12 +1329,8 @@ mod tests {
     }
 
     fn column(obj: &HitObject, keys: usize) -> usize {
-        let x = match &obj.kind {
-            HitObjectKind::Circle(c) => c.pos.x,
-            HitObjectKind::Hold(h) => h.pos_x,
-            _ => unreachable!(),
-        };
-        ((x * keys as f32 / 512.0) as usize).min(keys - 1)
+        let (x, _) = mania::note(obj).expect("only notes");
+        mania::column(x, keys)
     }
 
     /// Checks no two notes overlap or stack in a key, and returns how many
@@ -1367,15 +1339,13 @@ mod tests {
         let mut release = vec![f64::NEG_INFINITY; keys];
         let mut jacks = 0;
         for obj in &beatmap.hit_objects {
-            let col = column(obj, keys);
+            let (x, end) = mania::note(obj).expect("only notes");
+            let col = mania::column(x, keys);
             assert!(obj.start_time > release[col], "overlap in key {} at {}", col, obj.start_time);
             if obj.start_time - release[col] <= 500.0 * JACK_BEATS {
                 jacks += 1;
             }
-            release[col] = match &obj.kind {
-                HitObjectKind::Hold(h) => obj.start_time + h.duration,
-                _ => obj.start_time,
-            };
+            release[col] = end;
         }
         jacks
     }

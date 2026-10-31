@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, inject } from '@angular/core';
-import { PackStore } from '@entities/pack'; 
+import { PackStore } from '../../pack.store';
 import { debounceTime, Subject } from 'rxjs';
 import { TuiInput } from '@taiga-ui/core';
 

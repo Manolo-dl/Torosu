@@ -31,10 +31,11 @@ use serde::Serialize;
 
 use super::{
     layout::{Layout, layout},
-    patterns::{Labelled, Pattern, key_count, label, link_ms, modifier},
+    patterns::{Labelled, Pattern, label, link_ms, modifier},
     zones::Zone,
 };
 use crate::commands::trainer::{
+    mania::key_count,
     model::{Density, KeyConverterParams},
     tasks::key_converter,
 };

@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
-import { NoteLength } from '@features/trainer/models/trainer.model';
+import { NoteLength } from '../../models/trainer.model';
 import { TuiInput } from '@taiga-ui/core';
 import { TuiSegmented } from '@taiga-ui/kit';
 

@@ -1,3 +1,5 @@
+@import 'shared/styles/mixins';
+
 :host {
   display: block;
 }
@@ -35,9 +37,7 @@ header {
     min-inline-size: 0;
     text-align: start;
     font-family: monospace;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    .ellipsis();
   }
 }
 
@@ -75,8 +75,5 @@ header {
 }
 
 .empty {
-  padding: 1.5rem 0;
-  text-align: center;
-  color: var(--tui-text-tertiary);
-  font: var(--tui-typography-body-s);
+  .empty-state(1.5rem 0);
 }

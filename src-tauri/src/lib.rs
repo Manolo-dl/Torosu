@@ -1,36 +1,18 @@
-use std::{path::PathBuf, sync::{Mutex, atomic::AtomicBool}};
-use sqlx::SqlitePool;
+use std::{path::{Path, PathBuf}, sync::{Mutex, atomic::AtomicBool}};
 use tauri::Manager;
 use tauri_plugin_log::{Target, TargetKind};
 
-use crate::commands::config::model::AppConfig;
 use crate::commands::osu_reader::ReaderSnapshot;
+use crate::state::{AppConfigState, OsuReaderState, SessionState, UpdateState};
 
 mod commands;
-
-pub struct DbState {
-    pub pool: SqlitePool,
-}
-
-pub struct OsuReaderState {
-    pub started: AtomicBool,
-    pub snapshot: Mutex<ReaderSnapshot>,
-}
-
-pub struct AppConfigState {
-    pub config: Mutex<AppConfig>,
-}
-
-/// The update found by `check_update`, waiting for the user to install it.
-pub struct UpdateState {
-    pub pending: Mutex<Option<tauri_plugin_updater::Update>>,
-}
-
-/// The osu_session cookie in use; it only reaches the configuration file
-/// with `save_session`.
-pub struct SessionState {
-    pub osu_session: Mutex<Option<String>>,
-}
+mod error;
+mod name_format;
+mod osz;
+mod paths;
+mod state;
+#[cfg(test)]
+mod test_utils;
 
 pub fn run() {
     // reqwest is built without a bundled crypto provider; share ring with the updater
@@ -40,30 +22,21 @@ pub fn run() {
         .setup(|app| {
             app.handle().plugin(tauri_plugin_updater::Builder::new().build())?;
 
-            // Application folder
-            let app_dir = app_root_dir();
-            std::fs::create_dir_all(&app_dir).unwrap();
+            // The settings live in the user's folders: a system install (the
+            // .deb or the .rpm, in /usr/bin) can't write next to the executable.
+            let config_dir = app.path().app_config_dir()?;
+            std::fs::create_dir_all(&config_dir)?;
+
+            let config_path = config_dir.join("configuration.toml");
+
+            if let Some(legacy_dir) = legacy_dir() {
+                migrate_legacy_files(&legacy_dir, &config_path);
+            }
 
             // Load Configuration
-            let config = commands::config::file::read_config();
+            let config = commands::config::file::read_config(&config_path);
             app.manage(SessionState { osu_session: Mutex::new(config.downloader.osu_session.clone()) });
-            app.manage(AppConfigState { config: Mutex::new(config) });
-
-            // Database connection
-            let db_path = app_dir.join("osu_cache.db");
-
-            let pool = tauri::async_runtime::block_on(async {
-                SqlitePool::connect(&format!("sqlite://{}?mode=rwc", db_path.display()))
-                    .await
-                    .expect("failed to connect to sqlite")
-            });
-
-            tauri::async_runtime::block_on(async {
-                commands::osu_db::cache::init_schema(&pool).await.expect("failed to init osudb schema");
-                commands::collections::cache::init_schema(&pool).await.expect("failed to init collection schema")
-            });
-
-            app.manage(DbState { pool });
+            app.manage(AppConfigState { config: Mutex::new(config), path: config_path });
 
             // Updates are offered by the frontend (see `check_update`).
             app.manage(UpdateState { pending: Mutex::new(None) });
@@ -99,7 +72,6 @@ pub fn run() {
             .level_for("rustls", log::LevelFilter::Off)
             .level_for("zbus", log::LevelFilter::Off)
             .level_for("rustls_platform_verifier", log::LevelFilter::Off)
-            .level_for("sqlx", log::LevelFilter::Off)
             .level_for("tauri_plugin_updater", log::LevelFilter::Off)
             .targets([
                 Target::new(TargetKind::LogDir { file_name: None }),
@@ -120,7 +92,7 @@ pub fn run() {
             commands::system::update::check_update,
             commands::system::update::install_update,
             commands::collections::reader::read_osu_collections,
-            commands::collections::reader::write_text_file,
+            commands::system::text_file::write_text_file,
             commands::collections::writer::import_collections,
             commands::osu_db::reader::read_osu_db_full,
             commands::system::download::start_downloads,
@@ -129,12 +101,14 @@ pub fn run() {
             commands::packs::folders::validate_pack_folder,
             commands::packs::creator::create_pack,
             commands::dev::logs::read_logs,
-            commands::dev::database::get_database_tables,
-            commands::dev::database::get_table_columns,
-            commands::dev::database::execute_query,
             commands::osu_reader::connect_osu_reader,
             commands::osu_reader::export::export_selected_osz,
             commands::trainer::run::run_trainer,
+            commands::trainer::naming::trainer_name_example,
+            commands::packs::naming::pack_diff_names,
+            commands::packs::naming::pack_name_example,
+            commands::trainer::presets::read_trainer_presets,
+            commands::trainer::presets::write_trainer_presets,
             commands::trainer::video::is_ffmpeg_available
         ])
         .on_window_event(|window, event| {
@@ -144,7 +118,7 @@ pub fn run() {
                 let config_state = window.app_handle().state::<AppConfigState>();
                 let config = config_state.config.lock().unwrap().clone();
 
-                if let Err(e) = commands::config::file::write_config(&config) {
+                if let Err(e) = commands::config::file::write_config(&config_state.path, &config) {
                     log::error!("failed to write configuration.toml on close: {e}");
                 } else  {
                     log::info!("configuration.toml saved on close");
@@ -156,19 +130,96 @@ pub fn run() {
         .expect("error while running tauri application");
 }
 
-pub fn app_root_dir() -> PathBuf {
-
-    // If the application is runnig in AppImage, use the AppImage directory as the root directory
-    if let Ok(appimage_path) = std::env::var("APPIMAGE") {
-        if let Some(parent) = std::path::Path::new(&appimage_path).parent() {
-            log::debug!("APPIMAGE environment variable found, using AppImage directory as root: {}", parent.display());
-            return parent.to_path_buf();
-        }
+/// Where earlier versions kept `configuration.toml` and `osu_cache.db`: next to
+/// the executable, or to the AppImage.
+fn legacy_dir() -> Option<PathBuf> {
+    if let Ok(appimage) = std::env::var("APPIMAGE") {
+        return Path::new(&appimage).parent().map(Path::to_path_buf);
     }
 
-    std::env::current_exe()
-        .expect("failed to get current exe path")
-        .parent()
-        .expect("failed to get parent directory")
-        .to_path_buf()
+    std::env::current_exe().ok()?.parent().map(Path::to_path_buf)
+}
+
+/// Moves the settings of earlier versions out of `legacy_dir`, unless the new
+/// place already has its own, and deletes the SQLite cache of osu!.db and
+/// collection.db they kept there: reading it was slower than reading those
+/// files, so it is no longer used.
+fn migrate_legacy_files(legacy_dir: &Path, config_path: &Path) {
+    move_legacy_file(&legacy_dir.join("configuration.toml"), config_path);
+
+    for name in ["osu_cache.db", "osu_cache.db-journal", "osu_cache.db-wal", "osu_cache.db-shm"] {
+        let path = legacy_dir.join(name);
+        if !path.is_file() {
+            continue;
+        }
+
+        match std::fs::remove_file(&path) {
+            Ok(()) => log::info!("removed the old cache {:?}", path),
+            Err(e) => log::warn!("could not remove the old cache {:?}: {}", path, e),
+        }
+    }
+}
+
+fn move_legacy_file(from: &Path, to: &Path) {
+    if !from.is_file() || to.exists() {
+        return;
+    }
+
+    // A rename can't cross file systems (e.g. an AppImage on another drive).
+    let moved = std::fs::rename(from, to).or_else(|_| {
+        std::fs::copy(from, to)?;
+        std::fs::remove_file(from)
+    });
+
+    match moved {
+        Ok(()) => log::info!("moved {:?} to {:?}", from, to),
+        Err(e) => log::warn!("could not move {:?} to {:?}: {}", from, to, e),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::test_utils::TestDir;
+
+    fn migrate(old: &TestDir, new: &TestDir) {
+        migrate_legacy_files(&old.0, &new.0.join("configuration.toml"));
+    }
+
+    #[test]
+    fn moves_the_settings_of_earlier_versions() {
+        let (old, new) = (TestDir::new("move-old"), TestDir::new("move-new"));
+        old.write("configuration.toml", "dev_mode = true");
+
+        migrate(&old, &new);
+
+        assert_eq!(new.read("configuration.toml").as_deref(), Some("dev_mode = true"));
+        assert_eq!(old.read("configuration.toml"), None);
+    }
+
+    #[test]
+    fn keeps_what_the_new_place_already_has() {
+        let (old, new) = (TestDir::new("keep-old"), TestDir::new("keep-new"));
+        old.write("configuration.toml", "old");
+        new.write("configuration.toml", "new");
+
+        migrate(&old, &new);
+
+        assert_eq!(new.read("configuration.toml").as_deref(), Some("new"));
+        assert_eq!(old.read("configuration.toml").as_deref(), Some("old"));
+    }
+
+    #[test]
+    fn deletes_the_old_cache_and_nothing_else() {
+        let (old, new) = (TestDir::new("cache-old"), TestDir::new("cache-new"));
+        old.write("osu_cache.db", "cache");
+        old.write("osu_cache.db-journal", "journal");
+        old.write("torosu.AppImage", "app");
+
+        migrate(&old, &new);
+
+        assert_eq!(old.read("osu_cache.db"), None);
+        assert_eq!(old.read("osu_cache.db-journal"), None);
+        assert_eq!(old.read("torosu.AppImage").as_deref(), Some("app"));
+    }
 }

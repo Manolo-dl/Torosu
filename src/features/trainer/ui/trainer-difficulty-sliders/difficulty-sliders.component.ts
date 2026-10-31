@@ -1,8 +1,8 @@
 import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { DifficultyKey } from '@features/trainer/models/trainer.model';
-import { TrainerStore } from '@features/trainer/stores/trainer.store';
+import { DifficultyKey } from '../../models/trainer.model';
+import { TrainerStore } from '../../stores/trainer.store';
 import { TuiButton, TuiSlider, TuiTitle } from '@taiga-ui/core';
 import { TuiCardLarge } from '@taiga-ui/layout';
 

@@ -1,78 +1,29 @@
 use std::collections::HashMap;
 use std::panic;
+use std::path::Path;
 use osynic_osudb::entity::osu::osudb::OsuDB;
-use crate::{AppConfigState, DbState, commands::osu_db::model::{OsuBeatmapSet, OsuDiff}};
-use super::cache;
+use crate::{commands::osu_db::model::{OsuBeatmapSet, OsuDiff}, error::Result, state::AppConfigState};
 
 #[tauri::command]
 pub async fn read_osu_db_full(
     config_state: tauri::State<'_, AppConfigState>,
-    db_state: tauri::State<'_, DbState>,
-) -> Result<Vec<OsuBeatmapSet>, String> {
+) -> Result<Vec<OsuBeatmapSet>> {
 
-    let osu_path = config_state.config.lock().unwrap()
-        .osu_path.clone()
-        .ok_or("osu! path not set")?;
+    let osu_path = config_state.osu_path()?;
 
-    let use_sqlite = config_state.config.lock().unwrap().sqlite_db.clone();
+    let sets = tauri::async_runtime::spawn_blocking(move || read_from_osudb(&osu_path)).await??;
 
-    let db_path = std::path::Path::new(&osu_path).join("osu!.db");
-
-    
-    let metadata = std::fs::metadata(&db_path).map_err(|e| {
-        log::error!("Failed to read osu!.db metadata: {:?}: {}", db_path, e);
-        e.to_string()
-    })?;
-    
-    let file_size = metadata.len() as i64;
-    let last_modified = metadata
-    .modified()
-    .map_err(|e| e.to_string())?
-    .duration_since(std::time::UNIX_EPOCH)
-    .map_err(|e| e.to_string())?
-    .as_secs() as i64;
-
-    let pool = &db_state.pool;
-
-    if use_sqlite {
-        log::debug!("Attempting to read osu!.db from {:?}", db_path);
-        if let Some(meta) = cache::get_meta(pool).await {
-            if meta.last_modified == last_modified && meta.file_size == file_size {
-                log::debug!("loading osu!.db from cache");
-                return cache::get_beatmapsets(pool).await.map_err(|e| {
-                    log::error!("Failed to read osu!.db from cache: {}", e);
-                    e.to_string()
-                });
-            }
-        }
-    }
-
-    log::debug!("cache miss, reading osu!.db at {:?}", db_path);
-    let sets = read_from_osudb(&osu_path)?;
     log::info!("successfully parsed {} beatmap sets from osu!.db", sets.len());
-
-    if use_sqlite {
-        log::debug!("saving osu!.db to cache");
-        cache::save_beatmapsets(pool, &sets).await.map_err(|e| {
-            log::error!("Failed to save osu!.db to cache: {}", e);
-            e.to_string()
-        })?;
-    
-        cache::set_meta(pool, last_modified, file_size).await.map_err(|e| {
-            log::error!("Failed to save osu!.db metadata to cache: {}", e);
-            e.to_string()
-        })?;
-    }
 
     Ok(sets)
 }
 
-fn read_from_osudb(osu_path: &str) -> Result<Vec<OsuBeatmapSet>, String> {
+fn read_from_osudb(osu_path: &Path) -> Result<Vec<OsuBeatmapSet>> {
 
     use osynic_osudb::entity::osu::field::mode::Mode;
     use osynic_osudb::entity::osu::field::rank::RankedStatus;
 
-    let db_path = std::path::Path::new(osu_path).join("osu!.db");
+    let db_path = osu_path.join("osu!.db");
 
     log::debug!("Attempting to read osu!.db from {:?}", db_path);
 
@@ -84,7 +35,7 @@ fn read_from_osudb(osu_path: &str) -> Result<Vec<OsuBeatmapSet>, String> {
         })?
         .map_err(|e| {
             log::error!("Failed to parse osu!.db at {:?}: {}", db_path, e);
-            e.to_string()
+            e
         })?;
 
     let mut sets: HashMap<String, OsuBeatmapSet> = HashMap::new();
@@ -112,11 +63,6 @@ fn read_from_osudb(osu_path: &str) -> Result<Vec<OsuBeatmapSet>, String> {
         .map(|(_, s)| *s)
         .unwrap_or(0.0);
 
-        let bpm = b.timing_points.iter()
-            .find(|tp| !tp.inherits)
-            .map(|tp| (60000.0 / tp.bpm).round())
-            .unwrap_or(0.0);
-
         let status = match b.status {
             RankedStatus::Ranked => "ranked",
             RankedStatus::Loved => "loved",
@@ -131,7 +77,6 @@ fn read_from_osudb(osu_path: &str) -> Result<Vec<OsuBeatmapSet>, String> {
             md5,
             diff_name: b.difficulty_name.unwrap_or_default(),
             mode: b.mode.raw(),
-            bpm,
             length: b.total_time,
             stars,
             last_played: b.last_played.is_some(),

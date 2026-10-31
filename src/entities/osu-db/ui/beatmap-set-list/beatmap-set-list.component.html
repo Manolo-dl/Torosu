@@ -1,0 +1,15 @@
+@if (sets().length === 0) {
+  <div class="empty">{{ emptyText() }}</div>
+} @else {
+  <cdk-virtual-scroll-viewport
+    itemSize="56"
+    tuiScrollRef
+    class="viewport"
+    [style.height]="listHeight()"
+  >
+    <tui-scroll-controls />
+    <div *cdkVirtualFor="let set of sets(); trackBy: trackSet" class="item">
+      <app-beatmap-set-card [set]="set" [diffAction]="diffAction()" />
+    </div>
+  </cdk-virtual-scroll-viewport>
+}

@@ -1,3 +1,5 @@
+@import 'shared/styles/mixins';
+
 :host {
   display: flex;
   flex-direction: column;
@@ -43,9 +45,7 @@
     font: var(--tui-font-text-s);
 
     .path {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      .ellipsis();
       font-family: monospace;
       color: var(--tui-text-primary);
     }
@@ -86,7 +86,10 @@ section {
     border-radius: var(--tui-radius-m);
     background: color-mix(in srgb, var(--tui-background-accent-1) 15%, transparent);
     color: var(--tui-background-accent-1);
-    font-size: 1.1rem;
+
+    tui-icon {
+      font-size: 1.25rem;
+    }
   }
 
   [tuiTitle] {

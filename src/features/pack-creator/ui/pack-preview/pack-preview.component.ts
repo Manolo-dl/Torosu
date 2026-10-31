@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { ScrollingModule } from '@angular/cdk/scrolling';
-import { PackStore, SelectedDiff } from '@entities/pack';
+import { SelectedDiff } from '../../pack.model';
+import { PackStore } from '../../pack.store';
 import { TuiScrollControls, TuiScrollRef, TuiTitle } from '@taiga-ui/core';
 import { TuiBadge } from '@taiga-ui/kit';
 import { TuiCardLarge } from '@taiga-ui/layout';

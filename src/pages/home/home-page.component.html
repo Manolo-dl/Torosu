@@ -28,7 +28,7 @@
   <div class="tools">
     @for (tool of tools(); track tool.route) {
       <a appearance="floating" tuiCardLarge="compact" class="tool" [routerLink]="tool.route">
-        <span class="icon"><fa-icon [icon]="tool.icon" /></span>
+        <span class="icon"><tui-icon [icon]="tool.icon" /></span>
         <span tuiTitle>
           {{ tool.label }}
           <span tuiSubtitle>{{ tool.description }}</span>

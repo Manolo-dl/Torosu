@@ -8,7 +8,7 @@
                 [routerLinkActiveOptions]="{ exact: item.route === '/' }"
                 [class.disabled]="item.disabled"
                 >
-                    <fa-icon [icon]=item.icon />
+                    <tui-icon [icon]="item.icon" />
                     <span>{{ item.label }}</span>
                 </a>
             </li>
@@ -25,7 +25,7 @@
                     [routerLinkActiveOptions]="{ exact: item.route === '/' }"
                     [class.disabled]="item.disabled"
                     >
-                        <fa-icon [icon]=item.icon />
+                        <tui-icon [icon]="item.icon" />
                         <span>{{ item.label }}</span>
                     </a>
                 </li>

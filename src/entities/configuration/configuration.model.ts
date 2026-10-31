@@ -3,10 +3,23 @@ export interface AppConfig {
     excluded_tools: string[];
     downloader: DownloaderConfig;
     packs: PacksConfig;
-    sqlite_db: boolean;
+    trainer: TrainerConfig;
     open_file: boolean;
-    /** Shows the developer pages (logs, database, osu! data). */
+    /** Shows the developer pages (logs, osu! data). */
     dev_mode: boolean;
+}
+
+export interface TrainerConfig {
+    /** Encode the generated audio at ~192 kbit/s instead of ~128 kbit/s. */
+    high_quality_audio: boolean;
+    /** Re-encode the scaled video at a better quality (CRF 23 instead of 28), nearly twice as big. */
+    high_quality_video: boolean;
+    /** The rate change sets the pitch from the rate (kept below 1.0x, raised above), without the option. */
+    auto_pitch: boolean;
+    /** Open each generated .osz, so osu! imports it right away. */
+    open_osz: boolean;
+    /** Template of the difficulty name, with placeholders like `{diff}` and `{rate}` (see `naming.rs`). */
+    name_format: string;
 }
 
 export interface PacksConfig {
@@ -14,6 +27,8 @@ export interface PacksConfig {
     keep_background: boolean;
     /** Above this many original sets (each with its own audio and background) the pack is split; 0 never splits. */
     max_sets_per_pack: number;
+    /** Template of the name a diff gets in the pack, with placeholders like `{artist}` (see `packs/naming.rs`). */
+    name_format: string;
 }
 
 export interface DownloaderConfig {

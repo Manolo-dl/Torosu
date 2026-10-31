@@ -107,32 +107,53 @@ const STRETCH_CHUNK_FRAMES: usize = 4096;
 
 /// Changes the speed while preserving the original pitch.
 ///
-/// Feeds SoundTouch in chunks and drains after each one instead of using
+/// Borrows the decoded audio (~85 MB for 4 min of stereo): the converts of a
+/// run share it.
+pub fn apply_timestretch(audio: &DecodedAudio, rate: f64, on_progress: impl FnMut(f32)) -> Result<Vec<f32>> {
+    // SequenceMs/SeekwindowMs are kept: dropping them for calcSeqParameters'
+    // auto-tuning only saves ~5% once streaming, but changes the stretch
+    // granulation, so the output would no longer be identical.
+    let output = run_soundtouch(audio, rate, on_progress, |st| {
+        st.set_tempo(rate)
+            .set_setting(Setting::UseQuickseek, 1)
+            .set_setting(Setting::SequenceMs, 40)
+            .set_setting(Setting::SeekwindowMs, 15);
+    });
+    Ok(output)
+}
+
+/// Changes the speed letting the pitch shift with it, resampled back to the
+/// original sample rate. Faster than 1x, Vorbis encodes that in less space
+/// than the same samples at the raised rate ([`resampled_rate`]): 5% less at
+/// 1.3x, 10% at 1.5x. Slower, the lowered rate is the smaller one.
+pub fn apply_rate_change(audio: &DecodedAudio, rate: f64, on_progress: impl FnMut(f32)) -> Vec<f32> {
+    run_soundtouch(audio, rate, on_progress, |st| {
+        st.set_rate(rate);
+    })
+}
+
+/// Runs `audio` through SoundTouch, set up by `configure` for a speed of `rate`.
+///
+/// Feeds it in chunks and drains after each one instead of using
 /// `generate_audio()`, which pushes the whole track at once and only drains at
 /// the end. That grows SoundTouch's internal FIFO from 0 to ~85 MB in 4 KB
 /// steps, each one a full memcpy: O(n^2). Draining per chunk keeps the FIFO at
 /// a few KB and `ensureCapacity` never reallocates. On a 4 min track:
 /// 57.7 s -> 0.19 s, with bit-identical output.
-pub fn apply_timestretch(
+fn run_soundtouch(
     audio: &DecodedAudio,
     rate: f64,
     mut on_progress: impl FnMut(f32),
-) -> Result<Vec<f32>> {
+    configure: impl FnOnce(&mut SoundTouch),
+) -> Vec<f32> {
     let channels = audio.channels;
     let total_frames = audio.samples.len() / channels;
     let mut processed_frames = 0usize;
     let mut last_pct = 0u8;
 
     let mut st = SoundTouch::new();
-    // SequenceMs/SeekwindowMs are kept: dropping them for calcSeqParameters'
-    // auto-tuning only saves ~5% once streaming, but changes the stretch
-    // granulation, so the output would no longer be identical.
-    st.set_channels(channels as u32)
-        .set_sample_rate(audio.sample_rate)
-        .set_tempo(rate)
-        .set_setting(Setting::UseQuickseek, 1)
-        .set_setting(Setting::SequenceMs, 40)
-        .set_setting(Setting::SeekwindowMs, 15);
+    st.set_channels(channels as u32).set_sample_rate(audio.sample_rate);
+    configure(&mut st);
 
     let mut output: Vec<f32> = Vec::with_capacity((audio.samples.len() as f64 / rate) as usize + 4096);
     let mut recv = vec![0.0f32; STRETCH_CHUNK_FRAMES * channels * 2];
@@ -175,31 +196,34 @@ pub fn apply_timestretch(
         audio.samples.len()
     );
 
-    Ok(output)
+    output
 }
 
-/// Changes the speed letting the pitch shift naturally.
-pub fn apply_resample(audio: &DecodedAudio, rate: f64) -> (Vec<f32>, u32) {
-    let new_sample_rate = (audio.sample_rate as f64 * rate).round() as u32;
-    (audio.samples.clone(), new_sample_rate)
+/// Changes the speed letting the pitch shift naturally: the same samples,
+/// played at this sample rate, so they are encoded as they are.
+pub fn resampled_rate(sample_rate: u32, rate: f64) -> u32 {
+    (sample_rate as f64 * rate).round() as u32
 }
 
 /// Frames per channel submitted to libvorbis per call. The libvorbis docs
 /// recommend ~1024; larger blocks don't speed it up and raise peak memory.
 const ENCODE_BLOCK_FRAMES: usize = 1024;
 
-/// Quality-based VBR (range -0.2..=1.0). 0.6 is ~192 kbit/s for 44.1 kHz stereo,
-/// on par with the MP3s osu! beatmaps usually ship.
-const VORBIS_QUALITY: f32 = 0.6;
+/// Quality-based VBR (range -0.2..=1.0) for 44.1 kHz stereo: 0.4 is ~128 kbit/s,
+/// 0.6 (`high`) ~192 kbit/s, on par with the MP3s osu! beatmaps usually ship.
+pub fn vorbis_quality(high: bool) -> f32 {
+    if high { 0.6 } else { 0.4 }
+}
 
 /// Encodes interleaved samples to Ogg Vorbis in memory so they can be added
 /// straight into the .osz without going through a staging directory.
-pub fn encode_audio(samples: &[f32], sample_rate: u32, channels: u16) -> Result<Vec<u8>> {
+pub fn encode_audio(samples: &[f32], sample_rate: u32, channels: u16, quality: f32) -> Result<Vec<u8>> {
     log::debug!(
-        "encode_audio: {} samples, sample_rate={}, channels={}",
+        "encode_audio: {} samples, sample_rate={}, channels={}, quality={}",
         samples.len(),
         sample_rate,
-        channels
+        channels,
+        quality
     );
 
     let sample_rate_nz = NonZeroU32::new(sample_rate)
@@ -216,7 +240,7 @@ pub fn encode_audio(samples: &[f32], sample_rate: u32, channels: u16) -> Result<
 
     let mut encoder = VorbisEncoderBuilder::new(sample_rate_nz, channels_nz, sink)?
         .bitrate_management_strategy(VorbisBitrateManagementStrategy::QualityVbr {
-            target_quality: VORBIS_QUALITY,
+            target_quality: quality,
         })
         .build()?;
 

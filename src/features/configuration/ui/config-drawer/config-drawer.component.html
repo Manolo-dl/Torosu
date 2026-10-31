@@ -1,13 +1,3 @@
-<button
-    size="m"
-    appearance="flat"
-    tuiButton
-    type="button"
-    (click)="toggle()"
-    >
-    <fa-icon [icon]="faGears" />
-</button>
-
 <tui-drawer *tuiPopup="open()">
     <header>
         <h2 tuiHeader="body-l">
@@ -69,8 +59,8 @@
                         <input
                             placeholder="C:\Users\you\AppData\Local\osu!"
                             tuiInput
-                            [ngModel]="draft.osu_path"
-                            (ngModelChange)="draft.osu_path = $event || undefined"
+                            [ngModel]="draft().osu_path"
+                            (ngModelChange)="draft().osu_path = $event || undefined"
                         />
                         <button
                             appearance="icon"
@@ -85,24 +75,13 @@
                     </tui-textfield>
                     <label tuiCell>
                         <span tuiTitle>
-                            Use SQLite cache
-                            <span tuiSubtitle>Cache osu!.db and collections in a local database</span>
-                        </span>
-                        <input
-                            tuiSwitch
-                            type="checkbox"
-                            [(ngModel)]="draft.sqlite_db"
-                        />
-                    </label>
-                    <label tuiCell>
-                        <span tuiTitle>
                             Developer mode
-                            <span tuiSubtitle>Show the button for the developer pages: logs, database and osu! data</span>
+                            <span tuiSubtitle>Show the button for the developer pages: logs and osu! data</span>
                         </span>
                         <input
                             tuiSwitch
                             type="checkbox"
-                            [(ngModel)]="draft.dev_mode"
+                            [(ngModel)]="draft().dev_mode"
                         />
                     </label>
                 </section>
@@ -134,7 +113,7 @@
                         <input
                             tuiSwitch
                             type="checkbox"
-                            [(ngModel)]="draft.downloader.save_session"
+                            [(ngModel)]="draft().downloader.save_session"
                         />
                     </label>
                 </section>
@@ -146,8 +125,8 @@
                         <input
                             placeholder="Defaults to the osu! Songs folder"
                             tuiInput
-                            [ngModel]="draft.downloader.output_path"
-                            (ngModelChange)="draft.downloader.output_path = $event || undefined"
+                            [ngModel]="draft().downloader.output_path"
+                            (ngModelChange)="draft().downloader.output_path = $event || undefined"
                         />
                         <button
                             appearance="icon"
@@ -166,7 +145,7 @@
                             tuiInputNumber
                             [min]="1"
                             [step]="1"
-                            [(ngModel)]="draft.downloader.max_concurrent_downloads"
+                            [(ngModel)]="draft().downloader.max_concurrent_downloads"
                         />
                     </tui-textfield>
                 </section>
@@ -181,7 +160,7 @@
                         <input
                             tuiSwitch
                             type="checkbox"
-                            [(ngModel)]="draft.downloader.skip_video"
+                            [(ngModel)]="draft().downloader.skip_video"
                         />
                     </label>
                     <label tuiCell>
@@ -192,7 +171,7 @@
                         <input
                             tuiSwitch
                             type="checkbox"
-                            [(ngModel)]="draft.open_file"
+                            [(ngModel)]="draft().open_file"
                         />
                     </label>
                     <label tuiCell>
@@ -203,7 +182,7 @@
                         <input
                             tuiSwitch
                             type="checkbox"
-                            [(ngModel)]="draft.downloader.load_library"
+                            [(ngModel)]="draft().downloader.load_library"
                         />
                     </label>
                     <label tuiCell>
@@ -214,7 +193,7 @@
                         <input
                             tuiSwitch
                             type="checkbox"
-                            [(ngModel)]="draft.downloader.notify"
+                            [(ngModel)]="draft().downloader.notify"
                         />
                     </label>
                     <label tuiCell>
@@ -225,7 +204,7 @@
                         <input
                             tuiSwitch
                             type="checkbox"
-                            [(ngModel)]="draft.downloader.error_file"
+                            [(ngModel)]="draft().downloader.error_file"
                         />
                     </label>
                 </section>
@@ -242,7 +221,7 @@
                         <input
                             tuiSwitch
                             type="checkbox"
-                            [(ngModel)]="draft.packs.keep_background"
+                            [(ngModel)]="draft().packs.keep_background"
                         />
                     </label>
                     <tui-textfield>
@@ -251,14 +230,88 @@
                             tuiInputNumber
                             [min]="0"
                             [step]="1"
-                            [(ngModel)]="draft.packs.max_sets_per_pack"
+                            [(ngModel)]="draft().packs.max_sets_per_pack"
                         />
                     </tui-textfield>
+                </section>
+
+                <section>
+                    <h3 tuiTitle="s">Difficulty name</h3>
+                    <app-name-format-field
+                        exampleCommand="pack_name_example"
+                        [fields]="packNameFields"
+                        [presets]="packNameFormats"
+                        [(format)]="draft().packs.name_format"
+                    />
                 </section>
             }
 
             @case (3) {
-                <p class="empty">No trainer settings available yet.</p>
+                <section>
+                    <h3 tuiTitle="s">Quality</h3>
+                    <label tuiCell>
+                        <span tuiTitle>
+                            High quality audio
+                            <span tuiSubtitle>Encode the new audio at ~192 kbit/s instead of ~128 kbit/s, half as big again</span>
+                        </span>
+                        <input
+                            tuiSwitch
+                            type="checkbox"
+                            [(ngModel)]="draft().trainer.high_quality_audio"
+                        />
+                    </label>
+                    <label tuiCell>
+                        <span tuiTitle>
+                            High quality video
+                            <span tuiSubtitle>Re-encode a scaled video at a better quality, nearly twice as big</span>
+                        </span>
+                        <input
+                            tuiSwitch
+                            type="checkbox"
+                            [(ngModel)]="draft().trainer.high_quality_video"
+                        />
+                    </label>
+                </section>
+
+                <section>
+                    <h3 tuiTitle="s">Rate change</h3>
+                    <label tuiCell>
+                        <span tuiTitle>
+                            Automatic pitch
+                            <span tuiSubtitle>Keep the pitch below 1.0x and let it rise with the speed above, instead of choosing it in each rate change</span>
+                        </span>
+                        <input
+                            tuiSwitch
+                            type="checkbox"
+                            [(ngModel)]="draft().trainer.auto_pitch"
+                        />
+                    </label>
+                </section>
+
+                <section>
+                    <h3 tuiTitle="s">Output</h3>
+                    <label tuiCell>
+                        <span tuiTitle>
+                            Open the .osz
+                            <span tuiSubtitle>Open each new .osz with osu!, so it is imported right away</span>
+                        </span>
+                        <input
+                            tuiSwitch
+                            type="checkbox"
+                            [(ngModel)]="draft().trainer.open_osz"
+                        />
+                    </label>
+                </section>
+
+                <section>
+                    <h3 tuiTitle="s">Difficulty name</h3>
+                    <app-name-format-field
+                        exampleCommand="trainer_name_example"
+                        [fields]="trainerNameFields"
+                        [presets]="trainerNameFormats"
+                        [(format)]="draft().trainer.name_format"
+                    />
+                </section>
             }
         }
     </div>

@@ -1,0 +1,48 @@
+<div class="card" [attr.data-status]="status()" (click)="toggleExpand($event)">
+  <div class="body">
+    <div class="head">
+      <div class="titles">
+        <button tuiLink type="button" class="title" (click)="openSet($event)">{{ set().title }}</button>
+        <span class="artist">{{ set().artist }}</span>
+      </div>
+
+      <div class="side">
+        <span size="s" tuiBadge class="status">{{ status() }}</span>
+        <div class="side-bottom">
+          <div class="pips">
+            @for (group of pips(); track group.mode) {
+              <tui-icon class="pip-mode" [icon]="modeIcon(group.mode)" [style.color]="modeColor(group.mode)" />
+              @for (diff of group.diffs; track diff.md5) {
+                <span class="pip" [style.background]="diffBg(diff.stars)"></span>
+              }
+              @if (group.more > 0) {
+                <span class="pip-extra">+{{ group.more }}</span>
+              }
+            }
+          </div>
+          <tui-icon icon="@tui.chevron-down" class="chevron" [class.open]="expanded()" />
+        </div>
+      </div>
+    </div>
+
+    <tui-expand [expanded]="expanded()">
+      <div class="diffs">
+        @for (diff of sortedDiffs(); track diff.md5) {
+          <div class="diff">
+            <tui-icon class="mode" [icon]="modeIcon(diff.mode)" [style.color]="modeColor(diff.mode)" />
+            <app-star-badge size="s" class="stars" [stars]="diff.stars" />
+            <span class="name">{{ diff.diffName }}</span>
+            @if (diff.status !== status()) {
+              <span appearance="neutral" size="s" tuiBadge>{{ diff.status }}</span>
+            }
+            @if (diffAction(); as action) {
+              <span class="action">
+                <ng-container *ngTemplateOutlet="action; context: { $implicit: diff, set: set() }" />
+              </span>
+            }
+          </div>
+        }
+      </div>
+    </tui-expand>
+  </div>
+</div>

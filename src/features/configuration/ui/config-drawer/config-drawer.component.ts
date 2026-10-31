@@ -1,17 +1,22 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, linkedSignal, model, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TuiDrawer, TuiTabsHorizontal, TuiTab, TuiSwitch, TuiInputNumber } from "@taiga-ui/kit";
 import { open as openDialog } from '@tauri-apps/plugin-dialog';
 import { TuiHeader, TuiNavComponent } from "@taiga-ui/layout";
-import { TuiTitle, TuiPopup, TuiButton, TuiCell, TuiInput, TuiLabel, TuiNotificationService } from "@taiga-ui/core";
-import { FaIconComponent } from "@fortawesome/angular-fontawesome";
-import { faGears } from '@fortawesome/free-solid-svg-icons';
+import { TuiTitle, TuiPopup, TuiButton, TuiCell, TuiInput, TuiLabel } from "@taiga-ui/core";
 import { Router } from '@angular/router';
 import { AppConfig, ConfigurationStore } from '@entities/configuration';
 import { USER_ITEMS } from '@entities/nav-item';
 import { OsuDbStore } from '@entities/osu-db';
 import { CollectionStore } from '@entities/collection';
-import { OsuPathStore } from '@shared/stores';
+import { OsuPathStore } from '@entities/osu-path';
+import { NotifyService } from '@shared/services';
+import { NameFormatField, NameFormatFieldComponent, NameFormatPreset } from '../name-format-field/name-format-field.component';
+
+/** The names the trainer always gave (`DEFAULT_NAME_FORMAT` in trainer/naming.rs). */
+const DEFAULT_NAME_FORMAT = '{diff} {rate} ({bpm}bpm) ({pitch}) {tasks} {stats}';
+/** The names the pack creator always gave (`DEFAULT_PACK_NAME_FORMAT` in packs/naming.rs). */
+const DEFAULT_PACK_NAME_FORMAT = '[{creator}] {artist} - {title} ({diff})';
 
 // Mirrors the serde defaults in src-tauri/src/commands/config/model.rs
 const DEFAULT_CONFIG: AppConfig = {
@@ -26,16 +31,23 @@ const DEFAULT_CONFIG: AppConfig = {
   },
   packs: {
     keep_background: true,
-    max_sets_per_pack: 10,
+    max_sets_per_pack: 0,
+    name_format: DEFAULT_PACK_NAME_FORMAT,
   },
-  sqlite_db: true,
+  trainer: {
+    high_quality_audio: false,
+    high_quality_video: false,
+    auto_pitch: false,
+    open_osz: true,
+    name_format: DEFAULT_NAME_FORMAT,
+  },
   open_file: false,
   dev_mode: false,
 };
 
 @Component({
   selector: 'app-config-drawer',
-  imports: [FormsModule, TuiDrawer, TuiHeader, TuiTitle, TuiNavComponent, TuiTabsHorizontal, TuiTab, TuiSwitch, TuiInputNumber, TuiCell, TuiInput, TuiLabel, FaIconComponent, TuiPopup, TuiButton],
+  imports: [FormsModule, TuiDrawer, TuiHeader, TuiTitle, TuiNavComponent, TuiTabsHorizontal, TuiTab, TuiSwitch, TuiInputNumber, TuiCell, TuiInput, TuiLabel, TuiPopup, TuiButton, NameFormatFieldComponent],
   templateUrl: './config-drawer.component.html',
   styleUrl: './config-drawer.component.less',
 })
@@ -45,41 +57,71 @@ export class ConfigDrawerComponent {
   private readonly osuPath = inject(OsuPathStore);
   private readonly osuDb = inject(OsuDbStore);
   private readonly collections = inject(CollectionStore);
-  private readonly alerts = inject(TuiNotificationService);
+  private readonly notify = inject(NotifyService);
 
-  readonly open = signal(false);
+  /** Opened by the settings button (`ConfigButtonComponent`), which loads the settings first. */
+  readonly open = model.required<boolean>();
   readonly activeTab = signal(0);
-  readonly faGears = faGears;
   readonly tools = USER_ITEMS.filter(item => item.route !== '/');
 
-  // Local copy edited by the form; sent to the backend on save
-  draft: AppConfig = structuredClone(DEFAULT_CONFIG);
+  /**
+   * Local copy edited by the form; sent to the backend on save. Copied again
+   * from the saved settings each time the drawer opens, so what was not saved
+   * is dropped; but not when those change while it is open.
+   */
+  readonly draft = linkedSignal({
+    source: this.open,
+    computation: () => untracked(() => structuredClone(this.store.config() ?? DEFAULT_CONFIG)),
+  });
 
-  async toggle() {
-    if (this.open()) {
-      this.open.set(false);
-      return;
-    }
+  readonly trainerNameFormats: NameFormatPreset[] = [
+    { label: 'Default', format: DEFAULT_NAME_FORMAT },
+    { label: 'Rate first', format: '[{rate}] {diff} ({pitch}) {tasks} {stats}' },
+    { label: 'BPM first', format: '[{bpm}bpm] {diff} ({pitch}) {tasks} {stats}' },
+  ];
 
-    if (!this.store.isLoaded()) await this.store.loadConfig();
-    this.draft = structuredClone(this.store.config() ?? DEFAULT_CONFIG);
-    this.open.set(true);
-  }
+  readonly trainerNameFields: NameFormatField[] = [
+    { field: '{diff}', meaning: 'the original name' },
+    { field: '{rate}', meaning: '1.3x' },
+    { field: '{bpm}', meaning: 'the new BPM' },
+    { field: '{pitch}', meaning: 'pitch raised or lowered' },
+    { field: '{sv}', meaning: 'SV normalized' },
+    { field: '{keys}', meaning: 'the key converter, 10K Dense' },
+    { field: '{fln}', meaning: 'the FLN converter, FLN BG4 ML4' },
+    { field: '{tasks}', meaning: 'those three, each in parentheses' },
+    { field: '{stats}', meaning: 'the changed HP, CS, AR and OD' },
+  ];
+
+  readonly packNameFormats: NameFormatPreset[] = [
+    { label: 'Default', format: DEFAULT_PACK_NAME_FORMAT },
+    { label: 'Stars first', format: '[{stars}★] {artist} - {title} ({diff})' },
+    { label: 'Short', format: '{title} ({diff})' },
+  ];
+
+  readonly packNameFields: NameFormatField[] = [
+    { field: '{creator}', meaning: 'who mapped the diff' },
+    { field: '{artist}', meaning: 'the artist of the song' },
+    { field: '{title}', meaning: 'the title of the song' },
+    { field: '{diff}', meaning: 'the name of the diff' },
+    { field: '{stars}', meaning: '5.23' },
+    { field: '{mode}', meaning: 'osu!mania' },
+    { field: '{keys}', meaning: '7K, only in mania' },
+  ];
 
   async save() {
     // A new osu! folder is checked first: nothing is saved if it is not osu!'s.
-    const path = this.draft.osu_path;
+    const path = this.draft().osu_path;
     const pathChanged = !!path && path !== this.store.config()?.osu_path;
     if (pathChanged) {
       try {
         await this.osuPath.setPath(path);
       } catch (e) {
-        this.alerts.open(String(e), { appearance: 'negative' }).subscribe();
+        this.notify.error(String(e));
         return;
       }
     }
 
-    await this.store.updateConfig(this.draft);
+    await this.store.updateConfig(this.draft());
     this.open.set(false);
 
     // The library and collections loaded are the old folder's.
@@ -95,14 +137,16 @@ export class ConfigDrawerComponent {
     }
   }
 
+  // Set with `update`, which redraws the form: after the dialog nothing else
+  // would.
   async pickOsuPath() {
-    const path = await this.pickFolder('Select your osu! folder', this.draft.osu_path);
-    if (path) this.draft.osu_path = path;
+    const path = await this.pickFolder('Select your osu! folder', this.draft().osu_path);
+    if (path) this.draft.update(draft => ({ ...draft, osu_path: path }));
   }
 
   async pickOutputPath() {
-    const path = await this.pickFolder('Select the download folder', this.draft.downloader.output_path);
-    if (path) this.draft.downloader.output_path = path;
+    const path = await this.pickFolder('Select the download folder', this.draft().downloader.output_path);
+    if (path) this.draft.update(draft => ({ ...draft, downloader: { ...draft.downloader, output_path: path } }));
   }
 
   private async pickFolder(title: string, defaultPath?: string): Promise<string | null> {
@@ -110,11 +154,13 @@ export class ConfigDrawerComponent {
   }
 
   isToolEnabled(route: string): boolean {
-    return !this.draft.excluded_tools.includes(route);
+    return !this.draft().excluded_tools.includes(route);
   }
 
   setToolEnabled(route: string, enabled: boolean) {
-    const excluded = this.draft.excluded_tools.filter(r => r !== route);
-    this.draft.excluded_tools = enabled ? excluded : [...excluded, route];
+    this.draft.update(draft => {
+      const excluded = draft.excluded_tools.filter(r => r !== route);
+      return { ...draft, excluded_tools: enabled ? excluded : [...excluded, route] };
+    });
   }
 }

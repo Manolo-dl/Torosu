@@ -13,17 +13,17 @@
 
 use std::collections::BTreeMap;
 
-use rosu_map::{Beatmap, section::hit_objects::HitObjectKind};
+use rosu_map::Beatmap;
 use serde::Serialize;
 
 use super::{
     layout::{Digit, Group, Hand, Layout},
     zones::{self, Zone, ZoneSection},
 };
-use crate::commands::trainer::naming;
-
-/// osu! plays up to 18K (9K+9K).
-pub const MAX_KEYS: usize = 18;
+use crate::commands::trainer::{
+    mania::{self, MAX_KEYS},
+    timing::BeatGrid,
+};
 
 /// Notes closer than this (in ms) are the same row.
 const SAME_ROW_MS: f64 = 1.0;
@@ -167,10 +167,6 @@ pub struct Label {
     pub modifiers: u16,
 }
 
-pub fn key_count(beatmap: &Beatmap) -> usize {
-    beatmap.circle_size.round().clamp(1.0, MAX_KEYS as f32) as usize
-}
-
 /// Rows at most this far apart (in ms) are the same pattern.
 pub fn link_ms(beat_len: f64) -> f64 {
     (beat_len * LINK_BEATS).clamp(LINK_MIN_MS, LINK_MAX_MS)
@@ -179,32 +175,15 @@ pub fn link_ms(beat_len: f64) -> f64 {
 /// The rows of a mania map. Notes stacked on a note or inside a long note of
 /// their key are skipped.
 pub fn rows(beatmap: &Beatmap) -> Vec<Row> {
-    let keys = key_count(beatmap);
-
-    // The beat grid, without the fake BPMs of gimmick maps.
-    let main_beat_len = naming::main_bpm(beatmap).map_or(500.0, |bpm| 60_000.0 / bpm);
-    let mut grid: Vec<(f64, f64)> = beatmap
-        .control_points
-        .timing_points
-        .iter()
-        .filter(|tp| tp.beat_len.is_finite() && (main_beat_len / 10.0..=main_beat_len * 10.0).contains(&tp.beat_len))
-        .map(|tp| (tp.time, tp.beat_len))
-        .collect();
-    if grid.is_empty() {
-        grid.push((0.0, main_beat_len));
-    }
+    let keys = mania::key_count(beatmap);
+    let grid = BeatGrid::new(beatmap);
 
     let mut notes: Vec<(f64, f64, usize)> = beatmap
         .hit_objects
         .iter()
         .filter_map(|obj| {
-            let (x, end) = match &obj.kind {
-                HitObjectKind::Circle(circle) => (circle.pos.x, obj.start_time),
-                HitObjectKind::Hold(hold) => (hold.pos_x, obj.start_time + hold.duration),
-                _ => return None,
-            };
-            let col = ((x * keys as f32 / 512.0).floor().max(0.0) as usize).min(keys - 1);
-            Some((obj.start_time, end, col))
+            let (x, end) = mania::note(obj)?;
+            Some((obj.start_time, end, mania::column(x, keys)))
         })
         .collect();
     notes.sort_by(|a, b| a.0.total_cmp(&b.0));
@@ -215,9 +194,8 @@ pub fn rows(beatmap: &Beatmap) -> Vec<Row> {
 
     for (start, end, col) in notes {
         if rows.last().is_none_or(|row| start - row.time >= SAME_ROW_MS) {
-            let tp = grid.partition_point(|&(t, _)| t <= start + 2.0).saturating_sub(1);
             let held = (0..keys).filter(|&k| release[k] > start).fold(0, |m, k| m | 1 << k);
-            let (tp_time, beat_len) = grid[tp];
+            let (tp_time, beat_len) = grid.at(start);
             rows.push(Row { time: start, beat_len, mask: 0, ln: 0, held, inverse: 0, beat: beat_position(start, tp_time, beat_len) });
         }
         let row = rows.last_mut().expect("a row was just pushed");

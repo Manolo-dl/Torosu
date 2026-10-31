@@ -4,18 +4,27 @@
     <span appearance="neutral" tuiBadge>{{ store.filteredSets().length }} sets</span>
   </header>
 
-  @if (store.filteredSets().length === 0) {
-    <p class="empty">No maps found</p>
-  } @else {
-    <cdk-virtual-scroll-viewport
-      itemSize="64"
-      tuiScrollRef
-      class="viewport"
-    >
-      <tui-scroll-controls />
-      <div *cdkVirtualFor="let set of store.filteredSets(); trackBy: trackSet" class="item">
-        <app-pack-browser-card [set]="set" />
-      </div>
-    </cdk-virtual-scroll-viewport>
-  }
+  <app-beatmap-set-list
+    emptyText="No maps found"
+    listHeight="max(20rem, calc(100vh - 30rem))"
+    [sets]="store.filteredSets()"
+    [diffAction]="addButton"
+  />
 </div>
+
+<ng-template #addButton let-diff let-set="set">
+  @if (store.addedMd5s().has(diff.md5)) {
+    <tui-icon icon="@tui.check" class="added" />
+  } @else {
+    <button
+      appearance="secondary"
+      iconStart="@tui.plus"
+      size="xs"
+      tuiIconButton
+      type="button"
+      (click)="addDiff(set, diff, $event)"
+    >
+      Add
+    </button>
+  }
+</ng-template>

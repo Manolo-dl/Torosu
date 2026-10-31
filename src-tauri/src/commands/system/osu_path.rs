@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 
 use tauri::Manager;
 
-use crate::AppConfigState;
+use crate::{error::Result, state::AppConfigState};
 
 /// Allows the Songs folder in the `asset:` protocol scope at runtime.
 fn allow_songs_in_asset_scope(app: &tauri::AppHandle, osu_path: &str) {
@@ -17,29 +17,27 @@ fn allow_songs_in_asset_scope(app: &tauri::AppHandle, osu_path: &str) {
 #[tauri::command]
 pub async fn get_osu_path(
     app: tauri::AppHandle
-) -> Result<String, String> {
+) -> Result<String> {
     let path = resolve_osu_path(&app).await?;
     allow_songs_in_asset_scope(&app, &path);
     Ok(path)
 }
 
-async fn get_osu_path_from_memory() -> Result<String, String> {
+/// Folder of the running osu!, if there is one.
+async fn get_osu_path_from_memory() -> Option<String> {
     tauri::async_runtime::spawn_blocking(|| {
-        let reader = osu_memory_reader::OsuReader::attach().map_err(|e| {
-            log::debug!("osu! path not read from memory: {}", e);
-            e.to_string()
-        })?;
+        let reader = osu_memory_reader::OsuReader::attach()
+            .map_err(|e| log::debug!("osu! path not read from memory: {}", e))
+            .ok()?;
 
-        reader
-            .game_folder()
-            .map(|path| path.to_string_lossy().into_owned())
-            .ok_or_else(|| "osu! is running but its folder was not found".to_string())
+        reader.game_folder().map(|path| path.to_string_lossy().into_owned())
     })
     .await
-    .map_err(|e| e.to_string())?
+    .ok()
+    .flatten()
 }
 
-async fn resolve_osu_path(app: &tauri::AppHandle) -> Result<String, String> {
+async fn resolve_osu_path(app: &tauri::AppHandle) -> Result<String> {
     log::debug!("Getting osu! path");
 
     // Check if the path is already stored in the state
@@ -52,7 +50,7 @@ async fn resolve_osu_path(app: &tauri::AppHandle) -> Result<String, String> {
     }
 
     // 2. Check path of the running osu!
-    if let Ok(path) = get_osu_path_from_memory().await {
+    if let Some(path) = get_osu_path_from_memory().await {
         save_detected_path(&config_state, &path);
         return Ok(path);
     }
@@ -82,7 +80,7 @@ async fn resolve_osu_path(app: &tauri::AppHandle) -> Result<String, String> {
     }
 
     log::error!("osu! folder not found");
-    Err("osu! folder not found".to_string())
+    Err("osu! folder not found".into())
 }
 
 fn save_detected_path(state: &tauri::State<AppConfigState>, path: &str) {
@@ -92,11 +90,11 @@ fn save_detected_path(state: &tauri::State<AppConfigState>, path: &str) {
 
 // save osu! path when selected manually by the user
 #[tauri::command]
-pub fn save_osu_path(app: tauri::AppHandle, path: String) -> Result<(), String> {
+pub fn save_osu_path(app: tauri::AppHandle, path: String) -> Result<()> {
     // Every tool reads osu!.db, so a folder without it is not osu!'s.
     if !Path::new(&path).join("osu!.db").is_file() {
         log::warn!("refused osu! path {:?}: no osu!.db in it", path);
-        return Err(format!("{} is not an osu! folder: it has no osu!.db", path));
+        return Err(format!("{} is not an osu! folder: it has no osu!.db", path).into());
     }
 
     allow_songs_in_asset_scope(&app, &path);
