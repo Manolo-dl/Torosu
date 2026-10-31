@@ -1,8 +1,16 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { TASK_LABELS, taskSupportsMode } from '@features/trainer';
-import { FlnConverterParams, KeyConverterParams, KeyDensity, PLAYSTYLES, RateChangeParams, TrainerTaskType } from '@features/trainer/models/trainer.model';
-import { TrainerStore } from '@features/trainer/stores/trainer.store';
+import {
+  FlnConverterParams,
+  KeyConverterParams,
+  KeyDensity,
+  PLAYSTYLES,
+  RateChangeParams,
+  TASK_LABELS,
+  TrainerTaskType,
+  taskSupportsMode,
+} from '../../models/trainer.model';
+import { TrainerStore } from '../../stores/trainer.store';
 import { OsuReaderStore } from '@entities/osu-reader';
 import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDropList } from '@angular/cdk/drag-drop';
 import { TuiButton, TuiCheckbox, TuiDataList, TuiDropdown, TuiIcon, TuiInput, TuiNotificationDirective, TuiTitle } from '@taiga-ui/core';

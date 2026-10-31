@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { ImportCollectionParserService } from '@features/collection-importer/import-collection-parser.service';
-import { ImportCollectionStore } from '@features/collection-importer/import-collections.store';
+import { ImportCollectionParserService } from '../../import-collection-parser.service';
+import { ImportCollectionStore } from '../../import-collections.store';
 import { TxtDropzoneComponent } from '@shared/ui';
 import { TuiTitle } from '@taiga-ui/core';
 import { TuiCardLarge } from '@taiga-ui/layout';

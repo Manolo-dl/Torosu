@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { BeatmapExporterStore, ModeFilters, emptyModeFilters } from '@features/export-songs/stores/beatmap-exporter.store';
+import { BeatmapExporterStore, ModeFilters, emptyModeFilters } from '../../stores/beatmap-exporter.store';
 import { TuiButton, TuiExpand, TuiIcon, TuiInput, TuiTitle } from '@taiga-ui/core';
 import { TuiChip, TuiSegmented, TuiSwitch } from '@taiga-ui/kit';
 import { TuiCardLarge } from '@taiga-ui/layout';

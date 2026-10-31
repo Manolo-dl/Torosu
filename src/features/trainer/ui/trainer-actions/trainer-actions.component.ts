@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { TrainerStore } from '@features/trainer/stores/trainer.store';
+import { TrainerStore } from '../../stores/trainer.store';
 import { TuiButton } from '@taiga-ui/core';
 import { TuiButtonLoading, TuiProgress } from '@taiga-ui/kit';
 
