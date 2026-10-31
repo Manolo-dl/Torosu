@@ -37,7 +37,7 @@ export class AppComponent implements OnInit {
     this.darkMode.set(true);
     this.platformStore.setOs();
     // The sidebar and the tools read it (e.g. which tools are turned off).
-    this.config.loadConfig();
+    this.config.load();
     // Without a folder the widget above the pages asks for one.
     this.osuPath.detect();
   }

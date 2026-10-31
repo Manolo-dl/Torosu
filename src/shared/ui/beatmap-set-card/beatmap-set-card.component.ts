@@ -1,10 +1,13 @@
 import { DecimalPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, Input, signal } from '@angular/core';
-import { OsuBeatmapSet, OsuDiff, setStatus } from '@entities/osu-db/osu-db.model';
+import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
+import { OsuBeatmapSet, setStatus } from '@entities/osu-db/osu-db.model';
 import { openUrl } from '@tauri-apps/plugin-opener';
 import { modeColor, modeIcon, starBg, starFg } from '@shared/utils';
 import { TuiExpand, TuiIcon, TuiLink } from '@taiga-ui/core';
 import { TuiBadge } from '@taiga-ui/kit';
+
+/** Pips of each mode on the closed card; the rest are only counted. */
+const MAX_PIPS = 6;
 
 @Component({
   selector: 'app-beatmap-set-card',
@@ -14,39 +17,35 @@ import { TuiBadge } from '@taiga-ui/kit';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BeatmapSetCardComponent {
-  @Input({ required: true }) set!: OsuBeatmapSet;
+  readonly set = input.required<OsuBeatmapSet>();
 
   readonly expanded = signal(false);
+  readonly status = computed(() => setStatus(this.set()));
+
+  /** By mode, then by stars. */
+  readonly sortedDiffs = computed(() =>
+    [...this.set().diffs].sort((a, b) => a.mode !== b.mode ? a.mode - b.mode : a.stars - b.stars)
+  );
+
+  /** The pips of each mode: its easiest diffs, and how many more it has. */
+  readonly pips = computed(() => {
+    const diffs = this.sortedDiffs();
+    return [...new Set(diffs.map(d => d.mode))].map(mode => {
+      const ofMode = diffs.filter(d => d.mode === mode);
+      return { mode, diffs: ofMode.slice(0, MAX_PIPS), more: Math.max(0, ofMode.length - MAX_PIPS) };
+    });
+  });
 
   toggleExpand(event: Event) {
     event.stopPropagation();
     this.expanded.update(v => !v);
   }
 
-  get status() {
-    return setStatus(this.set);
-  }
-
   openSet(event: Event) {
     event.stopPropagation();
-    if (this.set.beatmapsetId <= 0) return;
-    openUrl(`https://osu.ppy.sh/beatmapsets/${this.set.beatmapsetId}`);
-  }
-
-  sortedDiffs(diffs: OsuDiff[]): OsuDiff[] {
-    return [...diffs].sort((a, b) => a.mode !== b.mode ? a.mode - b.mode : a.stars - b.stars);
-  }
-
-  uniqueModes(diffs: OsuDiff[]): number[] {
-    return [...new Set(diffs.map(d => d.mode))].sort();
-  }
-
-  visibleDiffsForMode(diffs: OsuDiff[], mode: number): OsuDiff[] {
-    return diffs.filter(d => d.mode === mode).sort((a, b) => a.stars - b.stars).slice(0, 6);
-  }
-
-  extraDiffsForMode(diffs: OsuDiff[], mode: number): number {
-    return Math.max(0, diffs.filter(d => d.mode === mode).length - 6);
+    const id = this.set().beatmapsetId;
+    if (id <= 0) return;
+    openUrl(`https://osu.ppy.sh/beatmapsets/${id}`);
   }
 
   readonly diffBg = starBg;

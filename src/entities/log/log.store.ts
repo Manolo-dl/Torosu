@@ -1,22 +1,27 @@
-import { patchState, signalStore, withComputed, withMethods, withState } from "@ngrx/signals";
+import { signalStore, withComputed } from "@ngrx/signals";
 import { LogEntry } from "./log.model";
-import { computed, inject } from "@angular/core";
-import { TuiNotificationService } from '@taiga-ui/core';
+import { computed } from "@angular/core";
+import { withLoader } from "@shared/stores";
 import { invoke } from "@tauri-apps/api/core";
 
 interface LogState {
     logs: LogEntry[];
-    isLoaded: boolean;
 }
 
 const initialState: LogState = {
     logs: [],
-    isLoaded: false,
 };
 
 export const LogStore = signalStore(
     { providedIn: 'root' },
-    withState(initialState),
+    withLoader(initialState, {
+        read: () => invoke<LogEntry[]>('read_logs'),
+        // Newest first.
+        loaded: logs => ({
+            logs: [...logs].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()),
+        }),
+        failure: 'Failed to load logs',
+    }),
 
     withComputed((store) => ({
         totalLogs: computed(() => store.logs().length),
@@ -37,21 +42,5 @@ export const LogStore = signalStore(
 
             return result;
         }),
-    })),
-
-    withMethods((store, alerts = inject(TuiNotificationService)) => ({
-        async load() {
-            try {
-                const logs = await invoke<LogEntry[]>('read_logs');
-                const sorted = [...logs].sort((a, b) =>
-                    new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-                );
-                patchState(store, { logs: sorted, isLoaded: true });
-            } catch (error) {
-                alerts.open('Failed to load logs', { appearance: 'negative' }).subscribe();
-                patchState(store, { isLoaded: false });
-                throw error;
-            }
-        }
     })),
 )

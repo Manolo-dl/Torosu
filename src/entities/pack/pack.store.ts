@@ -5,7 +5,7 @@ import { computed, inject } from "@angular/core";
 import { OsuDbStore } from "@entities/osu-db";
 import { OsuCollection } from "@entities/collection";
 import { ConfigurationStore } from "@entities/configuration";
-import { TuiNotificationService } from '@taiga-ui/core';
+import { NotifyService } from '@shared/services';
 
 interface PackStoreState {
     selectedDiffs: SelectedDiff[];
@@ -28,18 +28,26 @@ export const PackStore = signalStore(
     { providedIn: 'root' },
     withState(initialState),
 
+    withComputed((_, osuDbStore = inject(OsuDbStore)) => ({
+        /**
+         * What the search looks in, lowercased once per library instead of at
+         * every search: title, artist and diff file names, one per line (a
+         * query is a single line, so it can't match across two of them).
+         */
+        _searchIndex: computed(() =>
+            osuDbStore.beatmapSets().map(set => ({
+                set,
+                text: [set.title, set.artist, ...set.diffs.map(diff => diff.fileName)].join('\n').toLowerCase(),
+            }))
+        ),
+    })),
+
     withComputed((store, osuDbStore = inject(OsuDbStore)) => ({
         filteredSets: computed(() => {
             const query = store.searchQuery().toLowerCase().trim();
-            const sets = osuDbStore.beatmapSets();
+            if (!query) return osuDbStore.beatmapSets();
 
-            if (!query) return sets;
-
-            return sets.filter(set =>
-                set.title.toLowerCase().includes(query) ||
-                set.artist.toLowerCase().includes(query) ||
-                set.diffs.some(diff => diff.fileName.toLowerCase().includes(query))
-            );
+            return store._searchIndex().filter(entry => entry.text.includes(query)).map(entry => entry.set);
         }),
 
         addedMd5s: computed(() =>
@@ -75,7 +83,7 @@ export const PackStore = signalStore(
         }),
     })),
 
-    withMethods((store, alerts = inject(TuiNotificationService), osuDb = inject(OsuDbStore)) => ({
+    withMethods((store, notify = inject(NotifyService), osuDb = inject(OsuDbStore)) => ({
         toggleDiff(diff: SelectedDiff) {
             const diffs = store.selectedDiffs();
             const index = diffs.findIndex(d => d.md5 === diff.md5);
@@ -147,11 +155,11 @@ export const PackStore = signalStore(
                 const message = store.packCount() > 1
                     ? `Pack ${store.title()} created successfully in ${store.packCount()} parts!`
                     : `Pack ${store.title()} created successfully!`;
-                alerts.open(message, { appearance: 'positive' }).subscribe();
+                notify.success(message);
                 patchState(store, initialState);
             } catch (error) {
                 patchState(store, { isCreating: false });
-                alerts.open('Failed to create pack', { appearance: 'negative' }).subscribe();
+                notify.error('Failed to create pack');
                 throw error;
             }
         },
@@ -173,7 +181,7 @@ export const PackStore = signalStore(
         onInit() {
             // For `packCount`; the backend reads the setting on its own.
             const config = inject(ConfigurationStore);
-            if (!config.isLoaded()) config.loadConfig();
+            config.ensureLoaded();
         },
     }),
 )

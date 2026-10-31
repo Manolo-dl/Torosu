@@ -1,30 +1,31 @@
-import { patchState, signalStore, withComputed, withMethods, withState } from "@ngrx/signals";
+import { patchState, signalStore, withComputed, withMethods } from "@ngrx/signals";
 import { OsuCollection } from "./collection.model";
 import { computed, inject } from "@angular/core";
 import { OsuDbStore } from "@entities/osu-db";
 import { OsuBeatmapSet } from "@entities/osu-db/osu-db.model";
-import { OsuPathStore } from "@shared/stores"; 
-import { TuiNotificationService } from '@taiga-ui/core';
+import { withLoader } from "@shared/stores";
 import { invoke } from "@tauri-apps/api/core";
 
 
 interface CollectionState {
     collections: OsuCollection[];
     selectedCollections: string[];
-    isLoading: boolean;
-    isLoaded: boolean;
 }
 
 const initialState: CollectionState = {
     collections: [],
     selectedCollections: [],
-    isLoading: false,
-    isLoaded: false
 };
 
 export const CollectionStore = signalStore(
     { providedIn: 'root' },
-    withState(initialState),
+    withLoader(initialState, {
+        read: () => invoke<OsuCollection[]>('read_osu_collections'),
+        loaded: collections => ({ collections }),
+        needsOsuPath: true,
+        success: collections => `Loaded ${collections.length} collections`,
+        failure: 'Failed to load collections',
+    }),
 
     withComputed((store, osuDb = inject(OsuDbStore)) => {
         const collectionsWithBeatmaps = computed(() => {
@@ -71,68 +72,24 @@ export const CollectionStore = signalStore(
         };
     }),
 
-    withMethods((store, osuPath = inject(OsuPathStore), alerts = inject(TuiNotificationService)) => {
-        // Shared by whoever asks while collection.db is being read, so it is read once.
-        let loading: Promise<void> | null = null;
+    withMethods((store) => ({
+        toggleSelection(name: string) {
+            const selected = store.selectedCollections();
+            patchState(store, {
+                selectedCollections: selected.includes(name)
+                    ? selected.filter(c => c !== name)
+                    : [...selected, name]
+            });
+        },
 
-        async function read() {
-            const path = osuPath.path();
-            if (!path) {
-                alerts.open('Osu! path not set', { appearance: 'negative' }).subscribe();
-                throw new Error("Osu! path not set");
-            }
+        selectAll() {
+            patchState(store, {
+                selectedCollections: store.collections().map(c => c.name)
+            });
+        },
 
-            patchState(store, { isLoading: true });
-
-            try {
-                const collections = await invoke<OsuCollection[]>("read_osu_collections");
-                alerts.open(`Loaded ${collections.length} collections`, { appearance: 'positive' }).subscribe();
-                patchState(store, { collections, isLoaded: true, isLoading: false });
-            } catch (error) {
-                patchState(store, { isLoading: false });
-                alerts.open(`Failed to load collections`, { appearance: 'negative' }).subscribe();
-                throw error;
-            }
-        }
-
-        return {
-            load(): Promise<void> {
-                loading ??= read().finally(() => { loading = null; });
-                return loading;
-            },
-
-            setCollections(collections: OsuCollection[]) {
-                patchState(store, { collections, isLoaded: true, isLoading: false });
-            },
-
-            setLoading(isLoading: boolean) {
-                patchState(store, { isLoading });
-            },
-
-            toggleSelection(name: string) {
-                const selected = store.selectedCollections();
-                patchState(store, {
-                    selectedCollections: selected.includes(name)
-                        ? selected.filter(c => c !== name)
-                        : [...selected, name]
-                });
-            },
-
-            selectAll() {
-                patchState(store, {
-                    selectedCollections: store.collections().map(c => c.name)
-                });
-            },
-
-            clearSelection() {
-                patchState(store, { selectedCollections: [] });
-            },
-
-            reset() {
-                // A read still running is of the previous folder: not to be joined.
-                loading = null;
-                patchState(store, initialState);
-            },
-        };
-    }),
+        clearSelection() {
+            patchState(store, { selectedCollections: [] });
+        },
+    })),
 );

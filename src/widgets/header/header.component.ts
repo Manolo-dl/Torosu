@@ -5,11 +5,11 @@ import { UpdateStore } from '@entities/update';
 import { NavStore } from '@entities/nav-item';
 import { TUI_DARK_MODE, TuiButton, TuiDropdown, TuiTitle } from "@taiga-ui/core";
 import { TuiBadge, TuiButtonLoading, TuiProgress } from '@taiga-ui/kit';
-import { ConfigDrawerComponent } from "@features/configuration";
+import { ConfigButtonComponent } from "@features/configuration";
 
 @Component({
   selector: 'app-header',
-  imports: [TuiButton, TuiButtonLoading, TuiDropdown, TuiTitle, TuiBadge, TuiProgress, ConfigDrawerComponent],
+  imports: [TuiButton, TuiButtonLoading, TuiDropdown, TuiTitle, TuiBadge, TuiProgress, ConfigButtonComponent],
   templateUrl: './header.component.html',
   styleUrl: './header.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,

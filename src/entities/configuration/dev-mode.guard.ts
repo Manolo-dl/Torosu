@@ -8,7 +8,7 @@ export const devModeGuard: CanActivateFn = async () => {
   const config = inject(ConfigurationStore);
   const router = inject(Router);
 
-  if (!config.isLoaded()) await config.loadConfig();
+  await config.ensureLoaded();
 
   return config.config()?.dev_mode ? true : router.createUrlTree(['']);
 };

@@ -1,7 +1,7 @@
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { invoke } from '@tauri-apps/api/core';
 import { open } from '@tauri-apps/plugin-dialog';
-import { TuiNotificationService } from '@taiga-ui/core';
+import { NotifyService } from '@shared/services';
 import { computed, inject } from '@angular/core';
 
 interface OsuPathState {
@@ -19,7 +19,7 @@ export const OsuPathStore = signalStore(
     missing: computed(() => !store.path() && store.error() !== null),
   })),
 
-  withMethods((store, alerts = inject(TuiNotificationService)) => {
+  withMethods((store, notify = inject(NotifyService)) => {
     let detectPromise: Promise<void> | undefined;
 
     /** Finds the folder (saved, from the running osu!, or the usual places). Quiet
@@ -30,9 +30,9 @@ export const OsuPathStore = signalStore(
         const path = await invoke<string>('get_osu_path');
         await invoke('save_osu_path', { path });
         patchState(store, { path, error: null });
-        if (announce) alerts.open('osu! folder found', { appearance: 'positive' }).subscribe();
+        if (announce) notify.success('osu! folder found');
       } catch (error) {
-        if (announce) alerts.open('osu! folder not found', { appearance: 'negative' }).subscribe();
+        if (announce) notify.error('osu! folder not found');
         patchState(store, { error: String(error) });
         detectPromise = undefined;
       } finally {
@@ -73,9 +73,9 @@ export const OsuPathStore = signalStore(
 
         try {
           await setPath(selected as string);
-          alerts.open('osu! folder saved', { appearance: 'positive' }).subscribe();
+          notify.success('osu! folder saved');
         } catch (e) {
-          alerts.open(String(e), { appearance: 'negative' }).subscribe();
+          notify.error(String(e));
         }
       },
     };

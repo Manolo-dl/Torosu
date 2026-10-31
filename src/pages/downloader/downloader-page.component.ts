@@ -31,10 +31,8 @@ export class DownloaderPageComponent implements OnInit {
 
   /** With `load_library` on, the library loads by itself to skip maps already owned. */
   async ngOnInit() {
-    if (!this.config.isLoaded()) await this.config.loadConfig();
-    if (this.config.config()?.downloader.load_library && !this.osuDb.isLoaded() && !this.osuDb.isLoading()) {
-      await this.loadLibrary();
-    }
+    await this.config.ensureLoaded();
+    if (this.config.config()?.downloader.load_library) await this.osuDb.ensureLoaded();
   }
 
   async loadLibrary() {

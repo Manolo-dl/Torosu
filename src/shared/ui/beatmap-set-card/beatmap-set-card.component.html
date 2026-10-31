@@ -1,22 +1,22 @@
-<div class="card" [attr.data-status]="status" (click)="toggleExpand($event)">
+<div class="card" [attr.data-status]="status()" (click)="toggleExpand($event)">
   <div class="body">
     <div class="head">
       <div class="titles">
-        <button tuiLink type="button" class="title" (click)="openSet($event)">{{ set.title }}</button>
-        <span class="artist">{{ set.artist }}</span>
+        <button tuiLink type="button" class="title" (click)="openSet($event)">{{ set().title }}</button>
+        <span class="artist">{{ set().artist }}</span>
       </div>
 
       <div class="side">
-        <span size="s" tuiBadge class="status">{{ status }}</span>
+        <span size="s" tuiBadge class="status">{{ status() }}</span>
         <div class="side-bottom">
           <div class="pips">
-            @for (mode of uniqueModes(set.diffs); track mode) {
-              <tui-icon class="pip-mode" [icon]="modeIcon(mode)" [style.color]="modeColor(mode)" />
-              @for (diff of visibleDiffsForMode(set.diffs, mode); track diff.md5) {
+            @for (group of pips(); track group.mode) {
+              <tui-icon class="pip-mode" [icon]="modeIcon(group.mode)" [style.color]="modeColor(group.mode)" />
+              @for (diff of group.diffs; track diff.md5) {
                 <span class="pip" [style.background]="diffBg(diff.stars)"></span>
               }
-              @if (extraDiffsForMode(set.diffs, mode) > 0) {
-                <span class="pip-extra">+{{ extraDiffsForMode(set.diffs, mode) }}</span>
+              @if (group.more > 0) {
+                <span class="pip-extra">+{{ group.more }}</span>
               }
             }
           </div>
@@ -27,7 +27,7 @@
 
     <tui-expand [expanded]="expanded()">
       <div class="diffs">
-        @for (diff of sortedDiffs(set.diffs); track diff.md5) {
+        @for (diff of sortedDiffs(); track diff.md5) {
           <div class="diff">
             <tui-icon class="mode" [icon]="modeIcon(diff.mode)" [style.color]="modeColor(diff.mode)" />
             <span
