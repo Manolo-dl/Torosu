@@ -1,5 +1,4 @@
-//! Writing `.osz` files: zip archives of a beatmap set, stored without
-//! compression as osu! does.
+//! Writing `.osz` files: zip archives of a beatmap set.
 
 use std::{
     fs::{self, File},
@@ -47,7 +46,7 @@ impl OszWriter {
     /// Starts the entry `name`; a name can only be used once.
     fn start(&mut self, name: &str) -> Result<&mut ZipWriter<File>> {
         let zip = self.zip.as_mut().expect("only `finish` takes the zip, and it consumes the writer");
-        zip.start_file(name, SimpleFileOptions::default().compression_method(CompressionMethod::Stored))?;
+        zip.start_file(name, SimpleFileOptions::default().compression_method(compression(name)))?;
         Ok(zip)
     }
 
@@ -58,6 +57,18 @@ impl OszWriter {
         }
         fs::rename(&self.part, &self.path)?;
         Ok(())
+    }
+}
+
+/// How an entry is kept: deflated if it is text or raw audio, which shrink a
+/// lot (an .osu to a seventh, hitsound .wav files by a quarter). The audio,
+/// images and videos are compressed already: deflating them would take time
+/// to save 1 or 2%, so they are stored as they are.
+fn compression(name: &str) -> CompressionMethod {
+    let extension = name.rsplit_once('.').map(|(_, ext)| ext.to_ascii_lowercase());
+    match extension.as_deref() {
+        Some("osu" | "osb" | "wav" | "txt" | "bmp") => CompressionMethod::Deflated,
+        _ => CompressionMethod::Stored,
     }
 }
 
@@ -198,6 +209,26 @@ mod tests {
         let expected = [("audio.mp3".to_string(), "audio".to_string()), ("diff.osu".to_string(), "osu file".to_string())];
         assert_eq!(entries(&path), expected);
         assert_eq!(dir.read("set.osz.part"), None);
+    }
+
+    #[test]
+    fn deflates_text_and_stores_media() {
+        let dir = TestDir::new("osz-compression");
+        let path = dir.0.join("set.osz");
+        let osu = "0,0,1000,1,0\n".repeat(1000);
+
+        let mut osz = OszWriter::create(&path).unwrap();
+        osz.add_bytes("audio.ogg", b"audio").unwrap();
+        osz.add_bytes("Diff [Insane].OSU", osu.as_bytes()).unwrap();
+        osz.finish().unwrap();
+
+        let mut zip = zip::ZipArchive::new(File::open(&path).unwrap()).unwrap();
+        assert_eq!(zip.by_name("audio.ogg").unwrap().compression(), CompressionMethod::Stored);
+        let diff = zip.by_name("Diff [Insane].OSU").unwrap();
+        assert_eq!(diff.compression(), CompressionMethod::Deflated);
+        assert!(diff.compressed_size() < diff.size() / 10);
+        drop(diff);
+        assert_eq!(entries(&path)[1].1, osu);
     }
 
     #[test]

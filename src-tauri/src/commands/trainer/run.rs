@@ -354,6 +354,9 @@ async fn make_media(source: &Source, converts: &[Convert], config: &TrainerConfi
                         // Encoding is the last fifth.
                         let samples = audio_processing::apply_timestretch(&decoded, params.rate, |p| progress.job(job, p * 0.8))?;
                         audio_processing::encode_audio(&samples, decoded.sample_rate, channels, quality)?
+                    } else if params.rate > 1.0 {
+                        let samples = audio_processing::apply_rate_change(&decoded, params.rate, |p| progress.job(job, p * 0.8));
+                        audio_processing::encode_audio(&samples, decoded.sample_rate, channels, quality)?
                     } else {
                         let sample_rate = audio_processing::resampled_rate(decoded.sample_rate, params.rate);
                         audio_processing::encode_audio(&decoded.samples, sample_rate, channels, quality)?

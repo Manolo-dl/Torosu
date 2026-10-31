@@ -46,7 +46,7 @@ soundtouch = { version = "0.5.4", features = ["bundled"] }
 symphonia = { version = "0.6.1", default-features = false, features = ["mp3", "ogg", "vorbis", "wav", "pcm", "id3v2"] }
 log = "0.4.34"
 tokio = { version = "1.54.0", features = ["fs", "io-util", "macros", "net", "sync", "time"] }
-zip = { version = "8.6.0", default-features = false }
+zip = { version = "8.6.0", default-features = false, features = ["deflate-flate2-zlib-rs"] }
 futures-util = { version = "0.3.34", default-features = false }
 reqwest = { version = "0.13.5", default-features = false, features = ["rustls-no-provider", "stream"] }
 rustls = { version = "0.23", default-features = false, features = ["ring"] }
