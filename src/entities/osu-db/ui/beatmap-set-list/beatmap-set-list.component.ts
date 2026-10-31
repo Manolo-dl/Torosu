@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, input, TemplateRef } from '@angular/core';
 import { ScrollingModule } from '@angular/cdk/scrolling';
-import { OsuBeatmapSet } from '@entities/osu-db/osu-db.model';
+import { OsuBeatmapSet } from '../../osu-db.model';
 import { TuiScrollControls, TuiScrollRef } from '@taiga-ui/core';
 import { BeatmapSetCardComponent, DiffActionContext } from '../beatmap-set-card/beatmap-set-card.component';
 

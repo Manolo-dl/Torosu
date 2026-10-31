@@ -1,11 +1,11 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input, signal, TemplateRef } from '@angular/core';
-import { OsuBeatmapSet, OsuDiff, setStatus } from '@entities/osu-db/osu-db.model';
+import { OsuBeatmapSet, OsuDiff, setStatus } from '../../osu-db.model';
 import { openUrl } from '@tauri-apps/plugin-opener';
+import { StarBadgeComponent } from '@shared/ui';
 import { beatmapsetUrl, modeColor, modeIcon, starBg } from '@shared/utils';
 import { TuiExpand, TuiIcon, TuiLink } from '@taiga-ui/core';
 import { TuiBadge } from '@taiga-ui/kit';
-import { StarBadgeComponent } from '../star-badge/star-badge.component';
 
 /** Pips of each mode on the closed card; the rest are only counted. */
 const MAX_PIPS = 6;

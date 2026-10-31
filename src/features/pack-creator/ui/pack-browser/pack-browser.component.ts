@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import type { OsuBeatmapSet, OsuDiff } from '@entities/osu-db';
 import { selectedDiff } from '../../pack.model';
 import { PackStore } from '../../pack.store';
-import { BeatmapSetListComponent } from '@shared/ui';
+import { BeatmapSetListComponent } from '@entities/osu-db/ui';
 import { TuiButton, TuiIcon, TuiTitle } from '@taiga-ui/core';
 import { TuiBadge } from '@taiga-ui/kit';
 import { TuiCardLarge } from '@taiga-ui/layout';

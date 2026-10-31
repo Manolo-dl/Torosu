@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { BeatmapExporterStore } from '@features/export-songs/stores/beatmap-exporter.store';
-import { BeatmapSetListComponent } from '@shared/ui';
+import { BeatmapSetListComponent } from '@entities/osu-db/ui';
 import { TuiTitle } from '@taiga-ui/core';
 import { TuiCardLarge } from '@taiga-ui/layout';
 
