@@ -12,7 +12,10 @@ pub async fn read_osu_db_full(
         .osu_path.clone()
         .ok_or("osu! path not set")?;
 
-    let sets = read_from_osudb(&osu_path)?;
+    let sets = tauri::async_runtime::spawn_blocking(move || read_from_osudb(&osu_path))
+        .await
+        .map_err(|e| e.to_string())??;
+    
     log::info!("successfully parsed {} beatmap sets from osu!.db", sets.len());
 
     Ok(sets)
