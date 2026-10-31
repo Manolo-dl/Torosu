@@ -4,7 +4,7 @@ import { BeatmapExporterStore, ModeFilters, emptyModeFilters } from '@features/e
 import { TuiButton, TuiExpand, TuiIcon, TuiInput, TuiTitle } from '@taiga-ui/core';
 import { TuiChip, TuiSegmented, TuiSwitch } from '@taiga-ui/kit';
 import { TuiCardLarge } from '@taiga-ui/layout';
-import { modeIcon } from '@shared/utils';
+import { GAME_MODES } from '@shared/utils';
 
 export interface ModeConfig {
   label: string;
@@ -15,13 +15,24 @@ export interface ModeConfig {
   csLabel: string | null;
 }
 
+/** How a mode looks, for its filters. */
+function mode(value: number): Pick<ModeConfig, 'label' | 'value' | 'icon' | 'color'> {
+  const { shortName, icon, color } = GAME_MODES[value];
+  return { label: shortName, value, icon, color };
+}
+
 type RangeKey = { [K in keyof ModeFilters]: ModeFilters[K] extends number | null ? K : never }[keyof ModeFilters];
 
 interface RangeField {
   label: string;
   min: RangeKey;
   max: RangeKey;
-  limit: number;
+  /** The highest value that can be typed; none if not given. */
+  limit?: number;
+  /** 0.5 if not given. */
+  step?: number;
+  /** What a typed value is multiplied by to be stored: 1000 for seconds kept in ms. */
+  scale?: number;
 }
 
 @Component({
@@ -35,10 +46,10 @@ export class BeatmapFiltersComponent {
   readonly store = inject(BeatmapExporterStore);
 
   readonly modeConfigs: ModeConfig[] = [
-    { label: 'Standard', value: 0, icon: modeIcon(0), color: '#ff66ab', hasAr: true,  csLabel: 'CS'   },
-    { label: 'Taiko',    value: 1, icon: modeIcon(1), color: '#e05555', hasAr: false, csLabel: null    },
-    { label: 'Catch',    value: 2, icon: modeIcon(2), color: '#66bbff', hasAr: true,  csLabel: 'CS'   },
-    { label: 'Mania',    value: 3, icon: modeIcon(3), color: '#c966ff', hasAr: false, csLabel: 'Keys' },
+    { ...mode(0), hasAr: true,  csLabel: 'CS'   },
+    { ...mode(1), hasAr: false, csLabel: null   },
+    { ...mode(2), hasAr: true,  csLabel: 'CS'   },
+    { ...mode(3), hasAr: false, csLabel: 'Keys' },
   ];
 
   readonly statuses = ['Ranked', 'Loved', 'Approved', 'Qualified', 'Unranked'];
@@ -81,6 +92,7 @@ export class BeatmapFiltersComponent {
 
   private buildRangeFields(mode: ModeConfig): RangeField[] {
     return [
+      { label: 'Length (s)', min: 'minLength', max: 'maxLength', step: 1, scale: 1000 },
       { label: 'Stars', min: 'minStars', max: 'maxStars', limit: 15 },
       ...(mode.hasAr ? [{ label: 'AR', min: 'minAr', max: 'maxAr', limit: 10 } as RangeField] : []),
       { label: 'OD', min: 'minOd', max: 'maxOd', limit: 10 },
@@ -99,39 +111,27 @@ export class BeatmapFiltersComponent {
     this.store.setModeFilters(mode, { [key]: value });
   }
 
-  setModeMin(mode: number, minKey: keyof ModeFilters, maxKey: keyof ModeFilters, value: string) {
-    const min = value ? parseFloat(value) : null;
-    const currentMax = this.modeFilters(mode)[maxKey] as number | null;
+  /** What the input of `key` shows: the stored value, in the unit of `field`. */
+  rangeValue(mode: number, field: RangeField, key: RangeKey): number | '' {
+    const value = this.modeFilters(mode)[key];
+    return value !== null ? value / (field.scale ?? 1) : '';
+  }
+
+  setModeMin(mode: number, field: RangeField, value: string) {
+    const min = value ? parseFloat(value) * (field.scale ?? 1) : null;
+    const currentMax = this.modeFilters(mode)[field.max];
     this.store.setModeFilters(mode, {
-      [minKey]: min,
-      ...(min !== null && (currentMax === null || min > currentMax) ? { [maxKey]: min } : {}),
+      [field.min]: min,
+      ...(min !== null && (currentMax === null || min > currentMax) ? { [field.max]: min } : {}),
     });
   }
 
-  setModeMax(mode: number, minKey: keyof ModeFilters, maxKey: keyof ModeFilters, value: string) {
-    const max = value ? parseFloat(value) : null;
-    const currentMin = this.modeFilters(mode)[minKey] as number | null;
+  setModeMax(mode: number, field: RangeField, value: string) {
+    const max = value ? parseFloat(value) * (field.scale ?? 1) : null;
+    const currentMin = this.modeFilters(mode)[field.min];
     this.store.setModeFilters(mode, {
-      [maxKey]: max,
-      ...(max !== null && currentMin !== null && max < currentMin ? { [minKey]: max } : {}),
-    });
-  }
-
-  setModeMinLength(mode: number, value: string) {
-    const min = value ? parseInt(value) * 1000 : null;
-    const currentMax = this.modeFilters(mode).maxLength;
-    this.store.setModeFilters(mode, {
-      minLength: min,
-      ...(min !== null && (currentMax === null || min > currentMax) ? { maxLength: min } : {}),
-    });
-  }
-
-  setModeMaxLength(mode: number, value: string) {
-    const max = value ? parseInt(value) * 1000 : null;
-    const currentMin = this.modeFilters(mode).minLength;
-    this.store.setModeFilters(mode, {
-      maxLength: max,
-      ...(max !== null && currentMin !== null && max < currentMin ? { minLength: max } : {}),
+      [field.max]: max,
+      ...(max !== null && currentMin !== null && max < currentMin ? { [field.min]: max } : {}),
     });
   }
 
@@ -142,10 +142,6 @@ export class BeatmapFiltersComponent {
   modeKeyCount(mode: number): number | null {
     const mf = this.modeFilters(mode);
     return mf.minCs !== null && mf.minCs === mf.maxCs ? mf.minCs : null;
-  }
-
-  msToSec(ms: number | null): number | '' {
-    return ms !== null ? ms / 1000 : '';
   }
 
   // ── Global ──────────────────────────────────────────────────────────────────

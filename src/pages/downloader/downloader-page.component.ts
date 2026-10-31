@@ -5,6 +5,7 @@ import { OsuDbStore } from '@entities/osu-db';
 import { ConfigurationStore } from '@entities/configuration';
 import { UserStore } from '@entities/user';
 import { TuiTitle, TuiNotificationDirective, TuiButton } from "@taiga-ui/core";
+import { PageHeaderComponent } from '@shared/ui';
 import { TuiAccordion } from '@taiga-ui/kit';
 
 interface PageInfo {
@@ -19,7 +20,7 @@ interface Step {
 
 @Component({
   selector: 'app-downloader',
-  imports: [BeatmapImportComponent, BeatmapQueueComponent, OsuCookieInputComponent, TuiTitle, TuiNotificationDirective, TuiButton, TuiAccordion],
+  imports: [PageHeaderComponent, BeatmapImportComponent, BeatmapQueueComponent, OsuCookieInputComponent, TuiTitle, TuiNotificationDirective, TuiButton, TuiAccordion],
   templateUrl: './downloader-page.component.html',
   styleUrl: './downloader-page.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,

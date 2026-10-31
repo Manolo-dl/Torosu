@@ -1,3 +1,5 @@
+@import 'shared/styles/mixins';
+
 :host {
   display: block;
 }
@@ -16,8 +18,5 @@
 }
 
 .empty {
-  padding: 3rem 0;
-  text-align: center;
-  color: var(--tui-text-tertiary);
-  font: var(--tui-typography-body-m);
+  .empty-state(3rem 0; var(--tui-typography-body-m));
 }

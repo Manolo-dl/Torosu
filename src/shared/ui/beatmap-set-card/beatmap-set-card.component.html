@@ -30,16 +30,14 @@
         @for (diff of sortedDiffs(); track diff.md5) {
           <div class="diff">
             <tui-icon class="mode" [icon]="modeIcon(diff.mode)" [style.color]="modeColor(diff.mode)" />
-            <span
-              size="s"
-              tuiBadge
-              class="stars"
-              [style.background]="diffBg(diff.stars)"
-              [style.color]="diffFg(diff.stars)"
-            >
-              ★ {{ diff.stars | number:'1.2-2' }}
-            </span>
+            <app-star-badge size="s" class="stars" [stars]="diff.stars" />
             <span class="name">{{ diff.diffName }}</span>
+            @if (diff.status !== status()) {
+              <span appearance="neutral" size="s" tuiBadge>{{ diff.status }}</span>
+            }
+            @if (diffAction(); as action) {
+              <ng-container *ngTemplateOutlet="action; context: { $implicit: diff, set: set() }" />
+            }
           </div>
         }
       </div>

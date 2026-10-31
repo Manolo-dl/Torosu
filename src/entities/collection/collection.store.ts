@@ -1,7 +1,7 @@
 import { patchState, signalStore, withComputed, withMethods } from "@ngrx/signals";
 import { OsuCollection } from "./collection.model";
 import { computed, inject } from "@angular/core";
-import { OsuDbStore } from "@entities/osu-db";
+import { OsuDbStore, setsOfDiffs } from "@entities/osu-db";
 import { OsuBeatmapSet } from "@entities/osu-db/osu-db.model";
 import { withLoader } from "@shared/stores";
 import { invoke } from "@tauri-apps/api/core";
@@ -31,18 +31,7 @@ export const CollectionStore = signalStore(
         const collectionsWithBeatmaps = computed(() => {
             // Exported as links, so only what is on the website, with the diffs of the collection.
             const setsByMd5 = osuDb.submittedSetsByMd5();
-            return store.collections().map(col => {
-                const md5s = new Set(col.md5s);
-                const seenFolders = new Set<string>();
-                const sets: OsuBeatmapSet[] = [];
-                for (const md5 of md5s) {
-                    const set = setsByMd5.get(md5);
-                    if (!set || seenFolders.has(set.folderName)) continue;
-                    seenFolders.add(set.folderName);
-                    sets.push({ ...set, diffs: set.diffs.filter(d => md5s.has(d.md5)) });
-                }
-                return { name: col.name, sets };
-            });
+            return store.collections().map(col => ({ name: col.name, sets: setsOfDiffs(col.md5s, setsByMd5) }));
         });
 
         const selectedSets = computed(() => {

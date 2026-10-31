@@ -8,24 +8,8 @@ header {
   justify-content: space-between;
 }
 
-.viewport {
-  block-size: calc(100vh - 30rem);
-  min-block-size: 20rem;
-  overflow-x: hidden;
-
-  ::ng-deep .cdk-virtual-scroll-content-wrapper {
-    inline-size: 100%;
-  }
-
-  .item {
-    inline-size: 100%;
-    padding: 0 0.5rem 2px 0;
-  }
-}
-
-.empty {
-  padding: 3rem 1rem;
-  text-align: center;
-  color: var(--tui-text-tertiary);
-  font: var(--tui-typography-body-s);
+.added {
+  font-size: 1rem;
+  color: var(--tui-status-positive);
+  margin-inline: 0.25rem;
 }

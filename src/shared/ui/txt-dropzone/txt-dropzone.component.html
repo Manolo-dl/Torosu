@@ -1,0 +1,24 @@
+<label
+  appTxtFileDrop
+  #dropzone="appTxtFileDrop"
+  tuiInputFiles
+  [class.drag-over]="dropzone.isDragOver()"
+  (fileContent)="fileContent.emit($event)"
+>
+  <input
+    accept=".txt"
+    tuiInputFiles
+    [ngModel]="null"
+    (ngModelChange)="onFileSelect($event)"
+  />
+  <ng-template let-dragged>
+    <div class="content">
+      <tui-icon icon="@tui.file-text" />
+      @if (dragged || dropzone.isDragOver()) {
+        <span>Drop the <code>.txt</code> file here</span>
+      } @else {
+        <span>Drop a <code>.txt</code> file here or <a tuiLink>browse</a></span>
+      }
+    </div>
+  </ng-template>
+</label>

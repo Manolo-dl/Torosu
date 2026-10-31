@@ -1,3 +1,5 @@
+@import 'shared/styles/mixins';
+
 :host {
   display: flex;
   flex-direction: column;
@@ -5,14 +7,10 @@
 }
 
 .layout {
-  display: grid;
-  grid-template-columns: 20rem 1fr;
-  gap: 1.25rem;
-  align-items: start;
+  .sidebar-layout();
 
   .upload {
-    position: sticky;
-    top: 0;
+    .sticky();
   }
 
   .preview {

@@ -1,3 +1,5 @@
+@import 'shared/styles/mixins';
+
 :host {
   display: block;
 }
@@ -104,8 +106,5 @@ header {
 }
 
 .empty {
-  padding: 1.5rem 0;
-  text-align: center;
-  color: var(--tui-text-tertiary);
-  font: var(--tui-typography-body-s);
+  .empty-state(1.5rem 0);
 }

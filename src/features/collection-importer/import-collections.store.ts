@@ -1,6 +1,6 @@
 import { computed, inject } from "@angular/core";
 import { CollectionStore } from "@entities/collection";
-import { OsuDbStore } from "@entities/osu-db";
+import { OsuDbStore, setsOfDiffs } from "@entities/osu-db";
 import { patchState, signalStore, withComputed, withMethods, withState } from "@ngrx/signals";
 import { NotifyService } from '@shared/services';
 import { invoke } from "@tauri-apps/api/core";
@@ -59,21 +59,11 @@ export const ImportCollectionStore = signalStore(
             previewGroups: computed(() => {
                 const beatmapSetsByMd5 = osuDB.beatmapSetsByMd5();
 
-                return collectionsToImport().map(col => {
-                    const md5s = new Set(col.md5s);
-                    const seen = new Set<string>();
-                    const sets = [];
-
-                    for (const md5 of md5s) {
-                        const set = beatmapSetsByMd5.get(md5);
-                        if (!set || seen.has(set.folderName)) continue;
-                        seen.add(set.folderName);
-                        sets.push({ ...set, diffs: set.diffs.filter(d => md5s.has(d.md5)) });
-                    }
-
-                    const isExisting = existingMd5sByName().has(col.name);
-                    return { name: col.name, sets, isExisting };
-                });
+                return collectionsToImport().map(col => ({
+                    name: col.name,
+                    sets: setsOfDiffs(col.md5s, beatmapSetsByMd5),
+                    isExisting: existingMd5sByName().has(col.name),
+                }));
             }),
         };
     }),

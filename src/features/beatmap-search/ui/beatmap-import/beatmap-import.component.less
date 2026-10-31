@@ -1,33 +1,3 @@
 :host {
   display: block;
 }
-
-label[tuiInputFiles] {
-  min-block-size: 8rem;
-
-  &.drag-over input {
-    background: var(--tui-background-neutral-1);
-    border-color: var(--tui-text-action-hover);
-  }
-
-  .content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
-    color: var(--tui-text-secondary);
-
-    tui-icon {
-      font-size: 2rem;
-      color: var(--tui-text-action);
-    }
-
-    code {
-      font-family: monospace;
-      color: var(--tui-text-primary);
-      background: var(--tui-background-neutral-1);
-      padding: 0 0.3rem;
-      border-radius: var(--tui-radius-xs);
-    }
-  }
-}

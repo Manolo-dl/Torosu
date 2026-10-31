@@ -1,23 +1,32 @@
-import { DecimalPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
-import { OsuBeatmapSet, setStatus } from '@entities/osu-db/osu-db.model';
+import { NgTemplateOutlet } from '@angular/common';
+import { ChangeDetectionStrategy, Component, computed, input, signal, TemplateRef } from '@angular/core';
+import { OsuBeatmapSet, OsuDiff, setStatus } from '@entities/osu-db/osu-db.model';
 import { openUrl } from '@tauri-apps/plugin-opener';
-import { modeColor, modeIcon, starBg, starFg } from '@shared/utils';
+import { beatmapsetUrl, modeColor, modeIcon, starBg } from '@shared/utils';
 import { TuiExpand, TuiIcon, TuiLink } from '@taiga-ui/core';
 import { TuiBadge } from '@taiga-ui/kit';
+import { StarBadgeComponent } from '../star-badge/star-badge.component';
 
 /** Pips of each mode on the closed card; the rest are only counted. */
 const MAX_PIPS = 6;
 
+/** What a `diffAction` template gets: the diff (`let-diff`) and its set (`let-set="set"`). */
+export interface DiffActionContext {
+  $implicit: OsuDiff;
+  set: OsuBeatmapSet;
+}
+
 @Component({
   selector: 'app-beatmap-set-card',
-  imports: [DecimalPipe, TuiBadge, TuiExpand, TuiIcon, TuiLink],
+  imports: [NgTemplateOutlet, StarBadgeComponent, TuiBadge, TuiExpand, TuiIcon, TuiLink],
   templateUrl: './beatmap-set-card.component.html',
   styleUrl: './beatmap-set-card.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BeatmapSetCardComponent {
   readonly set = input.required<OsuBeatmapSet>();
+  /** Shown at the end of each diff, e.g. a button that picks it. */
+  readonly diffAction = input<TemplateRef<DiffActionContext>>();
 
   readonly expanded = signal(false);
   readonly status = computed(() => setStatus(this.set()));
@@ -45,11 +54,10 @@ export class BeatmapSetCardComponent {
     event.stopPropagation();
     const id = this.set().beatmapsetId;
     if (id <= 0) return;
-    openUrl(`https://osu.ppy.sh/beatmapsets/${id}`);
+    openUrl(beatmapsetUrl(id));
   }
 
   readonly diffBg = starBg;
-  readonly diffFg = starFg;
   readonly modeIcon = modeIcon;
   readonly modeColor = modeColor;
 }

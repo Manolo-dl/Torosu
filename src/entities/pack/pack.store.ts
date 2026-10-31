@@ -1,5 +1,5 @@
 import { patchState, signalStore, withComputed, withHooks, withMethods, withState } from "@ngrx/signals";
-import { SelectedDiff } from "./pack.model";
+import { SelectedDiff, selectedDiff } from "./pack.model";
 import { invoke } from "@tauri-apps/api/core";
 import { computed, inject } from "@angular/core";
 import { OsuDbStore } from "@entities/osu-db";
@@ -119,13 +119,7 @@ export const PackStore = signalStore(
                 const set = setsByMd5.get(md5);
                 const diff = diffsByMd5.get(md5);
                 if (!set || !diff) continue;
-                newDiffs.push({
-                    md5: diff.md5,
-                    folderName: set.folderName,
-                    fileName: diff.fileName,
-                    audio: diff.audio,
-                    newDiffName: `[${diff.creator}] ${set.artist} - ${set.title} (${diff.diffName})`,
-                });
+                newDiffs.push(selectedDiff(set, diff));
             }
 
             if (newDiffs.length > 0) {

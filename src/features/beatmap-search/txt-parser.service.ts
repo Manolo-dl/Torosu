@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { beatmapsetIdFromUrl } from '@shared/utils';
 
 @Injectable({
   providedIn: 'root',
@@ -22,8 +23,8 @@ export class TxtParserService {
   }
 
   private extractBeatmapSetId(url: string): number | null {
-    const match = url.match(/beatmapsets\/(\d+)/);
-    if (match) return parseInt(match[1]);
+    const id = beatmapsetIdFromUrl(url);
+    if (id !== null) return id;
 
     if (/^\d+$/.test(url)) return parseInt(url);
     

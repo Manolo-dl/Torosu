@@ -1,3 +1,5 @@
+@import 'shared/styles/mixins';
+
 :host {
   display: flex;
   flex-direction: column;
@@ -43,9 +45,7 @@
     font: var(--tui-font-text-s);
 
     .path {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      .ellipsis();
       font-family: monospace;
       color: var(--tui-text-primary);
     }

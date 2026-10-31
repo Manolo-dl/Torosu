@@ -1,0 +1,40 @@
+// Mixins shared by the component stylesheets:
+// @import 'shared/styles/mixins';
+
+// One line, cut with "…" when it does not fit.
+.ellipsis() {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// What shows instead of a list that is empty, loading or failed.
+.empty-state(@padding; @font: var(--tui-typography-body-s)) {
+  padding: @padding;
+  text-align: center;
+  color: var(--tui-text-tertiary);
+  font: @font;
+}
+
+// A page with a 20rem sidebar on the left; give the sidebar `.sticky()`.
+.sidebar-layout() {
+  display: grid;
+  grid-template-columns: 20rem 1fr;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+// Stays in view while the page scrolls.
+.sticky() {
+  position: sticky;
+  top: 0;
+}
+
+// A cdk virtual scroll viewport whose rows are as wide as it is.
+.full-width-virtual-scroll() {
+  overflow-x: hidden;
+
+  ::ng-deep .cdk-virtual-scroll-content-wrapper {
+    inline-size: 100%;
+  }
+}

@@ -40,12 +40,3 @@ export function starBg(stars: number): string {
 export function starFg(stars: number): string {
   return stars >= 6.5 ? '#ffd966' : 'rgba(0, 0, 0, 0.75)';
 }
-
-/** The icon of a game mode (osu!, taiko, catch, mania), for `<tui-icon [icon]>`; drawn in the text colour. */
-export function modeIcon(mode: number): string {
-  return `assets/icons/modes/${['osu', 'taiko', 'catch', 'mania'][mode] ?? 'osu'}.svg`;
-}
-
-export function modeColor(mode: number): string {
-  return ['#ff66ab', '#e05555', '#66bbff', '#c966ff'][mode] ?? '#aaa';
-}

@@ -1,8 +1,8 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, TemplateRef } from '@angular/core';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { OsuBeatmapSet } from '@entities/osu-db/osu-db.model';
 import { TuiScrollControls, TuiScrollRef } from '@taiga-ui/core';
-import { BeatmapSetCardComponent } from '../beatmap-set-card/beatmap-set-card.component';
+import { BeatmapSetCardComponent, DiffActionContext } from '../beatmap-set-card/beatmap-set-card.component';
 
 @Component({
   selector: 'app-beatmap-set-list',
@@ -12,9 +12,11 @@ import { BeatmapSetCardComponent } from '../beatmap-set-card/beatmap-set-card.co
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BeatmapSetListComponent {
-  @Input() sets: OsuBeatmapSet[] = [];
-  @Input() emptyText = 'No beatmaps';
-  @Input() listHeight = 'calc(100vh - 320px)';
+  readonly sets = input<OsuBeatmapSet[]>([]);
+  readonly emptyText = input('No beatmaps');
+  readonly listHeight = input('calc(100vh - 320px)');
+  /** For each card: see `BeatmapSetCardComponent.diffAction`. */
+  readonly diffAction = input<TemplateRef<DiffActionContext>>();
 
   trackSet(_: number, set: OsuBeatmapSet): string {
     return set.folderName;
