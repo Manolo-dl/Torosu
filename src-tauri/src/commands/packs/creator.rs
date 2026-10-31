@@ -1,5 +1,6 @@
 use std::{collections::HashMap, fs, path::{Path, PathBuf}};
 use crate::AppConfigState;
+use crate::commands::config::model::PacksConfig;
 use crate::commands::osu_db::folders::get_beatmapset_folder;
 
 #[derive(serde::Deserialize)]
@@ -32,6 +33,16 @@ pub async fn create_pack(
         (config.osu_path.clone().ok_or("osu! path not set")?, config.packs.clone())
     };
 
+    // Copying the audio and backgrounds of every set and zipping them is all
+    // file work: kept off the async runtime.
+    tauri::async_runtime::spawn_blocking(move || build_pack(&request, &osu_path, &packs))
+        .await
+        .map_err(|e| e.to_string())?
+}
+
+/// Writes the pack, in several parts if it has more sets than `packs` allows,
+/// and opens each .osz so osu! imports it.
+fn build_pack(request: &PackRequest, osu_path: &str, packs: &PacksConfig) -> Result<(), String> {
     let parts = split_by_set(&request.diffs, packs.max_sets_per_pack as usize);
     if parts.len() > 1 {
         log::info!("splitting {} diffs into {} packs (max {} sets per pack)", request.diffs.len(), parts.len(), packs.max_sets_per_pack);
@@ -40,7 +51,7 @@ pub async fn create_pack(
     let mut osz_paths = Vec::with_capacity(parts.len());
     for (index, diffs) in parts.iter().enumerate() {
         let title = part_title(&request.title, index, parts.len());
-        let osz_path = build_osz(&osu_path, &title, &request.final_creator, diffs, packs.keep_background).await?;
+        let osz_path = build_osz(osu_path, &title, &request.final_creator, diffs, packs.keep_background)?;
         osz_paths.push(osz_path);
     }
 
@@ -91,7 +102,7 @@ fn part_title(title: &str, index: usize, parts: usize) -> String {
 }
 
 /// Writes one set with `diffs` into an .osz in the temp folder and returns its path.
-async fn build_osz(
+fn build_osz(
     osu_path: &str,
     title: &str,
     creator: &str,
@@ -129,7 +140,7 @@ async fn build_osz(
         })?;
 
         let audio = match find_file(folder, &diff.audio) {
-            Some(source) => Some(copy_once(&mut copied, &source, "audio", &temp_dir).await?),
+            Some(source) => Some(copy_once(&mut copied, &source, "audio", &temp_dir)?),
             None => {
                 log::warn!("audio file not found for diff {}: {:?}", diff.file_name, folder.join(&diff.audio));
                 None
@@ -138,7 +149,7 @@ async fn build_osz(
 
         let background = match background_filename(&content).filter(|_| keep_background) {
             Some(name) => match find_file(folder, &name) {
-                Some(source) => Some(copy_once(&mut copied, &source, "bg", &temp_dir).await?),
+                Some(source) => Some(copy_once(&mut copied, &source, "bg", &temp_dir)?),
                 None => {
                     log::warn!("background not found for diff {}: {:?}", diff.file_name, folder.join(&name));
                     None
@@ -184,7 +195,7 @@ async fn build_osz(
 
 /// Copies `source` into the pack the first time a diff uses it and returns
 /// its name inside the pack (`audio-1.mp3`, `bg-2.jpg`, ...).
-async fn copy_once(copied: &mut HashMap<PathBuf, String>, source: &Path, prefix: &str, temp_dir: &Path) -> Result<String, String> {
+fn copy_once(copied: &mut HashMap<PathBuf, String>, source: &Path, prefix: &str, temp_dir: &Path) -> Result<String, String> {
     if let Some(name) = copied.get(source) {
         return Ok(name.clone());
     }
@@ -196,7 +207,7 @@ async fn copy_once(copied: &mut HashMap<PathBuf, String>, source: &Path, prefix:
     };
 
     let destination = temp_dir.join(&name);
-    tokio::fs::copy(source, &destination).await.map_err(|e| {
+    fs::copy(source, &destination).map_err(|e| {
         log::error!("failed to copy {:?} -> {:?}: {}", source, destination, e);
         e.to_string()
     })?;

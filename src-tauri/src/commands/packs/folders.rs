@@ -11,17 +11,27 @@ pub async fn validate_pack_folder(folder_name: String, osu_state: tauri::State<'
         .osu_path.clone()
         .ok_or("osu! path not set")?;
 
+    // Songs can hold thousands of folders, and this runs at every change of the title.
     let songs = Path::new(&osu_path).join("Songs");
-    let existing = std::fs::read_dir(&songs)
-        .map_err(|e| {
-            log::error!("failed to read {:?}: {}", songs, e);
-            e.to_string()
-        })?
-        .filter_map(|entry| entry.ok())
-        .filter(|entry| entry.file_type().is_ok_and(|t| t.is_dir()))
-        .filter_map(|entry| entry.file_name().into_string().ok());
+    let existing = tauri::async_runtime::spawn_blocking(move || folders_in(&songs))
+        .await
+        .map_err(|e| e.to_string())??;
 
     Ok(!is_pack_folder_taken(&folder_name, existing))
+}
+
+/// Names of the folders inside `dir`.
+fn folders_in(dir: &Path) -> Result<Vec<String>, String> {
+    let entries = std::fs::read_dir(dir).map_err(|e| {
+        log::error!("failed to read {:?}: {}", dir, e);
+        e.to_string()
+    })?;
+
+    Ok(entries
+        .filter_map(|entry| entry.ok())
+        .filter(|entry| entry.file_type().is_ok_and(|t| t.is_dir()))
+        .filter_map(|entry| entry.file_name().into_string().ok())
+        .collect())
 }
 
 /// osu! names the folder after the .osz, which is the sanitized title, and a
