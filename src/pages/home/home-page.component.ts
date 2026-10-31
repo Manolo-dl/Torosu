@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { getVersion } from '@tauri-apps/api/app';
 import { ConfigurationStore } from '@entities/configuration';
 import { USER_ITEMS } from '@entities/nav-item';
@@ -21,7 +20,7 @@ const DESCRIPTIONS: Record<string, string> = {
 
 @Component({
   selector: 'app-home',
-  imports: [RouterLink, FaIconComponent, TuiIcon, TuiTitle, TuiBadge, TuiCardLarge],
+  imports: [RouterLink, TuiIcon, TuiTitle, TuiBadge, TuiCardLarge],
   templateUrl: './home-page.component.html',
   styleUrl: './home-page.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,

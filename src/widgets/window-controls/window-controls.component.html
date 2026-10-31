@@ -3,13 +3,14 @@
       <button
         size="m"
         appearance="flat"
-        tuiButton
+        tuiIconButton
         type="button"
+        [iconStart]="control.icon"
         (click)="control.action()"
 
         tabIndex="0"
       >
-        <fa-icon [icon]="control.icon" />
+        {{ control.label }}
       </button>
   }
 </div>

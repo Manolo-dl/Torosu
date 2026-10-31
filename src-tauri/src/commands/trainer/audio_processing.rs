@@ -113,8 +113,11 @@ const STRETCH_CHUNK_FRAMES: usize = 4096;
 /// steps, each one a full memcpy: O(n^2). Draining per chunk keeps the FIFO at
 /// a few KB and `ensureCapacity` never reallocates. On a 4 min track:
 /// 57.7 s -> 0.19 s, with bit-identical output.
+///
+/// Takes the decoded audio (~85 MB for 4 min of stereo) so it is freed before
+/// the result is encoded.
 pub fn apply_timestretch(
-    audio: &DecodedAudio,
+    audio: DecodedAudio,
     rate: f64,
     mut on_progress: impl FnMut(f32),
 ) -> Result<Vec<f32>> {
@@ -178,10 +181,11 @@ pub fn apply_timestretch(
     Ok(output)
 }
 
-/// Changes the speed letting the pitch shift naturally.
-pub fn apply_resample(audio: &DecodedAudio, rate: f64) -> (Vec<f32>, u32) {
+/// Changes the speed letting the pitch shift naturally: the same samples,
+/// played at another sample rate, so they are handed over without a copy.
+pub fn apply_resample(audio: DecodedAudio, rate: f64) -> (Vec<f32>, u32) {
     let new_sample_rate = (audio.sample_rate as f64 * rate).round() as u32;
-    (audio.samples.clone(), new_sample_rate)
+    (audio.samples, new_sample_rate)
 }
 
 /// Frames per channel submitted to libvorbis per call. The libvorbis docs

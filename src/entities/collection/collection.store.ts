@@ -71,9 +71,11 @@ export const CollectionStore = signalStore(
         };
     }),
 
-    withMethods((store, osuPath = inject(OsuPathStore), alerts = inject(TuiNotificationService)) => ({
+    withMethods((store, osuPath = inject(OsuPathStore), alerts = inject(TuiNotificationService)) => {
+        // Shared by whoever asks while collection.db is being read, so it is read once.
+        let loading: Promise<void> | null = null;
 
-        async load() {
+        async function read() {
             const path = osuPath.path();
             if (!path) {
                 alerts.open('Osu! path not set', { appearance: 'negative' }).subscribe();
@@ -91,37 +93,46 @@ export const CollectionStore = signalStore(
                 alerts.open(`Failed to load collections`, { appearance: 'negative' }).subscribe();
                 throw error;
             }
-        },
-
-        setCollections(collections: OsuCollection[]) {
-            patchState(store, { collections, isLoaded: true, isLoading: false });
-        },
-
-        setLoading(isLoading: boolean) {
-            patchState(store, { isLoading });
-        },
-
-        toggleSelection(name: string) {
-            const selected = store.selectedCollections();
-            patchState(store, {
-                selectedCollections: selected.includes(name)
-                    ? selected.filter(c => c !== name)
-                    : [...selected, name]
-            });
-        },
-
-        selectAll() {
-            patchState(store, {
-                selectedCollections: store.collections().map(c => c.name)
-            });
-        },
-
-        clearSelection() {
-            patchState(store, { selectedCollections: [] });
-        },
-
-        reset() {
-            patchState(store, initialState);
         }
-    })),
+
+        return {
+            load(): Promise<void> {
+                loading ??= read().finally(() => { loading = null; });
+                return loading;
+            },
+
+            setCollections(collections: OsuCollection[]) {
+                patchState(store, { collections, isLoaded: true, isLoading: false });
+            },
+
+            setLoading(isLoading: boolean) {
+                patchState(store, { isLoading });
+            },
+
+            toggleSelection(name: string) {
+                const selected = store.selectedCollections();
+                patchState(store, {
+                    selectedCollections: selected.includes(name)
+                        ? selected.filter(c => c !== name)
+                        : [...selected, name]
+                });
+            },
+
+            selectAll() {
+                patchState(store, {
+                    selectedCollections: store.collections().map(c => c.name)
+                });
+            },
+
+            clearSelection() {
+                patchState(store, { selectedCollections: [] });
+            },
+
+            reset() {
+                // A read still running is of the previous folder: not to be joined.
+                loading = null;
+                patchState(store, initialState);
+            },
+        };
+    }),
 );

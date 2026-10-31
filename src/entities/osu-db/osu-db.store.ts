@@ -106,25 +106,18 @@ export const OsuDbStore = signalStore(
         localSubmittedSetIds: computed(() => new Set(store.submittedBeatmapSets().map(s => s.beatmapsetId))),
     })),
 
-    withMethods((store, osuPath = inject(OsuPathStore), alerts = inject(TuiNotificationService)) => ({
-        setBeatmapSets(beatmapSets: OsuBeatmapSet[]) {
-            patchState(store, { beatmapSets, isLoaded: true, isLoading: false });
-        },
+    withMethods((store, osuPath = inject(OsuPathStore), alerts = inject(TuiNotificationService)) => {
+        // Shared by whoever asks while osu!.db is being read (a page and a
+        // resolver, or a tool left before it loaded and the next one), so it is
+        // read once.
+        let loading: Promise<void> | null = null;
 
-        setLoading(isLoading: boolean) {
-            patchState(store, { isLoading });
-        },
-
-        reset() {
-            patchState(store, initialState);
-        },
-
-        async load() {
+        async function read() {
             const path = osuPath.path();
             if (!path) {
                 alerts.open('Osu! path not set', { appearance: 'negative' }).subscribe();
                 throw new Error("Osu! path not set");
-            } 
+            }
 
             patchState(store, { isLoading: true });
 
@@ -138,5 +131,26 @@ export const OsuDbStore = signalStore(
                 throw error;
             }
         }
-    })),
+
+        return {
+            setBeatmapSets(beatmapSets: OsuBeatmapSet[]) {
+                patchState(store, { beatmapSets, isLoaded: true, isLoading: false });
+            },
+
+            setLoading(isLoading: boolean) {
+                patchState(store, { isLoading });
+            },
+
+            reset() {
+                // A read still running is of the previous folder: not to be joined.
+                loading = null;
+                patchState(store, initialState);
+            },
+
+            load(): Promise<void> {
+                loading ??= read().finally(() => { loading = null; });
+                return loading;
+            },
+        };
+    }),
 )

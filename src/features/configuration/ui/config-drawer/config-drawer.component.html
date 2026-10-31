@@ -1,11 +1,12 @@
 <button
     size="m"
     appearance="flat"
-    tuiButton
+    iconStart="@tui.settings"
+    tuiIconButton
     type="button"
     (click)="toggle()"
     >
-    <fa-icon [icon]="faGears" />
+    Settings
 </button>
 
 <tui-drawer *tuiPopup="open()">
@@ -85,19 +86,8 @@
                     </tui-textfield>
                     <label tuiCell>
                         <span tuiTitle>
-                            Use SQLite cache
-                            <span tuiSubtitle>Cache osu!.db and collections in a local database</span>
-                        </span>
-                        <input
-                            tuiSwitch
-                            type="checkbox"
-                            [(ngModel)]="draft.sqlite_db"
-                        />
-                    </label>
-                    <label tuiCell>
-                        <span tuiTitle>
                             Developer mode
-                            <span tuiSubtitle>Show the button for the developer pages: logs, database and osu! data</span>
+                            <span tuiSubtitle>Show the button for the developer pages: logs and osu! data</span>
                         </span>
                         <input
                             tuiSwitch

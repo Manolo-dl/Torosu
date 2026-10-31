@@ -3,9 +3,8 @@ export interface AppConfig {
     excluded_tools: string[];
     downloader: DownloaderConfig;
     packs: PacksConfig;
-    sqlite_db: boolean;
     open_file: boolean;
-    /** Shows the developer pages (logs, database, osu! data). */
+    /** Shows the developer pages (logs, osu! data). */
     dev_mode: boolean;
 }
 

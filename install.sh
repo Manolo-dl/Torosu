@@ -18,10 +18,8 @@ DESKTOP_FILE="${XDG_DATA_HOME:-$HOME/.local/share}/applications/torosu.desktop"
 ICON_FILE="${XDG_DATA_HOME:-$HOME/.local/share}/icons/hicolor/256x256/apps/torosu.png"
 BIN_LINK="$HOME/.local/bin/torosu"
 PTRACE_CONF="/etc/sysctl.d/60-torosu-ptrace.conf"
-# Where Torosu keeps its settings and its cache (see `app_config_dir` and
-# `app_cache_dir` in src-tauri/src/lib.rs).
+# Where Torosu keeps its settings (see `app_config_dir` in src-tauri/src/lib.rs).
 CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/com.manolo.torosu"
-CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/com.manolo.torosu"
 
 info() { printf '\033[1;35m::\033[0m %s\n' "$*"; }
 warn() { printf '\033[1;33m!!\033[0m %s\n' "$*" >&2; }
@@ -47,8 +45,8 @@ uninstall() {
   if [ -f "$PTRACE_CONF" ] && ask "Also remove the permission to read osu!'s memory ($PTRACE_CONF)?"; then
     sudo rm -f "$PTRACE_CONF"
   fi
-  # The settings and the cache stay, in case of reinstalling.
-  info "Done. Your settings are still in $CONFIG_DIR and the cache in $CACHE_DIR; delete those folders to remove them too."
+  # The settings stay, in case of reinstalling.
+  info "Done. Your settings are still in $CONFIG_DIR; delete that folder to remove them too."
   exit 0
 }
 

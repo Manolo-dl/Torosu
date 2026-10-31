@@ -32,8 +32,8 @@ tauri-plugin-fs = "2.7.1"
 tauri-plugin-dialog = "2.8.3"
 tauri-plugin-os = "2.4.0"
 serde = { version = "1", features = ["derive"] }
+# Also needed outside the tests: `tauri::generate_context!` expands to code that uses it.
 serde_json = "1"
-sqlx = { version = "0.9.0", default-features = false, features = ["sqlite-bundled", "runtime-tokio", "derive"] }
 toml = "1.1.8"
 chrono = { version = "0.4.45", default-features = false, features = ["clock"] }
 osynic_osudb = "0.1.5"

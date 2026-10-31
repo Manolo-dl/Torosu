@@ -14,13 +14,10 @@ pub struct AppConfig {
     #[serde(default)]
     pub packs: PacksConfig,
 
-    #[serde(default = "default_true")]
-    pub sqlite_db: bool,
-
     #[serde(default = "default_false")]
     pub open_file: bool,
 
-    /// Shows the developer pages (logs, database, osu! data).
+    /// Shows the developer pages (logs, osu! data).
     #[serde(default = "default_false")]
     pub dev_mode: bool,
 }
@@ -73,8 +70,8 @@ fn default_max_concurrent_downloads() -> u32 { 1 }
 fn default_max_sets_per_pack() -> u32 { 0 }
 
 // Implemented by hand so the defaults match the serde ones above: a derived
-// Default would set `sqlite_db` to false, and that value is then written to
-// configuration.toml on close, silently disabling the cache for good.
+// Default would set `error_file` and `keep_background` to false, and those
+// values are then written to configuration.toml on close, for good.
 impl Default for AppConfig {
     fn default() -> Self {
         Self {
@@ -82,7 +79,6 @@ impl Default for AppConfig {
             excluded_tools: Vec::new(),
             downloader: DownloaderConfig::default(),
             packs: PacksConfig::default(),
-            sqlite_db: default_true(),
             open_file: default_false(),
             dev_mode: default_false(),
         }

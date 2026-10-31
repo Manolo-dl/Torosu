@@ -181,23 +181,25 @@ pub async fn run_trainer(app: tauri::AppHandle, request: RunTrainerRequest) -> R
 
         let audio_bytes = tokio::task::spawn_blocking(move || {
             let decoded = audio_processing::decode_audio(&audio_src)?;
+            let channels = decoded.channels as u16;
             let _ = app_audio.emit("trainer-progress", TrainerProgress { percent: 30 });
 
             let (samples, sample_rate) = if adjust_pitch {
+                let sample_rate = decoded.sample_rate;
                 let app_stretch = app_audio.clone();
-                let stretched = audio_processing::apply_timestretch(&decoded, rate, |p| {
+                let stretched = audio_processing::apply_timestretch(decoded, rate, |p| {
                     let pct = (30.0 + p * audio_span) as u8;
                     let _ = app_stretch.emit("trainer-progress", TrainerProgress { percent: pct });
                 })?;
-                (stretched, decoded.sample_rate)
+                (stretched, sample_rate)
             } else {
-                audio_processing::apply_resample(&decoded, rate)
+                audio_processing::apply_resample(decoded, rate)
             };
 
             let _ = app_audio.emit("trainer-progress", TrainerProgress { percent: audio_done });
 
             // Vorbis encoding is CPU-bound too, so it stays on the blocking pool.
-            audio_processing::encode_audio(&samples, sample_rate, decoded.channels as u16)
+            audio_processing::encode_audio(&samples, sample_rate, channels)
         })
         .await
         .map_err(|e| {

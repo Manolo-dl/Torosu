@@ -3,12 +3,16 @@ use futures_util::StreamExt;
 use tauri::{Emitter, Manager};
 use tokio::io::AsyncWriteExt;
 use std::sync::Arc;
+use std::time::{Duration, Instant};
 use tokio::sync::Semaphore;
 
 use crate::{AppConfigState, SessionState};
 
 const MAX_SIZE: u64 = 200 * 1024 * 1024;
 const DELAY_BETWEEN_DOWNLOADS_MS: u64 = 1000; // ~1 req/seg, osu! documentation recommendation
+/// A chunk is a few KB, and the frontend redraws the queue on every report:
+/// the progress of a download is sent at most this often.
+const PROGRESS_INTERVAL: Duration = Duration::from_millis(100);
 
 #[derive(serde::Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -194,6 +198,7 @@ async fn download_beatmap(
     })?;
 
     let mut downloaded: u64 = 0;
+    let mut last_progress = Instant::now();
     let mut stream = response.bytes_stream();
 
     while let Some(chunk) = stream.next().await {
@@ -214,7 +219,9 @@ async fn download_beatmap(
             return Err(e.to_string());
         }
 
-        if total > 0 {
+        // The 100% is reported by `start_downloads` with the "done" status.
+        if total > 0 && last_progress.elapsed() >= PROGRESS_INTERVAL {
+            last_progress = Instant::now();
             let progress = (downloaded as f64 / total as f64) * 100.0;
             app.emit("download:progress", DownloadProgress {
                 beatmap_set_id,

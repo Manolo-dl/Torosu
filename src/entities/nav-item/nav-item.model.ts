@@ -1,8 +1,7 @@
-import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-
 export interface NavItem {
     label: string;
     route: string;
-    icon: IconDefinition;
+    /** Taiga UI icon, for `<tui-icon [icon]>`. */
+    icon: string;
     disabled?: boolean;
 }

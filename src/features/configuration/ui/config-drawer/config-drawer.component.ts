@@ -4,8 +4,6 @@ import { TuiDrawer, TuiTabsHorizontal, TuiTab, TuiSwitch, TuiInputNumber } from 
 import { open as openDialog } from '@tauri-apps/plugin-dialog';
 import { TuiHeader, TuiNavComponent } from "@taiga-ui/layout";
 import { TuiTitle, TuiPopup, TuiButton, TuiCell, TuiInput, TuiLabel, TuiNotificationService } from "@taiga-ui/core";
-import { FaIconComponent } from "@fortawesome/angular-fontawesome";
-import { faGears } from '@fortawesome/free-solid-svg-icons';
 import { Router } from '@angular/router';
 import { AppConfig, ConfigurationStore } from '@entities/configuration';
 import { USER_ITEMS } from '@entities/nav-item';
@@ -28,14 +26,13 @@ const DEFAULT_CONFIG: AppConfig = {
     keep_background: true,
     max_sets_per_pack: 0,
   },
-  sqlite_db: true,
   open_file: false,
   dev_mode: false,
 };
 
 @Component({
   selector: 'app-config-drawer',
-  imports: [FormsModule, TuiDrawer, TuiHeader, TuiTitle, TuiNavComponent, TuiTabsHorizontal, TuiTab, TuiSwitch, TuiInputNumber, TuiCell, TuiInput, TuiLabel, FaIconComponent, TuiPopup, TuiButton],
+  imports: [FormsModule, TuiDrawer, TuiHeader, TuiTitle, TuiNavComponent, TuiTabsHorizontal, TuiTab, TuiSwitch, TuiInputNumber, TuiCell, TuiInput, TuiLabel, TuiPopup, TuiButton],
   templateUrl: './config-drawer.component.html',
   styleUrl: './config-drawer.component.less',
 })
@@ -49,7 +46,6 @@ export class ConfigDrawerComponent {
 
   readonly open = signal(false);
   readonly activeTab = signal(0);
-  readonly faGears = faGears;
   readonly tools = USER_ITEMS.filter(item => item.route !== '/');
 
   // Local copy edited by the form; sent to the backend on save
