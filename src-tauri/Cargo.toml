@@ -1,6 +1,6 @@
 [package]
 name = "torosu"
-version = "1.0.0"
+version = "1.1.0"
 description = "osu! stable tools in one app: beatmap downloader, collections, packs and a map trainer"
 license = "MIT"
 authors = ["Manolo-dl"]
@@ -32,12 +32,13 @@ tauri-plugin-fs = "2.7.1"
 tauri-plugin-dialog = "2.8.3"
 tauri-plugin-os = "2.4.0"
 serde = { version = "1", features = ["derive"] }
+# Also needed outside the tests: `tauri::generate_context!` expands to code that uses it.
 serde_json = "1"
-sqlx = { version = "0.9.0", default-features = false, features = ["sqlite-bundled", "runtime-tokio", "derive"] }
 toml = "1.1.8"
 chrono = { version = "0.4.45", default-features = false, features = ["clock"] }
 osynic_osudb = "0.1.5"
 anyhow = "1.0.104"
+thiserror = "2"
 rosu-map = "0.2.1"
 # Built from source and linked in: otherwise, on Linux, it links to the system
 # libSoundTouch, which the CI runner and most users don't have.
@@ -45,7 +46,7 @@ soundtouch = { version = "0.5.4", features = ["bundled"] }
 symphonia = { version = "0.6.1", default-features = false, features = ["mp3", "ogg", "vorbis", "wav", "pcm", "id3v2"] }
 log = "0.4.34"
 tokio = { version = "1.54.0", features = ["fs", "io-util", "macros", "net", "sync", "time"] }
-zip = { version = "8.6.0", default-features = false }
+zip = { version = "8.6.0", default-features = false, features = ["deflate-flate2-zlib-rs"] }
 futures-util = { version = "0.3.34", default-features = false }
 reqwest = { version = "0.13.5", default-features = false, features = ["rustls-no-provider", "stream"] }
 rustls = { version = "0.23", default-features = false, features = ["ring"] }
@@ -58,7 +59,9 @@ osu-memory-reader = { version = "0.1.0", features = ["serde", "difficulty"] }
 codegen-units = 1
 lto = true
 opt-level = "s"
-panic = "abort"
+# Not `panic = "abort"`, which the guideline suggests: a library can panic on a
+# broken osu!.db, audio or video file, and the app catches that (`catch_unwind`,
+# `spawn_blocking`) to report an error instead of closing. Both need unwinding.
 strip = true
 
 # Keep the audio decoding/encoding hot paths fast despite opt-level = "s"

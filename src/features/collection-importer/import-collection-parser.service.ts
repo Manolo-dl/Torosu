@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { beatmapsetIdFromUrl } from '@shared/utils';
 
 export interface ParsedImport {
     name: string;
@@ -7,7 +8,6 @@ export interface ParsedImport {
 }
 
 const MD5_RE = /^[a-f0-9]{32}$/i;
-const BEATMAPSET_URL_RE = /^https?:\/\/osu\.ppy\.sh\/beatmapsets\/(\d+)/;
 
 @Injectable({
   providedIn: 'root',
@@ -27,9 +27,9 @@ export class ImportCollectionParserService {
         current = { name, md5s: [], beatmapsetIds: [] };
         collections.push(current);
       } else if (current) {
-        const urlMatch = BEATMAPSET_URL_RE.exec(line);
-        if (urlMatch) {
-          current.beatmapsetIds.push(Number(urlMatch[1]));
+        const beatmapsetId = beatmapsetIdFromUrl(line);
+        if (beatmapsetId !== null) {
+          current.beatmapsetIds.push(beatmapsetId);
         } else if (MD5_RE.test(line)) {
           current.md5s.push(line);
         }

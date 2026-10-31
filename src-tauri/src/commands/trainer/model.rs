@@ -87,7 +87,7 @@ pub struct TrainerTask {
     pub task: TrainerTaskParams,
 }
 
-#[derive(Deserialize)]
+#[derive(Clone, Copy, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DifficultySettings {
     pub hp: f64,
@@ -96,10 +96,17 @@ pub struct DifficultySettings {
     pub ar: f64,
 }
 
+/// A diff to generate: the tasks it applies, in order.
+#[derive(Deserialize)]
+pub struct TrainerConvert {
+    pub tasks: Vec<TrainerTask>,
+}
+
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RunTrainerRequest {
     pub osu_file_path: String,
+    /// Shared by every convert.
     pub difficulty: DifficultySettings,
-    pub tasks: Vec<TrainerTask>,
+    pub converts: Vec<TrainerConvert>,
 }

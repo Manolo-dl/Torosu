@@ -1,8 +1,8 @@
 import { computed, inject } from "@angular/core";
 import { CollectionStore } from "@entities/collection";
-import { OsuDbStore } from "@entities/osu-db";
+import { OsuDbStore, setsOfDiffs } from "@entities/osu-db";
 import { patchState, signalStore, withComputed, withMethods, withState } from "@ngrx/signals";
-import { TuiNotificationService } from '@taiga-ui/core';
+import { NotifyService } from '@shared/services';
 import { invoke } from "@tauri-apps/api/core";
 import { ParsedImport } from "./import-collection-parser.service";
 
@@ -59,26 +59,16 @@ export const ImportCollectionStore = signalStore(
             previewGroups: computed(() => {
                 const beatmapSetsByMd5 = osuDB.beatmapSetsByMd5();
 
-                return collectionsToImport().map(col => {
-                    const md5s = new Set(col.md5s);
-                    const seen = new Set<string>();
-                    const sets = [];
-
-                    for (const md5 of md5s) {
-                        const set = beatmapSetsByMd5.get(md5);
-                        if (!set || seen.has(set.folderName)) continue;
-                        seen.add(set.folderName);
-                        sets.push({ ...set, diffs: set.diffs.filter(d => md5s.has(d.md5)) });
-                    }
-
-                    const isExisting = existingMd5sByName().has(col.name);
-                    return { name: col.name, sets, isExisting };
-                });
+                return collectionsToImport().map(col => ({
+                    name: col.name,
+                    sets: setsOfDiffs(col.md5s, beatmapSetsByMd5),
+                    isExisting: existingMd5sByName().has(col.name),
+                }));
             }),
         };
     }),
 
-    withMethods((store, alerts = inject(TuiNotificationService)) => ({
+    withMethods((store, notify = inject(NotifyService)) => ({
         setParsed(parsedImports: ParsedImport[]) {
             patchState(store, { parsedImports });
         },
@@ -95,10 +85,10 @@ export const ImportCollectionStore = signalStore(
 
             try {
                 await invoke('import_collections', { collections });
-                alerts.open('Collections imported successfully', { appearance: 'positive' }).subscribe();
+                notify.success('Collections imported successfully');
                 patchState(store, initialState);
             } catch (error) {
-                alerts.open('Failed to import collections', { appearance: 'negative' }).subscribe();
+                notify.error('Failed to import collections');
                 patchState(store, { isImporting: false });
                 throw error;
             }

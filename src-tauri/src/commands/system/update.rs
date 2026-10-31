@@ -3,7 +3,7 @@ use std::time::{Duration, Instant};
 use tauri::{AppHandle, Emitter};
 use tauri_plugin_updater::UpdaterExt;
 
-use crate::UpdateState;
+use crate::{error::Result, state::UpdateState};
 
 /// A newer version on the update server.
 #[derive(serde::Serialize, Clone)]
@@ -26,17 +26,16 @@ pub struct UpdateProgress {
 /// Looks for a newer version, without installing it: the frontend offers it
 /// and calls [`install_update`] if the user wants it.
 #[tauri::command]
-pub async fn check_update(app: AppHandle, state: tauri::State<'_, UpdateState>) -> Result<Option<UpdateInfo>, String> {
+pub async fn check_update(app: AppHandle, state: tauri::State<'_, UpdateState>) -> Result<Option<UpdateInfo>> {
     let update = app
         .updater_builder()
         .timeout(Duration::from_secs(30))
-        .build()
-        .map_err(|e| e.to_string())?
+        .build()?
         .check()
         .await
         .map_err(|e| {
             log::error!("failed to check for updates: {e}");
-            e.to_string()
+            e
         })?;
 
     let info = update.as_ref().map(|u| UpdateInfo {
@@ -55,7 +54,7 @@ pub async fn check_update(app: AppHandle, state: tauri::State<'_, UpdateState>) 
 /// Downloads and installs the update found by [`check_update`], reporting
 /// `update:progress`, then restarts the app.
 #[tauri::command]
-pub async fn install_update(app: AppHandle, state: tauri::State<'_, UpdateState>) -> Result<(), String> {
+pub async fn install_update(app: AppHandle, state: tauri::State<'_, UpdateState>) -> Result<()> {
     let update = state.pending.lock().unwrap().clone().ok_or("no update to install")?;
 
     let mut downloaded = 0u64;
@@ -75,7 +74,7 @@ pub async fn install_update(app: AppHandle, state: tauri::State<'_, UpdateState>
         .await
         .map_err(|e| {
             log::error!("failed to install the update: {e}");
-            e.to_string()
+            e
         })?;
 
     log::info!("update installed, restarting");

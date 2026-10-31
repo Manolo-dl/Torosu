@@ -8,7 +8,7 @@ export const toolEnabledGuard: CanActivateChildFn = async (_route, state) => {
   const config = inject(ConfigurationStore);
   const router = inject(Router);
 
-  if (!config.isLoaded()) await config.loadConfig();
+  await config.ensureLoaded();
 
   const excluded = config.config()?.excluded_tools ?? [];
   if (excluded.some(route => state.url === route || state.url.startsWith(`${route}/`))) {

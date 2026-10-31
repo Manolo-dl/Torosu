@@ -4,7 +4,6 @@ export interface OsuDiff {
     md5: string;
     diffName: string;
     mode: number;
-    bpm: number;
     length: number;
     stars: number;
     lastPlayed: boolean;
@@ -39,4 +38,21 @@ const STATUS_PRIORITY: BeatmapStatus[] = ['ranked', 'approved', 'qualified', 'lo
 export function setStatus(set: OsuBeatmapSet): BeatmapStatus {
     const statuses = new Set(set.diffs.map(d => d.status));
     return STATUS_PRIORITY.find(s => statuses.has(s)) ?? 'unknown';
+}
+
+/**
+ * The sets of the diffs `md5s`, each with only those of its diffs, as a
+ * collection shows them: diffs missing from `setsByMd5` are left out.
+ */
+export function setsOfDiffs(md5s: Iterable<string>, setsByMd5: ReadonlyMap<string, OsuBeatmapSet>): OsuBeatmapSet[] {
+    const wanted = new Set(md5s);
+    const seen = new Set<string>();
+    const sets: OsuBeatmapSet[] = [];
+    for (const md5 of wanted) {
+        const set = setsByMd5.get(md5);
+        if (!set || seen.has(set.folderName)) continue;
+        seen.add(set.folderName);
+        sets.push({ ...set, diffs: set.diffs.filter(d => wanted.has(d.md5)) });
+    }
+    return sets;
 }

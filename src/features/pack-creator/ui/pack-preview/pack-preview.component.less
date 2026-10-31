@@ -1,3 +1,5 @@
+@import 'shared/styles/mixins';
+
 :host {
   display: block;
 }
@@ -11,16 +13,9 @@ header {
 .viewport {
   block-size: calc(100vh - 36rem);
   min-block-size: 10rem;
-  overflow-x: hidden;
-
-  ::ng-deep .cdk-virtual-scroll-content-wrapper {
-    inline-size: 100%;
-  }
+  .full-width-virtual-scroll();
 }
 
 .empty {
-  padding: 2rem 1rem;
-  text-align: center;
-  color: var(--tui-text-tertiary);
-  font: var(--tui-typography-body-s);
+  .empty-state(2rem 1rem);
 }

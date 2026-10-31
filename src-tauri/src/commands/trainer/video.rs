@@ -72,13 +72,17 @@ fn probe(src: &Path) -> Probe {
 /// audio (osu! never plays the video's audio). The container follows the
 /// extension of `dst`. The frame rate is kept, so speeding up drops frames
 /// instead of raising it.
-pub fn apply_rate(src: &Path, dst: &Path, rate: f64, on_progress: impl Fn(f64)) -> Result<()> {
+///
+/// The quality is CRF 28, or CRF 23 when `high_quality`: nearly twice the
+/// size, while osu! shows the video dimmed behind the map.
+pub fn apply_rate(src: &Path, dst: &Path, rate: f64, high_quality: bool, on_progress: impl Fn(f64)) -> Result<()> {
     let probe = probe(src);
     let total = probe.duration.map(|d| d / rate);
 
     // Capped at the original bit rate: the result is never heavier per second
     // than the source, and being shorter, it ends up smaller.
-    let mut rate_control = vec!["-crf".to_string(), "23".to_string()];
+    let crf = if high_quality { "23" } else { "28" };
+    let mut rate_control = vec!["-crf".to_string(), crf.to_string()];
     if let Some(bit_rate) = probe.bit_rate {
         rate_control.extend(["-maxrate".to_string(), bit_rate.to_string()]);
         rate_control.extend(["-bufsize".to_string(), (bit_rate * 2).to_string()]);

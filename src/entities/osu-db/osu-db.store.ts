@@ -1,25 +1,25 @@
-import { computed, inject } from "@angular/core";
-import { patchState, signalStore, withComputed, withMethods, withState } from "@ngrx/signals";
-import { OsuPathStore } from "@shared/stores"; 
-import { TuiNotificationService } from '@taiga-ui/core';
+import { computed } from "@angular/core";
+import { signalStore, withComputed } from "@ngrx/signals";
+import { withLoader } from "@shared/stores";
 import { invoke } from "@tauri-apps/api/core";
 import { OsuBeatmapSet, OsuDiff, isSubmitted } from "./osu-db.model";
 
 interface OsuDbState {
     beatmapSets: OsuBeatmapSet[];
-    isLoading: boolean;
-    isLoaded: boolean;
 }
 
 const initialState: OsuDbState = {
     beatmapSets: [],
-    isLoading: false,
-    isLoaded: false,
 };
 
 export const OsuDbStore = signalStore(
     { providedIn: 'root' },
-    withState(initialState),
+    withLoader(initialState, {
+        read: () => invoke<OsuBeatmapSet[]>('read_osu_db_full'),
+        loaded: beatmapSets => ({ beatmapSets }),
+        success: beatmapSets => `Loaded ${beatmapSets.length} beatmap sets from osu!.db`,
+        failure: 'Failed to load osu!.db',
+    }),
 
     withComputed((store) => ({
         diffsByMd5: computed(() => {
@@ -104,39 +104,5 @@ export const OsuDbStore = signalStore(
         }),
 
         localSubmittedSetIds: computed(() => new Set(store.submittedBeatmapSets().map(s => s.beatmapsetId))),
-    })),
-
-    withMethods((store, osuPath = inject(OsuPathStore), alerts = inject(TuiNotificationService)) => ({
-        setBeatmapSets(beatmapSets: OsuBeatmapSet[]) {
-            patchState(store, { beatmapSets, isLoaded: true, isLoading: false });
-        },
-
-        setLoading(isLoading: boolean) {
-            patchState(store, { isLoading });
-        },
-
-        reset() {
-            patchState(store, initialState);
-        },
-
-        async load() {
-            const path = osuPath.path();
-            if (!path) {
-                alerts.open('Osu! path not set', { appearance: 'negative' }).subscribe();
-                throw new Error("Osu! path not set");
-            } 
-
-            patchState(store, { isLoading: true });
-
-            try {
-                const beatmapSets = await invoke<OsuBeatmapSet[]>('read_osu_db_full');
-                alerts.open(`Loaded ${beatmapSets.length} beatmap sets from osu!.db`, { appearance: 'positive' }).subscribe();
-                patchState(store, { beatmapSets, isLoaded: true, isLoading: false });
-            } catch (error) {
-                patchState(store, { isLoading: false });
-                alerts.open(`Failed to load osu!.db`, { appearance: 'negative' }).subscribe();
-                throw error;
-            }
-        }
     })),
 )

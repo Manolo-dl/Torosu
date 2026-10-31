@@ -1,8 +1,19 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { TASK_LABELS, taskSupportsMode } from '@features/trainer';
-import { FlnConverterParams, KeyConverterParams, KeyDensity, PLAYSTYLES, RateChangeParams, TrainerTaskType } from '@features/trainer/models/trainer.model';
-import { TrainerStore } from '@features/trainer/stores/trainer.store';
+import {
+  FlnConverterParams,
+  KeyConverterParams,
+  KeyDensity,
+  PLAYSTYLES,
+  RateChangeParams,
+  TASK_LABELS,
+  TrainerConvert,
+  rateChangeTask,
+  TrainerTaskType,
+  taskSupportsMode,
+} from '../../models/trainer.model';
+import { TrainerStore } from '../../stores/trainer.store';
+import { ConfigurationStore } from '@entities/configuration';
 import { OsuReaderStore } from '@entities/osu-reader';
 import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDropList } from '@angular/cdk/drag-drop';
 import { TuiButton, TuiCheckbox, TuiDataList, TuiDropdown, TuiIcon, TuiInput, TuiNotificationDirective, TuiTitle } from '@taiga-ui/core';
@@ -16,6 +27,7 @@ interface DensityOption {
   hint: string;
 }
 
+/** The tasks of one convert. */
 @Component({
   selector: 'app-trainer-task-pipeline',
   imports: [CdkDrag, CdkDropList, CdkDragHandle, FormsModule, TuiButton, TuiCardLarge, TuiCheckbox, TuiDataList, TuiDropdown, TuiIcon, TuiInput, TuiNotificationDirective, TuiSegmented, TuiTitle, TrainerNoteLengthComponent],
@@ -25,15 +37,23 @@ interface DensityOption {
 })
 export class TrainerTaskPipelineComponent {
 
+  readonly convert = input.required<TrainerConvert>();
+  /** From 1, as the convert is shown. */
+  readonly number = input.required<number>();
+
   readonly trainer = inject(TrainerStore);
   readonly reader = inject(OsuReaderStore);
+  private readonly config = inject(ConfigurationStore);
+
+  /** The rate change sets the pitch itself (see the settings): no option to show. */
+  readonly autoPitch = computed(() => this.config.config()?.trainer.auto_pitch ?? false);
 
   taskLabels = TASK_LABELS;
   availableTasks: TrainerTaskType[] = ['RateChange', 'SVNormalizer', 'FlnConverter', 'KeyConverter'];
   readonly menuOpen = signal(false);
 
   availableTasksFiltered = computed(() => {
-    const existingTypes = new Set(this.trainer.tasks().map(t => t.task.type));
+    const existingTypes = new Set(this.convert().tasks.map(t => t.task.type));
     const mode = this.reader.originalMode();
     return this.availableTasks.filter(type => !existingTypes.has(type) && taskSupportsMode(type, mode));
   });
@@ -76,20 +96,20 @@ export class TrainerTaskPipelineComponent {
   }
 
   onDrop(event: CdkDragDrop<unknown>) {
-    this.trainer.reorderTasks(event.previousIndex, event.currentIndex);
+    this.trainer.reorderTasks(this.convert().id, event.previousIndex, event.currentIndex);
   }
 
   addTask(type: TrainerTaskType) {
     this.menuOpen.set(false);
     switch (type) {
       case 'RateChange':
-        this.trainer.addTask({ type: 'RateChange', params: { rate: 1.0, adjustPitch: false, scaleStoryboard: false, scaleVideo: false } });
+        this.trainer.addTask(this.convert().id, rateChangeTask(1.0));
         break;
       case 'SVNormalizer':
-        this.trainer.addTask({ type: 'SVNormalizer', params: {} });
+        this.trainer.addTask(this.convert().id, { type: 'SVNormalizer', params: {} });
         break;
       case 'FlnConverter':
-        this.trainer.addTask({
+        this.trainer.addTask(this.convert().id, {
           type: 'FlnConverter',
           params: { gap: { unit: 'beat', value: 4 }, minLength: { unit: 'beat', value: 4 }, reworkExistingLn: true },
         });
@@ -97,7 +117,7 @@ export class TrainerTaskPipelineComponent {
       case 'KeyConverter': {
         const source = this.sourceKeys() ?? 4;
         const targetKeys = source < 7 ? 7 : source < 10 ? 10 : 7;
-        this.trainer.addTask({
+        this.trainer.addTask(this.convert().id, {
           type: 'KeyConverter',
           params: { targetKeys, density: 'none', keepJacks: true, playstyle: null },
         });
@@ -109,7 +129,7 @@ export class TrainerTaskPipelineComponent {
   onRateInput(id: string, rateStr: string, params: RateChangeParams) {
     const rate = parseFloat(rateStr);
     if (isNaN(rate) || rate <= 0) return;
-    this.trainer.updateTaskParams(id, { ...params, rate });
+    this.trainer.updateTaskParams(this.convert().id, id, { ...params, rate });
   }
 
   onBpmInput(id: string, bpmStr: string, params: RateChangeParams) {
@@ -118,15 +138,15 @@ export class TrainerTaskPipelineComponent {
     const newBpm = parseFloat(bpmStr);
     if (isNaN(newBpm) || newBpm <= 0) return;
     const rate = Math.round((newBpm / bpm) * 100) / 100;
-    this.trainer.updateTaskParams(id, { ...params, rate });
+    this.trainer.updateTaskParams(this.convert().id, id, { ...params, rate });
   }
 
   onRateOptionChange(id: string, params: RateChangeParams, change: Partial<RateChangeParams>) {
-    this.trainer.updateTaskParams(id, { ...params, ...change });
+    this.trainer.updateTaskParams(this.convert().id, id, { ...params, ...change });
   }
 
   onKeyChange(id: string, params: KeyConverterParams, change: Partial<KeyConverterParams>) {
-    this.trainer.updateTaskParams(id, { ...params, ...change });
+    this.trainer.updateTaskParams(this.convert().id, id, { ...params, ...change });
   }
 
   /** Changing the key count resets the playstyle, and the extra notes that no longer apply. */
@@ -159,6 +179,6 @@ export class TrainerTaskPipelineComponent {
   }
 
   onFlnChange(id: string, params: FlnConverterParams, change: Partial<FlnConverterParams>) {
-    this.trainer.updateTaskParams(id, { ...params, ...change });
+    this.trainer.updateTaskParams(this.convert().id, id, { ...params, ...change });
   }
 }

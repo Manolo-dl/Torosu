@@ -1,10 +1,9 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
-import { BeatmapImportComponent, BeatmapQueueComponent } from "@features/beatmap-search";
-import { OsuCookieInputComponent } from '@features/downloader';
+import { BeatmapImportComponent, BeatmapQueueComponent, OsuCookieInputComponent, UserStore } from '@features/downloader';
 import { OsuDbStore } from '@entities/osu-db';
 import { ConfigurationStore } from '@entities/configuration';
-import { UserStore } from '@entities/user';
 import { TuiTitle, TuiNotificationDirective, TuiButton } from "@taiga-ui/core";
+import { PageHeaderComponent } from '@shared/ui';
 import { TuiAccordion } from '@taiga-ui/kit';
 
 interface PageInfo {
@@ -19,7 +18,7 @@ interface Step {
 
 @Component({
   selector: 'app-downloader',
-  imports: [BeatmapImportComponent, BeatmapQueueComponent, OsuCookieInputComponent, TuiTitle, TuiNotificationDirective, TuiButton, TuiAccordion],
+  imports: [PageHeaderComponent, BeatmapImportComponent, BeatmapQueueComponent, OsuCookieInputComponent, TuiTitle, TuiNotificationDirective, TuiButton, TuiAccordion],
   templateUrl: './downloader-page.component.html',
   styleUrl: './downloader-page.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -31,10 +30,8 @@ export class DownloaderPageComponent implements OnInit {
 
   /** With `load_library` on, the library loads by itself to skip maps already owned. */
   async ngOnInit() {
-    if (!this.config.isLoaded()) await this.config.loadConfig();
-    if (this.config.config()?.downloader.load_library && !this.osuDb.isLoaded() && !this.osuDb.isLoading()) {
-      await this.loadLibrary();
-    }
+    await this.config.ensureLoaded();
+    if (this.config.config()?.downloader.load_library) await this.osuDb.ensureLoaded();
   }
 
   async loadLibrary() {

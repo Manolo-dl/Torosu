@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { OsuPathStore } from '@shared/stores';
+import { OsuPathStore } from '@entities/osu-path';
 import { TuiButton, TuiNotificationDirective, TuiTitle } from "@taiga-ui/core";
 import { TuiButtonLoading } from '@taiga-ui/kit';
 

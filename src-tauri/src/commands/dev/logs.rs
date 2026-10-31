@@ -1,5 +1,7 @@
 use tauri::Manager;
 
+use crate::error::Result;
+
 #[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LogEntry {
@@ -10,18 +12,18 @@ pub struct LogEntry {
 }
 
 #[tauri::command]
-pub async fn read_logs(app: tauri::AppHandle) -> Result<Vec<LogEntry>, String> {
+pub async fn read_logs(app: tauri::AppHandle) -> Result<Vec<LogEntry>> {
 
     // Get path to the log file
     let log_dir = app.path().app_log_dir().map_err(|e| {
         log::error!("could not find app log dir: {}", e);
-        e.to_string()
+        e
     })?;
 
     let mut log_files: Vec<_> = std::fs::read_dir(&log_dir)
         .map_err(|e| {
             log::error!("could not read log dir: {}", e);
-            e.to_string()
+            e
         })?
         .filter_map(|e| e.ok())
         .filter(|e| e.path().extension().map_or(false, |ext| ext == "log"))
@@ -35,7 +37,7 @@ pub async fn read_logs(app: tauri::AppHandle) -> Result<Vec<LogEntry>, String> {
 
     let content = std::fs::read_to_string(latest_file.path()).map_err(|e| {
         log::error!("could not read log file: {}", e);
-        e.to_string()
+        e
     })?;
 
     let entries: Vec<LogEntry> = content

@@ -10,14 +10,14 @@
       <button
         size="m"
         appearance="flat"
-        tuiButton
+        iconStart="@tui.circle-arrow-up"
+        tuiIconButton
         type="button"
         class="update"
-        [attr.aria-label]="'Update to ' + available.version"
         [tuiDropdown]="updatePanel"
         [(tuiDropdownOpen)]="updateOpen"
       >
-        <fa-icon [icon]="faCircleArrowUp" />
+        Update to {{ available.version }}
       </button>
 
       <ng-template #updatePanel>
@@ -70,11 +70,12 @@
     <button
       size="m"
       appearance="flat"
-      tuiButton
+      tuiIconButton
       type="button"
+      [iconStart]="icon()"
       (click)="darkMode.update(dark => !dark)"
     >
-      <fa-icon [icon]="icon()" />
+      Toggle theme
     </button>
 
     @if (devMode()) {
@@ -89,6 +90,6 @@
       </button>
     }
 
-    <app-config-drawer />
+    <app-config-button />
   </div>
 </header>

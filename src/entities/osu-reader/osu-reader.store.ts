@@ -3,7 +3,8 @@ import { OsuReaderSnapshot, OsuReaderStatus, SelectedBeatmap } from "./osu-reade
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { computed, inject } from "@angular/core";
-import { TuiNotificationService } from '@taiga-ui/core';
+import { NotifyService } from '@shared/services';
+import { save } from '@tauri-apps/plugin-dialog';
 
 interface OsuReaderStoreState {
     data: SelectedBeatmap | null;
@@ -12,6 +13,7 @@ interface OsuReaderStoreState {
     started: boolean;
     /** `blob:` URL of the current beatmap background, see `loadBackground`. */
     backgroundUrl: string | null;
+    exporting: boolean;
 }
 
 const initialState: OsuReaderStoreState = {
@@ -19,6 +21,7 @@ const initialState: OsuReaderStoreState = {
     status: { state: 'waiting' },
     started: false,
     backgroundUrl: null,
+    exporting: false,
 }
 
 const IMAGE_TYPES: Record<string, string> = {
@@ -45,7 +48,7 @@ export const OsuReaderStore = signalStore(
         originalMode: computed(() => store.data()?.attributes?.originalMode ?? null),
     })),
 
-    withMethods((store, alerts = inject(TuiNotificationService)) => {
+    withMethods((store, notify = inject(NotifyService)) => {
         // Path of the background being shown (or loading), to skip reloading it
         // and to drop responses that arrive late.
         let backgroundPath: string | null = null;
@@ -88,19 +91,45 @@ export const OsuReaderStore = signalStore(
             switch (status.state) {
                 case 'waiting':
                     if (previous.state === 'connected') {
-                        alerts.open('osu! was closed, waiting for it to start again.', { appearance: 'info' }).subscribe();
+                        notify.info('osu! was closed, waiting for it to start again.');
                     }
                     break;
                 case 'connected':
-                    alerts.open('Connected to osu!', { appearance: 'positive' }).subscribe();
+                    notify.success('Connected to osu!');
                     break;
                 case 'error':
-                    alerts.open(`Can't read osu!: ${status.message}`, { appearance: 'negative' }).subscribe();
+                    notify.error(`Can't read osu!: ${status.message}`);
                     break;
             }
         }
 
         return {
+            /** Saves the set folder of the selected beatmap as an .osz, where the user picks. */
+            async exportOsz() {
+                const data = store.data();
+                if (!data?.paths || store.exporting()) return;
+
+                const { setId, artist, title } = data.beatmap;
+                // Same name osu! gives exported sets.
+                const name = `${setId > 0 ? `${setId} ` : ''}${artist} - ${title}.osz`.replace(/[\\/:*?"<>|]/g, '_');
+                const path = await save({
+                    filters: [{ name: 'osu! beatmap set', extensions: ['osz'] }],
+                    defaultPath: name,
+                });
+                if (!path) return;
+
+                patchState(store, { exporting: true });
+                try {
+                    await invoke('export_selected_osz', { path });
+                    notify.success(`Exported ${name}`);
+                } catch (e) {
+                    console.error('export_selected_osz failed', e);
+                    notify.error(`Failed to export the beatmap: ${e}`);
+                } finally {
+                    patchState(store, { exporting: false });
+                }
+            },
+
             async connect() {
                 if (store.started()) return;
                 patchState(store, { started: true });
@@ -115,14 +144,14 @@ export const OsuReaderStore = signalStore(
                     if (snapshot.beatmap && !store.data()) setBeatmap(snapshot.beatmap);
                     if (store.status().state === 'waiting') {
                         if (snapshot.status.state === 'waiting') {
-                            alerts.open('Looking for osu!...', { appearance: 'info' }).subscribe();
+                            notify.info('Looking for osu!...');
                         } else {
                             setStatus(snapshot.status);
                         }
                     }
                 } catch (e) {
                     console.error('connect_osu_reader failed', e);
-                    alerts.open('Failed to start the osu! reader.', { appearance: 'negative' }).subscribe();
+                    notify.error('Failed to start the osu! reader.');
                     patchState(store, { started: false });
                 }
             },

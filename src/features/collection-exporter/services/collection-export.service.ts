@@ -2,6 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { CollectionStore } from '@entities/collection';
 import { OsuDbStore } from '@entities/osu-db';
 import { BeatmapsetExportService } from '@shared/services';
+import { beatmapsetUrl } from '@shared/utils';
 
 @Injectable({ providedIn: 'root' })
 export class CollectionExportService {
@@ -20,7 +21,7 @@ export class CollectionExportService {
       for (const col of collections) {
         const setIds = new Set(col.md5s.map(md5 => setsByMd5.get(md5)?.beatmapsetId).filter(id => id != null));
         if (setIds.size === 0) continue;
-        const lines = [`- ${col.name}`, ...[...setIds].map(id => `https://osu.ppy.sh/beatmapsets/${id}`)];
+        const lines = [`- ${col.name}`, ...[...setIds].map(beatmapsetUrl)];
         sections.push(lines.join('\n'));
       }
       return sections.join('\n\n');

@@ -3,7 +3,7 @@ import { patchState, signalStore, withComputed, withHooks, withMethods, withStat
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { openUrl } from "@tauri-apps/plugin-opener";
-import { TuiNotificationService } from '@taiga-ui/core';
+import { NotifyService } from '@shared/services';
 import { UpdateInfo, UpdateProgress } from "./update.model";
 
 /** Where the releases are, to update by hand when the app can't (e.g. the Arch package). */
@@ -38,13 +38,13 @@ export const UpdateStore = signalStore(
         }),
     })),
 
-    withMethods((store, alerts = inject(TuiNotificationService)) => ({
+    withMethods((store, notify = inject(NotifyService)) => ({
         async check() {
             try {
                 const available = await invoke<UpdateInfo | null>('check_update');
                 patchState(store, { available });
                 if (available) {
-                    alerts.open(`Torosu ${available.version} is available. Update it from the icon in the header.`, { appearance: 'info' }).subscribe();
+                    notify.info(`Torosu ${available.version} is available. Update it from the icon in the header.`);
                 }
             } catch (e) {
                 console.warn('failed to check for updates', e);
@@ -63,7 +63,7 @@ export const UpdateStore = signalStore(
                 await invoke('install_update');
             } catch (e) {
                 console.error('install_update failed', e);
-                alerts.open('Torosu could not update itself. Download the new version from the releases page.', { appearance: 'negative' }).subscribe();
+                notify.error('Torosu could not update itself. Download the new version from the releases page.');
                 patchState(store, { installing: false, progress: null, failed: true });
             } finally {
                 unlisten();

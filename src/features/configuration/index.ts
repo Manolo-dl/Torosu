@@ -1,1 +1,1 @@
-export { ConfigDrawerComponent } from './ui/config-drawer/config-drawer.component'
+export { ConfigButtonComponent } from './ui/config-button/config-button.component'

@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal } from '@angular/core';
 import { form, required, FormField } from '@angular/forms/signals';
-import { PackStore, SelectedDiff } from '@entities/pack';
+import { SelectedDiff } from '../../pack.model';
+import { PackStore } from '../../pack.store';
 import { TuiButton, TuiHint, TuiIcon, TuiInput, tuiTextfieldOptionsProvider } from '@taiga-ui/core';
 
 @Component({
@@ -44,6 +45,6 @@ export class PackPreviewCardComponent {
   }
 
   onRemove() {
-    this.store.toggleDiff(this.diff());
+    this.store.removeDiff(this.diff().md5);
   }
 }

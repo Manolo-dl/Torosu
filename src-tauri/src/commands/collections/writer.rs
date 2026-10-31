@@ -1,24 +1,26 @@
-use std::collections::HashSet;
+use std::{collections::HashSet, path::Path};
 
 use osynic_osudb::entity::collection::{collection::Collection, collectiondb::CollectionDB};
 
-use crate::{AppConfigState, commands::collections::model::ImportCollection};
+use crate::{commands::collections::model::ImportCollection, error::Result, state::AppConfigState};
 
 #[tauri::command]
 pub async fn import_collections(
     config_state: tauri::State<'_, AppConfigState>,
     collections: Vec<ImportCollection>
-) -> Result<(), String> {
+) -> Result<()> {
 
-    let osu_path = config_state.config.lock().unwrap()
-        .osu_path.clone()
-        .ok_or("osu! path not set")?;
+    let collection_path = config_state.osu_path()?.join("collection.db");
 
-    let collection_path = std::path::Path::new(&osu_path).join("collection.db");
+    tauri::async_runtime::spawn_blocking(move || merge_into_collectiondb(&collection_path, collections)).await?
+}
+
+/// Reads collection.db, adds `collections` to it and writes it back.
+fn merge_into_collectiondb(collection_path: &Path, collections: Vec<ImportCollection>) -> Result<()> {
 
     log::debug!("reading collection.db for import at {:?}", collection_path);
 
-    let mut collection_list = CollectionDB::from_file(&collection_path)
+    let mut collection_list = CollectionDB::from_file(collection_path)
         .map_err(|e| {
             log::error!("Failed to parse collection.db: {:?}", e);
             format!("Failed to parse collection.db: {:?}", e)
@@ -58,7 +60,7 @@ pub async fn import_collections(
         }
     }
 
-    collection_list.to_file(&collection_path).map_err(|e| {
+    collection_list.to_file(collection_path).map_err(|e| {
         log::error!("Failed to save collection.db: {:?}", e);
         format!("Failed to save collection.db: {:?}", e)
     })?;

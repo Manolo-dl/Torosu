@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { CollectionStore } from '@entities/collection';
-import { CollectionExportService } from '@features/collection-exporter/services/collection-export.service';
+import { CollectionExportService } from '../../services/collection-export.service';
 import { ExportControlsComponent, ExportFormat } from '@shared/ui';
 import { TuiTitle } from '@taiga-ui/core';
 import { TuiCardLarge } from '@taiga-ui/layout';

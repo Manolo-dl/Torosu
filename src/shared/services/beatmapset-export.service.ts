@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { invoke } from '@tauri-apps/api/core';
 import { save } from '@tauri-apps/plugin-dialog';
+import { beatmapsetUrl } from '@shared/utils';
 
 @Injectable({ providedIn: 'root' })
 export class BeatmapsetExportService {
@@ -8,7 +9,7 @@ export class BeatmapsetExportService {
   formatLine(beatmapsetId: number, format: 'urls' | 'ids'): string {
     return format === 'ids'
       ? `${beatmapsetId}`
-      : `https://osu.ppy.sh/beatmapsets/${beatmapsetId}`;
+      : beatmapsetUrl(beatmapsetId);
   }
 
   async saveToFile(content: string, defaultPath = 'export.txt'): Promise<boolean> {

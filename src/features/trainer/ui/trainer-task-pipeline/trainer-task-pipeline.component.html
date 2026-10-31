@@ -1,17 +1,42 @@
 <div appearance="floating" tuiCardLarge="compact">
   <header>
-    <h3 tuiTitle>Tasks</h3>
-    <button
-      iconStart="@tui.plus"
-      size="s"
-      tuiButton
-      type="button"
-      [disabled]="availableTasksFiltered().length === 0"
-      [tuiDropdown]="taskMenu"
-      [(tuiDropdownOpen)]="menuOpen"
-    >
-      Add task
-    </button>
+    <h3 tuiTitle>Convert {{ number() }}</h3>
+    <div class="actions">
+      <button
+        iconStart="@tui.plus"
+        size="s"
+        tuiButton
+        type="button"
+        [disabled]="availableTasksFiltered().length === 0"
+        [tuiDropdown]="taskMenu"
+        [(tuiDropdownOpen)]="menuOpen"
+      >
+        Add task
+      </button>
+      <button
+        appearance="flat"
+        iconStart="@tui.copy"
+        size="s"
+        tuiIconButton
+        type="button"
+        title="Duplicate this convert"
+        (click)="trainer.duplicateConvert(convert().id)"
+      >
+        Duplicate convert
+      </button>
+      <button
+        appearance="flat"
+        iconStart="@tui.x"
+        size="s"
+        tuiIconButton
+        type="button"
+        title="Remove this convert"
+        [disabled]="trainer.converts().length === 1"
+        (click)="trainer.removeConvert(convert().id)"
+      >
+        Remove convert
+      </button>
+    </div>
     <ng-template #taskMenu>
       <tui-data-list>
         @for (type of availableTasksFiltered(); track type) {
@@ -24,7 +49,7 @@
   </header>
 
   <div class="list" cdkDropList (cdkDropListDropped)="onDrop($event)">
-    @for (entry of trainer.tasks(); track entry.id) {
+    @for (entry of convert().tasks; track entry.id) {
       <div class="task" cdkDrag>
         <tui-icon icon="@tui.grip-vertical" class="handle" cdkDragHandle />
 
@@ -63,16 +88,18 @@
                 />
               </tui-textfield>
 
-              <label tuiLabel class="option">
-                <input
-                  size="s"
-                  tuiCheckbox
-                  type="checkbox"
-                  [ngModel]="entry.task.params.adjustPitch"
-                  (ngModelChange)="onRateOptionChange(entry.id, entry.task.params, { adjustPitch: $event })"
-                />
-                Adjust pitch
-              </label>
+              @if (!autoPitch()) {
+                <label tuiLabel class="option">
+                  <input
+                    size="s"
+                    tuiCheckbox
+                    type="checkbox"
+                    [ngModel]="entry.task.params.adjustPitch"
+                    (ngModelChange)="onRateOptionChange(entry.id, entry.task.params, { adjustPitch: $event })"
+                  />
+                  Adjust pitch
+                </label>
+              }
 
               <label tuiLabel class="option">
                 <input
@@ -241,13 +268,13 @@
           size="s"
           tuiIconButton
           type="button"
-          (click)="trainer.removeTask(entry.id)"
+          (click)="trainer.removeTask(convert().id, entry.id)"
         >
           Remove task
         </button>
       </div>
     } @empty {
-      <p class="empty">No tasks added yet.</p>
+      <p class="empty">No tasks: only the difficulty settings change.</p>
     }
   </div>
 </div>

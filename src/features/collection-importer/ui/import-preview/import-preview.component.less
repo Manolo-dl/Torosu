@@ -1,3 +1,5 @@
+@import 'shared/styles/mixins';
+
 :host {
   display: block;
 }
@@ -15,9 +17,7 @@
       flex: 1;
       min-inline-size: 0;
       text-align: start;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      .ellipsis();
     }
   }
 
@@ -28,8 +28,5 @@
 }
 
 .empty {
-  padding: 2rem 1rem;
-  text-align: center;
-  color: var(--tui-text-tertiary);
-  font: var(--tui-typography-body-s);
+  .empty-state(2rem 1rem);
 }

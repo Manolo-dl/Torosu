@@ -1,10 +1,6 @@
-<header>
-  <h1 tuiTitle="l">
-    osu! Data
-    <span tuiSubtitle>Selected beatmap, read from the osu! memory</span>
-  </h1>
+<app-page-header heading="osu! Data" subtitle="Selected beatmap, read from the osu! memory">
   <app-osu-reader-status />
-</header>
+</app-page-header>
 
 @let status = store.status();
 @if (status.state === 'error') {

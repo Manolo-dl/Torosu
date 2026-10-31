@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { BeatmapExporterStore } from '@features/export-songs/stores/beatmap-exporter.store';
+import { BeatmapExporterStore } from '../../stores/beatmap-exporter.store';
 import { BeatmapsetExportService } from '@shared/services';
 import { ExportControlsComponent, ExportFormat } from '@shared/ui';
 import { TuiTitle } from '@taiga-ui/core';

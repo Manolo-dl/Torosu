@@ -1,0 +1,9 @@
+<header>
+  <h1 tuiTitle="l">
+    {{ heading() }}
+    @if (subtitle(); as subtitle) {
+      <span tuiSubtitle>{{ subtitle }}</span>
+    }
+  </h1>
+  <ng-content />
+</header>

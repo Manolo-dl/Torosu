@@ -1,8 +1,8 @@
-use crate::{app_root_dir, commands::config::model::AppConfig};
+use std::path::Path;
 
-pub fn read_config() -> AppConfig {
+use crate::{commands::config::model::AppConfig, error::Result};
 
-    let path = app_root_dir().join("configuration.toml");
+pub fn read_config(path: &Path) -> AppConfig {
 
     let mut config: AppConfig = match std::fs::read_to_string(path) {
         Ok(content) => toml::from_str(&content).unwrap_or_else(|e| {
@@ -21,33 +21,22 @@ pub fn read_config() -> AppConfig {
     config
 }
 
-pub fn write_config(config: &AppConfig) -> Result<(), String> {
-     let path = app_root_dir().join("configuration.toml");
-
-     let toml = toml::to_string_pretty(config).map_err(|e| {
-        log::error!("Failed to serialize configuration.toml: {}", e);
-        e.to_string()
-     })?;
-
-     std::fs::write(path, toml).map_err(|e| {
-        log::error!("Failed to write configuration.toml: {}", e);
-        e.to_string()
-     })?;
-
-     Ok(())
+pub fn write_config(path: &Path, config: &AppConfig) -> Result<()> {
+    std::fs::write(path, toml::to_string_pretty(config)?)?;
+    Ok(())
 }
 
 #[tauri::command]
-pub fn get_config(state: tauri::State<'_, crate::AppConfigState>) -> AppConfig {
+pub fn get_config(state: tauri::State<'_, crate::state::AppConfigState>) -> AppConfig {
     state.config.lock().unwrap().clone()
 }
 
 #[tauri::command]
 pub async fn update_config(
     config: AppConfig,
-    state: tauri::State<'_, crate::AppConfigState>,
-    session: tauri::State<'_, crate::SessionState>,
-) -> Result<(), String> {
+    state: tauri::State<'_, crate::state::AppConfigState>,
+    session: tauri::State<'_, crate::state::SessionState>,
+) -> Result<()> {
     let mut config = config;
     // The cookie is set from the downloader, not here: the one in use is
     // saved or forgotten as `save_session` says.

@@ -1,3 +1,5 @@
+@import 'shared/styles/mixins';
+
 :host {
   display: block;
   font: var(--tui-typography-body-xs);
@@ -24,9 +26,7 @@
   .key {
     font-weight: 600;
     color: var(--tui-text-secondary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    .ellipsis();
 
     &.index {
       font-weight: 400;

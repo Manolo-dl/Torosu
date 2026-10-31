@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { ImportCollectionStore } from '@features/collection-importer/import-collections.store';
+import { ImportCollectionStore } from '../../import-collections.store';
 import { TuiButton } from '@taiga-ui/core';
 import { TuiButtonLoading } from '@taiga-ui/kit';
 

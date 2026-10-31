@@ -22,15 +22,21 @@
           [attr.aria-label]="modeName()"
         />
       }
-      <span
-        size="l"
-        tuiBadge
-        class="stars"
-        [style.background]="starBg(reader.stars())"
-        [style.color]="starFg(reader.stars())"
-      >
-        ★ {{ reader.stars() | number:'1.2-2' }}
-      </span>
+      <app-star-badge size="l" class="stars" [stars]="reader.stars()" />
+      @if (reader.data()?.paths) {
+        <button
+          appearance="floating"
+          iconStart="@tui.download"
+          size="s"
+          tuiIconButton
+          type="button"
+          title="Export as .osz"
+          [loading]="reader.exporting()"
+          (click)="reader.exportOsz()"
+        >
+          Export as .osz
+        </button>
+      }
     </div>
   </div>
 </div>

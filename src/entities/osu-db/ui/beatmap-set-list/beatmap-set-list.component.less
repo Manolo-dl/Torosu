@@ -1,0 +1,18 @@
+@import 'shared/styles/mixins';
+
+:host {
+  display: block;
+}
+
+.viewport {
+  .full-width-virtual-scroll();
+
+  .item {
+    inline-size: 100%;
+    padding: 0 0.5rem;
+  }
+}
+
+.empty {
+  .empty-state(3rem 1.25rem);
+}

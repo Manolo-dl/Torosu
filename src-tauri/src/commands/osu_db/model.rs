@@ -1,49 +1,9 @@
-use sqlx::prelude::FromRow;
-
-#[derive(FromRow)]
-pub struct OsuDbMeta {
-    pub last_modified: i64,
-    pub file_size: i64,
-}
-
-#[derive(FromRow)]
-pub struct BeatmapSetRow {
-    pub folder_name: String,
-    pub beatmapset_id: i64,
-    pub title: String,
-    pub artist: String,
-}
-
-#[derive(FromRow)]
-pub struct DiffRow {
-    pub folder_name: String,
-    pub md5: String,
-    pub diff_name: String,
-    pub mode: i64,
-    pub length: i64,
-    pub stars: f64,
-    pub last_played: i64,
-    pub circle_size: f64,
-    pub approach_rate: f64,
-    pub hp_drain: f64,
-    pub overall_difficulty: f64,
-    pub file_name: String,
-    pub audio: String,
-    pub creator: String,
-    pub status: String,
-}
-
-pub struct BeatmapsetFolder {
-    pub folder_path: String,
-}
-
 #[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OsuDiff {
     pub md5: String,
     pub diff_name: String,
     pub mode: u8,
-    pub bpm: f64,
     pub length: u32,
     pub stars: f64,
     pub last_played: bool,

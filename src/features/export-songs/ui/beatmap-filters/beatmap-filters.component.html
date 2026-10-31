@@ -63,33 +63,6 @@
             </div>
           </div>
 
-          <div class="filter-group">
-            <span class="label">Length (s)</span>
-            <div class="range">
-              <tui-textfield tuiTextfieldSize="s">
-                <input
-                  min="0"
-                  placeholder="Min"
-                  tuiInput
-                  type="number"
-                  [value]="msToSec(modeFilters(m.value).minLength)"
-                  (change)="setModeMinLength(m.value, $any($event.target).value)"
-                />
-              </tui-textfield>
-              <span>–</span>
-              <tui-textfield tuiTextfieldSize="s">
-                <input
-                  min="0"
-                  placeholder="Max"
-                  tuiInput
-                  type="number"
-                  [value]="msToSec(modeFilters(m.value).maxLength)"
-                  (change)="setModeMaxLength(m.value, $any($event.target).value)"
-                />
-              </tui-textfield>
-            </div>
-          </div>
-
           @for (f of rangeFields.get(m.value); track f.label) {
             <div class="filter-group">
               <span class="label">{{ f.label }}</span>
@@ -100,10 +73,10 @@
                     placeholder="Min"
                     tuiInput
                     type="number"
-                    [max]="f.limit"
-                    [step]="0.5"
-                    [value]="modeFilters(m.value)[f.min] ?? ''"
-                    (change)="setModeMin(m.value, f.min, f.max, $any($event.target).value)"
+                    [attr.max]="f.limit ?? null"
+                    [step]="f.step ?? 0.5"
+                    [value]="rangeValue(m.value, f, f.min)"
+                    (change)="setModeMin(m.value, f, $any($event.target).value)"
                   />
                 </tui-textfield>
                 <span>–</span>
@@ -113,10 +86,10 @@
                     placeholder="Max"
                     tuiInput
                     type="number"
-                    [max]="f.limit"
-                    [step]="0.5"
-                    [value]="modeFilters(m.value)[f.max] ?? ''"
-                    (change)="setModeMax(m.value, f.min, f.max, $any($event.target).value)"
+                    [attr.max]="f.limit ?? null"
+                    [step]="f.step ?? 0.5"
+                    [value]="rangeValue(m.value, f, f.max)"
+                    (change)="setModeMax(m.value, f, $any($event.target).value)"
                   />
                 </tui-textfield>
               </div>

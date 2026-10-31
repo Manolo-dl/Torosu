@@ -4,9 +4,11 @@
   gap: 1.5rem;
 }
 
+// The pack takes about a third of the width, from 16rem to 26rem: in a narrow
+// window the maps to pick from keep room for their diffs and Add buttons.
 .layout {
   display: grid;
-  grid-template-columns: 1fr 26rem;
+  grid-template-columns: minmax(0, 1fr) clamp(16rem, 35%, 26rem);
   gap: 1.25rem;
   align-items: start;
 

@@ -1,3 +1,5 @@
+@import 'shared/styles/mixins';
+
 :host {
   display: block;
 }
@@ -6,6 +8,12 @@ header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+
+  .actions {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
 }
 
 .list {
@@ -104,8 +112,5 @@ header {
 }
 
 .empty {
-  padding: 1.5rem 0;
-  text-align: center;
-  color: var(--tui-text-tertiary);
-  font: var(--tui-typography-body-s);
+  .empty-state(1.5rem 0);
 }
