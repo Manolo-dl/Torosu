@@ -36,7 +36,9 @@
               <span appearance="neutral" size="s" tuiBadge>{{ diff.status }}</span>
             }
             @if (diffAction(); as action) {
-              <ng-container *ngTemplateOutlet="action; context: { $implicit: diff, set: set() }" />
+              <span class="action">
+                <ng-container *ngTemplateOutlet="action; context: { $implicit: diff, set: set() }" />
+              </span>
             }
           </div>
         }

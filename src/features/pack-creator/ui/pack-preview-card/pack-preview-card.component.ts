@@ -45,6 +45,6 @@ export class PackPreviewCardComponent {
   }
 
   onRemove() {
-    this.store.toggleDiff(this.diff());
+    this.store.removeDiff(this.diff().md5);
   }
 }

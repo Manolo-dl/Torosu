@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::commands::trainer::naming::DEFAULT_NAME_FORMAT;
+use crate::commands::{packs::naming::DEFAULT_PACK_NAME_FORMAT, trainer::naming::DEFAULT_NAME_FORMAT};
 
 #[derive(Deserialize, Serialize, Clone)]
 pub struct AppConfig {
@@ -67,6 +67,10 @@ pub struct PacksConfig {
     /// the pack is split into several; 0 never splits.
     #[serde(default = "default_max_sets_per_pack")]
     pub max_sets_per_pack: u32,
+
+    /// Template of the name a diff gets in the pack: see `packs::naming`.
+    #[serde(default = "default_pack_name_format")]
+    pub name_format: String,
 }
 
 #[derive(Deserialize, Serialize, Clone)]
@@ -98,6 +102,7 @@ fn default_false() -> bool { false }
 fn default_max_concurrent_downloads() -> u32 { 1 }
 fn default_max_sets_per_pack() -> u32 { 0 }
 fn default_name_format() -> String { DEFAULT_NAME_FORMAT.to_string() }
+fn default_pack_name_format() -> String { DEFAULT_PACK_NAME_FORMAT.to_string() }
 
 // Implemented by hand so the defaults match the serde ones above: a derived
 // Default would set `error_file` and `keep_background` to false, and those
@@ -121,6 +126,7 @@ impl Default for PacksConfig {
         Self {
             keep_background: default_true(),
             max_sets_per_pack: default_max_sets_per_pack(),
+            name_format: default_pack_name_format(),
         }
     }
 }

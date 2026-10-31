@@ -27,6 +27,8 @@ export interface PacksConfig {
     keep_background: boolean;
     /** Above this many original sets (each with its own audio and background) the pack is split; 0 never splits. */
     max_sets_per_pack: number;
+    /** Template of the name a diff gets in the pack, with placeholders like `{artist}` (see `packs/naming.rs`). */
+    name_format: string;
 }
 
 export interface DownloaderConfig {

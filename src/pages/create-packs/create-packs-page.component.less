@@ -6,9 +6,15 @@
 
 .layout {
   display: grid;
-  grid-template-columns: 1fr 26rem;
+  grid-template-columns: minmax(0, 1fr) 26rem;
   gap: 1.25rem;
   align-items: start;
+
+  // Narrower, the maps to pick from would be too cramped next to the pack
+  // (the Add button of a diff did not fit): the pack goes under them.
+  @media (max-width: 1150px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
 
   .browser,
   .pack {

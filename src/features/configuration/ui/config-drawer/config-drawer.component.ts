@@ -1,7 +1,6 @@
-import { Component, effect, inject, linkedSignal, model, signal, untracked } from '@angular/core';
+import { Component, inject, linkedSignal, model, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TuiDrawer, TuiTabsHorizontal, TuiTab, TuiSwitch, TuiInputNumber } from "@taiga-ui/kit";
-import { invoke } from '@tauri-apps/api/core';
 import { open as openDialog } from '@tauri-apps/plugin-dialog';
 import { TuiHeader, TuiNavComponent } from "@taiga-ui/layout";
 import { TuiTitle, TuiPopup, TuiButton, TuiCell, TuiInput, TuiLabel } from "@taiga-ui/core";
@@ -12,9 +11,12 @@ import { OsuDbStore } from '@entities/osu-db';
 import { CollectionStore } from '@entities/collection';
 import { OsuPathStore } from '@entities/osu-path';
 import { NotifyService } from '@shared/services';
+import { NameFormatField, NameFormatFieldComponent, NameFormatPreset } from '../name-format-field/name-format-field.component';
 
-/** The names the trainer always gave (`DEFAULT_NAME_FORMAT` in naming.rs). */
+/** The names the trainer always gave (`DEFAULT_NAME_FORMAT` in trainer/naming.rs). */
 const DEFAULT_NAME_FORMAT = '{diff} {rate} ({bpm}bpm) ({pitch}) {tasks} {stats}';
+/** The names the pack creator always gave (`DEFAULT_PACK_NAME_FORMAT` in packs/naming.rs). */
+const DEFAULT_PACK_NAME_FORMAT = '[{creator}] {artist} - {title} ({diff})';
 
 // Mirrors the serde defaults in src-tauri/src/commands/config/model.rs
 const DEFAULT_CONFIG: AppConfig = {
@@ -30,6 +32,7 @@ const DEFAULT_CONFIG: AppConfig = {
   packs: {
     keep_background: true,
     max_sets_per_pack: 0,
+    name_format: DEFAULT_PACK_NAME_FORMAT,
   },
   trainer: {
     high_quality_audio: false,
@@ -44,7 +47,7 @@ const DEFAULT_CONFIG: AppConfig = {
 
 @Component({
   selector: 'app-config-drawer',
-  imports: [FormsModule, TuiDrawer, TuiHeader, TuiTitle, TuiNavComponent, TuiTabsHorizontal, TuiTab, TuiSwitch, TuiInputNumber, TuiCell, TuiInput, TuiLabel, TuiPopup, TuiButton],
+  imports: [FormsModule, TuiDrawer, TuiHeader, TuiTitle, TuiNavComponent, TuiTabsHorizontal, TuiTab, TuiSwitch, TuiInputNumber, TuiCell, TuiInput, TuiLabel, TuiPopup, TuiButton, NameFormatFieldComponent],
   templateUrl: './config-drawer.component.html',
   styleUrl: './config-drawer.component.less',
 })
@@ -71,14 +74,13 @@ export class ConfigDrawerComponent {
     computation: () => untracked(() => structuredClone(this.store.config() ?? DEFAULT_CONFIG)),
   });
 
-  /** Formats to start from; any text works. */
-  readonly nameFormats = [
+  readonly trainerNameFormats: NameFormatPreset[] = [
     { label: 'Default', format: DEFAULT_NAME_FORMAT },
     { label: 'Rate first', format: '[{rate}] {diff} ({pitch}) {tasks} {stats}' },
     { label: 'BPM first', format: '[{bpm}bpm] {diff} ({pitch}) {tasks} {stats}' },
   ];
 
-  readonly nameFields = [
+  readonly trainerNameFields: NameFormatField[] = [
     { field: '{diff}', meaning: 'the original name' },
     { field: '{rate}', meaning: '1.3x' },
     { field: '{bpm}', meaning: 'the new BPM' },
@@ -90,24 +92,21 @@ export class ConfigDrawerComponent {
     { field: '{stats}', meaning: 'the changed HP, CS, AR and OD' },
   ];
 
-  /** What the name format gives for a sample convert, made by the backend as it names the real ones. */
-  readonly nameExample = signal('');
+  readonly packNameFormats: NameFormatPreset[] = [
+    { label: 'Default', format: DEFAULT_PACK_NAME_FORMAT },
+    { label: 'Stars first', format: '[{stars}★] {artist} - {title} ({diff})' },
+    { label: 'Short', format: '{title} ({diff})' },
+  ];
 
-  constructor() {
-    effect(() => {
-      const format = this.draft().trainer.name_format;
-      invoke<string>('trainer_name_example', { format })
-        .then(example => {
-          // A later format may have been typed meanwhile.
-          if (this.draft().trainer.name_format === format) this.nameExample.set(example);
-        })
-        .catch(() => this.nameExample.set(''));
-    });
-  }
-
-  setNameFormat(nameFormat: string) {
-    this.draft.update(draft => ({ ...draft, trainer: { ...draft.trainer, name_format: nameFormat } }));
-  }
+  readonly packNameFields: NameFormatField[] = [
+    { field: '{creator}', meaning: 'who mapped the diff' },
+    { field: '{artist}', meaning: 'the artist of the song' },
+    { field: '{title}', meaning: 'the title of the song' },
+    { field: '{diff}', meaning: 'the name of the diff' },
+    { field: '{stars}', meaning: '5.23' },
+    { field: '{mode}', meaning: 'osu!mania' },
+    { field: '{keys}', meaning: '7K, only in mania' },
+  ];
 
   async save() {
     // A new osu! folder is checked first: nothing is saved if it is not osu!'s.

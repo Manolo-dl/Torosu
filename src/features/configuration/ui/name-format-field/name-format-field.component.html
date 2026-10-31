@@ -1,0 +1,36 @@
+<tui-textfield>
+  <label tuiLabel>Name format</label>
+  <input
+    tuiInput
+    [ngModel]="format()"
+    (ngModelChange)="format.set($event)"
+  />
+</tui-textfield>
+
+<div class="formats">
+  @for (preset of presets(); track preset.label) {
+    <button
+      appearance="secondary"
+      size="xs"
+      tuiButton
+      type="button"
+      (click)="format.set(preset.format)"
+    >
+      {{ preset.label }}
+    </button>
+  }
+</div>
+
+@if (example()) {
+  <p class="example">For example <strong>{{ example() }}</strong></p>
+}
+
+<ul class="fields">
+  @for (item of fields(); track item.field) {
+    <li><code>{{ item.field }}</code> {{ item.meaning }}</li>
+  }
+</ul>
+
+<p class="hint">
+  Anything else is kept as written. Brackets whose placeholders are all empty vanish with them.
+</p>

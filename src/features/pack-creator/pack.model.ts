@@ -8,19 +8,26 @@ export interface SelectedDiff {
     newDiffName: string
 }
 
-export interface PackRequest {
-    title: string,
-    finalCreator: string,
-    diffs: SelectedDiff[]
-}
-
-/** `diff` of `set` picked for the pack, named after its mapper, its song and itself. */
-export function selectedDiff(set: OsuBeatmapSet, diff: OsuDiff): SelectedDiff {
+/** `diff` of `set` picked for the pack, called `name` in it. */
+export function selectedDiff(set: OsuBeatmapSet, diff: OsuDiff, name: string): SelectedDiff {
     return {
         md5: diff.md5,
         folderName: set.folderName,
         fileName: diff.fileName,
         audio: diff.audio,
-        newDiffName: `[${diff.creator}] ${set.artist} - ${set.title} (${diff.diffName})`,
+        newDiffName: name,
+    };
+}
+
+/** What the backend names a diff from (`PackDiff` in packs/naming.rs). */
+export function nameSource(set: OsuBeatmapSet, diff: OsuDiff) {
+    return {
+        creator: diff.creator,
+        artist: set.artist,
+        title: set.title,
+        diffName: diff.diffName,
+        stars: diff.stars,
+        mode: diff.mode,
+        circleSize: diff.circleSize,
     };
 }

@@ -95,6 +95,7 @@
 
     .diff {
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
       gap: 0.45rem;
       padding: 2px 0;
@@ -107,11 +108,18 @@
         font-weight: 700;
       }
 
+      // At least this wide before what follows it goes to a second line.
       .name {
         .ellipsis();
-        flex: 1;
+        flex: 1 1 6rem;
         min-inline-size: 0;
         font: var(--tui-typography-body-s);
+      }
+
+      // On the right, also when it is on a line of its own.
+      .action {
+        display: flex;
+        margin-inline-start: auto;
       }
     }
   }

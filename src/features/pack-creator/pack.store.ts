@@ -1,5 +1,6 @@
 import { patchState, signalStore, withComputed, withHooks, withMethods, withState } from "@ngrx/signals";
-import { SelectedDiff, selectedDiff } from "./pack.model";
+import { OsuBeatmapSet, OsuDiff } from "@entities/osu-db";
+import { SelectedDiff, nameSource, selectedDiff } from "./pack.model";
 import { invoke } from "@tauri-apps/api/core";
 import { computed, inject } from "@angular/core";
 import { OsuDbStore } from "@entities/osu-db";
@@ -83,93 +84,103 @@ export const PackStore = signalStore(
         }),
     })),
 
-    withMethods((store, notify = inject(NotifyService), osuDb = inject(OsuDbStore)) => ({
-        toggleDiff(diff: SelectedDiff) {
-            const diffs = store.selectedDiffs();
-            const index = diffs.findIndex(d => d.md5 === diff.md5);
-
-            if (index === -1) {
-                patchState(store, { selectedDiffs: [...diffs, diff] });
-            } else {
-                const newDiffs = [...diffs];
-                newDiffs.splice(index, 1);
-                patchState(store, { selectedDiffs: newDiffs });
-            }
-        },
-
-        updateDiffName(diff: SelectedDiff, newDiffName: string) {
-            const diffs = store.selectedDiffs();
-            const index = diffs.findIndex(d => d.md5 === diff.md5);
-
-            if (index >= 0 && diffs[index].newDiffName !== newDiffName) {
-                const newDiffs = [...diffs];
-                newDiffs[index] = { ...newDiffs[index], newDiffName };
-                patchState(store, { selectedDiffs: newDiffs });
-            }
-        },
-
-        addFromCollection(collection: OsuCollection) {
-            const setsByMd5 = osuDb.beatmapSetsByMd5();
-            const diffsByMd5 = osuDb.diffsByMd5();
-            const alreadyAdded = store.addedMd5s();
-
-            const newDiffs: SelectedDiff[] = [];
-            for (const md5 of collection.md5s) {
-                if (alreadyAdded.has(md5)) continue;
-                const set = setsByMd5.get(md5);
-                const diff = diffsByMd5.get(md5);
-                if (!set || !diff) continue;
-                newDiffs.push(selectedDiff(set, diff));
-            }
-
-            if (newDiffs.length > 0) {
-                patchState(store, { selectedDiffs: [...store.selectedDiffs(), ...newDiffs] });
-            }
-        },
-
-        setTitle(title: string) {
-            patchState(store, { title });
-        },
-
-        clear() {
-            patchState(store, initialState);
-        },
-
-        async createPack() {
-            try {
-                patchState(store, { isCreating: true });
-                await invoke('create_pack', {
-                    request: {
-                        title: store.title(),
-                        finalCreator: store.finalCreator(),
-                        diffs: store.selectedDiffs()
-                    }
-                });
-                patchState(store, { isCreating: false });
-                const message = store.packCount() > 1
-                    ? `Pack ${store.title()} created successfully in ${store.packCount()} parts!`
-                    : `Pack ${store.title()} created successfully!`;
-                notify.success(message);
-                patchState(store, initialState);
-            } catch (error) {
-                patchState(store, { isCreating: false });
-                notify.error('Failed to create pack');
-                throw error;
-            }
-        },
-
-        setSearchQuery(query: string) {
-            patchState(store, { searchQuery: query });
-        },
-
-        setFinalCreator(finalCreator: string) {
-            patchState(store, { finalCreator });
-        },
-
-        setTitleValid(titleValid: boolean) {
-            patchState(store, { titleValid });
+    withMethods((store, notify = inject(NotifyService), osuDb = inject(OsuDbStore), config = inject(ConfigurationStore)) => {
+        /** The diffs picked for the pack, named with the name format in the settings. */
+        async function named(picked: { set: OsuBeatmapSet; diff: OsuDiff }[]): Promise<SelectedDiff[]> {
+            const names = await invoke<string[]>('pack_diff_names', {
+                format: config.config()?.packs.name_format ?? '',
+                diffs: picked.map(({ set, diff }) => nameSource(set, diff)),
+            });
+            return picked.map(({ set, diff }, i) => selectedDiff(set, diff, names[i]));
         }
-    })),
+
+        /** Adds the ones not added yet: naming them takes a moment, so they may be by then. */
+        function addNew(diffs: SelectedDiff[]) {
+            const added = new Set(store.selectedDiffs().map(d => d.md5));
+            const fresh = diffs.filter(d => !added.has(d.md5));
+            if (fresh.length > 0) patchState(store, { selectedDiffs: [...store.selectedDiffs(), ...fresh] });
+        }
+
+        return {
+            async addDiff(set: OsuBeatmapSet, diff: OsuDiff) {
+                addNew(await named([{ set, diff }]));
+            },
+
+            removeDiff(md5: string) {
+                patchState(store, { selectedDiffs: store.selectedDiffs().filter(d => d.md5 !== md5) });
+            },
+
+            updateDiffName(diff: SelectedDiff, newDiffName: string) {
+                const diffs = store.selectedDiffs();
+                const index = diffs.findIndex(d => d.md5 === diff.md5);
+
+                if (index >= 0 && diffs[index].newDiffName !== newDiffName) {
+                    const newDiffs = [...diffs];
+                    newDiffs[index] = { ...newDiffs[index], newDiffName };
+                    patchState(store, { selectedDiffs: newDiffs });
+                }
+            },
+
+            async addFromCollection(collection: OsuCollection) {
+                const setsByMd5 = osuDb.beatmapSetsByMd5();
+                const diffsByMd5 = osuDb.diffsByMd5();
+                const alreadyAdded = store.addedMd5s();
+
+                const picked: { set: OsuBeatmapSet; diff: OsuDiff }[] = [];
+                for (const md5 of collection.md5s) {
+                    if (alreadyAdded.has(md5)) continue;
+                    const set = setsByMd5.get(md5);
+                    const diff = diffsByMd5.get(md5);
+                    if (set && diff) picked.push({ set, diff });
+                }
+
+                if (picked.length > 0) addNew(await named(picked));
+            },
+
+            setTitle(title: string) {
+                patchState(store, { title });
+            },
+
+            clear() {
+                patchState(store, initialState);
+            },
+
+            async createPack() {
+                try {
+                    patchState(store, { isCreating: true });
+                    await invoke('create_pack', {
+                        request: {
+                            title: store.title(),
+                            finalCreator: store.finalCreator(),
+                            diffs: store.selectedDiffs()
+                        }
+                    });
+                    patchState(store, { isCreating: false });
+                    const message = store.packCount() > 1
+                        ? `Pack ${store.title()} created successfully in ${store.packCount()} parts!`
+                        : `Pack ${store.title()} created successfully!`;
+                    notify.success(message);
+                    patchState(store, initialState);
+                } catch (error) {
+                    patchState(store, { isCreating: false });
+                    notify.error('Failed to create pack');
+                    throw error;
+                }
+            },
+
+            setSearchQuery(query: string) {
+                patchState(store, { searchQuery: query });
+            },
+
+            setFinalCreator(finalCreator: string) {
+                patchState(store, { finalCreator });
+            },
+
+            setTitleValid(titleValid: boolean) {
+                patchState(store, { titleValid });
+            }
+        };
+    }),
 
     withHooks({
         onInit() {

@@ -7,6 +7,7 @@ use crate::state::{AppConfigState, OsuReaderState, SessionState, UpdateState};
 
 mod commands;
 mod error;
+mod name_format;
 mod osz;
 mod paths;
 mod state;
@@ -104,6 +105,8 @@ pub fn run() {
             commands::osu_reader::export::export_selected_osz,
             commands::trainer::run::run_trainer,
             commands::trainer::naming::trainer_name_example,
+            commands::packs::naming::pack_diff_names,
+            commands::packs::naming::pack_name_example,
             commands::trainer::presets::read_trainer_presets,
             commands::trainer::presets::write_trainer_presets,
             commands::trainer::video::is_ffmpeg_available

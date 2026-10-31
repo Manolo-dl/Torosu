@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import type { OsuBeatmapSet, OsuDiff } from '@entities/osu-db';
-import { selectedDiff } from '../../pack.model';
 import { PackStore } from '../../pack.store';
 import { BeatmapSetListComponent } from '@entities/osu-db/ui';
 import { TuiButton, TuiIcon, TuiTitle } from '@taiga-ui/core';
@@ -20,6 +19,6 @@ export class PackBrowserComponent {
   addDiff(set: OsuBeatmapSet, diff: OsuDiff, event: Event) {
     // Not a click on the card, which would open or close it.
     event.stopPropagation();
-    this.store.toggleDiff(selectedDiff(set, diff));
+    this.store.addDiff(set, diff);
   }
 }
