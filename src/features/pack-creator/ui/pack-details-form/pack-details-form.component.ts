@@ -2,7 +2,7 @@ import { Component, effect, inject, resource, Signal, signal } from '@angular/co
 import { form, required, validateAsync, FormField, debounce } from '@angular/forms/signals';
 import { invoke } from '@tauri-apps/api/core';
 import { StatefulInputComponent } from "@shared/ui";
-import { PackStore } from '@entities/pack';
+import { PackStore } from '../../pack.store';
 import { TuiTitle } from '@taiga-ui/core';
 import { TuiCardLarge } from '@taiga-ui/layout';
 

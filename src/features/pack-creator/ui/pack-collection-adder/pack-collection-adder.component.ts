@@ -1,7 +1,7 @@
 import { Component, computed, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CollectionStore } from '@entities/collection';
 import { OsuDbStore } from '@entities/osu-db';
-import { PackStore } from '@entities/pack';
+import { PackStore } from '../../pack.store';
 import { OsuCollection } from '@entities/collection';
 import { TuiButton, TuiLoader, TuiScrollbar, TuiTitle } from '@taiga-ui/core';
 import { TuiBadge } from '@taiga-ui/kit';
