@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { form, maxLength, minLength, required, FormRoot, FormField } from '@angular/forms/signals';
 import { signal } from '@angular/core';
-import { UserStore } from '@entities/user';
+import { UserStore } from '../../user.store';
 import { ConfigurationStore } from '@entities/configuration';
 import { StatefulInputComponent } from "@shared/ui";
 import { TuiButton, TuiNotificationDirective, TuiTitle } from '@taiga-ui/core';

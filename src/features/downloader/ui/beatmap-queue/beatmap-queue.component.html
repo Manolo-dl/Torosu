@@ -1,7 +1,7 @@
-@if (beatmapStore.queue().length > 0 || beatmapStore.skippedCount() > 0) {
+@if (downloadQueue.queue().length > 0 || downloadQueue.skippedCount() > 0) {
   <div appearance="floating" tuiCardLarge>
     <div class="stats">
-      <span appearance="neutral" tuiBadge>{{ beatmapStore.queue().length }} queued</span>
+      <span appearance="neutral" tuiBadge>{{ downloadQueue.queue().length }} queued</span>
       @if (done() > 0) {
         <span appearance="positive" tuiBadge>{{ done() }} done</span>
       }
@@ -11,8 +11,8 @@
       @if (failed() > 0) {
         <span appearance="negative" tuiBadge>{{ failed() }} failed</span>
       }
-      @if (beatmapStore.skippedCount() > 0) {
-        <span appearance="neutral" tuiBadge>{{ beatmapStore.skippedCount() }} already owned</span>
+      @if (downloadQueue.skippedCount() > 0) {
+        <span appearance="neutral" tuiBadge>{{ downloadQueue.skippedCount() }} already owned</span>
       }
     </div>
 
@@ -22,9 +22,9 @@
       </div>
     }
 
-    @if (beatmapStore.queue().length > 0) {
+    @if (downloadQueue.queue().length > 0) {
       <tui-scrollbar class="list">
-        @for (item of beatmapStore.queue(); track item.beatmapSetId) {
+        @for (item of downloadQueue.queue(); track item.beatmapSetId) {
           <div class="item" [attr.data-status]="item.status">
             <span class="id">#{{ item.beatmapSetId }}</span>
             @if (item.status === 'downloading') {
@@ -55,8 +55,8 @@
         size="m"
         tuiButton
         type="button"
-        [disabled]="beatmapStore.isDownloading()"
-        (click)="beatmapStore.clearQueue()"
+        [disabled]="downloadQueue.isDownloading()"
+        (click)="downloadQueue.clearQueue()"
       >
         Clear queue
       </button>
@@ -64,8 +64,8 @@
         size="m"
         tuiButton
         type="button"
-        [disabled]="pending() === 0 || beatmapStore.isDownloading()"
-        [loading]="beatmapStore.isDownloading()"
+        [disabled]="pending() === 0 || downloadQueue.isDownloading()"
+        [loading]="downloadQueue.isDownloading()"
         (click)="startDownload()"
       >
         Start download

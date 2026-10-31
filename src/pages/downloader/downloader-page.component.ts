@@ -1,9 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
-import { BeatmapImportComponent, BeatmapQueueComponent } from "@features/beatmap-search";
-import { OsuCookieInputComponent } from '@features/downloader';
+import { BeatmapImportComponent, BeatmapQueueComponent, OsuCookieInputComponent, UserStore } from '@features/downloader';
 import { OsuDbStore } from '@entities/osu-db';
 import { ConfigurationStore } from '@entities/configuration';
-import { UserStore } from '@entities/user';
 import { TuiTitle, TuiNotificationDirective, TuiButton } from "@taiga-ui/core";
 import { PageHeaderComponent } from '@shared/ui';
 import { TuiAccordion } from '@taiga-ui/kit';

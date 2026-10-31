@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { BeatmapStore } from '@entities/beatmap';
-import { TxtParserService } from '@features/beatmap-search/txt-parser.service';
+import { DownloadQueueStore } from '../../download-queue.store';
+import { TxtParserService } from '../../txt-parser.service';
 import { TxtDropzoneComponent } from '@shared/ui';
 
 @Component({
@@ -11,10 +11,10 @@ import { TxtDropzoneComponent } from '@shared/ui';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BeatmapImportComponent {
-  private beatmapStore = inject(BeatmapStore);
+  private downloadQueue = inject(DownloadQueueStore);
   private parser = inject(TxtParserService);
 
   addToQueue(content: string) {
-    this.beatmapStore.addToQueue(this.parser.parse(content));
+    this.downloadQueue.addToQueue(this.parser.parse(content));
   }
 }

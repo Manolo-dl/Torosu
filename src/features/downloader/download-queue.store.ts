@@ -1,21 +1,22 @@
 import { patchState, signalStore, withComputed, withMethods, withState } from "@ngrx/signals";
-import { DownloadItem, DownloadStatus } from "./beatmap.model";
+import { DownloadStatus } from "./download-queue.model";
 import { computed, inject } from "@angular/core";
 import { OsuDbStore } from "@entities/osu-db";
 
-interface BeatmapState {
+interface DownloadQueueState {
     rawQueue: number[];
     statusMap: Record<number, { status: DownloadStatus; progress: number }>;
     isDownloading: boolean;
 }
 
-const initialState: BeatmapState = {
+const initialState: DownloadQueueState = {
     rawQueue: [],
     statusMap: {},
     isDownloading: false
 };
 
-export const BeatmapStore = signalStore(
+/** The beatmap sets to download, and how each one is going. */
+export const DownloadQueueStore = signalStore(
     { providedIn: 'root' },
     withState(initialState),
 

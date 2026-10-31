@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
-import { BeatmapStore, DownloadStatus } from '@entities/beatmap';
-import { BeatmapDownloadService } from '@features/beatmap-search';
+import { BeatmapDownloadService } from '../../beatmap-download.service';
+import { DownloadStatus } from '../../download-queue.model';
+import { DownloadQueueStore } from '../../download-queue.store';
 import { TuiButton, TuiNotificationDirective, TuiScrollbar } from '@taiga-ui/core';
 import { TuiBadge, TuiButtonLoading, TuiProgress } from '@taiga-ui/kit';
 import { TuiCardLarge } from '@taiga-ui/layout';
@@ -14,7 +15,7 @@ import { TuiCardLarge } from '@taiga-ui/layout';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BeatmapQueueComponent {
-  readonly beatmapStore = inject(BeatmapStore);
+  readonly downloadQueue = inject(DownloadQueueStore);
   readonly downloader = inject(BeatmapDownloadService);
 
   readonly statusAppearance: Record<DownloadStatus, string> = {
@@ -24,9 +25,9 @@ export class BeatmapQueueComponent {
     failed: 'negative',
   };
 
-  readonly pending = computed(() => this.beatmapStore.queue().filter(i => i.status === 'pending').length);
-  readonly done    = computed(() => this.beatmapStore.queue().filter(i => i.status === 'done').length);
-  readonly failed  = computed(() => this.beatmapStore.queue().filter(i => i.status === 'failed').length);
+  readonly pending = computed(() => this.downloadQueue.queue().filter(i => i.status === 'pending').length);
+  readonly done    = computed(() => this.downloadQueue.queue().filter(i => i.status === 'done').length);
+  readonly failed  = computed(() => this.downloadQueue.queue().filter(i => i.status === 'failed').length);
 
   async startDownload() {
     await this.downloader.startDownload();
