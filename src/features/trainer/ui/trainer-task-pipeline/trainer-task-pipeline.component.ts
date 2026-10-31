@@ -8,6 +8,7 @@ import {
   RateChangeParams,
   TASK_LABELS,
   TrainerConvert,
+  rateChangeTask,
   TrainerTaskType,
   taskSupportsMode,
 } from '../../models/trainer.model';
@@ -102,7 +103,7 @@ export class TrainerTaskPipelineComponent {
     this.menuOpen.set(false);
     switch (type) {
       case 'RateChange':
-        this.trainer.addTask(this.convert().id, { type: 'RateChange', params: { rate: 1.0, adjustPitch: false, scaleStoryboard: false, scaleVideo: false } });
+        this.trainer.addTask(this.convert().id, rateChangeTask(1.0));
         break;
       case 'SVNormalizer':
         this.trainer.addTask(this.convert().id, { type: 'SVNormalizer', params: {} });

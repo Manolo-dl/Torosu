@@ -104,6 +104,8 @@ pub fn run() {
             commands::osu_reader::export::export_selected_osz,
             commands::trainer::run::run_trainer,
             commands::trainer::naming::trainer_name_example,
+            commands::trainer::presets::read_trainer_presets,
+            commands::trainer::presets::write_trainer_presets,
             commands::trainer::video::is_ffmpeg_available
         ])
         .on_window_event(|window, event| {

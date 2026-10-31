@@ -74,6 +74,22 @@ export interface TrainerConvert {
     tasks: TrainerTask[];
 }
 
+/** A list of converts to start from, each with its tasks. */
+export interface TrainerPreset {
+    name: string;
+    converts: TrainerTaskParams[][];
+}
+
+/** A rate change with the default options. */
+export function rateChangeTask(rate: number): TrainerTaskParams {
+    return { type: 'RateChange', params: { rate, adjustPitch: false, scaleStoryboard: false, scaleVideo: false } };
+}
+
+/** Presets that come with the trainer; the user's own are saved next to the settings. */
+export const BUILT_IN_PRESETS: TrainerPreset[] = [
+    { name: 'Rates 1.1x – 1.4x', converts: [1.1, 1.2, 1.3, 1.4].map(rate => [rateChangeTask(rate)]) },
+];
+
 export const TASK_LABELS: Record<TrainerTaskType, string> = {
     RateChange: 'Rate Change',
     SVNormalizer: 'SV Normalizer',

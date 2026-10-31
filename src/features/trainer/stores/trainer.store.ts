@@ -88,6 +88,22 @@ export const TrainerStore = signalStore(
                 patchState(store, { converts: store.converts().filter(c => c.id !== id) });
             },
 
+            /**
+             * Replaces the converts with `converts`, e.g. a preset's. Returns how
+             * many tasks were left out for not working on the map's mode.
+             */
+            setConverts(converts: TrainerTaskParams[][]): number {
+                const mode = reader.originalMode();
+                let dropped = 0;
+                const next = converts.map(tasks => {
+                    const supported = tasks.filter(task => taskSupportsMode(task.type, mode));
+                    dropped += tasks.length - supported.length;
+                    return newConvert(supported.map(task => ({ id: crypto.randomUUID(), task: structuredClone(task) })));
+                });
+                patchState(store, { converts: next.length > 0 ? next : [newConvert()] });
+                return dropped;
+            },
+
             addTask(convertId: string, task: TrainerTaskParams) {
                 updateTasks(convertId, tasks => [...tasks, { id: crypto.randomUUID(), task }]);
             },
