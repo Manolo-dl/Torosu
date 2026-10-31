@@ -16,10 +16,6 @@
   font: @font;
 }
 
-// Windows narrower than this, past the app's own sidebar, leave too little
-// room next to a 20rem sidebar: `.sidebar-layout()` puts it on top instead.
-@stacked: ~"(max-width: 1000px)";
-
 // A page with a 20rem sidebar on the left; give the sidebar `.sticky()`. The
 // rest can shrink below the width of its content (long names are cut), so it
 // never pushes the page wider than the window.
@@ -28,20 +24,12 @@
   grid-template-columns: 20rem minmax(0, 1fr);
   gap: 1.25rem;
   align-items: start;
-
-  @media @stacked {
-    grid-template-columns: minmax(0, 1fr);
-  }
 }
 
-// Stays in view while the page scrolls, while the sidebar is at the side.
+// Stays in view while the page scrolls.
 .sticky() {
   position: sticky;
   top: 0;
-
-  @media @stacked {
-    position: static;
-  }
 }
 
 // A cdk virtual scroll viewport whose rows are as wide as it is.

@@ -8,8 +8,14 @@
 .osu-card();
 
 .head {
-  .titles .title:hover {
-    color: var(--tui-text-action);
+  // The link to the set's page is the title's text, not the whole row: a
+  // column of flex items stretches them by default.
+  .titles .title {
+    align-self: flex-start;
+
+    &:hover {
+      color: var(--tui-text-action);
+    }
   }
 
   .side {

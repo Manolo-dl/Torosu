@@ -4,6 +4,14 @@
   padding: 0;
 }
 
+/* Taiga's tui-expand is a grid with an `auto` column: once open, content cut
+   with an ellipsis (a long diff name) widened it to the whole text, pushing
+   what follows (the Add button) out of sight. Now it is never wider than the
+   expand itself, so the names are the ones cut. */
+tui-expand {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 /* ============================================
    Taiga UI theme classes (controladas por tuiTheme)
    Paleta de prueba: rosa = acento 1, violeta = acento 2 / foco,
