@@ -70,34 +70,76 @@ impl Drop for OszWriter {
     }
 }
 
-/// Opens an .osz with what the system opens it with, osu! itself, which
-/// imports it. On Linux osu! often runs under osu-wine, without a file
-/// association: that is tried next.
+/// Opens an .osz in osu!, which imports it.
+///
+/// On Linux osu! runs under Wine, and xdg-open usually takes the .osz for the
+/// zip it is, so it lands in the archive manager without an error. There
+/// osu-winello's own handler is tried first, then `gio open`, which tells an
+/// .osz apart by its extension when a handler registered it, and only then
+/// the default app, as everywhere else.
 pub fn open(osz_path: &Path) -> Result<()> {
-    log::debug!("opening osz with default handler: {:?}", osz_path);
-
-    if let Err(e) = tauri_plugin_opener::open_path(osz_path, None::<&str>) {
-        log::warn!("default handler failed to open .osz ({}), trying osu-wine --osuhandler", e);
-
-        let osu_wine_result = std::process::Command::new("osu-wine")
-            .arg("--osuhandler")
-            .arg(osz_path)
-            .spawn();
-
-        match osu_wine_result {
-            Ok(_) => {
-                log::debug!("opened .osz via osu-wine --osuhandler");
-            }
-            Err(wine_err) => {
-                log::error!("failed to open .osz with both default handler and osu-wine: {} / {}", e, wine_err);
-                return Err(format!("Failed to open .osz: {}", e).into());
-            }
-        }
-    } else {
-        log::debug!("opened .osz with default handler");
+    #[cfg(target_os = "linux")]
+    if open_under_wine(osz_path) {
+        return Ok(());
     }
 
-    Ok(())
+    log::debug!("opening osz with the default app: {:?}", osz_path);
+    tauri_plugin_opener::open_path(osz_path, None::<&str>).map_err(|e| {
+        log::error!("failed to open {:?}: {}", osz_path, e);
+        format!("Failed to open .osz: {}", e).into()
+    })
+}
+
+/// Whether the .osz went to osu! under Wine: through osu-winello, or through
+/// the app `gio` has for it.
+#[cfg(target_os = "linux")]
+fn open_under_wine(osz_path: &Path) -> bool {
+    use std::process::{Command, Stdio};
+
+    if let Some(osu_wine) = osu_winello() {
+        log::debug!("opening {:?} with {:?} --osuhandler", osz_path, osu_wine);
+        match Command::new(&osu_wine).arg("--osuhandler").arg(osz_path).stdin(Stdio::null()).spawn() {
+            Ok(mut child) => {
+                // It can run for a while (it may start osu!): waited for aside,
+                // so it does not stay a zombie.
+                std::thread::spawn(move || {
+                    let _ = child.wait();
+                });
+                return true;
+            }
+            Err(e) => log::warn!("{:?} --osuhandler failed: {}", osu_wine, e),
+        }
+    }
+
+    match Command::new("gio").arg("open").arg(osz_path).stdin(Stdio::null()).status() {
+        Ok(status) if status.success() => {
+            log::debug!("opened {:?} with gio open", osz_path);
+            true
+        }
+        Ok(status) => {
+            log::warn!("gio open {:?} failed: {}", osz_path, status);
+            false
+        }
+        Err(e) => {
+            log::debug!("gio is not available: {}", e);
+            false
+        }
+    }
+}
+
+/// osu-winello's launcher, `osu-wine`, if it has `--osuhandler`, which hands
+/// a file to the osu! it installed. Looked for in the PATH and in
+/// ~/.local/bin, where osu-winello puts it: an app started from the desktop
+/// does not always have that folder in its PATH.
+#[cfg(target_os = "linux")]
+fn osu_winello() -> Option<PathBuf> {
+    let path = std::env::var_os("PATH").map(|path| std::env::split_paths(&path).collect::<Vec<_>>()).unwrap_or_default();
+    let local_bin = std::env::var_os("HOME").map(|home| PathBuf::from(home).join(".local/bin"));
+
+    path.into_iter()
+        .chain(local_bin)
+        .map(|dir| dir.join("osu-wine"))
+        .find(|launcher| fs::read_to_string(launcher).is_ok_and(|script| script.contains("--osuhandler")))
 }
 
 /// Every file inside `folder`, subfolders included, as `(name, path)`: `name`

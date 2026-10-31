@@ -81,7 +81,7 @@ pub struct TrainerConfig {
     pub auto_pitch: bool,
 
     /// Opens each generated .osz, so osu! imports it right away.
-    #[serde(default = "default_false")]
+    #[serde(default = "default_true")]
     pub open_osz: bool,
 
     /// Template of the difficulty name: see `naming::version`.
@@ -141,7 +141,7 @@ impl Default for TrainerConfig {
         Self {
             high_quality_audio: default_false(),
             auto_pitch: default_false(),
-            open_osz: default_false(),
+            open_osz: default_true(),
             name_format: default_name_format(),
         }
     }
