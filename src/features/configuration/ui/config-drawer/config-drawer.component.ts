@@ -33,6 +33,7 @@ const DEFAULT_CONFIG: AppConfig = {
   },
   trainer: {
     high_quality_audio: false,
+    high_quality_video: false,
     auto_pitch: false,
     open_osz: true,
     name_format: DEFAULT_NAME_FORMAT,

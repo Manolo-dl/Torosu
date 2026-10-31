@@ -238,7 +238,7 @@
 
             @case (3) {
                 <section>
-                    <h3 tuiTitle="s">Audio</h3>
+                    <h3 tuiTitle="s">Quality</h3>
                     <label tuiCell>
                         <span tuiTitle>
                             High quality audio
@@ -250,6 +250,21 @@
                             [(ngModel)]="draft().trainer.high_quality_audio"
                         />
                     </label>
+                    <label tuiCell>
+                        <span tuiTitle>
+                            High quality video
+                            <span tuiSubtitle>Re-encode a scaled video at a better quality, nearly twice as big</span>
+                        </span>
+                        <input
+                            tuiSwitch
+                            type="checkbox"
+                            [(ngModel)]="draft().trainer.high_quality_video"
+                        />
+                    </label>
+                </section>
+
+                <section>
+                    <h3 tuiTitle="s">Rate change</h3>
                     <label tuiCell>
                         <span tuiTitle>
                             Automatic pitch

@@ -379,6 +379,7 @@ async fn make_media(source: &Source, converts: &[Convert], config: &TrainerConfi
 
     let videos = try_join_all(video_jobs.into_values().enumerate().map(|(i, job)| {
         let (progress, src, rate) = (progress.clone(), source.folder.join(&job.original), job.rate);
+        let high_quality = config.high_quality_video;
         async move {
             let ext = job.name.rsplit_once('.').map_or("mp4", |(_, ext)| ext);
             let tmp = TempFile::new(ext);
@@ -386,7 +387,7 @@ async fn make_media(source: &Source, converts: &[Convert], config: &TrainerConfi
             log::debug!("re-encoding video {:?} at {}x into {:?}", src, rate, dst);
 
             tauri::async_runtime::spawn_blocking(move || {
-                video::apply_rate(&src, &dst, rate, |p| progress.job(first_video + i, p as f32))
+                video::apply_rate(&src, &dst, rate, high_quality, |p| progress.job(first_video + i, p as f32))
             })
             .await?
             .map_err(|e| {

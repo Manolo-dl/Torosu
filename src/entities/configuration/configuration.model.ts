@@ -12,6 +12,8 @@ export interface AppConfig {
 export interface TrainerConfig {
     /** Encode the generated audio at ~192 kbit/s instead of ~128 kbit/s. */
     high_quality_audio: boolean;
+    /** Re-encode the scaled video at a better quality (CRF 23 instead of 28), nearly twice as big. */
+    high_quality_video: boolean;
     /** The rate change sets the pitch from the rate (kept below 1.0x, raised above), without the option. */
     auto_pitch: boolean;
     /** Open each generated .osz, so osu! imports it right away. */

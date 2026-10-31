@@ -75,6 +75,10 @@ pub struct TrainerConfig {
     #[serde(default = "default_false")]
     pub high_quality_audio: bool,
 
+    /// Re-encodes the scaled video at CRF 23 instead of 28.
+    #[serde(default = "default_false")]
+    pub high_quality_video: bool,
+
     /// Sets the rate change's pitch from the rate: kept below 1.0x, raised
     /// with the speed above. The frontend hides the pitch option then.
     #[serde(default = "default_false")]
@@ -140,6 +144,7 @@ impl Default for TrainerConfig {
     fn default() -> Self {
         Self {
             high_quality_audio: default_false(),
+            high_quality_video: default_false(),
             auto_pitch: default_false(),
             open_osz: default_true(),
             name_format: default_name_format(),
