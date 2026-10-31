@@ -1,6 +1,6 @@
 pub mod export;
 
-use std::{path::PathBuf, sync::atomic::Ordering, thread, time::Duration};
+use std::{sync::atomic::Ordering, thread, time::Duration};
 
 use osu_memory_reader::{Beatmap, BeatmapAttributes, BeatmapPaths, Error, OsuReader};
 use serde::Serialize;
@@ -46,18 +46,11 @@ impl ReaderSnapshot {
     }
 }
 
-/// Songs folder of the last beatmap read, as osu! has it in its settings.
-pub fn songs_folder(app: &AppHandle) -> Option<PathBuf> {
-    let state = app.state::<OsuReaderState>();
-    let snapshot = state.snapshot.lock().unwrap();
-    snapshot.beatmap.as_ref()?.paths.as_ref().map(|paths| paths.songs.clone())
-}
-
 /// Starts reading osu! in the background (once) and returns what is known so
 /// far. Later changes arrive as `osu-reader-status` and `osu-beatmap` events,
 /// so the frontend should listen to them before calling this.
 #[tauri::command]
-pub fn connect_osu_reader(app: AppHandle, state: tauri::State<'_, OsuReaderState>) -> Result<ReaderSnapshot, String> {
+pub fn connect_osu_reader(app: AppHandle, state: tauri::State<'_, OsuReaderState>) -> crate::error::Result<ReaderSnapshot> {
     let snapshot = state.snapshot.lock().unwrap().clone();
 
     if !state.started.swap(true, Ordering::SeqCst) {

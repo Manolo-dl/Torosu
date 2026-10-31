@@ -38,6 +38,7 @@ toml = "1.1.8"
 chrono = { version = "0.4.45", default-features = false, features = ["clock"] }
 osynic_osudb = "0.1.5"
 anyhow = "1.0.104"
+thiserror = "2"
 rosu-map = "0.2.1"
 # Built from source and linked in: otherwise, on Linux, it links to the system
 # libSoundTouch, which the CI runner and most users don't have.

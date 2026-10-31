@@ -4,7 +4,7 @@ use rosu_map::{
     section::{general::GameMode, hit_objects::HitObjectKind, timing_points::DifficultyPoint},
 };
 
-use crate::commands::trainer::naming;
+use crate::commands::trainer::timing;
 
 /// osu! clamps the slider velocity to this range.
 const MIN_SV: f64 = 0.1;
@@ -23,7 +23,7 @@ const MAX_SV: f64 = 10.0;
 /// Slider and drumroll lengths are rescaled to the new SV, otherwise their
 /// duration (pixel length / SV) would change.
 pub fn apply(beatmap: &mut Beatmap) -> Result<()> {
-    let Some(main_bpm) = naming::main_bpm(beatmap) else {
+    let Some(main_bpm) = timing::main_bpm(beatmap) else {
         log::warn!("SV normalizer: the beatmap has no valid timing point, left as is");
         return Ok(());
     };

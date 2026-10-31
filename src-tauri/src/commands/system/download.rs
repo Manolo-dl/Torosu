@@ -2,11 +2,12 @@ use reqwest::Client;
 use futures_util::StreamExt;
 use tauri::{Emitter, Manager};
 use tokio::io::AsyncWriteExt;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::Semaphore;
 
-use crate::{AppConfigState, SessionState};
+use crate::{AppConfigState, SessionState, error::Result, paths};
 
 const MAX_SIZE: u64 = 200 * 1024 * 1024;
 const DELAY_BETWEEN_DOWNLOADS_MS: u64 = 1000; // ~1 req/seg, osu! documentation recommendation
@@ -26,16 +27,12 @@ pub struct DownloadProgress {
 pub async fn start_downloads(
     app: tauri::AppHandle,
     beatmap_set_ids: Vec<u64>,
-) -> Result<(), String> {
+) -> Result<()> {
 
     let config_state = app.state::<AppConfigState>();
-    let (osu_path, downloader_config, open_file) = {
+    let (downloader_config, open_file) = {
         let config = config_state.config.lock().unwrap();
-        (
-            config.osu_path.clone().ok_or("osu! path not set")?,
-            config.downloader.clone(),
-            config.open_file.clone(),
-        )
+        (config.downloader.clone(), config.open_file)
     };
 
     let osu_session = app
@@ -46,14 +43,14 @@ pub async fn start_downloads(
         .clone()
         .ok_or("osu_session cookie not set")?;
 
-    let songs_folder = downloader_config
-        .output_path
-        .clone()
-        .unwrap_or_else(|| format!("{}/Songs", osu_path));
+    let songs_folder = match &downloader_config.output_path {
+        Some(path) => PathBuf::from(path),
+        None => paths::songs_dir(&app)?,
+    };
 
-    if !std::path::Path::new(&songs_folder).exists() {
-        log::error!("Output folder not found: {}", songs_folder);
-        return Err(format!("Output folder not found: {}", songs_folder));
+    if !songs_folder.exists() {
+        log::error!("Output folder not found: {}", songs_folder.display());
+        return Err(format!("Output folder not found: {}", songs_folder.display()).into());
     }
 
     let client = Client::new();
@@ -99,7 +96,7 @@ pub async fn start_downloads(
         })
     }).collect();
 
-    let mut results: Vec<(u64, Result<(), String>)> = Vec::new();
+    let mut results: Vec<(u64, Result<()>)> = Vec::new();
     for task in tasks {
         if let Ok(r) = task.await {
             results.push(r);
@@ -111,10 +108,10 @@ pub async fn start_downloads(
         .collect();
 
     if downloader_config.error_file && !failed_ids.is_empty() {
-        let error_file_path = format!("{}/failed_downloads.txt", songs_folder);
+        let error_file_path = songs_folder.join("failed_downloads.txt");
         let content = failed_ids.iter().map(|id| id.to_string()).collect::<Vec<_>>().join("\n");
-        if let Err(e) = std::fs::write(&error_file_path, content) {
-            log::error!("Failed to write error file {}: {}", error_file_path, e);
+        if let Err(e) = tokio::fs::write(&error_file_path, content).await {
+            log::error!("Failed to write error file {:?}: {}", error_file_path, e);
         }
     }
 
@@ -140,10 +137,10 @@ async fn download_beatmap(
     client: &Client,
     beatmap_set_id: u64,
     osu_session: &str,
-    songs_folder: &str,
+    songs_folder: &Path,
     skip_video: bool,
     open_file: bool,
-) -> Result<(), String> {
+) -> Result<()> {
 
     let url = if skip_video {
         format!("https://osu.ppy.sh/beatmapsets/{}/download?noVideo=1", beatmap_set_id)
@@ -159,19 +156,19 @@ async fn download_beatmap(
         .await
         .map_err(|e| {
             log::error!("HTTP request failed for {}: {}", beatmap_set_id, e);
-            e.to_string()
+            e
         })?;
 
     if !response.status().is_success() {
         log::error!("Failed to download {}: HTTP {}", beatmap_set_id, response.status());
-        return Err(format!("HTTP {}", response.status()));
+        return Err(format!("HTTP {}", response.status()).into());
     }
 
     let total = response.content_length().unwrap_or(0);
 
     if total > MAX_SIZE {
         log::error!("Beatmap set {} is too large: {} bytes", beatmap_set_id, total);
-        return Err(format!("Beatmap set {} is too large ({} bytes)", beatmap_set_id, total));
+        return Err(format!("Beatmap set {} is too large ({} bytes)", beatmap_set_id, total).into());
     }
 
     let disposition = response.headers()
@@ -182,19 +179,19 @@ async fn download_beatmap(
 
     let filename = extract_filename(&disposition, beatmap_set_id);
 
-    let temp_dir = std::path::Path::new(songs_folder)
+    let temp_dir = songs_folder
         .parent()
-        .ok_or_else(|| "invalid songs folder path".to_string())?
+        .ok_or("invalid songs folder path")?
         .join(".onisu-downloads-tmp");
 
-    tokio::fs::create_dir_all(&temp_dir).await.map_err(|e| e.to_string())?;
+    tokio::fs::create_dir_all(&temp_dir).await?;
 
     let tmp_path = temp_dir.join(format!("{}.osz.part", beatmap_set_id));
-    let final_path = format!("{}/{}", songs_folder, filename);
+    let final_path = songs_folder.join(&filename);
 
     let mut file = tokio::fs::File::create(&tmp_path).await.map_err(|e| {
         log::error!("Failed to create file {:?}: {}", tmp_path, e);
-        e.to_string()
+        e
     })?;
 
     let mut downloaded: u64 = 0;
@@ -207,7 +204,7 @@ async fn download_beatmap(
             Err(e) => {
                 log::error!("Stream interrupted for {}: {}", beatmap_set_id, e);
                 let _ = tokio::fs::remove_file(&tmp_path).await;
-                return Err(e.to_string());
+                return Err(e.into());
             }
         };
 
@@ -216,7 +213,7 @@ async fn download_beatmap(
         if let Err(e) = file.write_all(&chunk).await {
             log::error!("Failed to write chunk for {}: {}", beatmap_set_id, e);
             let _ = tokio::fs::remove_file(&tmp_path).await;
-            return Err(e.to_string());
+            return Err(e.into());
         }
 
         // The 100% is reported by `start_downloads` with the "done" status.
@@ -231,19 +228,19 @@ async fn download_beatmap(
         }
     }
 
-    file.flush().await.map_err(|e| e.to_string())?;
+    file.flush().await?;
     drop(file);
-    
+
     tokio::fs::rename(&tmp_path, &final_path).await.map_err(|e| {
-        log::error!("Failed to move file to {}: {}", final_path, e);
-        e.to_string()
+        log::error!("Failed to move file to {:?}: {}", final_path, e);
+        e
     })?;
 
     if open_file {
         if let Err(e) = tauri_plugin_opener::open_path(&final_path, None::<&str>) {
-            log::error!("Failed to open file {}: {}", final_path, e);
+            log::error!("Failed to open file {:?}: {}", final_path, e);
         } else {
-            log::info!("Opened file {}", final_path);
+            log::info!("Opened file {:?}", final_path);
         }
     }
 
@@ -289,7 +286,7 @@ pub fn set_osu_session(
     session: Option<String>,
     state: tauri::State<'_, AppConfigState>,
     current: tauri::State<'_, SessionState>,
-) -> Result<(), String> {
+) -> Result<()> {
     let mut config = state.config.lock().unwrap();
     config.downloader.osu_session = if config.downloader.save_session { session.clone() } else { None };
     *current.osu_session.lock().unwrap() = session;

@@ -6,9 +6,10 @@ use crate::commands::trainer::{
     model::{Density, DifficultySettings, RunTrainerRequest, TrainerTaskParams, TrainerProgress},
     naming, osu_fixups, pipeline, storyboard, video,
 };
+use crate::{error::Result, osz::{self, OszWriter}};
 
 #[tauri::command]
-pub async fn run_trainer(app: tauri::AppHandle, request: RunTrainerRequest) -> Result<(), String> {
+pub async fn run_trainer(app: tauri::AppHandle, request: RunTrainerRequest) -> Result<()> {
     log::debug!("run_trainer called for {}", request.osu_file_path);
 
     macro_rules! emit_progress {
@@ -29,7 +30,7 @@ pub async fn run_trainer(app: tauri::AppHandle, request: RunTrainerRequest) -> R
 
     let mut beatmap = rosu_map::from_path::<Beatmap>(original_path).map_err(|e| {
         log::error!("failed to parse .osu file {:?}: {}", original_path, e);
-        e.to_string()
+        e
     })?;
 
     // rosu-map drops the storyboard and the video, so they are read raw.
@@ -74,7 +75,7 @@ pub async fn run_trainer(app: tauri::AppHandle, request: RunTrainerRequest) -> R
 
     pipeline::run(&mut beatmap, &request.tasks).map_err(|e| {
         log::error!("pipeline execution failed: {}", e);
-        e.to_string()
+        e
     })?;
 
     emit_progress!(20);
@@ -208,7 +209,7 @@ pub async fn run_trainer(app: tauri::AppHandle, request: RunTrainerRequest) -> R
         })?
         .map_err(|e| {
             log::error!("audio processing failed: {}", e);
-            e.to_string()
+            e
         })?;
 
         let audio_filename = naming::audio_filename(params);
@@ -263,7 +264,7 @@ pub async fn run_trainer(app: tauri::AppHandle, request: RunTrainerRequest) -> R
     // Write the generated diff, with audio_file already updated if applicable.
     let output_osu = beatmap.encode_to_string().map_err(|e| {
         log::error!("failed to encode beatmap: {}", e);
-        e.to_string()
+        e
     })?;
 
     let output_osu = storyboard::inject_events(output_osu, &events);
@@ -338,37 +339,21 @@ impl Drop for TempFile {
 /// Every file of the set except the diffs, the .osb (merged into the new diff),
 /// the files in `skip` (replaced by processed ones: audio, video) and the files
 /// earlier runs generated, as `(path inside the .osz, path on disk)`.
-fn collect_assets(folder: &Path, skip: &[&str]) -> Result<Vec<(String, PathBuf)>, String> {
+fn collect_assets(folder: &Path, skip: &[&str]) -> Result<Vec<(String, PathBuf)>> {
     let skip: Vec<String> = skip.iter().map(|s| s.replace('\\', "/").to_lowercase()).collect();
-    let mut assets = Vec::new();
-    let mut pending = vec![folder.to_path_buf()];
 
-    while let Some(dir) = pending.pop() {
-        for entry in fs::read_dir(&dir).map_err(|e| e.to_string())? {
-            let path = entry.map_err(|e| e.to_string())?.path();
-
-            if path.is_dir() {
-                pending.push(path);
-                continue;
-            }
-
-            let Ok(relative) = path.strip_prefix(folder) else { continue };
-            let name = relative.to_string_lossy().replace('\\', "/");
+    let mut assets: Vec<(String, PathBuf)> = osz::files_in(folder)?
+        .into_iter()
+        .filter(|(name, _)| {
             let lower = name.to_lowercase();
-
-            if lower.ends_with(".osu")
+            !(lower.ends_with(".osu")
                 || lower.ends_with(".osb")
                 || lower.ends_with(".osz")
                 || skip.contains(&lower)
-                || naming::is_generated_audio(&name)
-                || naming::is_generated_video(&name)
-            {
-                continue;
-            }
-
-            assets.push((name, path));
-        }
-    }
+                || naming::is_generated_audio(name)
+                || naming::is_generated_video(name))
+        })
+        .collect();
 
     assets.sort();
     Ok(assets)
@@ -376,47 +361,17 @@ fn collect_assets(folder: &Path, skip: &[&str]) -> Result<Vec<(String, PathBuf)>
 
 /// Writes the .osz straight from memory: no staging. The set is only copied
 /// (`assets`) when exporting it as a new set.
-///
-/// It is written to a `.part` file first and renamed when complete: osu! picks
-/// up any .osz in Songs, and a half-written one imports as a broken set.
 fn write_osz(
     output_path: &Path,
     audio: Option<&(String, Vec<u8>)>,
     assets: &[(String, PathBuf)],
     osu_name: &str,
     osu_content: &str,
-) -> Result<(), String> {
-    let mut part_name = output_path.as_os_str().to_os_string();
-    part_name.push(".part");
-    let part_path = PathBuf::from(part_name);
-
-    let result = write_osz_contents(&part_path, audio, assets, osu_name, osu_content)
-        .and_then(|()| fs::rename(&part_path, output_path).map_err(|e| e.to_string()));
-
-    if result.is_err() {
-        let _ = fs::remove_file(&part_path);
-    }
-
-    result
-}
-
-fn write_osz_contents(
-    output_path: &Path,
-    audio: Option<&(String, Vec<u8>)>,
-    assets: &[(String, PathBuf)],
-    osu_name: &str,
-    osu_content: &str,
-) -> Result<(), String> {
-    use std::io::Write;
-    use zip::write::SimpleFileOptions;
-
-    let file = fs::File::create(output_path).map_err(|e| e.to_string())?;
-    let mut zip = zip::ZipWriter::new(file);
-    let options = SimpleFileOptions::default().compression_method(zip::CompressionMethod::Stored);
+) -> Result<()> {
+    let mut osz = OszWriter::create(output_path)?;
 
     if let Some((audio_name, audio_bytes)) = audio {
-        zip.start_file(audio_name, options).map_err(|e| e.to_string())?;
-        zip.write_all(audio_bytes).map_err(|e| e.to_string())?;
+        osz.add_bytes(audio_name, audio_bytes)?;
     }
 
     let audio_name = audio.map(|(name, _)| name.to_lowercase());
@@ -428,14 +383,9 @@ fn write_osz_contents(
             continue;
         }
 
-        let mut src = fs::File::open(path).map_err(|e| format!("{}: {}", path.display(), e))?;
-        zip.start_file(name, options).map_err(|e| e.to_string())?;
-        std::io::copy(&mut src, &mut zip).map_err(|e| e.to_string())?;
+        osz.add_file(name, path)?;
     }
 
-    zip.start_file(osu_name, options).map_err(|e| e.to_string())?;
-    zip.write_all(osu_content.as_bytes()).map_err(|e| e.to_string())?;
-
-    zip.finish().map_err(|e| e.to_string())?;
-    Ok(())
+    osz.add_bytes(osu_name, osu_content.as_bytes())?;
+    osz.finish()
 }

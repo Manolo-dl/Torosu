@@ -6,6 +6,11 @@ use crate::commands::config::model::AppConfig;
 use crate::commands::osu_reader::ReaderSnapshot;
 
 mod commands;
+mod error;
+mod osz;
+mod paths;
+#[cfg(test)]
+mod test_utils;
 
 pub struct OsuReaderState {
     pub started: AtomicBool,
@@ -16,6 +21,13 @@ pub struct AppConfigState {
     pub config: Mutex<AppConfig>,
     /// `configuration.toml`, written when the app closes.
     pub path: PathBuf,
+}
+
+impl AppConfigState {
+    /// The osu! folder, which every tool needs.
+    pub fn osu_path(&self) -> error::Result<PathBuf> {
+        self.config.lock().unwrap().osu_path.clone().map(PathBuf::from).ok_or_else(|| "osu! path not set".into())
+    }
 }
 
 /// The update found by `check_update`, waiting for the user to install it.
@@ -190,32 +202,7 @@ fn move_legacy_file(from: &Path, to: &Path) {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    /// An empty folder in the temp dir, removed when dropped.
-    struct TestDir(PathBuf);
-
-    impl TestDir {
-        fn new(name: &str) -> Self {
-            let dir = std::env::temp_dir().join(format!("torosu-test-{}-{}", std::process::id(), name));
-            let _ = std::fs::remove_dir_all(&dir);
-            std::fs::create_dir_all(&dir).unwrap();
-            Self(dir)
-        }
-
-        fn write(&self, name: &str, content: &str) {
-            std::fs::write(self.0.join(name), content).unwrap();
-        }
-
-        fn read(&self, name: &str) -> Option<String> {
-            std::fs::read_to_string(self.0.join(name)).ok()
-        }
-    }
-
-    impl Drop for TestDir {
-        fn drop(&mut self) {
-            let _ = std::fs::remove_dir_all(&self.0);
-        }
-    }
+    use crate::test_utils::TestDir;
 
     fn migrate(old: &TestDir, new: &TestDir) {
         migrate_legacy_files(&old.0, &new.0.join("configuration.toml"));

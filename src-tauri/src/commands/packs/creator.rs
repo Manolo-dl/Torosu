@@ -1,7 +1,7 @@
 use std::{collections::HashMap, fs, path::{Path, PathBuf}};
-use crate::AppConfigState;
+use tauri::Manager;
+use crate::{AppConfigState, error::Result, osz::OszWriter, paths};
 use crate::commands::config::model::PacksConfig;
-use crate::commands::osu_db::folders::get_beatmapset_folder;
 
 #[derive(serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -21,37 +21,44 @@ pub struct PackRequest {
 }
 
 #[tauri::command]
-pub async fn create_pack(
-    request: PackRequest,
-    config_state: tauri::State<'_, AppConfigState>,
-) -> Result<(), String> {
+pub async fn create_pack(app: tauri::AppHandle, request: PackRequest) -> Result<()> {
 
     log::debug!("create_pack called with title={}, creator={}, {} diffs", request.title, request.final_creator, request.diffs.len());
 
-    let (osu_path, packs) = {
-        let config = config_state.config.lock().unwrap();
-        (config.osu_path.clone().ok_or("osu! path not set")?, config.packs.clone())
+    // In osu!'s own export folder, where the pack can be found again. Not in
+    // Songs: osu! would pick the .osz up while it is still being written.
+    let (exports, packs) = {
+        let state = app.state::<AppConfigState>();
+        let packs = state.config.lock().unwrap().packs.clone();
+        (state.osu_path()?.join("Exports"), packs)
     };
+    let songs = paths::songs_dir(&app)?;
 
-    // Copying the audio and backgrounds of every set and zipping them is all
+    // Copying the audio and backgrounds of every set into the .osz is all
     // file work: kept off the async runtime.
-    tauri::async_runtime::spawn_blocking(move || build_pack(&request, &osu_path, &packs))
-        .await
-        .map_err(|e| e.to_string())?
+    tauri::async_runtime::spawn_blocking(move || build_pack(&request, &songs, &exports, &packs)).await?
 }
 
-/// Writes the pack, in several parts if it has more sets than `packs` allows,
-/// and opens each .osz so osu! imports it.
-fn build_pack(request: &PackRequest, osu_path: &str, packs: &PacksConfig) -> Result<(), String> {
+/// Writes the pack into `exports`, in several parts if it has more sets than
+/// `packs` allows, and opens each .osz so osu! imports it.
+fn build_pack(request: &PackRequest, songs: &Path, exports: &Path, packs: &PacksConfig) -> Result<()> {
     let parts = split_by_set(&request.diffs, packs.max_sets_per_pack as usize);
     if parts.len() > 1 {
         log::info!("splitting {} diffs into {} packs (max {} sets per pack)", request.diffs.len(), parts.len(), packs.max_sets_per_pack);
     }
 
+    fs::create_dir_all(exports).map_err(|e| format!("{}: {}", exports.display(), e))?;
+
     let mut osz_paths = Vec::with_capacity(parts.len());
     for (index, diffs) in parts.iter().enumerate() {
         let title = part_title(&request.title, index, parts.len());
-        let osz_path = build_osz(osu_path, &title, &request.final_creator, diffs, packs.keep_background)?;
+        let osz_path = exports.join(format!("{}.osz", sanitize(&title)));
+
+        log::debug!("writing {:?}", osz_path);
+        write_osz(&osz_path, songs, &title, &request.final_creator, diffs, packs.keep_background).map_err(|e| {
+            log::error!("failed to write {:?}: {}", osz_path, e);
+            e
+        })?;
         osz_paths.push(osz_path);
     }
 
@@ -101,37 +108,26 @@ fn part_title(title: &str, index: usize, parts: usize) -> String {
     }
 }
 
-/// Writes one set with `diffs` into an .osz in the temp folder and returns its path.
-fn build_osz(
-    osu_path: &str,
+/// Writes one set with `diffs` into the .osz at `path`. The files go straight
+/// into it, from the set folders in `songs`.
+fn write_osz(
+    path: &Path,
+    songs: &Path,
     title: &str,
     creator: &str,
     diffs: &[&SelectedDiff],
     keep_background: bool,
-) -> Result<PathBuf, String> {
+) -> Result<()> {
 
-    let safe_title = sanitize(title);
-    let temp_dir = std::env::temp_dir().join(format!("osu-pack-{}", safe_title));
+    let mut osz = OszWriter::create(path)?;
 
-    // Leftovers of a failed run would end up in the .osz.
-    if temp_dir.exists() {
-        let _ = fs::remove_dir_all(&temp_dir);
-    }
-
-    log::debug!("creating temp directory at {:?}", temp_dir);
-    fs::create_dir_all(&temp_dir).map_err(|e| {
-        log::error!("failed to create temp directory {:?}: {}", temp_dir, e);
-        e.to_string()
-    })?;
-
-    // Diffs of the same set share their audio and background: copied once.
-    let mut copied: HashMap<PathBuf, String> = HashMap::new();
+    // Diffs of the same set share their audio and background: added once.
+    let mut added: HashMap<PathBuf, String> = HashMap::new();
 
     for (index, diff) in diffs.iter().enumerate() {
         log::debug!("processing diff {}/{}: folder_name={}, file_name={}", index + 1, diffs.len(), diff.folder_name, diff.file_name);
 
-        let folder = get_beatmapset_folder(osu_path, &diff.folder_name)?;
-        let folder = Path::new(&folder.folder_path);
+        let folder = paths::beatmapset_folder(songs, &diff.folder_name)?;
         let osu_file_path = folder.join(&diff.file_name);
 
         let content = fs::read_to_string(&osu_file_path).map_err(|e| {
@@ -139,8 +135,8 @@ fn build_osz(
             format!("Failed to read {}: {}", diff.file_name, e)
         })?;
 
-        let audio = match find_file(folder, &diff.audio) {
-            Some(source) => Some(copy_once(&mut copied, &source, "audio", &temp_dir)?),
+        let audio = match find_file(&folder, &diff.audio) {
+            Some(source) => Some(add_once(&mut osz, &mut added, &source, "audio")?),
             None => {
                 log::warn!("audio file not found for diff {}: {:?}", diff.file_name, folder.join(&diff.audio));
                 None
@@ -148,8 +144,8 @@ fn build_osz(
         };
 
         let background = match background_filename(&content).filter(|_| keep_background) {
-            Some(name) => match find_file(folder, &name) {
-                Some(source) => Some(copy_once(&mut copied, &source, "bg", &temp_dir)?),
+            Some(name) => match find_file(&folder, &name) {
+                Some(source) => Some(add_once(&mut osz, &mut added, &source, "bg")?),
                 None => {
                     log::warn!("background not found for diff {}: {:?}", diff.file_name, folder.join(&name));
                     None
@@ -168,52 +164,31 @@ fn build_osz(
         );
 
         let new_osu_name = format!("{}.osu", sanitize(&diff.new_diff_name));
-        fs::write(temp_dir.join(&new_osu_name), modified_content).map_err(|e| {
-            log::error!("failed to write {:?}: {}", temp_dir.join(&new_osu_name), e);
-            e.to_string()
-        })?;
+        osz.add_bytes(&new_osu_name, modified_content.as_bytes())?;
 
-        log::debug!("wrote modified .osu file: {}", new_osu_name);
+        log::debug!("added modified .osu file: {}", new_osu_name);
     }
 
-    let osz_path = std::env::temp_dir().join(format!("{}.osz", safe_title));
-    log::debug!("creating osz archive at {:?}", osz_path);
-
-    create_osz(&temp_dir, &osz_path).map_err(|e| {
-        log::error!("failed to create osz archive {:?}: {}", osz_path, e);
-        e
-    })?;
-
-    if let Err(e) = fs::remove_dir_all(&temp_dir) {
-        log::warn!("failed to clean up temp directory {:?}: {}", temp_dir, e);
-    } else {
-        log::debug!("cleaned up temp directory {:?}", temp_dir);
-    }
-
-    Ok(osz_path)
+    osz.finish()
 }
 
-/// Copies `source` into the pack the first time a diff uses it and returns
-/// its name inside the pack (`audio-1.mp3`, `bg-2.jpg`, ...).
-fn copy_once(copied: &mut HashMap<PathBuf, String>, source: &Path, prefix: &str, temp_dir: &Path) -> Result<String, String> {
-    if let Some(name) = copied.get(source) {
+/// Adds `source` to the pack the first time a diff uses it and returns its
+/// name inside the pack (`audio-1.mp3`, `bg-2.jpg`, ...).
+fn add_once(osz: &mut OszWriter, added: &mut HashMap<PathBuf, String>, source: &Path, prefix: &str) -> Result<String> {
+    if let Some(name) = added.get(source) {
         return Ok(name.clone());
     }
 
-    let number = copied.values().filter(|name| name.starts_with(&format!("{prefix}-"))).count() + 1;
+    let number = added.values().filter(|name| name.starts_with(&format!("{prefix}-"))).count() + 1;
     let name = match source.extension().and_then(|e| e.to_str()) {
         Some(extension) => format!("{prefix}-{number}.{extension}"),
         None => format!("{prefix}-{number}"),
     };
 
-    let destination = temp_dir.join(&name);
-    fs::copy(source, &destination).map_err(|e| {
-        log::error!("failed to copy {:?} -> {:?}: {}", source, destination, e);
-        e.to_string()
-    })?;
-    log::debug!("copied {:?} to {:?}", source, destination);
+    osz.add_file(&name, source)?;
+    log::debug!("added {:?} as {}", source, name);
 
-    copied.insert(source.to_path_buf(), name.clone());
+    added.insert(source.to_path_buf(), name.clone());
     Ok(name)
 }
 
@@ -352,7 +327,7 @@ fn modify_osu_metadata(
     result
 }
 
-fn open_osz(osz_path: &Path) -> Result<(), String> {
+fn open_osz(osz_path: &Path) -> Result<()> {
     log::debug!("opening osz with default handler: {:?}", osz_path);
 
     if let Err(e) = tauri_plugin_opener::open_path(osz_path, None::<&str>) {
@@ -369,43 +344,13 @@ fn open_osz(osz_path: &Path) -> Result<(), String> {
             }
             Err(wine_err) => {
                 log::error!("failed to open .osz with both default handler and osu-wine: {} / {}", e, wine_err);
-                return Err(format!("Failed to open .osz: {}", e));
+                return Err(format!("Failed to open .osz: {}", e).into());
             }
         }
     } else {
         log::debug!("opened .osz with default handler");
     }
 
-    Ok(())
-}
-
-fn create_osz(source_dir: &Path, output_path: &Path) -> Result<(), String> {
-    use std::io::{Read, Write};
-    use zip::write::SimpleFileOptions;
-
-    let file = std::fs::File::create(output_path).map_err(|e| e.to_string())?;
-    let mut zip = zip::ZipWriter::new(file);
-    let options = SimpleFileOptions::default().compression_method(zip::CompressionMethod::Stored);
-
-    for entry in fs::read_dir(source_dir).map_err(|e| e.to_string())? {
-        let entry = entry.map_err(|e| e.to_string())?;
-        let path = entry.path();
-
-        if path.is_file() {
-            let file_name = path.file_name()
-                .and_then(|n| n.to_str())
-                .ok_or("Invalid file name")?;
-
-            zip.start_file(file_name, options).map_err(|e| e.to_string())?;
-
-            let mut f = std::fs::File::open(&path).map_err(|e| e.to_string())?;
-            let mut buffer = Vec::new();
-            f.read_to_end(&mut buffer).map_err(|e| e.to_string())?;
-            zip.write_all(&buffer).map_err(|e| e.to_string())?;
-        }
-    }
-
-    zip.finish().map_err(|e| e.to_string())?;
     Ok(())
 }
 

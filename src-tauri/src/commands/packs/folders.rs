@@ -1,30 +1,24 @@
 use std::path::Path;
 
-use crate::{AppConfigState, commands::packs::creator::sanitize};
+use crate::{commands::packs::creator::sanitize, error::Result, paths};
 
 /// Whether a pack titled `folder_name` can be created without clashing with a
 /// folder already in `Songs`.
 #[tauri::command]
-pub async fn validate_pack_folder(folder_name: String, osu_state: tauri::State<'_, AppConfigState>) -> Result<bool, String> {
-
-    let osu_path = osu_state.config.lock().unwrap()
-        .osu_path.clone()
-        .ok_or("osu! path not set")?;
+pub async fn validate_pack_folder(app: tauri::AppHandle, folder_name: String) -> Result<bool> {
 
     // Songs can hold thousands of folders, and this runs at every change of the title.
-    let songs = Path::new(&osu_path).join("Songs");
-    let existing = tauri::async_runtime::spawn_blocking(move || folders_in(&songs))
-        .await
-        .map_err(|e| e.to_string())??;
+    let songs = paths::songs_dir(&app)?;
+    let existing = tauri::async_runtime::spawn_blocking(move || folders_in(&songs)).await??;
 
     Ok(!is_pack_folder_taken(&folder_name, existing))
 }
 
 /// Names of the folders inside `dir`.
-fn folders_in(dir: &Path) -> Result<Vec<String>, String> {
+fn folders_in(dir: &Path) -> Result<Vec<String>> {
     let entries = std::fs::read_dir(dir).map_err(|e| {
         log::error!("failed to read {:?}: {}", dir, e);
-        e.to_string()
+        e
     })?;
 
     Ok(entries

@@ -1,32 +1,29 @@
 use std::collections::HashMap;
 use std::panic;
+use std::path::Path;
 use osynic_osudb::entity::osu::osudb::OsuDB;
-use crate::{AppConfigState, commands::osu_db::model::{OsuBeatmapSet, OsuDiff}};
+use crate::{AppConfigState, commands::osu_db::model::{OsuBeatmapSet, OsuDiff}, error::Result};
 
 #[tauri::command]
 pub async fn read_osu_db_full(
     config_state: tauri::State<'_, AppConfigState>,
-) -> Result<Vec<OsuBeatmapSet>, String> {
+) -> Result<Vec<OsuBeatmapSet>> {
 
-    let osu_path = config_state.config.lock().unwrap()
-        .osu_path.clone()
-        .ok_or("osu! path not set")?;
+    let osu_path = config_state.osu_path()?;
 
-    let sets = tauri::async_runtime::spawn_blocking(move || read_from_osudb(&osu_path))
-        .await
-        .map_err(|e| e.to_string())??;
-    
+    let sets = tauri::async_runtime::spawn_blocking(move || read_from_osudb(&osu_path)).await??;
+
     log::info!("successfully parsed {} beatmap sets from osu!.db", sets.len());
 
     Ok(sets)
 }
 
-fn read_from_osudb(osu_path: &str) -> Result<Vec<OsuBeatmapSet>, String> {
+fn read_from_osudb(osu_path: &Path) -> Result<Vec<OsuBeatmapSet>> {
 
     use osynic_osudb::entity::osu::field::mode::Mode;
     use osynic_osudb::entity::osu::field::rank::RankedStatus;
 
-    let db_path = std::path::Path::new(osu_path).join("osu!.db");
+    let db_path = osu_path.join("osu!.db");
 
     log::debug!("Attempting to read osu!.db from {:?}", db_path);
 
@@ -38,7 +35,7 @@ fn read_from_osudb(osu_path: &str) -> Result<Vec<OsuBeatmapSet>, String> {
         })?
         .map_err(|e| {
             log::error!("Failed to parse osu!.db at {:?}: {}", db_path, e);
-            e.to_string()
+            e
         })?;
 
     let mut sets: HashMap<String, OsuBeatmapSet> = HashMap::new();

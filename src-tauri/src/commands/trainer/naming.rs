@@ -7,8 +7,9 @@
 
 use rosu_map::Beatmap;
 
-use crate::commands::trainer::model::{
-    Density, DifficultySettings, FlnConverterParams, KeyConverterParams, LengthUnit, NoteLength, RateChangeParams,
+use crate::commands::trainer::{
+    model::{Density, DifficultySettings, FlnConverterParams, KeyConverterParams, LengthUnit, NoteLength, RateChangeParams},
+    timing,
 };
 
 /// Formats a number with at most `decimals` decimals, without trailing zeros:
@@ -34,24 +35,6 @@ fn pitch_tag(params: &RateChangeParams) -> Option<&'static str> {
         (false, r) if r < 1.0 => Some("pitch lowered"),
         _ => None,
     }
-}
-
-/// BPM of the timing point that lasts the longest, like the one osu! shows on
-/// song select. Expects the timing points to be already rate-scaled.
-pub fn main_bpm(beatmap: &Beatmap) -> Option<f64> {
-    let points = &beatmap.control_points.timing_points;
-    let end = beatmap.hit_objects.last().map_or(0.0, |h| h.start_time);
-
-    points
-        .iter()
-        .enumerate()
-        .map(|(i, tp)| {
-            let next = points.get(i + 1).map_or(end, |n| n.time);
-            ((next - tp.time).max(0.0), tp.beat_len)
-        })
-        .max_by(|a, b| a.0.total_cmp(&b.0))
-        .filter(|&(_, beat_len)| beat_len > 0.0)
-        .map(|(_, beat_len)| 60_000.0 / beat_len)
 }
 
 /// Builds the new `Version`, e.g.:
@@ -80,7 +63,7 @@ pub fn version(
 
     if let Some(params) = rate {
         let mut rate_part = fmt_rate(params.rate);
-        if let Some(bpm) = main_bpm(beatmap) {
+        if let Some(bpm) = timing::main_bpm(beatmap) {
             rate_part.push_str(&format!(" ({}bpm)", bpm.round()));
         }
         if let Some(tag) = pitch_tag(params) {

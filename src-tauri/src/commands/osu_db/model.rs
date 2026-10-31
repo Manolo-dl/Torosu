@@ -1,7 +1,3 @@
-pub struct BeatmapsetFolder {
-    pub folder_path: String,
-}
-
 #[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OsuDiff {

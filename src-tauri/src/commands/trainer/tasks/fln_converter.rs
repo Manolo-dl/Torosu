@@ -9,8 +9,9 @@ use rosu_map::{
 };
 
 use crate::commands::trainer::{
+    mania,
     model::{FlnConverterParams, LengthUnit, NoteLength},
-    naming,
+    timing,
 };
 
 /// Avoids 1-2 ms of rounding turning some notes into LNs and not their
@@ -27,15 +28,15 @@ pub fn apply(beatmap: &mut Beatmap, params: &FlnConverterParams) -> Result<()> {
         bail!("the FLN converter only works on osu!mania maps");
     }
 
-    let keys = beatmap.circle_size.round().max(1.0) as usize;
-    let main_beat_len = naming::main_bpm(beatmap).map(|bpm| 60_000.0 / bpm);
+    let keys = mania::key_count(beatmap);
+    let main_beat_len = timing::main_beat_len(beatmap);
 
     // Gimmick maps use fake BPMs (0.001, 100000...) that would make a beat
     // based gap absurd, so those fall back to the main BPM.
     let beat_len_at = |time: f64| {
         let beat_len = beatmap.control_points.timing_point_at(time).map(|tp| tp.beat_len);
         match (beat_len, main_beat_len) {
-            (Some(b), Some(main)) if !(b.is_finite() && b > 0.0 && (main / 10.0..=main * 10.0).contains(&b)) => main,
+            (Some(b), Some(main)) if !timing::is_plausible_beat_len(b, main) => main,
             (Some(b), _) if b.is_finite() && b > 0.0 => b,
             (_, main) => main.unwrap_or(500.0),
         }
@@ -43,13 +44,8 @@ pub fn apply(beatmap: &mut Beatmap, params: &FlnConverterParams) -> Result<()> {
 
     let mut columns: Vec<Vec<usize>> = vec![Vec::new(); keys];
     for (i, obj) in beatmap.hit_objects.iter().enumerate() {
-        let x = match &obj.kind {
-            HitObjectKind::Circle(circle) => circle.pos.x,
-            HitObjectKind::Hold(hold) => hold.pos_x,
-            _ => continue,
-        };
-        let column = ((x * keys as f32 / 512.0).floor().max(0.0) as usize).min(keys - 1);
-        columns[column].push(i);
+        let Some((x, _)) = mania::note(obj) else { continue };
+        columns[mania::column(x, keys)].push(i);
     }
 
     // (index, new length): `None` turns it into a normal note.
@@ -90,11 +86,7 @@ pub fn apply(beatmap: &mut Beatmap, params: &FlnConverterParams) -> Result<()> {
 
     for (i, length) in changes {
         let obj = &mut beatmap.hit_objects[i];
-        let x = match &obj.kind {
-            HitObjectKind::Circle(circle) => circle.pos.x,
-            HitObjectKind::Hold(hold) => hold.pos_x,
-            _ => continue,
-        };
+        let Some((x, _)) = mania::note(obj) else { continue };
 
         obj.kind = match length {
             Some(duration) => {
