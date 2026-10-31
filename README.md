@@ -14,8 +14,8 @@
 - **Export Collections**: save your collections as beatmap links, or as a list to import on another install.
 - **Import Collections**: bring collections from a file into osu!, merged with the ones you already have.
 - **Export Song Folder**: filter your library by mode, status, stars, length and more, and export it as beatmap links.
-- **Create Packs**: put diffs from any sets, rates and unsubmitted maps too, into a pack of your own.
-- **Trainer**: change the rate, the stats, the long notes or the key count of the map selected in osu!. It reads the map straight from the game, so there is nothing to open by hand.
+- **Create Packs**: put diffs from any sets, rates and unsubmitted maps too, into a pack of your own, with the diffs named the way you choose.
+- **Trainer**: change the rate, the stats, the long notes or the key count of the map selected in osu!. It reads the map straight from the game, so there is nothing to open by hand. Make several versions in one go, each with its own changes (1.1x, 1.2x, 1.3x and 1.4x, say), and keep the ones you use as presets.
 
 Torosu is made for **osu! stable**. osu!lazer is not supported: the tools read and write osu! stable's files.
 
@@ -43,7 +43,7 @@ curl -fsSL https://raw.githubusercontent.com/Manolo-dl/Torosu/main/install.sh | 
 
 To read it before running it, download [install.sh](install.sh) and run `bash install.sh`. `bash install.sh --uninstall` removes Torosu again, keeping your settings.
 
-osu! is expected to run under Wine, for example with [osu-winello](https://github.com/NelloKudo/osu-winello).
+osu! is expected to run under Wine, for example with [osu-winello](https://github.com/NelloKudo/osu-winello). With osu-winello, the `.osz` files Torosu makes open in osu! by themselves.
 
 #### Reading osu!'s memory
 
@@ -71,7 +71,7 @@ Torosu is the new name of osu-tools, and 1.0.0 installs as a new app: uninstall 
 
 ## First start
 
-Torosu looks for your osu! folder: the one of the running osu!, or the usual install folders. If it can't find it, it asks for it: choose the folder that has `osu!.db`. You can change it later in the settings (the gear in the header), where you can also turn tools off, set up the downloader and the packs, and save the osu! session cookie between sessions.
+Torosu looks for your osu! folder: the one of the running osu!, or the usual install folders. If it can't find it, it asks for it: choose the folder that has `osu!.db`. You can change it later in the settings (the gear in the header), where you can also turn tools off, set up the downloader and the packs, and save the osu! session cookie between sessions. The trainer's settings choose how the new diffs are named, the quality of the audio and video it makes, and whether each `.osz` opens in osu! once made.
 
 ## Building from source
 
