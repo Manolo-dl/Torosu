@@ -1,6 +1,6 @@
 use std::{collections::HashMap, fs, path::{Path, PathBuf}};
 use tauri::Manager;
-use crate::{error::Result, osz::OszWriter, paths, state::AppConfigState};
+use crate::{error::Result, osz::{self, OszWriter}, paths, state::AppConfigState};
 use crate::commands::config::model::PacksConfig;
 
 #[derive(serde::Deserialize)]
@@ -63,7 +63,7 @@ fn build_pack(request: &PackRequest, songs: &Path, exports: &Path, packs: &Packs
     }
 
     for osz_path in &osz_paths {
-        open_osz(osz_path)?;
+        osz::open(osz_path)?;
     }
 
     log::info!("successfully created pack '{}' with {} diffs in {} set(s)", request.title, request.diffs.len(), osz_paths.len());
@@ -325,33 +325,6 @@ fn modify_osu_metadata(
     }
 
     result
-}
-
-fn open_osz(osz_path: &Path) -> Result<()> {
-    log::debug!("opening osz with default handler: {:?}", osz_path);
-
-    if let Err(e) = tauri_plugin_opener::open_path(osz_path, None::<&str>) {
-        log::warn!("default handler failed to open .osz ({}), trying osu-wine --osuhandler", e);
-
-        let osu_wine_result = std::process::Command::new("osu-wine")
-            .arg("--osuhandler")
-            .arg(osz_path)
-            .spawn();
-
-        match osu_wine_result {
-            Ok(_) => {
-                log::debug!("opened .osz via osu-wine --osuhandler");
-            }
-            Err(wine_err) => {
-                log::error!("failed to open .osz with both default handler and osu-wine: {} / {}", e, wine_err);
-                return Err(format!("Failed to open .osz: {}", e).into());
-            }
-        }
-    } else {
-        log::debug!("opened .osz with default handler");
-    }
-
-    Ok(())
 }
 
 pub fn sanitize(name: &str) -> String {

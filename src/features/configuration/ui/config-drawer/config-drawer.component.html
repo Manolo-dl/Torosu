@@ -237,7 +237,83 @@
             }
 
             @case (3) {
-                <p class="empty">No trainer settings available yet.</p>
+                <section>
+                    <h3 tuiTitle="s">Audio</h3>
+                    <label tuiCell>
+                        <span tuiTitle>
+                            High quality audio
+                            <span tuiSubtitle>Encode the new audio at ~192 kbit/s instead of ~128 kbit/s, half as big again</span>
+                        </span>
+                        <input
+                            tuiSwitch
+                            type="checkbox"
+                            [(ngModel)]="draft().trainer.high_quality_audio"
+                        />
+                    </label>
+                    <label tuiCell>
+                        <span tuiTitle>
+                            Automatic pitch
+                            <span tuiSubtitle>Keep the pitch below 1.0x and let it rise with the speed above, instead of choosing it in each rate change</span>
+                        </span>
+                        <input
+                            tuiSwitch
+                            type="checkbox"
+                            [(ngModel)]="draft().trainer.auto_pitch"
+                        />
+                    </label>
+                </section>
+
+                <section>
+                    <h3 tuiTitle="s">Output</h3>
+                    <label tuiCell>
+                        <span tuiTitle>
+                            Open the .osz
+                            <span tuiSubtitle>Open each new .osz with osu!, so it is imported right away</span>
+                        </span>
+                        <input
+                            tuiSwitch
+                            type="checkbox"
+                            [(ngModel)]="draft().trainer.open_osz"
+                        />
+                    </label>
+                </section>
+
+                <section>
+                    <h3 tuiTitle="s">Difficulty name</h3>
+                    <tui-textfield>
+                        <label tuiLabel>Name format</label>
+                        <input
+                            tuiInput
+                            [ngModel]="draft().trainer.name_format"
+                            (ngModelChange)="setNameFormat($event)"
+                        />
+                    </tui-textfield>
+                    <div class="formats">
+                        @for (preset of nameFormats; track preset.label) {
+                            <button
+                                appearance="secondary"
+                                size="xs"
+                                tuiButton
+                                type="button"
+                                (click)="setNameFormat(preset.format)"
+                            >
+                                {{ preset.label }}
+                            </button>
+                        }
+                    </div>
+                    @if (nameExample()) {
+                        <p class="example">For example <strong>{{ nameExample() }}</strong></p>
+                    }
+                    <ul class="fields">
+                        @for (item of nameFields; track item.field) {
+                            <li><code>{{ item.field }}</code> {{ item.meaning }}</li>
+                        }
+                    </ul>
+                    <p class="hint">
+                        Anything else is kept as written. Brackets whose placeholders are all empty vanish with them,
+                        like <code>{{ '({bpm}bpm)' }}</code> without a rate change.
+                    </p>
+                </section>
             }
         }
     </div>

@@ -7,9 +7,8 @@
 
 use rosu_map::Beatmap;
 
-use crate::commands::trainer::{
-    model::{Density, DifficultySettings, FlnConverterParams, KeyConverterParams, LengthUnit, NoteLength, RateChangeParams},
-    timing,
+use crate::commands::trainer::model::{
+    Density, DifficultySettings, FlnConverterParams, KeyConverterParams, LengthUnit, NoteLength, RateChangeParams,
 };
 
 /// Formats a number with at most `decimals` decimals, without trailing zeros:
@@ -37,76 +36,209 @@ fn pitch_tag(params: &RateChangeParams) -> Option<&'static str> {
     }
 }
 
-/// Builds the new `Version`, e.g.:
-///
-/// - `Insane 1.3x (234bpm)`
-/// - `Insane 1.3x (234bpm) (pitch raised) AR9.5 OD8`
-/// - `Insane HP7` when only the difficulty settings change
-/// - `Insane (SV normalized)` when the SV changes are normalized
-/// - `Insane (FLN BG4 ML4)` after the FLN converter, named like osuLNmaster
-/// - `Insane (10K Dense)` after the key converter
-/// - `Insane (trainer)` when nothing changes
-///
-/// `beatmap` must already have the tasks applied; `original` holds the
-/// difficulty settings before they were overwritten.
-pub fn version(
-    beatmap: &Beatmap,
-    original_version: &str,
-    original: &DifficultySettings,
-    new: &DifficultySettings,
-    rate: Option<&RateChangeParams>,
-    sv_normalized: bool,
-    fln: Option<&FlnConverterParams>,
-    keys: Option<&KeyConverterParams>,
-) -> String {
-    let mut parts = vec![original_version.to_string()];
+/// The name format the trainer starts with, which gives the names it always
+/// gave, e.g. `Insane 1.3x (234bpm) (pitch raised) OD8`.
+pub const DEFAULT_NAME_FORMAT: &str = "{diff} {rate} ({bpm}bpm) ({pitch}) {tasks} {stats}";
 
-    if let Some(params) = rate {
-        let mut rate_part = fmt_rate(params.rate);
-        if let Some(bpm) = timing::main_bpm(beatmap) {
-            rate_part.push_str(&format!(" ({}bpm)", bpm.round()));
-        }
-        if let Some(tag) = pitch_tag(params) {
-            rate_part.push_str(&format!(" ({})", tag));
-        }
-        parts.push(rate_part);
-    }
-
-    if sv_normalized {
-        parts.push("(SV normalized)".to_string());
-    }
-
-    if let Some(params) = keys {
-        parts.push(key_tag(params));
-    }
-
-    if let Some(params) = fln {
-        parts.push(fln_tag(params));
-    }
-
-    let stats = [
-        ("HP", original.hp, new.hp),
-        ("CS", original.cs, new.cs),
-        ("AR", original.ar, new.ar),
-        ("OD", original.od, new.od),
-    ];
-    for (label, before, after) in stats {
-        if (before - after).abs() > 1e-3 {
-            parts.push(format!("{}{}", label, fmt_num(after, 1)));
-        }
-    }
-
-    if parts.len() == 1 {
-        parts.push("(trainer)".to_string());
-    }
-
-    parts.join(" ")
+/// What a convert changed, for its name.
+pub struct NameInfo<'a> {
+    pub original_version: &'a str,
+    /// The difficulty settings before and after.
+    pub original: &'a DifficultySettings,
+    pub new: &'a DifficultySettings,
+    pub rate: Option<&'a RateChangeParams>,
+    /// The BPM after the tasks (see `timing::main_bpm`).
+    pub bpm: Option<f64>,
+    pub sv_normalized: bool,
+    pub fln: Option<&'a FlnConverterParams>,
+    pub keys: Option<&'a KeyConverterParams>,
 }
 
-/// `(10K)`, `(10K More Dense)`, `(8K Full 1+7)`, `(7K, split jacks)`... Every setting that changes
-/// the notes is in the name.
+/// Builds the new `Version` from `format`, free text with these placeholders:
+///
+/// - `{diff}`: the original name, `Insane`
+/// - `{rate}`: `1.3x`; `{bpm}`: `234`; `{pitch}`: `pitch raised` or `pitch lowered`
+/// - `{sv}`: `SV normalized`; `{keys}`: `10K Dense`; `{fln}`: `FLN BG4 ML4`
+/// - `{tasks}`: those three in parentheses, `(SV normalized) (10K Dense)`
+/// - `{stats}`: the difficulty settings that changed, `AR9.5 OD8`
+///
+/// Empty placeholders vanish, and so do the `(...)` and `[...]` around them
+/// when every placeholder inside is empty: `({bpm}bpm)` without a rate change.
+/// A name equal to the original, which would overwrite its .osu, gets
+/// ` (trainer)`.
+pub fn version(format: &str, info: &NameInfo) -> String {
+    let sv = info.sv_normalized.then(|| "SV normalized".to_string());
+    let keys = info.keys.map(key_tag);
+    let fln = info.fln.map(fln_tag);
+
+    let value = |field: &str| -> Option<String> {
+        match field {
+            "diff" => Some(info.original_version.to_string()),
+            "rate" => info.rate.map(|p| fmt_rate(p.rate)),
+            "bpm" => info.rate.and(info.bpm).map(|bpm| fmt_num(bpm.round(), 0)),
+            "pitch" => info.rate.and_then(pitch_tag).map(str::to_string),
+            "sv" => sv.clone(),
+            "keys" => keys.clone(),
+            "fln" => fln.clone(),
+            "tasks" => {
+                let tags: Vec<String> = [&sv, &keys, &fln].into_iter().flatten().map(|tag| format!("({})", tag)).collect();
+                (!tags.is_empty()).then(|| tags.join(" "))
+            }
+            "stats" => {
+                let stats: Vec<String> = [
+                    ("HP", info.original.hp, info.new.hp),
+                    ("CS", info.original.cs, info.new.cs),
+                    ("AR", info.original.ar, info.new.ar),
+                    ("OD", info.original.od, info.new.od),
+                ]
+                .into_iter()
+                .filter(|(_, before, after)| (before - after).abs() > 1e-3)
+                .map(|(label, _, after)| format!("{}{}", label, fmt_num(after, 1)))
+                .collect();
+                (!stats.is_empty()).then(|| stats.join(" "))
+            }
+            _ => None,
+        }
+    };
+
+    let name = render_template(format, &value);
+    if name.is_empty() || name == info.original_version {
+        format!("{} (trainer)", info.original_version)
+    } else {
+        name
+    }
+}
+
+const NAME_FIELDS: [&str; 9] = ["diff", "rate", "bpm", "pitch", "sv", "keys", "fln", "tasks", "stats"];
+
+/// A part of a name format.
+enum Part {
+    Text(String),
+    Field(String),
+    /// `(...)` or `[...]`.
+    Group(char, Vec<Part>, char),
+}
+
+fn parse_template(format: &str) -> Vec<Part> {
+    // The groups being read, innermost last; the bottom one is the whole format.
+    let mut stack: Vec<(Option<char>, Vec<Part>)> = vec![(None, Vec::new())];
+    let push_text = |parts: &mut Vec<Part>, text: &str| match parts.last_mut() {
+        Some(Part::Text(last)) => last.push_str(text),
+        _ => parts.push(Part::Text(text.to_string())),
+    };
+
+    let mut chars = format.char_indices().peekable();
+    while let Some((i, c)) = chars.next() {
+        let closes = match c {
+            ')' => Some('('),
+            ']' => Some('['),
+            _ => None,
+        };
+        match c {
+            '(' | '[' => stack.push((Some(c), Vec::new())),
+            _ if closes.is_some() && stack.len() > 1 && stack.last().unwrap().0 == closes => {
+                let (open, parts) = stack.pop().unwrap();
+                stack.last_mut().unwrap().1.push(Part::Group(open.unwrap(), parts, c));
+            }
+            '{' => {
+                let rest = &format[i + 1..];
+                match rest.find('}').map(|end| &rest[..end]).filter(|name| NAME_FIELDS.contains(name)) {
+                    Some(name) => {
+                        stack.last_mut().unwrap().1.push(Part::Field(name.to_string()));
+                        for _ in 0..=name.len() {
+                            chars.next();
+                        }
+                    }
+                    // Not a placeholder: the user's own text.
+                    None => push_text(&mut stack.last_mut().unwrap().1, "{"),
+                }
+            }
+            _ => push_text(&mut stack.last_mut().unwrap().1, c.encode_utf8(&mut [0; 4])),
+        }
+    }
+
+    // A group that is never closed was text.
+    while stack.len() > 1 {
+        let (open, parts) = stack.pop().unwrap();
+        let parent = &mut stack.last_mut().unwrap().1;
+        push_text(parent, open.unwrap().encode_utf8(&mut [0; 4]));
+        for part in parts {
+            match part {
+                Part::Text(text) => push_text(parent, &text),
+                other => parent.push(other),
+            }
+        }
+    }
+    stack.pop().unwrap().1
+}
+
+/// The text of `parts`, how many placeholders they have and how many of
+/// those are filled.
+fn render_parts(parts: &[Part], value: &dyn Fn(&str) -> Option<String>) -> (String, usize, usize) {
+    let mut out = String::new();
+    let (mut fields, mut filled) = (0, 0);
+    for part in parts {
+        match part {
+            Part::Text(text) => out.push_str(text),
+            Part::Field(name) => {
+                fields += 1;
+                if let Some(v) = value(name) {
+                    filled += 1;
+                    out.push_str(&v);
+                }
+            }
+            Part::Group(open, inner, close) => {
+                let (text, f, ok) = render_parts(inner, value);
+                fields += f;
+                filled += ok;
+                if f == 0 || ok > 0 {
+                    out.push(*open);
+                    out.push_str(&text);
+                    out.push(*close);
+                }
+            }
+        }
+    }
+    (out, fields, filled)
+}
+
+fn render_template(format: &str, value: &dyn Fn(&str) -> Option<String>) -> String {
+    let (text, _, _) = render_parts(&parse_template(format), value);
+
+    // One space between words, and none right inside the brackets that are left.
+    let mut out = String::new();
+    for word in text.split_whitespace() {
+        if !out.is_empty() && !out.ends_with(['(', '[']) && !word.starts_with([')', ']']) {
+            out.push(' ');
+        }
+        out.push_str(word);
+    }
+    out
+}
+
+/// What `format` gives for a sample convert: Insane at 1.3x without adjusting
+/// the pitch, with the SV normalized and OD 8, to preview it in the settings.
+#[tauri::command]
+pub fn trainer_name_example(format: String) -> String {
+    let original = DifficultySettings { hp: 5.0, cs: 4.0, od: 7.0, ar: 9.0 };
+    let new = DifficultySettings { od: 8.0, ..original };
+    let rate = RateChangeParams { rate: 1.3, adjust_pitch: false, scale_storyboard: false, scale_video: false };
+    version(&format, &NameInfo {
+        original_version: "Insane",
+        original: &original,
+        new: &new,
+        rate: Some(&rate),
+        bpm: Some(234.0),
+        sv_normalized: true,
+        fln: None,
+        keys: None,
+    })
+}
+
+/// `10K`, `10K More Dense`, `8K Full 1+7`, `7K, split jacks`... Every setting
+/// that changes the notes is in the name.
 fn key_tag(params: &KeyConverterParams) -> String {
-    let mut tag = format!("({}K", params.target_keys);
+    let mut tag = format!("{}K", params.target_keys);
     match params.density {
         Density::None => {}
         Density::Dense => tag.push_str(" Dense"),
@@ -119,7 +251,6 @@ fn key_tag(params: &KeyConverterParams) -> String {
     if !params.keep_jacks {
         tag.push_str(", split jacks");
     }
-    tag.push(')');
     tag
 }
 
@@ -131,7 +262,7 @@ fn fln_tag(params: &FlnConverterParams) -> String {
         LengthUnit::Ms => format!("{}ms", fmt_num(l.value, 0)),
     };
     let kind = if params.rework_existing_ln { "FLN" } else { "INV" };
-    format!("({} BG{} ML{})", kind, length(params.gap), length(params.min_length))
+    format!("{} BG{} ML{}", kind, length(params.gap), length(params.min_length))
 }
 
 /// `Artist - Title (Creator) [Version].osu`, the naming osu! itself uses.
@@ -217,6 +348,58 @@ pub fn sanitize_filename(name: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// The name of Insane (OD 7, 234 BPM after the rate) with these changes.
+    fn name(format: &str, rate: Option<&RateChangeParams>, od: f64, sv_normalized: bool, keys: Option<&KeyConverterParams>) -> String {
+        let original = DifficultySettings { hp: 5.0, cs: 4.0, od: 7.0, ar: 9.0 };
+        let new = DifficultySettings { od, ..original };
+        version(format, &NameInfo {
+            original_version: "Insane",
+            original: &original,
+            new: &new,
+            rate,
+            bpm: Some(234.0),
+            sv_normalized,
+            fln: None,
+            keys,
+        })
+    }
+
+    #[test]
+    fn default_format_gives_the_usual_names() {
+        let raised = RateChangeParams { rate: 1.3, adjust_pitch: false, scale_storyboard: false, scale_video: false };
+        let kept = RateChangeParams { adjust_pitch: true, ..raised.clone() };
+        let keys = KeyConverterParams { target_keys: 10, density: Density::Dense, keep_jacks: true, playstyle: None };
+        let f = DEFAULT_NAME_FORMAT;
+
+        assert_eq!(name(f, Some(&raised), 8.0, false, None), "Insane 1.3x (234bpm) (pitch raised) OD8");
+        assert_eq!(name(f, Some(&kept), 7.0, false, None), "Insane 1.3x (234bpm)");
+        assert_eq!(name(f, None, 7.0, true, Some(&keys)), "Insane (SV normalized) (10K Dense)");
+        assert_eq!(name(f, None, 8.0, false, None), "Insane OD8");
+        assert_eq!(name(f, None, 7.0, false, None), "Insane (trainer)");
+    }
+
+    #[test]
+    fn brackets_vanish_with_their_empty_placeholders() {
+        let kept = RateChangeParams { rate: 1.3, adjust_pitch: true, scale_storyboard: false, scale_video: false };
+
+        assert_eq!(name("[{rate}] {diff} ({stats})", None, 8.0, false, None), "Insane (OD8)");
+        assert_eq!(name("[{rate}] {diff}", Some(&kept), 7.0, false, None), "[1.3x] Insane");
+        assert_eq!(name("{diff} ({rate} {pitch})", Some(&kept), 7.0, false, None), "Insane (1.3x)");
+        assert_eq!(name("{diff} ({bpm} BPM, {sv})", Some(&kept), 7.0, false, None), "Insane (234 BPM,)");
+    }
+
+    #[test]
+    fn keeps_the_users_own_text() {
+        let kept = RateChangeParams { rate: 1.3, adjust_pitch: true, scale_storyboard: false, scale_video: false };
+
+        assert_eq!(name("{diff} - practice {rate}", Some(&kept), 7.0, false, None), "Insane - practice 1.3x");
+        assert_eq!(name("{diff} (mine) {rate}", None, 8.0, false, None), "Insane (mine)");
+        // Unknown placeholders and unclosed brackets are text too.
+        assert_eq!(name("{diff} {foo} ({rate}", Some(&kept), 7.0, false, None), "Insane {foo} (1.3x");
+        // Nothing but empty placeholders: the original name is not reused.
+        assert_eq!(name("{rate}", None, 7.0, false, None), "Insane (trainer)");
+    }
 
     #[test]
     fn formats_numbers_without_noise() {

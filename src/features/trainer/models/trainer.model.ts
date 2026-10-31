@@ -68,6 +68,12 @@ export interface TrainerTask {
     task: TrainerTaskParams;
 }
 
+/** A diff to generate: its own tasks, applied in order. The difficulty settings are shared. */
+export interface TrainerConvert {
+    id: string;
+    tasks: TrainerTask[];
+}
+
 export const TASK_LABELS: Record<TrainerTaskType, string> = {
     RateChange: 'Rate Change',
     SVNormalizer: 'SV Normalizer',

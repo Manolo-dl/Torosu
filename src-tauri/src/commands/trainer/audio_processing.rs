@@ -114,10 +114,10 @@ const STRETCH_CHUNK_FRAMES: usize = 4096;
 /// a few KB and `ensureCapacity` never reallocates. On a 4 min track:
 /// 57.7 s -> 0.19 s, with bit-identical output.
 ///
-/// Takes the decoded audio (~85 MB for 4 min of stereo) so it is freed before
-/// the result is encoded.
+/// Borrows the decoded audio (~85 MB for 4 min of stereo): the converts of a
+/// run share it.
 pub fn apply_timestretch(
-    audio: DecodedAudio,
+    audio: &DecodedAudio,
     rate: f64,
     mut on_progress: impl FnMut(f32),
 ) -> Result<Vec<f32>> {
@@ -182,28 +182,30 @@ pub fn apply_timestretch(
 }
 
 /// Changes the speed letting the pitch shift naturally: the same samples,
-/// played at another sample rate, so they are handed over without a copy.
-pub fn apply_resample(audio: DecodedAudio, rate: f64) -> (Vec<f32>, u32) {
-    let new_sample_rate = (audio.sample_rate as f64 * rate).round() as u32;
-    (audio.samples, new_sample_rate)
+/// played at this sample rate, so they are encoded as they are.
+pub fn resampled_rate(sample_rate: u32, rate: f64) -> u32 {
+    (sample_rate as f64 * rate).round() as u32
 }
 
 /// Frames per channel submitted to libvorbis per call. The libvorbis docs
 /// recommend ~1024; larger blocks don't speed it up and raise peak memory.
 const ENCODE_BLOCK_FRAMES: usize = 1024;
 
-/// Quality-based VBR (range -0.2..=1.0). 0.6 is ~192 kbit/s for 44.1 kHz stereo,
-/// on par with the MP3s osu! beatmaps usually ship.
-const VORBIS_QUALITY: f32 = 0.6;
+/// Quality-based VBR (range -0.2..=1.0) for 44.1 kHz stereo: 0.4 is ~128 kbit/s,
+/// 0.6 (`high`) ~192 kbit/s, on par with the MP3s osu! beatmaps usually ship.
+pub fn vorbis_quality(high: bool) -> f32 {
+    if high { 0.6 } else { 0.4 }
+}
 
 /// Encodes interleaved samples to Ogg Vorbis in memory so they can be added
 /// straight into the .osz without going through a staging directory.
-pub fn encode_audio(samples: &[f32], sample_rate: u32, channels: u16) -> Result<Vec<u8>> {
+pub fn encode_audio(samples: &[f32], sample_rate: u32, channels: u16, quality: f32) -> Result<Vec<u8>> {
     log::debug!(
-        "encode_audio: {} samples, sample_rate={}, channels={}",
+        "encode_audio: {} samples, sample_rate={}, channels={}, quality={}",
         samples.len(),
         sample_rate,
-        channels
+        channels,
+        quality
     );
 
     let sample_rate_nz = NonZeroU32::new(sample_rate)
@@ -220,7 +222,7 @@ pub fn encode_audio(samples: &[f32], sample_rate: u32, channels: u16) -> Result<
 
     let mut encoder = VorbisEncoderBuilder::new(sample_rate_nz, channels_nz, sink)?
         .bitrate_management_strategy(VorbisBitrateManagementStrategy::QualityVbr {
-            target_quality: VORBIS_QUALITY,
+            target_quality: quality,
         })
         .build()?;
 

@@ -122,7 +122,7 @@ export class BeatmapFiltersComponent {
     const currentMax = this.modeFilters(mode)[field.max];
     this.store.setModeFilters(mode, {
       [field.min]: min,
-      ...(min !== null && (currentMax === null || min > currentMax) ? { [field.max]: min } : {}),
+      ...(min !== null && currentMax !== null && min > currentMax ? { [field.max]: min } : {}),
     });
   }
 

@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+use crate::commands::trainer::naming::DEFAULT_NAME_FORMAT;
+
 #[derive(Deserialize, Serialize, Clone)]
 pub struct AppConfig {
     #[serde(default)]
@@ -13,6 +15,9 @@ pub struct AppConfig {
 
     #[serde(default)]
     pub packs: PacksConfig,
+
+    #[serde(default)]
+    pub trainer: TrainerConfig,
 
     #[serde(default = "default_false")]
     pub open_file: bool,
@@ -64,10 +69,31 @@ pub struct PacksConfig {
     pub max_sets_per_pack: u32,
 }
 
+#[derive(Deserialize, Serialize, Clone)]
+pub struct TrainerConfig {
+    /// Encodes the generated audio at ~192 kbit/s instead of ~128 kbit/s.
+    #[serde(default = "default_false")]
+    pub high_quality_audio: bool,
+
+    /// Sets the rate change's pitch from the rate: kept below 1.0x, raised
+    /// with the speed above. The frontend hides the pitch option then.
+    #[serde(default = "default_false")]
+    pub auto_pitch: bool,
+
+    /// Opens each generated .osz, so osu! imports it right away.
+    #[serde(default = "default_false")]
+    pub open_osz: bool,
+
+    /// Template of the difficulty name: see `naming::version`.
+    #[serde(default = "default_name_format")]
+    pub name_format: String,
+}
+
 fn default_true() -> bool { true }
 fn default_false() -> bool { false }
 fn default_max_concurrent_downloads() -> u32 { 1 }
 fn default_max_sets_per_pack() -> u32 { 0 }
+fn default_name_format() -> String { DEFAULT_NAME_FORMAT.to_string() }
 
 // Implemented by hand so the defaults match the serde ones above: a derived
 // Default would set `error_file` and `keep_background` to false, and those
@@ -79,6 +105,7 @@ impl Default for AppConfig {
             excluded_tools: Vec::new(),
             downloader: DownloaderConfig::default(),
             packs: PacksConfig::default(),
+            trainer: TrainerConfig::default(),
             open_file: default_false(),
             dev_mode: default_false(),
         }
@@ -105,6 +132,17 @@ impl Default for DownloaderConfig {
             load_library: false,
             skip_video: false,
             max_concurrent_downloads: default_max_concurrent_downloads(),
+        }
+    }
+}
+
+impl Default for TrainerConfig {
+    fn default() -> Self {
+        Self {
+            high_quality_audio: default_false(),
+            auto_pitch: default_false(),
+            open_osz: default_false(),
+            name_format: default_name_format(),
         }
     }
 }

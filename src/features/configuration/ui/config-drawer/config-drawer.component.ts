@@ -1,6 +1,7 @@
-import { Component, inject, linkedSignal, model, signal, untracked } from '@angular/core';
+import { Component, effect, inject, linkedSignal, model, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TuiDrawer, TuiTabsHorizontal, TuiTab, TuiSwitch, TuiInputNumber } from "@taiga-ui/kit";
+import { invoke } from '@tauri-apps/api/core';
 import { open as openDialog } from '@tauri-apps/plugin-dialog';
 import { TuiHeader, TuiNavComponent } from "@taiga-ui/layout";
 import { TuiTitle, TuiPopup, TuiButton, TuiCell, TuiInput, TuiLabel } from "@taiga-ui/core";
@@ -11,6 +12,9 @@ import { OsuDbStore } from '@entities/osu-db';
 import { CollectionStore } from '@entities/collection';
 import { OsuPathStore } from '@entities/osu-path';
 import { NotifyService } from '@shared/services';
+
+/** The names the trainer always gave (`DEFAULT_NAME_FORMAT` in naming.rs). */
+const DEFAULT_NAME_FORMAT = '{diff} {rate} ({bpm}bpm) ({pitch}) {tasks} {stats}';
 
 // Mirrors the serde defaults in src-tauri/src/commands/config/model.rs
 const DEFAULT_CONFIG: AppConfig = {
@@ -26,6 +30,12 @@ const DEFAULT_CONFIG: AppConfig = {
   packs: {
     keep_background: true,
     max_sets_per_pack: 0,
+  },
+  trainer: {
+    high_quality_audio: false,
+    auto_pitch: false,
+    open_osz: false,
+    name_format: DEFAULT_NAME_FORMAT,
   },
   open_file: false,
   dev_mode: false,
@@ -59,6 +69,44 @@ export class ConfigDrawerComponent {
     source: this.open,
     computation: () => untracked(() => structuredClone(this.store.config() ?? DEFAULT_CONFIG)),
   });
+
+  /** Formats to start from; any text works. */
+  readonly nameFormats = [
+    { label: 'Default', format: DEFAULT_NAME_FORMAT },
+    { label: 'Rate first', format: '[{rate}] {diff} ({pitch}) {tasks} {stats}' },
+    { label: 'BPM first', format: '[{bpm}bpm] {diff} ({pitch}) {tasks} {stats}' },
+  ];
+
+  readonly nameFields = [
+    { field: '{diff}', meaning: 'the original name' },
+    { field: '{rate}', meaning: '1.3x' },
+    { field: '{bpm}', meaning: 'the new BPM' },
+    { field: '{pitch}', meaning: 'pitch raised or lowered' },
+    { field: '{sv}', meaning: 'SV normalized' },
+    { field: '{keys}', meaning: 'the key converter, 10K Dense' },
+    { field: '{fln}', meaning: 'the FLN converter, FLN BG4 ML4' },
+    { field: '{tasks}', meaning: 'those three, each in parentheses' },
+    { field: '{stats}', meaning: 'the changed HP, CS, AR and OD' },
+  ];
+
+  /** What the name format gives for a sample convert, made by the backend as it names the real ones. */
+  readonly nameExample = signal('');
+
+  constructor() {
+    effect(() => {
+      const format = this.draft().trainer.name_format;
+      invoke<string>('trainer_name_example', { format })
+        .then(example => {
+          // A later format may have been typed meanwhile.
+          if (this.draft().trainer.name_format === format) this.nameExample.set(example);
+        })
+        .catch(() => this.nameExample.set(''));
+    });
+  }
+
+  setNameFormat(nameFormat: string) {
+    this.draft.update(draft => ({ ...draft, trainer: { ...draft.trainer, name_format: nameFormat } }));
+  }
 
   async save() {
     // A new osu! folder is checked first: nothing is saved if it is not osu!'s.

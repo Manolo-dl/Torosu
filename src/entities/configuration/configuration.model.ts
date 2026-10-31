@@ -3,9 +3,21 @@ export interface AppConfig {
     excluded_tools: string[];
     downloader: DownloaderConfig;
     packs: PacksConfig;
+    trainer: TrainerConfig;
     open_file: boolean;
     /** Shows the developer pages (logs, osu! data). */
     dev_mode: boolean;
+}
+
+export interface TrainerConfig {
+    /** Encode the generated audio at ~192 kbit/s instead of ~128 kbit/s. */
+    high_quality_audio: boolean;
+    /** The rate change sets the pitch from the rate (kept below 1.0x, raised above), without the option. */
+    auto_pitch: boolean;
+    /** Open each generated .osz, so osu! imports it right away. */
+    open_osz: boolean;
+    /** Template of the difficulty name, with placeholders like `{diff}` and `{rate}` (see `naming.rs`). */
+    name_format: string;
 }
 
 export interface PacksConfig {

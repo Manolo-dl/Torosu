@@ -15,9 +15,13 @@
     tuiButton
     type="button"
     [loading]="trainer.creating()"
-    (click)="trainer.createMap()"
+    (click)="trainer.createMaps()"
   >
-    Create map
+    @if (trainer.converts().length === 1) {
+      Create map
+    } @else {
+      Create {{ trainer.converts().length }} maps
+    }
   </button>
 </div>
 

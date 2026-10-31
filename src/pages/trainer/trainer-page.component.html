@@ -8,5 +8,19 @@
     <app-trainer-actions />
   </aside>
 
-  <app-trainer-task-pipeline />
+  <section class="converts">
+    @for (convert of trainer.converts(); track convert.id; let i = $index) {
+      <app-trainer-task-pipeline [convert]="convert" [number]="i + 1" />
+    }
+    <button
+      appearance="secondary"
+      iconStart="@tui.plus"
+      size="m"
+      tuiButton
+      type="button"
+      (click)="trainer.addConvert()"
+    >
+      Add convert
+    </button>
+  </section>
 </div>
