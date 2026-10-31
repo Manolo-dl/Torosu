@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use crate::{OsuReaderState, error::Result, osz::{self, OszWriter}};
+use crate::{error::Result, osz::{self, OszWriter}, state::OsuReaderState};
 
 /// Packs the whole set folder of the beatmap selected in osu! into an .osz at
 /// `path`, as osu! itself exports it: every file, subfolders included.

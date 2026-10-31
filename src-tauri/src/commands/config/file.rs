@@ -27,15 +27,15 @@ pub fn write_config(path: &Path, config: &AppConfig) -> Result<()> {
 }
 
 #[tauri::command]
-pub fn get_config(state: tauri::State<'_, crate::AppConfigState>) -> AppConfig {
+pub fn get_config(state: tauri::State<'_, crate::state::AppConfigState>) -> AppConfig {
     state.config.lock().unwrap().clone()
 }
 
 #[tauri::command]
 pub async fn update_config(
     config: AppConfig,
-    state: tauri::State<'_, crate::AppConfigState>,
-    session: tauri::State<'_, crate::SessionState>,
+    state: tauri::State<'_, crate::state::AppConfigState>,
+    session: tauri::State<'_, crate::state::SessionState>,
 ) -> Result<()> {
     let mut config = config;
     // The cookie is set from the downloader, not here: the one in use is

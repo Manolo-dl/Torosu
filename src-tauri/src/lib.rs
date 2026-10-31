@@ -2,44 +2,16 @@ use std::{path::{Path, PathBuf}, sync::{Mutex, atomic::AtomicBool}};
 use tauri::Manager;
 use tauri_plugin_log::{Target, TargetKind};
 
-use crate::commands::config::model::AppConfig;
 use crate::commands::osu_reader::ReaderSnapshot;
+use crate::state::{AppConfigState, OsuReaderState, SessionState, UpdateState};
 
 mod commands;
 mod error;
 mod osz;
 mod paths;
+mod state;
 #[cfg(test)]
 mod test_utils;
-
-pub struct OsuReaderState {
-    pub started: AtomicBool,
-    pub snapshot: Mutex<ReaderSnapshot>,
-}
-
-pub struct AppConfigState {
-    pub config: Mutex<AppConfig>,
-    /// `configuration.toml`, written when the app closes.
-    pub path: PathBuf,
-}
-
-impl AppConfigState {
-    /// The osu! folder, which every tool needs.
-    pub fn osu_path(&self) -> error::Result<PathBuf> {
-        self.config.lock().unwrap().osu_path.clone().map(PathBuf::from).ok_or_else(|| "osu! path not set".into())
-    }
-}
-
-/// The update found by `check_update`, waiting for the user to install it.
-pub struct UpdateState {
-    pub pending: Mutex<Option<tauri_plugin_updater::Update>>,
-}
-
-/// The osu_session cookie in use; it only reaches the configuration file
-/// with `save_session`.
-pub struct SessionState {
-    pub osu_session: Mutex<Option<String>>,
-}
 
 pub fn run() {
     // reqwest is built without a bundled crypto provider; share ring with the updater
@@ -119,7 +91,7 @@ pub fn run() {
             commands::system::update::check_update,
             commands::system::update::install_update,
             commands::collections::reader::read_osu_collections,
-            commands::collections::reader::write_text_file,
+            commands::system::text_file::write_text_file,
             commands::collections::writer::import_collections,
             commands::osu_db::reader::read_osu_db_full,
             commands::system::download::start_downloads,

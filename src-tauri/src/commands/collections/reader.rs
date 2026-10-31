@@ -1,6 +1,6 @@
 use std::path::Path;
 use osynic_osudb::entity::collection::collectiondb::CollectionDB;
-use crate::{AppConfigState, commands::collections::model::OsuCollection, error::Result};
+use crate::{commands::collections::model::OsuCollection, error::Result, state::AppConfigState};
 
 #[tauri::command]
 pub async fn read_osu_collections(
@@ -27,10 +27,4 @@ fn read_from_collectiondb(path: &Path) -> Result<Vec<OsuCollection>> {
             md5s: c.beatmap_hashes.into_iter().flatten().collect(),
         })
         .collect())
-}
-
-#[tauri::command]
-pub async fn write_text_file(path: String, content: String) -> Result<()> {
-    tokio::fs::write(&path, content).await?;
-    Ok(())
 }

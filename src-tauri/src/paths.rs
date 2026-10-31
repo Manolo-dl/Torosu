@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 
 use tauri::{AppHandle, Manager};
 
-use crate::{AppConfigState, OsuReaderState, error::Result};
+use crate::{error::Result, state::{AppConfigState, OsuReaderState}};
 
 /// osu!'s Songs folder. osu! can keep the songs somewhere else
 /// (`BeatmapDirectory` in its settings): the folder the running osu! uses,

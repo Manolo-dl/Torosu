@@ -3,7 +3,7 @@ use std::time::{Duration, Instant};
 use tauri::{AppHandle, Emitter};
 use tauri_plugin_updater::UpdaterExt;
 
-use crate::{UpdateState, error::Result};
+use crate::{error::Result, state::UpdateState};
 
 /// A newer version on the update server.
 #[derive(serde::Serialize, Clone)]

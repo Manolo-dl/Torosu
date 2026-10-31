@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 
 use tauri::Manager;
 
-use crate::{AppConfigState, error::Result};
+use crate::{error::Result, state::AppConfigState};
 
 /// Allows the Songs folder in the `asset:` protocol scope at runtime.
 fn allow_songs_in_asset_scope(app: &tauri::AppHandle, osu_path: &str) {

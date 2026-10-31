@@ -1,6 +1,6 @@
 use std::{collections::HashMap, fs, path::{Path, PathBuf}};
 use tauri::Manager;
-use crate::{AppConfigState, error::Result, osz::OszWriter, paths};
+use crate::{error::Result, osz::OszWriter, paths, state::AppConfigState};
 use crate::commands::config::model::PacksConfig;
 
 #[derive(serde::Deserialize)]

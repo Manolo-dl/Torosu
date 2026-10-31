@@ -6,7 +6,7 @@ use osu_memory_reader::{Beatmap, BeatmapAttributes, BeatmapPaths, Error, OsuRead
 use serde::Serialize;
 use tauri::{AppHandle, Emitter, Manager};
 
-use crate::{AppConfigState, OsuReaderState};
+use crate::state::{AppConfigState, OsuReaderState};
 
 /// How often the selected beatmap is read while osu! is open.
 const POLL_INTERVAL: Duration = Duration::from_millis(250);

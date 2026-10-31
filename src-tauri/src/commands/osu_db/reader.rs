@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::panic;
 use std::path::Path;
 use osynic_osudb::entity::osu::osudb::OsuDB;
-use crate::{AppConfigState, commands::osu_db::model::{OsuBeatmapSet, OsuDiff}, error::Result};
+use crate::{commands::osu_db::model::{OsuBeatmapSet, OsuDiff}, error::Result, state::AppConfigState};
 
 #[tauri::command]
 pub async fn read_osu_db_full(

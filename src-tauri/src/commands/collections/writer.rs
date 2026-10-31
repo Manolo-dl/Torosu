@@ -2,7 +2,7 @@ use std::{collections::HashSet, path::Path};
 
 use osynic_osudb::entity::collection::{collection::Collection, collectiondb::CollectionDB};
 
-use crate::{AppConfigState, commands::collections::model::ImportCollection, error::Result};
+use crate::{commands::collections::model::ImportCollection, error::Result, state::AppConfigState};
 
 #[tauri::command]
 pub async fn import_collections(
