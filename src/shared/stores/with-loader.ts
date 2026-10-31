@@ -9,15 +9,12 @@ import {
   type WritableStateSource,
 } from '@ngrx/signals';
 import { NotifyService } from '@shared/services';
-import { OsuPathStore } from './osu-path-store';
 
 export interface LoaderOptions<State, Data> {
   /** Reads the data from the backend. */
   read: () => Promise<Data>;
   /** What the store keeps of it. */
   loaded: (data: Data) => Partial<State>;
-  /** Read from the osu! folder: refused, with a notification, while there is none. */
-  needsOsuPath?: boolean;
   /** Notifications once read and when it fails; none if not given. */
   success?: (data: Data) => string;
   failure?: string;
@@ -47,7 +44,6 @@ export function withLoader<State extends object, Data>(initialState: State, opti
       // only check the writes to each part on its own.
       const stored = store as unknown as WritableStateSource<State>;
       const status = store as unknown as WritableStateSource<LoaderState> & StateSignals<LoaderState>;
-      const osuPath = options.needsOsuPath ? inject(OsuPathStore) : null;
 
       // Shared by whoever asks while it is being read (a page and its
       // resolver, or a tool left before it loaded and the next one), so it
@@ -57,11 +53,6 @@ export function withLoader<State extends object, Data>(initialState: State, opti
       let generation = 0;
 
       async function read() {
-        if (osuPath && !osuPath.path()) {
-          notify.error('Osu! path not set');
-          throw new Error('Osu! path not set');
-        }
-
         const started = generation;
         patchState(status, { isLoading: true });
 

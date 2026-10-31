@@ -9,7 +9,7 @@ import { AppConfig, ConfigurationStore } from '@entities/configuration';
 import { USER_ITEMS } from '@entities/nav-item';
 import { OsuDbStore } from '@entities/osu-db';
 import { CollectionStore } from '@entities/collection';
-import { OsuPathStore } from '@shared/stores';
+import { OsuPathStore } from '@entities/osu-path';
 import { NotifyService } from '@shared/services';
 
 // Mirrors the serde defaults in src-tauri/src/commands/config/model.rs

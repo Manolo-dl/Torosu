@@ -2,7 +2,7 @@ import { Routes } from "@angular/router";
 import { collectionResolver } from "@entities/collection";
 import { osuDbResolver } from "@entities/osu-db";
 import { logResolver } from "@entities/log";
-import { osuPathGuard } from "@shared/guards";
+import { osuPathGuard } from "@entities/osu-path";
 import { osuReaderResolver } from "@entities/osu-reader";
 import { devModeGuard, toolEnabledGuard } from "@entities/configuration";
 

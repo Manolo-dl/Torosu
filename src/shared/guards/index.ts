@@ -1,1 +1,0 @@
-export { osuPathGuard } from './osu-path.guard';

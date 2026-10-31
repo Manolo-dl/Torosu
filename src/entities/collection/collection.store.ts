@@ -22,7 +22,6 @@ export const CollectionStore = signalStore(
     withLoader(initialState, {
         read: () => invoke<OsuCollection[]>('read_osu_collections'),
         loaded: collections => ({ collections }),
-        needsOsuPath: true,
         success: collections => `Loaded ${collections.length} collections`,
         failure: 'Failed to load collections',
     }),

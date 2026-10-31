@@ -3,7 +3,7 @@ import { RouterLink } from '@angular/router';
 import { getVersion } from '@tauri-apps/api/app';
 import { ConfigurationStore } from '@entities/configuration';
 import { USER_ITEMS } from '@entities/nav-item';
-import { OsuPathStore } from '@shared/stores';
+import { OsuPathStore } from '@entities/osu-path';
 import { TuiIcon, TuiTitle } from '@taiga-ui/core';
 import { TuiBadge } from '@taiga-ui/kit';
 import { TuiCardLarge } from '@taiga-ui/layout';

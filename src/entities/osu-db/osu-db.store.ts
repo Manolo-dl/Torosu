@@ -17,7 +17,6 @@ export const OsuDbStore = signalStore(
     withLoader(initialState, {
         read: () => invoke<OsuBeatmapSet[]>('read_osu_db_full'),
         loaded: beatmapSets => ({ beatmapSets }),
-        needsOsuPath: true,
         success: beatmapSets => `Loaded ${beatmapSets.length} beatmap sets from osu!.db`,
         failure: 'Failed to load osu!.db',
     }),
