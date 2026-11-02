@@ -67,11 +67,16 @@ export class ConfigDrawerComponent {
   /**
    * Local copy edited by the form; sent to the backend on save. Copied again
    * from the saved settings each time the drawer opens, so what was not saved
-   * is dropped; but not when those change while it is open.
+   * is dropped; but not when those change while it is open. The osu! folder
+   * is the one in use, empty without one: it may have been detected or chosen
+   * after the settings were read.
    */
   readonly draft = linkedSignal({
     source: this.open,
-    computation: () => untracked(() => structuredClone(this.store.config() ?? DEFAULT_CONFIG)),
+    computation: () => untracked(() => ({
+      ...structuredClone(this.store.config() ?? DEFAULT_CONFIG),
+      osu_path: this.osuPath.path() ?? undefined,
+    })),
   });
 
   readonly trainerNameFormats: NameFormatPreset[] = [
@@ -110,11 +115,13 @@ export class ConfigDrawerComponent {
 
   async save() {
     // A new osu! folder is checked first: nothing is saved if it is not osu!'s.
+    // Emptied, it is forgotten and the app asks for one again.
     const path = this.draft().osu_path;
-    const pathChanged = !!path && path !== this.store.config()?.osu_path;
+    const pathChanged = (path ?? null) !== this.osuPath.path();
     if (pathChanged) {
       try {
-        await this.osuPath.setPath(path);
+        if (path) await this.osuPath.setPath(path);
+        else await this.osuPath.clearPath();
       } catch (e) {
         this.notify.error(String(e));
         return;
@@ -130,9 +137,10 @@ export class ConfigDrawerComponent {
       this.collections.reset();
     }
 
-    // The tool open was just turned off.
+    // The tool open was just turned off, or has no osu! folder now.
     const url = this.router.url;
-    if ([...this.store.excludedTools()].some(route => url === route || url.startsWith(`${route}/`))) {
+    const turnedOff = [...this.store.excludedTools()].some(route => url === route || url.startsWith(`${route}/`));
+    if (turnedOff || (!this.osuPath.path() && url.startsWith('/user/'))) {
       await this.router.navigate(['/']);
     }
   }

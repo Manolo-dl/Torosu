@@ -16,6 +16,8 @@ export interface OsuDiff {
     creator: string;
     /** Per diff: a ranked set can hold diffs that were never uploaded, such as rates. */
     status: BeatmapStatus;
+    /** 0 for diffs never uploaded: the trainer and the packs leave the id out. */
+    beatmapId: number;
 }
 
 /** A folder of `Songs`. Unsubmitted sets have `beatmapsetId` 0, so `folderName` is what identifies a set. */
@@ -27,9 +29,24 @@ export interface OsuBeatmapSet {
     diffs: OsuDiff[];
 }
 
-/** Whether the diff is on the osu! website, so it can be linked or downloaded. */
+/**
+ * Whether the diff is on the osu! website, so it can be linked or downloaded.
+ * osu! only learns the status when it checks it online (in song select), so
+ * in a new install every diff is `unknown`: one with an id is taken as
+ * uploaded.
+ */
 export function isSubmitted(diff: OsuDiff): boolean {
-    return diff.status !== 'unsubmitted' && diff.status !== 'unknown';
+    if (diff.status === 'unknown') return diff.beatmapId > 0;
+    return diff.status !== 'unsubmitted';
+}
+
+/**
+ * None of the set's diffs was checked online by osu! yet, as in a new install
+ * or playing offline. For a set of `submittedBeatmapSets`: it is there for its
+ * ids, but it may not be on the website.
+ */
+export function isUncheckedSet(set: OsuBeatmapSet): boolean {
+    return set.diffs.every(d => d.status === 'unknown');
 }
 
 const STATUS_PRIORITY: BeatmapStatus[] = ['ranked', 'approved', 'qualified', 'loved', 'unranked', 'unsubmitted', 'unknown'];

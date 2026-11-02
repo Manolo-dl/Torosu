@@ -45,6 +45,10 @@ pub async fn update_config(
     } else {
         None
     };
-    *state.config.lock().unwrap() = config;
-    Ok(())
+    state.update(|current| {
+        // The osu! folder is set with `save_osu_path`, which checks it: the
+        // frontend's copy may be older than the one detected meanwhile.
+        config.osu_path = current.osu_path.take();
+        *current = config;
+    })
 }

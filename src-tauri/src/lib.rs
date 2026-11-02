@@ -88,6 +88,7 @@ pub fn run() {
             commands::config::file::update_config,
             commands::system::osu_path::get_osu_path,
             commands::system::osu_path::save_osu_path,
+            commands::system::osu_path::clear_osu_path,
             commands::system::songs_file::read_songs_file,
             commands::system::update::check_update,
             commands::system::update::install_update,
@@ -111,21 +112,6 @@ pub fn run() {
             commands::trainer::presets::write_trainer_presets,
             commands::trainer::video::is_ffmpeg_available
         ])
-        .on_window_event(|window, event| {
-            
-            if let tauri::WindowEvent::CloseRequested { .. } = event {
-                
-                let config_state = window.app_handle().state::<AppConfigState>();
-                let config = config_state.config.lock().unwrap().clone();
-
-                if let Err(e) = commands::config::file::write_config(&config_state.path, &config) {
-                    log::error!("failed to write configuration.toml on close: {e}");
-                } else  {
-                    log::info!("configuration.toml saved on close");
-                }
-
-            }
-        }) 
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

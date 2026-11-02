@@ -1,7 +1,7 @@
 import { patchState, signalStore, withComputed, withMethods } from "@ngrx/signals";
 import { OsuCollection } from "./collection.model";
 import { computed, inject } from "@angular/core";
-import { OsuDbStore, setsOfDiffs } from "@entities/osu-db";
+import { OsuDbStore, isUncheckedSet, setsOfDiffs } from "@entities/osu-db";
 import { OsuBeatmapSet } from "@entities/osu-db/osu-db.model";
 import { withLoader } from "@shared/stores";
 import { invoke } from "@tauri-apps/api/core";
@@ -53,6 +53,8 @@ export const CollectionStore = signalStore(
             selectedSets,
             selectedCount: computed(() => store.selectedCollections().length),
             totalSelectedSets: computed(() => selectedSets().length),
+            /** Selected sets osu! never checked online, which may not be on the website. */
+            uncheckedSelectedSets: computed(() => selectedSets().filter(isUncheckedSet).length),
             allSelected: computed(() => {
                 const cols = collectionsWithBeatmaps();
                 return cols.length > 0 && cols.length === store.selectedCollections().length;

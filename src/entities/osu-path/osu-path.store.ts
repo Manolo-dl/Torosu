@@ -47,6 +47,13 @@ export const OsuPathStore = signalStore(
       detectPromise = Promise.resolve();
     }
 
+    /** Forgets the folder: the app asks for one again (`missing`), without detecting it by itself. */
+    async function clearPath() {
+      await invoke('clear_osu_path');
+      patchState(store, { path: null, error: 'osu! folder not set' });
+      detectPromise = Promise.resolve();
+    }
+
     return {
       async detect(): Promise<void> {
         if (!detectPromise) {
@@ -62,6 +69,7 @@ export const OsuPathStore = signalStore(
       },
 
       setPath,
+      clearPath,
 
       async selectManually() {
         const selected = await open({

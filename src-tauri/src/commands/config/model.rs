@@ -106,7 +106,7 @@ fn default_pack_name_format() -> String { DEFAULT_PACK_NAME_FORMAT.to_string() }
 
 // Implemented by hand so the defaults match the serde ones above: a derived
 // Default would set `error_file` and `keep_background` to false, and those
-// values are then written to configuration.toml on close, for good.
+// values are then written to configuration.toml with the next change, for good.
 impl Default for AppConfig {
     fn default() -> Self {
         Self {
