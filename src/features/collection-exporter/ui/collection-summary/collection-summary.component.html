@@ -11,3 +11,7 @@
     </div>
   </div>
 </div>
+
+@if (store.uncheckedSelectedSets(); as unchecked) {
+  <app-unchecked-notice [count]="unchecked" />
+}

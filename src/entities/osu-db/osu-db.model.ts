@@ -40,6 +40,15 @@ export function isSubmitted(diff: OsuDiff): boolean {
     return diff.status !== 'unsubmitted';
 }
 
+/**
+ * None of the set's diffs was checked online by osu! yet, as in a new install
+ * or playing offline. For a set of `submittedBeatmapSets`: it is there for its
+ * ids, but it may not be on the website.
+ */
+export function isUncheckedSet(set: OsuBeatmapSet): boolean {
+    return set.diffs.every(d => d.status === 'unknown');
+}
+
 const STATUS_PRIORITY: BeatmapStatus[] = ['ranked', 'approved', 'qualified', 'loved', 'unranked', 'unsubmitted', 'unknown'];
 
 /** Status shown for a whole set: the best one among its diffs. */

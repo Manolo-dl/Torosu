@@ -1,5 +1,5 @@
 import { computed, inject } from "@angular/core";
-import { OsuDbStore } from "@entities/osu-db";
+import { OsuDbStore, isUncheckedSet } from "@entities/osu-db";
 import { patchState, signalStore, withComputed, withMethods, withState } from "@ngrx/signals";
 
 export interface ModeFilters {
@@ -86,6 +86,8 @@ export const BeatmapExporterStore = signalStore(
 
     withComputed((store) => ({
         totalFiltered: computed(() => store.filteredBeatmaps().length),
+        /** Filtered sets osu! never checked online, which may not be on the website. */
+        uncheckedFiltered: computed(() => store.filteredBeatmaps().filter(isUncheckedSet).length),
     })),
 
     withMethods((store) => ({
