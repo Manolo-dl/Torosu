@@ -189,7 +189,7 @@ mod tests {
                 let mut file = zip.by_index(i).unwrap();
                 let mut content = String::new();
                 file.read_to_string(&mut content).unwrap();
-                (file.name().to_string(), content)
+                (file.name().unwrap().to_string(), content)
             })
             .collect()
     }
