@@ -16,6 +16,8 @@ pub struct OsuDiff {
     pub creator: String,
     /// Per diff: a ranked set can hold diffs that were never uploaded (e.g. rates).
     pub status: String,
+    /// 0 for diffs never uploaded: the trainer and the packs leave `BeatmapID` out.
+    pub beatmap_id: u32,
 }
 
 /// A folder of `Songs`. Unsubmitted sets have `beatmapset_id` 0, so the folder

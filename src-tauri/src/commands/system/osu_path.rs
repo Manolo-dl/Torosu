@@ -51,7 +51,6 @@ async fn resolve_osu_path(app: &tauri::AppHandle) -> Result<String> {
 
     // 2. Check path of the running osu!
     if let Some(path) = get_osu_path_from_memory().await {
-        save_detected_path(&config_state, &path);
         return Ok(path);
     }
 
@@ -73,7 +72,6 @@ async fn resolve_osu_path(app: &tauri::AppHandle) -> Result<String> {
 
         for path in &candidates {
             if path.join("Songs").exists() {
-                save_detected_path(&config_state, &path.to_string_lossy().to_string());
                 return Ok(path.to_string_lossy().to_string());
             }
         }
@@ -83,12 +81,8 @@ async fn resolve_osu_path(app: &tauri::AppHandle) -> Result<String> {
     Err("osu! folder not found".into())
 }
 
-fn save_detected_path(state: &tauri::State<AppConfigState>, path: &str) {
-    let mut config = state.config.lock().unwrap();
-    config.osu_path = Some(path.to_string());
-}
-
-// save osu! path when selected manually by the user
+/// Uses the folder found by `get_osu_path` or chosen by the user, and keeps it
+/// in configuration.toml.
 #[tauri::command]
 pub fn save_osu_path(app: tauri::AppHandle, path: String) -> Result<()> {
     // Every tool reads osu!.db, so a folder without it is not osu!'s.
@@ -99,8 +93,12 @@ pub fn save_osu_path(app: tauri::AppHandle, path: String) -> Result<()> {
 
     allow_songs_in_asset_scope(&app, &path);
 
-    let config_state = app.state::<AppConfigState>();
-    save_detected_path(&config_state, &path);
+    app.state::<AppConfigState>().update(|config| config.osu_path = Some(path))
+}
 
-    Ok(())
+/// Forgets the osu! folder, emptied in the settings: the app asks for one
+/// again, and `get_osu_path` looks for it on the next start.
+#[tauri::command]
+pub fn clear_osu_path(app: tauri::AppHandle) -> Result<()> {
+    app.state::<AppConfigState>().update(|config| config.osu_path = None)
 }

@@ -4,3 +4,7 @@
     <strong>{{ store.totalFiltered() }}</strong>
   </div>
 </div>
+
+@if (store.uncheckedFiltered(); as unchecked) {
+  <app-unchecked-notice [count]="unchecked" />
+}

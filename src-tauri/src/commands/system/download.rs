@@ -287,8 +287,8 @@ pub fn set_osu_session(
     state: tauri::State<'_, AppConfigState>,
     current: tauri::State<'_, SessionState>,
 ) -> Result<()> {
-    let mut config = state.config.lock().unwrap();
-    config.downloader.osu_session = if config.downloader.save_session { session.clone() } else { None };
-    *current.osu_session.lock().unwrap() = session;
-    Ok(())
+    *current.osu_session.lock().unwrap() = session.clone();
+    state.update(|config| {
+        config.downloader.osu_session = if config.downloader.save_session { session } else { None };
+    })
 }

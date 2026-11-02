@@ -88,6 +88,7 @@ fn read_from_osudb(osu_path: &Path) -> Result<Vec<OsuBeatmapSet>> {
             audio: b.audio.unwrap_or_default(),
             creator: b.creator.unwrap_or_default(),
             status,
+            beatmap_id: b.beatmap_id.max(0) as u32,
         };
 
         let set = sets.entry(folder_name.clone())
