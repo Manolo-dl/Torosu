@@ -204,7 +204,7 @@
                 (activeItemIndexChange)="onTargetKeys(entry.id, entry.task.params, keyOptions[$event])"
               >
                 @for (keys of keyOptions; track keys) {
-                  <button type="button" [disabled]="keys === sourceKeys()">{{ keys }}K</button>
+                  <button type="button" [disabled]="keys === sourceKeys()">{{ keys }}</button>
                 }
               </tui-segmented>
             </div>
@@ -246,6 +246,11 @@
                   }
                 </tui-segmented>
                 <span class="setting-hint">{{ playstyles[playstyleAt].hint }}</span>
+              </div>
+            } @else if (playstyles.length === 1) {
+              <div class="setting">
+                <span class="setting-title">Playstyle: {{ playstyles[0].name }}</span>
+                <span class="setting-hint">{{ playstyles[0].hint }}</span>
               </div>
             }
 

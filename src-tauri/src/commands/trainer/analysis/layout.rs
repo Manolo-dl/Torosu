@@ -11,9 +11,13 @@
 //! patterns.
 //!
 //! osu! plays up to 10K on one stage; 12K to 18K are two stages side by side
-//! (6K+6K ... 9K+9K), made for co-op but also played solo.
+//! (6K+6K ... 9K+9K), made for co-op but mostly played solo, with the
+//! playstyles of the osu! wiki (Beatmapping/osu!mania 10K+ playstyles):
+//! `10K2S` on 12K, `DP` and `EZ2AC` on 14K and 16K, `10K8K` and `9K9K` on 18K.
 
 use serde::Serialize;
+
+use crate::commands::trainer::mania;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize)]
 pub enum Hand {
@@ -106,8 +110,8 @@ impl Layout {
 
 /// Parses a layout written as one token per key: `L`/`R` and the finger in
 /// piano numbering (1 thumb, 2 index, 3 middle, 4 ring, 5 pinky), `T` for a
-/// thumb of either hand, `LS`/`RS` for a scratch, and `|` between the stages
-/// of two players.
+/// thumb of either hand, `M` for a middle key either hand moves to, `LS`/`RS`
+/// for a scratch, and `|` between the stages of two players.
 fn parse(spec: &str) -> Vec<Finger> {
     let mut fingers = Vec::new();
     let mut player = 0;
@@ -118,6 +122,7 @@ fn parse(spec: &str) -> Vec<Finger> {
         }
         let (hand, digit) = match token {
             "T" => (Hand::Either, Digit::Thumb),
+            "M" => (Hand::Either, Digit::Index),
             "LS" => (Hand::Left, Digit::Scratch),
             "RS" => (Hand::Right, Digit::Scratch),
             _ => {
@@ -198,22 +203,35 @@ pub fn layouts(keys: usize) -> Vec<Layout> {
         ],
         9 => &[("4+1+4", "Thumb on the middle key (pop'n)", "L5 L4 L3 L2 T R2 R3 R4 R5")],
         10 => &[("5+5", "Every finger, thumbs in the middle", "L5 L4 L3 L2 L1 R1 R2 R3 R4 R5")],
+        12 => &[("10K2S", "10K with a scratch on each side", "LS L5 L4 L3 L2 L1 R1 R2 R3 R4 R5 RS")],
+        // DP: 7 keys per hand in two rows, the hand resting on keys 1, 2, 4,
+        // 6 and 7 from the thumb; the ring finger also takes key 5 and the
+        // index key 3.
+        14 => &[
+            ("DP", "7 keys per hand in two rows (IIDX)", "L5 L4 L4 L3 L2 L2 L1 R1 R2 R2 R3 R4 R4 R5"),
+            ("EZ2AC", "10K and 4 middle keys either hand moves to", "L5 L4 L3 L2 L1 M M M M R1 R2 R3 R4 R5"),
+        ],
+        16 => &[
+            ("DP", "DP with a scratch on each side", "LS L5 L4 L4 L3 L2 L2 L1 R1 R2 R2 R3 R4 R4 R5 RS"),
+            ("EZ2AC", "10K2S and 4 middle keys either hand moves to", "LS L5 L4 L3 L2 L1 M M M M R1 R2 R3 R4 R5 RS"),
+        ],
+        // 10K8K: 4 more keys for each hand's fingers but the thumb, outside
+        // (4K10K4K) or inside its 10K keys, which is the same for the fingers.
+        18 => &[
+            ("10K8K", "10K and 4 more keys per hand, the thumbs aside", "L5 L4 L3 L2 L5 L4 L3 L2 L1 R1 R2 R3 R4 R5 R2 R3 R4 R5"),
+            ("9K9K", "9 keys per hand in two rows", "L5 L5 L4 L4 L3 L3 L2 L2 L1 R1 R2 R2 R3 R3 R4 R4 R5 R5"),
+        ],
         _ => &[],
     };
-    if !fixed.is_empty() {
-        return fixed
-            .iter()
-            .map(|&(name, description, spec)| Layout { name, description, fingers: parse(spec) })
-            .collect();
-    }
+    let mut all: Vec<Layout> =
+        fixed.iter().map(|&(name, description, spec)| Layout { name, description, fingers: parse(spec) }).collect();
 
-    // Two stages: co-op, or solo with a stage per hand.
-    if keys > 10 && keys % 2 == 0 && keys <= 18 {
-        let stage = keys / 2;
-        return vec![
-            Layout { name: "Co-op", description: "A player per stage", fingers: parse(&coop(stage)) },
-            Layout { name: "Solo", description: "A stage per hand", fingers: parse(&solo(stage)) },
-        ];
+    // Two stages can also be played in co-op, a player per stage.
+    if keys > mania::STAGE_MAX_KEYS && mania::is_playable(keys) {
+        all.push(Layout { name: "Co-op", description: "A player per stage", fingers: parse(&coop(keys / 2)) });
+    }
+    if !all.is_empty() {
+        return all;
     }
 
     // Anything else: half per hand, a thumb in the middle when odd.
@@ -253,10 +271,33 @@ mod tests {
         let names = |keys, name| layout(keys, Some(name)).groups().into_iter().map(|g| g.name).collect::<Vec<_>>();
         assert_eq!(names(7, "3+1+3"), ["Left", "Thumb", "Right"]);
         assert_eq!(names(14, "Co-op"), ["P1 Left", "P1 Thumb", "P1 Right", "P2 Left", "P2 Thumb", "P2 Right"]);
-        assert_eq!(names(14, "Solo"), ["Left", "Right"]);
+        assert_eq!(names(14, "DP"), ["Left", "Right"]);
+        assert_eq!(names(16, "EZ2AC"), ["Left", "Thumb", "Right"]);
+        assert_eq!(names(18, "9K9K"), ["Left", "Right"]);
         assert!(layout(7, None).symmetric());
         assert!(!layout(5, Some("3+2")).symmetric());
         assert!(!layout(8, Some("1+7")).symmetric());
-        assert!(layout(16, None).symmetric());
+        for keys in [12, 14, 16, 18] {
+            assert!(layouts(keys).iter().all(|l| l.symmetric()), "{}K", keys);
+        }
+    }
+
+    #[test]
+    fn wide_playstyles_follow_the_wiki() {
+        let ten = layout(10, None);
+        // 10K2S and 10K8K keep the hands on the 10K keys.
+        assert_eq!(layout(12, Some("10K2S")).digit_mask(Digit::Scratch), 1 | 1 << 11);
+        assert_eq!(layout(18, Some("10K8K")).digit_mask(Digit::Thumb), 1 << 8 | 1 << 9);
+        assert_eq!(layout(18, Some("10K8K")).fingers[4..14], ten.fingers[..]);
+        // EZ2AC: the 10K keys around 4 middle keys for either hand.
+        let ez2ac = layout(14, Some("EZ2AC"));
+        assert_eq!([&ez2ac.fingers[..5], &ez2ac.fingers[9..]].concat(), ten.fingers);
+        assert!(ez2ac.fingers[5..9].iter().all(|f| f.hand == Hand::Either && f.digit != Digit::Thumb));
+        // DP: every finger of a hand on its 7 keys.
+        let dp = layout(14, Some("DP"));
+        assert_eq!(dp.groups().iter().map(|g| g.mask.count_ones()).collect::<Vec<_>>(), [7, 7]);
+        for digit in [Digit::Thumb, Digit::Index, Digit::Middle, Digit::Ring, Digit::Pinky] {
+            assert_ne!(dp.digit_mask(digit) & 0x7f, 0, "{:?}", digit);
+        }
     }
 }

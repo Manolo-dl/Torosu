@@ -55,6 +55,20 @@ export const PLAYSTYLES: Record<number, { name: string; hint: string }[]> = {
         { name: '3+2+3', hint: 'Both thumbs on the middle keys.' },
         { name: '1+7', hint: '7K with a scratch on the left, IIDX style.' },
     ],
+    // 12K to 18K: the playstyles of the osu! wiki (osu!mania 10K+ playstyles).
+    12: [{ name: '10K2S', hint: '10K with a scratch on each side, hit by moving a pinky outward.' }],
+    14: [
+        { name: 'DP', hint: 'Double Play, IIDX style: 7 keys per hand in two rows.' },
+        { name: 'EZ2AC', hint: '10K and 4 middle keys either hand moves to (Space Mix).' },
+    ],
+    16: [
+        { name: 'DP', hint: 'Double Play with a scratch on each side (14K2S).' },
+        { name: 'EZ2AC', hint: '10K2S and 4 middle keys either hand moves to.' },
+    ],
+    18: [
+        { name: '10K8K', hint: '10K and 4 more keys per hand for every finger but the thumb (4K10K4K).' },
+        { name: '9K9K', hint: '9 keys per hand in two rows, like a DP for pop\'n music.' },
+    ],
 };
 
 export type TrainerTaskParams =

@@ -66,7 +66,8 @@ export class TrainerTaskPipelineComponent {
   /** Key count of the current map, only for osu!mania maps. */
   sourceKeys = computed(() => this.reader.data()?.attributes?.keyCount ?? null);
 
-  readonly keyOptions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+  /** One stage up to 10K; 12K to 18K are two stages of the same size. */
+  readonly keyOptions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 18];
   readonly densityOptions: DensityOption[] = [
     { value: 'none', label: 'None', hint: 'Only the notes of the original map.' },
     {
