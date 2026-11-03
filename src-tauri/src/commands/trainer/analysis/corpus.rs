@@ -19,6 +19,10 @@
 //! - `corpus_compare`: a passage of `MAP` next to its 10K converts, as text.
 //! - `corpus_columns`: how often hand-made 9K and 10K maps use each column,
 //!   the outer ones above all, next to 4K and 7K converts to them.
+//! - `corpus_scratch`, `corpus_scratch_truth`, `corpus_scratch_sources`: the
+//!   scratches of 10K2S, in hand-made maps and converts; the converter on
+//!   hand-made maps without their scratches; and on the other maps of their
+//!   songs, the use it is for.
 
 use std::{
     collections::{BTreeMap, HashMap},
@@ -35,6 +39,7 @@ use super::{
     zones::Zone,
 };
 use crate::commands::trainer::{
+    accents::Accents,
     mania::key_count,
     model::{Density, KeyConverterParams},
     tasks::key_converter,
@@ -1812,8 +1817,9 @@ impl ScratchAgg {
 /// Hand-made 10K2S maps next to 4K, 7K and 10K converts to 12K (`LIMIT`
 /// source maps of each key count, 100 by default, up to `MAX_NPS` notes per
 /// second, 15 by default: hand-made 10K2S maps are easy), in the playstyle
-/// `PLAYSTYLE` (12K by default, or 10K2S). `MAPS` (parts of diff file names,
-/// split by `;`) converts those diffs instead, each on its own.
+/// `PLAYSTYLE` (12K by default, or 10K2S, which follows the audio). `MAPS`
+/// (parts of diff file names, split by `;`) converts those diffs instead,
+/// each on its own.
 #[test]
 #[ignore = "reads a whole Songs folder; run by hand"]
 fn corpus_scratch() {
@@ -1831,10 +1837,18 @@ fn corpus_scratch() {
         let last = b.hit_objects.last().map_or(0.0, |h| h.start_time);
         b.hit_objects.len() as f64 / ((last - first) / 1000.0).max(1.0)
     };
-    let convert = |beatmap: &Beatmap, density: Density| {
+    let params = |density| KeyConverterParams { target_keys: dst as u8, density, keep_jacks: true, playstyle: playstyle.clone() };
+    // The accents of a map's audio, when the playstyle follows them.
+    let accents = |path: &Path, beatmap: &Beatmap| {
+        let folder = path.parent().filter(|_| key_converter::uses_audio(&params(Density::None)))?;
+        Accents::read(&folder.join(&beatmap.audio_file)).ok()
+    };
+    let converted = |beatmap: &Beatmap, accents: &Option<Accents>, density: Density| {
         let mut b = beatmap.clone();
-        let params = KeyConverterParams { target_keys: dst as u8, density, keep_jacks: true, playstyle: playstyle.clone() };
-        key_converter::apply(&mut b, &params).ok().map(|_| label(&b, &dst_layout))
+        key_converter::apply_with(&mut b, &params(density), accents.as_ref().map(|a| a.at_rate(1.0))).ok().map(|_| b)
+    };
+    let convert = |beatmap: &Beatmap, accents: &Option<Accents>, density: Density| {
+        converted(beatmap, accents, density).map(|b| label(&b, &dst_layout))
     };
 
     let hand_made: ScratchAgg = parallel(
@@ -1855,17 +1869,16 @@ fn corpus_scratch() {
             continue;
         };
         let Some(beatmap) = parse(path) else { continue };
+        let accents = accents(path, &beatmap);
         for (name, density) in modes {
             let mut agg = ScratchAgg::default();
-            if let Some(l) = convert(&beatmap, density) {
+            if let Some(l) = convert(&beatmap, &accents, density) {
                 agg.add(&l, &dst_layout);
             }
             // `DUMP=1` writes the convert to `OUT`, to look at it in osu!.
             if std::env::var_os("DUMP").is_some() {
-                let mut b = beatmap.clone();
-                let params = KeyConverterParams { target_keys: dst as u8, density, keep_jacks: true, playstyle: playstyle.clone() };
-                if key_converter::apply(&mut b, &params).is_ok() {
-                    b.version = format!("{} ({}K {})", b.version, dst, name);
+                if let Some(mut b) = converted(&beatmap, &accents, density) {
+                    b.version = format!("{} ({} {})", b.version, dst_layout.name, name);
                     let osu = crate::commands::trainer::osu_fixups::sanitize(b.encode_to_string().unwrap(), None);
                     let file = format!("{} [{}].osu", b.title, b.version).replace(['/', '\\'], "_");
                     std::fs::write(out_dir().join(file), osu).unwrap();
@@ -1879,26 +1892,28 @@ fn corpus_scratch() {
     }
 
     // A few diffs per set, so a big pack does not make up every source.
-    let maps: Vec<Beatmap> = sets
+    let maps: Vec<(PathBuf, Beatmap)> = sets
         .iter()
         .flat_map(|files| {
-            let diffs: Vec<Beatmap> = files.iter().filter_map(|p| parse(p)).filter(|b| nps(b) <= max_nps).collect();
+            let diffs: Vec<(PathBuf, Beatmap)> =
+                files.iter().filter_map(|p| parse(p).map(|b| (p.clone(), b))).filter(|(_, b)| nps(b) <= max_nps).collect();
             [4usize, 7, 10].into_iter().flat_map(move |keys| {
-                diffs.iter().filter(|b| key_count(b) == keys).take(PER_SET).cloned().collect::<Vec<_>>()
+                diffs.iter().filter(|(_, b)| key_count(b) == keys).take(PER_SET).cloned().collect::<Vec<_>>()
             })
         })
         .collect();
-    let sources: Vec<Beatmap> = [4usize, 7, 10]
+    let sources: Vec<(PathBuf, Beatmap)> = [4usize, 7, 10]
         .iter()
-        .flat_map(|&keys| maps.iter().filter(move |b| key_count(b) == keys).take(limit).cloned())
+        .flat_map(|&keys| maps.iter().filter(move |(_, b)| key_count(b) == keys).take(limit).cloned())
         .collect();
 
     // Keyed by (source keys, mode).
     let converts: BTreeMap<(usize, usize), ScratchAgg> = parallel(
         &sources,
-        |acc: &mut BTreeMap<(usize, usize), ScratchAgg>, beatmap| {
+        |acc: &mut BTreeMap<(usize, usize), ScratchAgg>, (path, beatmap)| {
+            let accents = accents(path, beatmap);
             for (m, (_, density)) in modes.iter().enumerate() {
-                if let Some(l) = convert(beatmap, *density) {
+                if let Some(l) = convert(beatmap, &accents, *density) {
                     acc.entry((key_count(beatmap), m)).or_default().add(&l, &dst_layout);
                 }
             }
@@ -1912,4 +1927,290 @@ fn corpus_scratch() {
     for ((src, m), agg) in &converts {
         agg.print(&format!("{}K -> {}K {}", src, dst, modes[*m].0));
     }
+}
+
+/// The scratch notes of a 12K map, as (time, key), and the map without them
+/// as a 10K map: what a 10K2S mapper scratched over.
+fn split_scratches(beatmap: &Beatmap) -> (Beatmap, Vec<(f64, usize)>) {
+    use crate::commands::trainer::mania;
+    let mut inner = beatmap.clone();
+    let mut scratches = Vec::new();
+    inner.hit_objects.retain_mut(|obj| {
+        let Some((x, _)) = mania::note(obj) else { return true };
+        let col = mania::column(x, 12);
+        if col == 0 || col == 11 {
+            scratches.push((obj.start_time, col));
+            return false;
+        }
+        let x = mania::column_x(col - 1, 10);
+        match &mut obj.kind {
+            rosu_map::section::hit_objects::HitObjectKind::Circle(c) => c.pos.x = x,
+            rosu_map::section::hit_objects::HitObjectKind::Hold(h) => h.pos_x = x,
+            _ => {}
+        }
+        true
+    });
+    inner.circle_size = 10.0;
+    (inner, scratches)
+}
+
+/// Hand-made 10K2S maps against the converter: each map without its scratches
+/// is a 10K map, converted back to 10K2S with its audio (`AUDIO=0`: without),
+/// and the scratches it gets are compared with the mapper's (same time,
+/// within 3 ms; then the same scratch too). `MAPS` (parts of diff file names,
+/// split by `;`) picks some; `MAX_NPS` (40) leaves out gimmick maps, and maps
+/// with "help" in their name are marks, not maps (see
+/// `corpus_scratch_sources`); `DUMP=1` writes each map's scratches to `OUT`.
+#[test]
+#[ignore = "reads a whole Songs folder; run by hand"]
+fn corpus_scratch_truth() {
+    use crate::commands::trainer::mania;
+    let max_nps: f64 = std::env::var("MAX_NPS").ok().and_then(|s| s.parse().ok()).unwrap_or(40.0);
+    let picked: Vec<String> = std::env::var("MAPS").map(|m| m.split(';').map(String::from).collect()).unwrap_or_default();
+    let nps = |b: &Beatmap| {
+        let first = b.hit_objects.first().map_or(0.0, |h| h.start_time);
+        let last = b.hit_objects.last().map_or(0.0, |h| h.start_time);
+        b.hit_objects.len() as f64 / ((last - first) / 1000.0).max(1.0)
+    };
+    let mut maps: Vec<(PathBuf, Beatmap)> = mania_sets(&songs_dir())
+        .into_iter()
+        .flatten()
+        .filter(|p| picked.is_empty() || picked.iter().any(|m| p.to_string_lossy().contains(m.as_str())))
+        .filter_map(|p| parse(&p).map(|b| (p, b)))
+        .filter(|(_, b)| key_count(b) == 12 && nps(b) <= max_nps && !b.version.to_lowercase().contains("help"))
+        .collect();
+    maps.sort_by(|a, b| a.0.cmp(&b.0));
+
+    // Per map: truth and predicted times, times in both, truth and predicted
+    // notes, notes in both.
+    let results: Vec<(String, [usize; 6])> = parallel(
+        &maps,
+        |acc: &mut Vec<(String, [usize; 6])>, (path, beatmap)| {
+            let (inner, truth) = split_scratches(beatmap);
+            let mut converted = inner.clone();
+            let params =
+                KeyConverterParams { target_keys: 12, density: Density::None, keep_jacks: true, playstyle: Some("10K2S".into()) };
+            let accents = path
+                .parent()
+                .filter(|_| std::env::var("AUDIO").map_or(true, |a| a != "0"))
+                .and_then(|folder| Accents::read(&folder.join(&beatmap.audio_file)).ok());
+            if key_converter::apply_with(&mut converted, &params, accents.as_ref().map(|a| a.at_rate(1.0))).is_err() {
+                return;
+            }
+            let predicted: Vec<(f64, usize)> = converted
+                .hit_objects
+                .iter()
+                .filter_map(|o| mania::note(o).map(|(x, _)| (o.start_time, mania::column(x, 12))))
+                .filter(|&(_, c)| c == 0 || c == 11)
+                .collect();
+            // Times (either scratch) and notes (the same scratch) in both.
+            let times = |notes: &[(f64, usize)]| {
+                let mut times: Vec<f64> = notes.iter().map(|n| n.0).collect();
+                times.dedup();
+                times
+            };
+            let (truth_times, predicted_times) = (times(&truth), times(&predicted));
+            let hits = predicted_times.iter().filter(|&&p| truth_times.iter().any(|&t| (t - p).abs() <= 3.0)).count();
+            let sides = predicted.iter().filter(|p| truth.iter().any(|t| (t.0 - p.0).abs() <= 3.0 && t.1 == p.1)).count();
+            let name = format!("{} [{}]", beatmap.title, beatmap.version);
+            if std::env::var_os("DUMP").is_some() {
+                let text: String = predicted.iter().map(|(t, c)| format!("{} {}\n", t, c)).collect();
+                let file = name.replace(['/', '\\'], "_") + ".pred.txt";
+                std::fs::write(out_dir().join(file), text).unwrap();
+            }
+            acc.push((name, [truth_times.len(), predicted_times.len(), hits, truth.len(), predicted.len(), sides]));
+        },
+        |total, part| total.extend(part),
+    );
+
+    let f1 = |hits: usize, truth: usize, predicted: usize| {
+        let (precision, recall) = (hits as f64 / predicted.max(1) as f64, hits as f64 / truth.max(1) as f64);
+        (precision, recall, 2.0 * precision * recall / (precision + recall).max(1e-9))
+    };
+    let mut results = results;
+    results.sort_by(|a, b| a.0.cmp(&b.0));
+    let mut total = [0usize; 6];
+    let mut f1s = Vec::new();
+    for (name, counts) in &results {
+        let [truth, predicted, hits, truth_notes, predicted_notes, sides] = *counts;
+        let (precision, recall, times_f1) = f1(hits, truth, predicted);
+        let (_, _, notes_f1) = f1(sides, truth_notes, predicted_notes);
+        f1s.push(notes_f1);
+        println!(
+            "  {:<60} truth {:>4} predicted {:>4} | times: precision {} recall {} F1 {:.2} | notes F1 {:.2}",
+            name.chars().take(60).collect::<String>(),
+            truth_notes,
+            predicted_notes,
+            pct(precision),
+            pct(recall),
+            times_f1,
+            notes_f1
+        );
+        for (t, c) in total.iter_mut().zip(counts) {
+            *t += c;
+        }
+    }
+    let [truth, predicted, hits, truth_notes, predicted_notes, sides] = total;
+    let (precision, recall, times_f1) = f1(hits, truth, predicted);
+    let (note_precision, note_recall, notes_f1) = f1(sides, truth_notes, predicted_notes);
+    println!(
+        "\n  {} maps, {} scratch notes, {} predicted\n  times (either scratch): precision {} recall {} F1 {:.3}\n  \
+         notes (the same scratch): precision {} recall {} F1 {:.3} (mean per map {:.3})",
+        results.len(),
+        truth_notes,
+        predicted_notes,
+        pct(precision),
+        pct(recall),
+        times_f1,
+        pct(note_precision),
+        pct(note_recall),
+        notes_f1,
+        f1s.iter().sum::<f64>() / f1s.len().max(1) as f64,
+    );
+}
+
+/// The converter on what it is for, against hand-made 10K2S maps: the other
+/// maps of their sets (the same audio) converted to 10K2S with the audio
+/// (`AUDIO=0`: without), their scratches against the mapper's in time (either
+/// scratch, within 25 ms: two mappers' timing), where both maps play. Per
+/// song, the mean over its pairs. `MAPS` (parts of file paths, split by `;`)
+/// picks some sets; `MAX_NPS` (40) leaves out gimmick maps. `UNTIL` (ms)
+/// compares up to then only, and takes in the maps with "help" in their name,
+/// left out otherwise, as marks: their notes on the left scratch, where their
+/// mapper hears an accent. `DENSITY` (`none`, `dense`, `more`, `full`)
+/// converts with that density; `VERBOSE=1` lists every pair.
+#[test]
+#[ignore = "reads a whole Songs folder; run by hand"]
+fn corpus_scratch_sources() {
+    use crate::commands::trainer::mania;
+    let picked: Vec<String> = std::env::var("MAPS").map(|m| m.split(';').map(String::from).collect()).unwrap_or_default();
+    let until: f64 = std::env::var("UNTIL").ok().and_then(|s| s.parse().ok()).unwrap_or(f64::INFINITY);
+    let audio = std::env::var("AUDIO").map_or(true, |a| a != "0");
+    let max_nps: f64 = std::env::var("MAX_NPS").ok().and_then(|s| s.parse().ok()).unwrap_or(40.0);
+    let nps = |b: &Beatmap| {
+        let first = b.hit_objects.first().map_or(0.0, |h| h.start_time);
+        let last = b.hit_objects.last().map_or(0.0, |h| h.start_time);
+        b.hit_objects.len() as f64 / ((last - first) / 1000.0).max(1.0)
+    };
+    let density = match std::env::var("DENSITY").as_deref() {
+        Ok("dense") => Density::Dense,
+        Ok("more") => Density::MoreDense,
+        Ok("full") => Density::Full,
+        _ => Density::None,
+    };
+    let sets: Vec<Vec<PathBuf>> = mania_sets(&songs_dir())
+        .into_iter()
+        .filter(|set| picked.is_empty() || set.iter().any(|p| picked.iter().any(|m| p.to_string_lossy().contains(m.as_str()))))
+        .collect();
+    let help = |b: &Beatmap| b.version.to_lowercase().contains("help");
+    // The scratch times of a map up to `until`, and the time span its notes take.
+    let scratches = |b: &Beatmap, left_only: bool| {
+        let mut times: Vec<f64> = b
+            .hit_objects
+            .iter()
+            .filter_map(|o| mania::note(o).map(|(x, _)| (o.start_time, mania::column(x, 12))))
+            .filter(|&(t, c)| t < until && (c == 0 || (c == 11 && !left_only)))
+            .map(|(t, _)| t)
+            .collect();
+        times.sort_by(f64::total_cmp);
+        times.dedup_by(|a, b| (*a - *b).abs() < 1.0);
+        times
+    };
+    let span = |b: &Beatmap| {
+        let first = b.hit_objects.first().map_or(0.0, |h| h.start_time);
+        (first, b.hit_objects.last().map_or(first, |h| h.start_time).min(until))
+    };
+
+    // Per pair: song, source, truth, and [truth, predicted, hits].
+    let results: Vec<(String, String, String, [usize; 3])> = parallel(
+        &sets,
+        |acc: &mut Vec<(String, String, String, [usize; 3])>, set| {
+            let maps: Vec<(PathBuf, Beatmap)> = set.iter().filter_map(|p| parse(p).map(|b| (p.clone(), b))).collect();
+            let truths: Vec<&Beatmap> =
+                maps.iter().map(|(_, b)| b).filter(|b| key_count(b) == 12 && nps(b) <= max_nps && (!help(b) || until.is_finite())).collect();
+            let mut heard: HashMap<String, Option<Accents>> = HashMap::new();
+            for (path, source) in maps.iter().filter(|(_, b)| key_count(b) != 12) {
+                let same: Vec<&&Beatmap> = truths.iter().filter(|t| t.audio_file == source.audio_file).collect();
+                if same.is_empty() {
+                    continue;
+                }
+                let accents = heard.entry(source.audio_file.clone()).or_insert_with(|| {
+                    let folder = path.parent()?;
+                    audio.then(|| Accents::read(&folder.join(&source.audio_file)).ok()).flatten()
+                });
+                let mut converted = source.clone();
+                let params = KeyConverterParams { target_keys: 12, density, keep_jacks: true, playstyle: Some("10K2S".into()) };
+                if key_converter::apply_with(&mut converted, &params, accents.as_ref().map(|a| a.at_rate(1.0))).is_err() {
+                    continue;
+                }
+                let predicted = scratches(&converted, false);
+                for truth in same {
+                    let ((a, b), (c, d)) = (span(source), span(truth));
+                    let (from, to) = (a.max(c) - 1.0, b.min(d) + 1.0);
+                    let within = |times: Vec<f64>| -> Vec<f64> { times.into_iter().filter(|t| (from..=to).contains(t)).collect() };
+                    let (truth_times, predicted) = (within(scratches(truth, help(truth))), within(predicted.clone()));
+                    let hits = predicted.iter().filter(|&&p| truth_times.iter().any(|&t| (t - p).abs() <= 25.0)).count();
+                    acc.push((
+                        truth.title.clone(),
+                        format!("{}K {}", key_count(source), source.version),
+                        truth.version.clone(),
+                        [truth_times.len(), predicted.len(), hits],
+                    ));
+                }
+            }
+        },
+        |total, part| total.extend(part),
+    );
+
+    let f1 = |[truth, predicted, hits]: [usize; 3]| {
+        let (precision, recall) = (hits as f64 / predicted.max(1) as f64, hits as f64 / truth.max(1) as f64);
+        (precision, recall, 2.0 * precision * recall / (precision + recall).max(1e-9))
+    };
+    let mut results = results;
+    results.sort();
+    let mut songs: BTreeMap<String, Vec<(f64, f64, f64)>> = BTreeMap::new();
+    for (song, source, truth, counts) in &results {
+        let (precision, recall, f) = f1(*counts);
+        if std::env::var_os("VERBOSE").is_some() {
+            println!(
+                "  {:<24} {:<34} -> {:<30} truth {:>4} predicted {:>4} | precision {} recall {} F1 {:.2}",
+                song.chars().take(24).collect::<String>(),
+                source.chars().take(34).collect::<String>(),
+                truth.chars().take(30).collect::<String>(),
+                counts[0],
+                counts[1],
+                pct(precision),
+                pct(recall),
+                f
+            );
+        }
+        songs.entry(song.clone()).or_default().push((precision, recall, f));
+    }
+    let mean = |v: &[f64]| v.iter().sum::<f64>() / v.len().max(1) as f64;
+    let mut per_song = Vec::new();
+    for (song, pairs) in &songs {
+        let (p, r, f): (Vec<f64>, Vec<f64>, Vec<f64>) =
+            pairs.iter().fold((vec![], vec![], vec![]), |(mut p, mut r, mut f), x| {
+                p.push(x.0);
+                r.push(x.1);
+                f.push(x.2);
+                (p, r, f)
+            });
+        println!(
+            "  {:<40} {:>3} pairs | precision {} recall {} F1 {:.3}",
+            song.chars().take(40).collect::<String>(),
+            pairs.len(),
+            pct(mean(&p)),
+            pct(mean(&r)),
+            mean(&f)
+        );
+        per_song.push((mean(&p), mean(&r), mean(&f)));
+    }
+    println!(
+        "\n  {} songs: precision {} recall {} F1 {:.3}",
+        per_song.len(),
+        pct(mean(&per_song.iter().map(|x| x.0).collect::<Vec<_>>())),
+        pct(mean(&per_song.iter().map(|x| x.1).collect::<Vec<_>>())),
+        mean(&per_song.iter().map(|x| x.2).collect::<Vec<_>>()),
+    );
 }
