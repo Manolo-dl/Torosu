@@ -1671,3 +1671,245 @@ fn corpus_columns() {
         }
     }
 }
+
+/// How a map uses its scratches: the outer keys of 10K2S, played by the
+/// pinky of the key next to them.
+#[derive(Default)]
+struct ScratchAgg {
+    maps: usize,
+    notes: u64,
+    keys: usize,
+    scratch: u64,
+    /// Notes on the keys next to the scratches, which the same pinky plays.
+    pinky: u64,
+    /// Scratch notes in a row with a key of their own hand, or while it holds
+    /// one; and with the key next to them (never: the same finger).
+    with_own: u64,
+    with_pinky: u64,
+    /// Scratch notes alone in their row.
+    alone: u64,
+    /// Scratch notes and every row by where they fall in the beat (1/1, 1/2,
+    /// 1/4, anything else).
+    beat: [u64; 4],
+    rows_beat: [u64; 4],
+    /// Scratch notes 1/2 beat or closer after the last one of their scratch.
+    jack_half: u64,
+    /// Scratch notes 4th or later in a run, a beat apart or closer, and the
+    /// longest run of each map, summed.
+    runs4: u64,
+    longest: u64,
+    /// 4-beat windows of 8 notes or more, and those where a hand plays less
+    /// than a quarter of them.
+    windows: u64,
+    lopsided: u64,
+}
+
+impl ScratchAgg {
+    fn add(&mut self, l: &Labelled, layout: &Layout) {
+        use super::layout::{Digit, Hand};
+        let scratch = layout.digit_mask(Digit::Scratch);
+        if scratch == 0 || l.rows.is_empty() {
+            return;
+        }
+        let fingers = &layout.fingers;
+        let side = |hand: Hand| fingers.iter().enumerate().filter(|(_, f)| f.hand == hand).fold(0u32, |m, (c, _)| m | 1 << c);
+        let (left, right) = (side(Hand::Left), side(Hand::Right));
+        let own = |s: usize| if left & 1 << s != 0 { left & !(1 << s) } else { right & !(1 << s) };
+        let pinky = |s: usize| own(s) & layout.digit_mask(Digit::Pinky);
+        self.maps += 1;
+        self.keys = l.keys;
+        let rows = &l.rows;
+        let mut longest = 0;
+        for s in (0..l.keys).filter(|&s| scratch & 1 << s != 0) {
+            let mut run = 0u64;
+            let mut last = f64::NEG_INFINITY;
+            for row in rows.iter().filter(|r| r.mask & 1 << s != 0) {
+                run = if row.time - last <= row.beat_len * 1.01 { run + 1 } else { 1 };
+                self.runs4 += (run >= 4) as u64;
+                longest = longest.max(run);
+                last = row.time;
+            }
+        }
+        self.longest += longest;
+
+        let window = rows[0].beat_len * 4.0;
+        let mut counts: BTreeMap<i64, (u32, u32)> = BTreeMap::new();
+        let pinky_keys = (0..l.keys).filter(|&s| scratch & 1 << s != 0).fold(0u32, |m, s| m | pinky(s));
+        for (i, row) in rows.iter().enumerate() {
+            self.notes += row.mask.count_ones() as u64;
+            self.pinky += (row.mask & pinky_keys).count_ones() as u64;
+            self.rows_beat[row.beat.min(3) as usize] += 1;
+            let w = counts.entry(((row.time - rows[0].time) / window) as i64).or_default();
+            w.0 += (row.mask & left).count_ones();
+            w.1 += (row.mask & right).count_ones();
+            for s in (0..l.keys).filter(|&s| row.mask & scratch & 1 << s != 0) {
+                self.scratch += 1;
+                self.with_own += ((row.mask | row.held) & own(s) != 0) as u64;
+                self.with_pinky += (row.mask & pinky(s) != 0) as u64;
+                self.alone += (row.mask == 1 << s) as u64;
+                self.beat[row.beat.min(3) as usize] += 1;
+                let gap = row.beat_len * 0.51;
+                self.jack_half +=
+                    rows[..i].iter().rev().take_while(|r| row.time - r.time <= gap).any(|r| r.mask & 1 << s != 0) as u64;
+            }
+        }
+        for (l, r) in counts.into_values().filter(|&(l, r)| l + r >= 8) {
+            self.windows += 1;
+            self.lopsided += ((l.min(r) as f64) < (l + r) as f64 * 0.25) as u64;
+        }
+    }
+
+    fn merge(&mut self, b: ScratchAgg) {
+        self.maps += b.maps;
+        self.notes += b.notes;
+        self.keys = self.keys.max(b.keys);
+        self.scratch += b.scratch;
+        self.pinky += b.pinky;
+        self.with_own += b.with_own;
+        self.with_pinky += b.with_pinky;
+        self.alone += b.alone;
+        self.jack_half += b.jack_half;
+        self.runs4 += b.runs4;
+        self.longest += b.longest;
+        self.windows += b.windows;
+        self.lopsided += b.lopsided;
+        for i in 0..4 {
+            self.beat[i] += b.beat[i];
+            self.rows_beat[i] += b.rows_beat[i];
+        }
+    }
+
+    fn print(&self, name: &str) {
+        let of = |x: u64| pct(x as f64 / self.scratch.max(1) as f64);
+        let dist = |c: &[u64; 4]| {
+            let total = c.iter().sum::<u64>().max(1) as f64;
+            c.iter().map(|&x| format!("{:.0}", x as f64 / total * 100.0)).collect::<Vec<_>>().join("/")
+        };
+        let maps = self.maps.max(1) as f64;
+        // Each scratch against an even column.
+        let share = self.scratch as f64 / 2.0 / self.notes.max(1) as f64 * self.keys as f64;
+        let pinky = self.pinky as f64 / 2.0 / self.notes.max(1) as f64 * self.keys as f64;
+        println!(
+            "  {:<30} {:>4} maps | scratch {:.2}x a key, the key next to it {:.2}x | with next key {} | with own hand {} | alone {} | \
+             on 1/1-1/2-1/4-other {} (rows {}) | again within 1/2 {} | 4th+ of a run {}, longest {:.1} | lopsided windows {}",
+            name,
+            self.maps,
+            share,
+            pinky,
+            of(self.with_pinky),
+            of(self.with_own),
+            of(self.alone),
+            dist(&self.beat),
+            dist(&self.rows_beat),
+            of(self.jack_half),
+            of(self.runs4),
+            self.longest as f64 / maps,
+            pct(self.lopsided as f64 / self.windows.max(1) as f64),
+        );
+    }
+}
+
+/// Hand-made 10K2S maps next to 4K, 7K and 10K converts to 12K (`LIMIT`
+/// source maps of each key count, 100 by default, up to `MAX_NPS` notes per
+/// second, 15 by default: hand-made 10K2S maps are easy), in the playstyle
+/// `PLAYSTYLE` (12K by default, or 10K2S). `MAPS` (parts of diff file names,
+/// split by `;`) converts those diffs instead, each on its own.
+#[test]
+#[ignore = "reads a whole Songs folder; run by hand"]
+fn corpus_scratch() {
+    const PER_SET: usize = 3;
+    let sets = mania_sets(&songs_dir());
+    let limit: usize = std::env::var("LIMIT").ok().and_then(|s| s.parse().ok()).unwrap_or(100);
+    let max_nps: f64 = std::env::var("MAX_NPS").ok().and_then(|s| s.parse().ok()).unwrap_or(15.0);
+    let picked: Vec<String> = std::env::var("MAPS").map(|m| m.split(';').map(String::from).collect()).unwrap_or_default();
+    let dst = 12usize;
+    let playstyle = std::env::var("PLAYSTYLE").ok();
+    let dst_layout = layout(dst, playstyle.as_deref());
+    let modes = [("None", Density::None), ("Dense", Density::Dense), ("MoreDense", Density::MoreDense), ("Full", Density::Full)];
+    let nps = |b: &Beatmap| {
+        let first = b.hit_objects.first().map_or(0.0, |h| h.start_time);
+        let last = b.hit_objects.last().map_or(0.0, |h| h.start_time);
+        b.hit_objects.len() as f64 / ((last - first) / 1000.0).max(1.0)
+    };
+    let convert = |beatmap: &Beatmap, density: Density| {
+        let mut b = beatmap.clone();
+        let params = KeyConverterParams { target_keys: dst as u8, density, keep_jacks: true, playstyle: playstyle.clone() };
+        key_converter::apply(&mut b, &params).ok().map(|_| label(&b, &dst_layout))
+    };
+
+    let hand_made: ScratchAgg = parallel(
+        &sets,
+        |acc: &mut ScratchAgg, files| {
+            for beatmap in files.iter().filter_map(|p| parse(p)).filter(|b| key_count(b) == dst) {
+                acc.add(&label(&beatmap, &dst_layout), &dst_layout);
+            }
+        },
+        ScratchAgg::merge,
+    );
+    println!("\n=== {}K ({})", dst, dst_layout.name);
+    hand_made.print("hand-made");
+
+    for part in &picked {
+        let Some(path) = sets.iter().flatten().find(|p| p.to_string_lossy().contains(part.as_str())) else {
+            println!("  {}: not found", part);
+            continue;
+        };
+        let Some(beatmap) = parse(path) else { continue };
+        for (name, density) in modes {
+            let mut agg = ScratchAgg::default();
+            if let Some(l) = convert(&beatmap, density) {
+                agg.add(&l, &dst_layout);
+            }
+            // `DUMP=1` writes the convert to `OUT`, to look at it in osu!.
+            if std::env::var_os("DUMP").is_some() {
+                let mut b = beatmap.clone();
+                let params = KeyConverterParams { target_keys: dst as u8, density, keep_jacks: true, playstyle: playstyle.clone() };
+                if key_converter::apply(&mut b, &params).is_ok() {
+                    b.version = format!("{} ({}K {})", b.version, dst, name);
+                    let osu = crate::commands::trainer::osu_fixups::sanitize(b.encode_to_string().unwrap(), None);
+                    let file = format!("{} [{}].osu", b.title, b.version).replace(['/', '\\'], "_");
+                    std::fs::write(out_dir().join(file), osu).unwrap();
+                }
+            }
+            agg.print(&format!("{} {}K {}", beatmap.version.chars().take(18).collect::<String>(), key_count(&beatmap), name));
+        }
+    }
+    if !picked.is_empty() {
+        return;
+    }
+
+    // A few diffs per set, so a big pack does not make up every source.
+    let maps: Vec<Beatmap> = sets
+        .iter()
+        .flat_map(|files| {
+            let diffs: Vec<Beatmap> = files.iter().filter_map(|p| parse(p)).filter(|b| nps(b) <= max_nps).collect();
+            [4usize, 7, 10].into_iter().flat_map(move |keys| {
+                diffs.iter().filter(|b| key_count(b) == keys).take(PER_SET).cloned().collect::<Vec<_>>()
+            })
+        })
+        .collect();
+    let sources: Vec<Beatmap> = [4usize, 7, 10]
+        .iter()
+        .flat_map(|&keys| maps.iter().filter(move |b| key_count(b) == keys).take(limit).cloned())
+        .collect();
+
+    // Keyed by (source keys, mode).
+    let converts: BTreeMap<(usize, usize), ScratchAgg> = parallel(
+        &sources,
+        |acc: &mut BTreeMap<(usize, usize), ScratchAgg>, beatmap| {
+            for (m, (_, density)) in modes.iter().enumerate() {
+                if let Some(l) = convert(beatmap, *density) {
+                    acc.entry((key_count(beatmap), m)).or_default().add(&l, &dst_layout);
+                }
+            }
+        },
+        |total, part| {
+            for (k, agg) in part {
+                total.entry(k).or_default().merge(agg);
+            }
+        },
+    );
+    for ((src, m), agg) in &converts {
+        agg.print(&format!("{}K -> {}K {}", src, dst, modes[*m].0));
+    }
+}

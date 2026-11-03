@@ -56,7 +56,10 @@ export const PLAYSTYLES: Record<number, { name: string; hint: string }[]> = {
         { name: '1+7', hint: '7K with a scratch on the left, IIDX style.' },
     ],
     // 12K to 18K: the playstyles of the osu! wiki (osu!mania 10K+ playstyles).
-    12: [{ name: '10K2S', hint: '10K with a scratch on each side, hit by moving a pinky outward.' }],
+    12: [
+        { name: '12K', hint: 'Every key is a lane: the patterns run into the outer keys.' },
+        { name: '10K2S', hint: 'A 10K map with a scratch on each side for some beats, hit by moving a pinky outward.' },
+    ],
     14: [
         { name: 'DP', hint: 'Double Play, IIDX style: 7 keys per hand in two rows.' },
         { name: 'EZ2AC', hint: '10K and 4 middle keys either hand moves to (Space Mix).' },

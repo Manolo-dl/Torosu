@@ -14,6 +14,8 @@
 //! (6K+6K ... 9K+9K), made for co-op but mostly played solo, with the
 //! playstyles of the osu! wiki (Beatmapping/osu!mania 10K+ playstyles):
 //! `10K2S` on 12K, `DP` and `EZ2AC` on 14K and 16K, `10K8K` and `9K9K` on 18K.
+//! 12K is also played as twelve lanes (`12K`), the patterns running into the
+//! outer keys, where 10K2S keeps them for a scratch's own notes.
 
 use serde::Serialize;
 
@@ -87,6 +89,15 @@ impl Layout {
                 Group { name, mask }
             })
             .collect()
+    }
+
+    /// The key count of the map under the scratches when they are lanes of
+    /// their own, notes for some sounds over a map of the other keys that
+    /// stands without them (10K2S: a 10K map and a scratch on each side, as
+    /// 7K+1 is a 7K map and a scratch), rather than keys the patterns run into
+    /// (12K).
+    pub fn inner_keys(&self) -> Option<usize> {
+        (self.name == "10K2S").then(|| self.keys() - self.digit_mask(Digit::Scratch).count_ones() as usize)
     }
 
     pub fn digit_mask(&self, digit: Digit) -> u32 {
@@ -203,7 +214,13 @@ pub fn layouts(keys: usize) -> Vec<Layout> {
         ],
         9 => &[("4+1+4", "Thumb on the middle key (pop'n)", "L5 L4 L3 L2 T R2 R3 R4 R5")],
         10 => &[("5+5", "Every finger, thumbs in the middle", "L5 L4 L3 L2 L1 R1 R2 R3 R4 R5")],
-        12 => &[("10K2S", "10K with a scratch on each side", "LS L5 L4 L3 L2 L1 R1 R2 R3 R4 R5 RS")],
+        // 12K: every key a lane, the patterns running into the outer ones;
+        // 10K2S: a 10K map, and a scratch on each side for some sounds. The
+        // same fingers, the outer key with the pinky.
+        12 => &[
+            ("12K", "Every key a lane, the patterns run into the outer ones", "LS L5 L4 L3 L2 L1 R1 R2 R3 R4 R5 RS"),
+            ("10K2S", "10K with a scratch on each side for some sounds", "LS L5 L4 L3 L2 L1 R1 R2 R3 R4 R5 RS"),
+        ],
         // DP: 7 keys per hand in two rows, the hand resting on keys 1, 2, 4,
         // 6 and 7 from the thumb; the ring finger also takes key 5 and the
         // index key 3.

@@ -22,7 +22,10 @@
 //! - **Consistency**: each column keeps loosely to the keys around its natural
 //!   place.
 //! - **Spread**: a key that was just used costs more, decaying over a beat. The
-//!   notes spread over every key, without anchors or minijacks.
+//!   notes spread over every key, without anchors or minijacks. Where the
+//!   target has few new keys (10K -> 12K, 7K -> 8K), a column coming back to
+//!   its key is not spread, and one that just played keeps to its key: the
+//!   source's jacks, trills and back-and-forths stay as they are.
 //! - **Jacks**: no new jacks; the map's own jacks (the same column in
 //!   consecutive rows, up to 1/2 beat apart) stay on a single key. Where a
 //!   finger has two keys (10K8K, DP, 9K9K, a scratch and its pinky), going
@@ -47,6 +50,16 @@
 //!   none: open chords stay open. Extra notes go on any key that suits what
 //!   its hand plays rather than next to the chord, mostly in the denser parts
 //!   of the source.
+//! - **Scratches** (10K2S, 14K2S DP): the pinky plays the scratch and the key
+//!   next to it, so they never have notes at once. The scratch is an accent,
+//!   on the beat, in short groups with rests in between: a note only goes
+//!   there if its column does not have to follow it (jacks, chordjacks,
+//!   short notes right after it), so it never takes a column for bars. The
+//!   pinky shares its notes about evenly between the scratch and that key.
+//!   That is 12K, every key a lane. 10K2S keeps the scratches out of the
+//!   patterns, as 7K+1 does: the map is converted to 10K on the inner keys,
+//!   and each scratch gets notes of its own on top, for some beats, where
+//!   hand-made 10K2S maps hit them (see [`add_scratch_lanes`]).
 //!
 //! The hands come from the playstyle of the target (`analysis::layout`): on
 //! 8K `3+2+3` the two middle keys are the thumbs', on `1+7` the first key is
@@ -65,8 +78,9 @@ use rosu_map::{
     Beatmap,
     section::{
         general::GameMode,
-        hit_objects::{HitObject, HitObjectKind},
+        hit_objects::{HitObject, HitObjectCircle, HitObjectKind, hit_samples::HitSampleInfo},
     },
+    util::Pos,
 };
 
 use crate::commands::trainer::{
@@ -114,6 +128,9 @@ const FREE_DEVIATION: f64 = 0.75;
 const TRILL_MIN_NOTES: usize = 6;
 const TRILL_MIN_CHORDS: usize = 4;
 const TRILL_MAX_GAP_BEATS: f64 = 0.5;
+/// Leeway for gaps measured in beats: osu! rounds the notes to the ms, so a
+/// 1/2 at 174 BPM (172.4 ms) comes out as 172 or 173.
+const ROUNDING_MS: f64 = 2.0;
 /// Breaking a real trill.
 const COST_BROKEN_TRILL: f64 = 10.0;
 /// Rows of history kept to spot back-and-forths and to copy patterns.
@@ -154,6 +171,85 @@ const W_REPEAT2: f64 = 12.0;
 const W_REPEAT3: f64 = 6.0;
 /// A note going to the other hand.
 const W_CROSS: f64 = 6.0;
+/// New keys per source key from which a column coming back to its key is
+/// spread over the others ([`W_FRESH`], [`W_REPEAT2`]) in full, and up to
+/// which it is not at all: 4K -> 7K (0.75) and 7K -> 10K (0.43) roll the
+/// back-and-forths of the source over the new keys, 10K -> 12K (0.2) keeps
+/// them, as its mapper meant them with 10 keys to choose from. With half the
+/// cost, a 10K map's columns coming back two notes later kept their key 40%
+/// of the time; with none, 80%.
+const SPREAD_FROM: f64 = 0.2;
+const SPREAD_FULL: f64 = 0.4;
+/// Where the target has few new keys, a column moving to another key while
+/// it played within the last beat costs this, times how little it spreads
+/// ([`SPREAD_FULL`]): the scratch's reward or the pinky's balance do not pull
+/// a column away mid-pattern. On a 10K map going to 12K, with 4 the columns
+/// coming back two notes later kept their key 96 to 98% of the time (85 to
+/// 89% without); with 8, 98 to 100%, but the scratch kept columns for runs of
+/// 10.
+const W_STICK: f64 = 4.0;
+
+// Scratches as lanes of their own (10K2S, see [`add_scratch_lanes`]), measured
+// on hand-made 10K2S maps over the rows with notes and a hand free: how often
+// a scratch comes with them, by where they fall in the bar.
+
+/// On the first beat of a bar, its other beats, a 1/2, anywhere else.
+const SCRATCH_ON_BAR: f64 = 0.285;
+const SCRATCH_ON_BEAT: f64 = 0.145;
+const SCRATCH_ON_HALF: f64 = 0.074;
+const SCRATCH_ELSEWHERE: f64 = 0.012;
+/// Bars 1 and 3 of a phrase of 4 (from the first note, a rest of 2 beats or
+/// a kiai) get more than bars 2 and 4: 35% against 21% on their first beat.
+const SCRATCH_PHRASE: [f64; 2] = [1.22, 0.75];
+/// The rates times this: half of the scratches of hand-made maps come where
+/// no other key has a note, which a convert has no sound to put one on, so
+/// the rows with notes get them more often. With 4 a convert gets about one a
+/// bar where its hands leave room (hand-made maps: 1.05), a third of that on
+/// dense 10K maps whose rows mostly have both hands.
+const SCRATCH_SCALE: f64 = 4.0;
+/// How the rates change with the nearest note the scratch's hand presses,
+/// which moves out to it, as (up to how far, in beats, times what): rarely
+/// 1/4 beat away (15% of the rate with none within 1/2). Hand-made maps of 10
+/// notes a second and more come 1/4 beat close 10 to 30% of the time; easy
+/// ones never.
+const SCRATCH_HAND_NEAR: [(f64, f64); 3] = [(0.13, SCRATCH_HAND_BUSY), (0.26, 0.15), (0.51, 0.85)];
+/// With a note of the hand in the row, 1/8 beat away or while it holds a
+/// long note: never in hand-made maps, which leave the hand free, but a dense
+/// map's rows mostly have both hands and their notes stay. Only the key of
+/// the pinky never goes with its scratch.
+const SCRATCH_HAND_BUSY: f64 = 0.1;
+/// The same for the key of the scratch's pinky, from its notes' ends too:
+/// never 3/8 beat away or closer (a jack of the pinky), less 1/2 beat away.
+const SCRATCH_PINKY_NEAR: [(f64, f64); 2] = [(0.38, 0.0), (0.56, 0.4)];
+/// Reward for a note on a scratch the pinky moves out to (10K2S, 14K2S DP),
+/// on the beat; [`SCRATCH_BEAT`] of it elsewhere. Hand-made 10K2S maps use
+/// the scratch as an accent, 74% of its notes on the beat; without the
+/// reward, the scratch gets few notes and those in runs, from the source
+/// columns whose natural place it is.
+const W_SCRATCH: f64 = 8.0;
+/// The share of [`W_SCRATCH`] by position in the beat (1/1, 1/2, 1/4, other).
+const SCRATCH_BEAT: [f64; 4] = [1.0, 0.5, 0.0, 0.0];
+/// A scratch costs this per note it had lately and would have next (see
+/// [`Note::ahead`]), each decaying over [`SCRATCH_DECAY_BEATS`]: hand-made
+/// maps hit it in short groups with long rests in between (a third of the
+/// gaps a beat or less, a quarter over 8 beats), never for bars on end.
+/// With 8 and 3, 4K, 7K and 10K converts give each scratch 0.5 to 1.6x the
+/// notes of a key, in runs of 7 at most (see `corpus_scratch`); a reward of
+/// 10, or a level of 2, makes runs of 10 to 20 again.
+const W_SCRATCH_LEVEL: f64 = 3.0;
+const SCRATCH_DECAY_BEATS: f64 = 4.0;
+/// Per note a scratch has had more than the key next to it (the other key
+/// of its pinky) lately, decaying over [`PINKY_BALANCE_BEATS`], a note on it
+/// costs this more, and one on that key this less, by
+/// [`PINKY_BALANCE_CAP`] notes at most; the same the other way. Hand-made
+/// 10K2S maps share the pinky's notes about evenly (6.6% on the scratch, 6.0%
+/// on the key); without it the scratch took four times as many, as the
+/// source column whose natural place it is stays on it. With 2, converts get
+/// 0.9 to 1.3 notes on the scratch per note on the key. A bigger reward
+/// brings runs back: a scratch left alone for long would take every note.
+const W_PINKY_BALANCE: f64 = 2.0;
+const PINKY_BALANCE_BEATS: f64 = 16.0;
+const PINKY_BALANCE_CAP: f64 = 2.0;
 
 /// Most extra notes a row can get.
 const MAX_EXTRAS: usize = 4;
@@ -312,18 +408,36 @@ fn choices(costs: &[[f64; MAX_KEYS]], keys: usize) -> Vec<Vec<u8>> {
 }
 
 /// Calls `f` with every way to place notes on keys left to right, each note
-/// on one of its `choices`, in the order of their masks.
-fn each_combo(choices: &[&[u8]], combo: &mut [u8], f: &mut impl FnMut(&[u8])) {
-    fn place(choices: &[&[u8]], combo: &mut [u8], n: usize, below: u8, f: &mut impl FnMut(&[u8])) {
+/// on one of its `choices` and each finger on one of its keys at most (see
+/// [`shared_fingers`]: on 10K2S a scratch and the key next to it), in the
+/// order of their masks.
+fn each_combo(choices: &[&[u8]], fingers: &[u32; MAX_KEYS], combo: &mut [u8], f: &mut impl FnMut(&[u8])) {
+    fn place(
+        choices: &[&[u8]],
+        fingers: &[u32; MAX_KEYS],
+        combo: &mut [u8],
+        n: usize,
+        below: u8,
+        taken: u32,
+        f: &mut impl FnMut(&[u8]),
+    ) {
         if n == 0 {
             return f(combo);
         }
         for &key in choices[n - 1].iter().take_while(|&&key| key < below) {
+            if taken & 1 << key != 0 {
+                continue;
+            }
             combo[n - 1] = key;
-            place(choices, combo, n - 1, key, f);
+            place(choices, fingers, combo, n - 1, key, taken | fingers[key as usize], f);
         }
     }
-    place(choices, combo, choices.len(), u8::MAX, f);
+    place(choices, fingers, combo, choices.len(), u8::MAX, 0, f);
+}
+
+/// How many notes a row of the target can have at once: one per finger.
+fn fingers_count(fingers: &[u32; MAX_KEYS], keys: usize) -> usize {
+    (0..keys).filter(|&k| fingers[k].trailing_zeros() as usize == k).count()
 }
 
 /// Which of `k` notes (sorted by column) are kept when only `m` fit: spread
@@ -341,6 +455,10 @@ struct Note {
     idx: usize,
     end: f64,
     src: u8,
+    /// The notes of its source column that would follow it onto its key
+    /// (see [`look_ahead`]), each decaying over [`SCRATCH_DECAY_BEATS`]: what
+    /// a scratch taking it would get too.
+    ahead: f64,
 }
 
 struct Row {
@@ -365,6 +483,8 @@ struct Row {
     share: u8,
     /// Two of its notes on next columns of the same hand (a pill).
     pill: bool,
+    /// Two of its notes on next columns, in any hand.
+    adjacent: bool,
     /// The pattern, density zone and beat position of the source here.
     pattern: Pattern,
     zone: Zone,
@@ -395,6 +515,14 @@ struct State {
     history: [Past; HISTORY],
     /// Wide hands: what each hand (left, right) played last.
     hands: [HandPast; 2],
+    /// Per scratch: when it was last hit, and how many notes it had lately
+    /// (each decaying over [`SCRATCH_DECAY_BEATS`]) as of then.
+    scratch_time: [f64; MAX_KEYS],
+    scratch_level: [f64; MAX_KEYS],
+    /// Per scratch and the key next to it: when it was last hit, and how
+    /// many notes it had lately (decaying over [`PINKY_BALANCE_BEATS`]).
+    pinky_time: [f64; MAX_KEYS],
+    pinky_level: [f64; MAX_KEYS],
 }
 
 impl State {
@@ -410,6 +538,10 @@ impl State {
             last_roll: 0,
             history: [Past { time: f64::NEG_INFINITY, src: 0, dst: 0, decision: Decision::DROPPED }; HISTORY],
             hands: [HandPast { time: f64::NEG_INFINITY, ..Default::default() }; 2],
+            scratch_time: [f64::NEG_INFINITY; MAX_KEYS],
+            scratch_level: [0.0; MAX_KEYS],
+            pinky_time: [f64::NEG_INFINITY; MAX_KEYS],
+            pinky_level: [0.0; MAX_KEYS],
         }
     }
 }
@@ -457,6 +589,7 @@ struct Past {
     decision: Decision,
 }
 
+#[derive(Clone, Copy)]
 struct Ctx<'a> {
     notes: &'a [Note],
     src_keys: usize,
@@ -469,8 +602,15 @@ struct Ctx<'a> {
     /// aside, and whether both have 4 keys or more (see [`W_HAND_ROLL`]).
     dst_groups: [u32; 2],
     wide: bool,
+    /// The scratches the pinky moves out to (10K2S, 14K2S DP), see [`W_SCRATCH`],
+    /// and with them the keys next to them (see [`W_PINKY_BALANCE`]).
+    scratches: u32,
+    pinkies: u32,
     /// The keys each target key shares a finger with (see [`shared_fingers`]).
     fingers: [u32; MAX_KEYS],
+    /// How much a column coming back to its key is spread over the others,
+    /// 0 to 1 (see [`SPREAD_FULL`]).
+    spread: f64,
 }
 
 fn pos(col: usize, keys: usize) -> f64 {
@@ -479,7 +619,7 @@ fn pos(col: usize, keys: usize) -> f64 {
 
 impl Ctx<'_> {
     fn fresh(&self, state: &State, col: usize, row: &Row) -> f64 {
-        let weight = if row.notes.len() > 1 || row.quota > 0 { W_FRESH_CHORDS } else { W_FRESH };
+        let weight = if row.notes.len() > 1 || (row.quota > 0 && self.fill.is_some()) { W_FRESH_CHORDS } else { W_FRESH };
         weight * (-(row.time - state.release[col]) / row.beat_len).exp()
     }
 
@@ -594,26 +734,59 @@ impl Ctx<'_> {
                 if source_jack && self.keep_jacks && !keeps_jack {
                     cost += COST_BROKEN_JACK;
                 }
+                let own = state.last_src[col] == note.src;
                 if !keeps_jack {
                     cost += self.repeat_cost(state, row, src, col);
                     if state.last_src[col] != note.src && row.time - state.release[col] <= jack_gap {
                         cost += COST_NEW_JACK;
                     }
-                    cost += self.fresh(state, col, row);
+                    // A column coming back to its key is spread only where
+                    // the target has room for it (see `spread`).
+                    cost += self.fresh(state, col, row) * if own { self.spread } else { 1.0 };
                 }
 
                 if state.src_target[src] != NONE && state.src_target[src] as usize != col {
                     cost += W_SWITCH;
+                    if row.time - state.src_release[src] <= row.beat_len + ROUNDING_MS {
+                        cost += W_STICK * (1.0 - self.spread);
+                    }
                 }
                 let natural = pos(src, self.src_keys) * self.dst_keys as f64 - 0.5;
                 let stray = ((col as f64 - natural).abs() - FREE_DEVIATION).max(0.0);
                 cost += W_DEVIATION * stray * stray;
+                if self.scratches & 1 << col != 0 {
+                    cost += self.scratch_cost(state, row, col, note.ahead);
+                }
+                // The pinky's balance moves a column when it starts, not one
+                // coming back to its key, where the target keeps those.
+                cost += self.pinky_cost(state, row, col) * if own { self.spread } else { 1.0 };
 
                 costs[i][col] = cost;
             }
         }
 
         costs
+    }
+
+    /// The cost of a note on a scratch here: a reward for an accent on the
+    /// beat, less the more the scratch was used lately and would be next
+    /// (`ahead`, see [`Note::ahead`]).
+    fn scratch_cost(&self, state: &State, row: &Row, col: usize, ahead: f64) -> f64 {
+        let decay = (-(row.time - state.scratch_time[col]) / (SCRATCH_DECAY_BEATS * row.beat_len)).exp();
+        W_SCRATCH_LEVEL * (state.scratch_level[col] * decay + ahead) - W_SCRATCH * SCRATCH_BEAT[row.beat.min(3) as usize]
+    }
+
+    /// On a scratch or the key next to it: how many notes more than the other
+    /// it had lately, times [`W_PINKY_BALANCE`] (negative when it had fewer).
+    fn pinky_cost(&self, state: &State, row: &Row, col: usize) -> f64 {
+        if self.pinkies & 1 << col == 0 {
+            return 0.0;
+        }
+        let level = |k: usize| {
+            state.pinky_level[k] * (-(row.time - state.pinky_time[k]) / (PINKY_BALANCE_BEATS * row.beat_len)).exp()
+        };
+        let others = keys_of(self.fingers[col] & !(1 << col)).map(|k| level(k as usize)).sum::<f64>();
+        W_PINKY_BALANCE * (level(col) - others).max(-PINKY_BALANCE_CAP)
     }
 
     /// Cost of a key coming back 2 or 3 notes later (a back-and-forth), and
@@ -638,7 +811,9 @@ impl Ctx<'_> {
                     cost += COST_BROKEN_TRILL;
                 }
             } else if dst_repeats {
-                cost += weight;
+                // The source's own back-and-forths are spread only where the
+                // target has room for them (see `spread`).
+                cost += weight * if src_repeats { self.spread } else { 1.0 };
             }
         }
         cost
@@ -665,6 +840,10 @@ impl Ctx<'_> {
 
         let alternating = self.alternating(state, row);
         let busy = self.busy_hands(state, row);
+        // A repeated pattern copies its extra notes with the row, so one on a
+        // scratch comes back as often as the row's columns do.
+        let extra_ahead =
+            if row.grouped { self.notes[row.notes.clone()].iter().map(|n| n.ahead).fold(0.0, f64::max) } else { 0.0 };
         for (col, cost) in costs.iter_mut().enumerate().take(self.dst_keys) {
             let since = row.time - state.release[col];
             if since > 0.0 && since >= gap {
@@ -672,7 +851,9 @@ impl Ctx<'_> {
                 // In jumptrills the middle key is an accent on the beat.
                 let middle = alternating && self.dst_hands[col] == Hand::Either && row.beat != 0;
                 let hand = if hand_bit(self.dst_hands[col]) & busy != 0 || middle { W_HAND_TWICE } else { 0.0 };
-                *cost = self.fresh(state, col, row) + jack + hand - reward;
+                let scratch = if self.scratches & 1 << col != 0 { self.scratch_cost(state, row, col, extra_ahead) } else { 0.0 };
+                let scratch = scratch + self.pinky_cost(state, row, col);
+                *cost = self.fresh(state, col, row) + jack + hand - reward + scratch;
             }
         }
         costs
@@ -688,8 +869,21 @@ impl Ctx<'_> {
         let Some(fill) = self.fill else { return (extras, 0, 0.0) };
         let max = if fill.scaled { row.quota as usize } else { fill.max };
 
-        // Full spreads the extras over any key, except in repeated patterns.
-        let anywhere = (fill.scaled || self.wide) && !row.grouped;
+        // Full spreads the extras over any key, except in repeated patterns,
+        // where they stay next to the chord so each phase of a jumptrill sits
+        // on one hand. Where the target has few new keys and wide hands
+        // (10K -> 12K), they go anywhere on the chord's hand instead, as
+        // elsewhere: a 10K trill of single notes does not turn into a
+        // jumptrill of pills.
+        let near = self.spread < 1.0;
+        let anywhere = (fill.scaled || self.wide) && (!row.grouped || (self.wide && near));
+        let chord_hands = combo.iter().fold(0u8, |m, &c| m | hand_bit(self.dst_hands[c as usize]));
+        // Where the target has few new keys, an extra note does not go next
+        // to a note of its row unless the source has notes next to each other
+        // there: a single note of a stream does not turn into two next keys,
+        // in a hand or across the middle (a thumb on each middle key), which
+        // 6 to 12% of the rows a 10K map's extra notes went to did.
+        let apart = near && !row.adjacent;
 
         let mut n = 0;
         let mut total = 0.0;
@@ -697,13 +891,24 @@ impl Ctx<'_> {
             // The cost the choice is made on, the key, and the cost it adds
             // (what each hand plays is costed with the whole row later).
             let mut best: Option<(f64, u8, f64)> = None;
+            let placed = combo.iter().chain(&extras[..n]);
+            let taken = placed.clone().fold(0u32, |m, &c| m | 1 << c);
+            // Every key of the fingers already in the row (see `shared_fingers`):
+            // on 10K2S a scratch and the key next to it never go together.
+            let held = placed.fold(0u32, |m, &c| m | self.fingers[c as usize]);
             if anywhere {
-                let taken = combo.iter().chain(&extras[..n]).fold(0u32, |m, &c| m | 1 << c);
                 // Wide hands: an extra note goes on with what its hand plays.
                 let hand_now = self.hand_cost(state, row, taken);
                 for next in 0..self.dst_keys as u8 {
                     let mut added = extra_costs[next as usize];
-                    if !added.is_finite() || taken & 1 << next != 0 {
+                    if !added.is_finite() || held & 1 << next != 0 {
+                        continue;
+                    }
+                    let hand = hand_bit(self.dst_hands[next as usize]);
+                    if row.grouped && hand != 0 && chord_hands != 0 && hand & chord_hands == 0 {
+                        continue;
+                    }
+                    if apart && (taken << 1 | taken >> 1) & 1 << next != 0 {
                         continue;
                     }
                     if n > 0 && !fill.scaled {
@@ -727,8 +932,7 @@ impl Ctx<'_> {
                     // half: rows mostly grow by one note, sometimes two.
                     let cost = extra_costs[next as usize] + if n > 0 && !fill.scaled { EXTRA_REWARD / 2.0 } else { 0.0 };
                     if cost < 0.0
-                        && !combo.contains(&next)
-                        && !extras[..n].contains(&next)
+                        && held & 1 << next == 0
                         && same_hand(self.dst_hands[col as usize], self.dst_hands[next as usize])
                         && best.is_none_or(|(b, _, _)| cost < b)
                     {
@@ -818,7 +1022,7 @@ impl Ctx<'_> {
             let before = out.len();
             let options: Vec<&[u8]> = keep.iter().map(|&note| choices[note].as_slice()).collect();
 
-            each_combo(&options, &mut combo[..size], &mut |combo| {
+            each_combo(&options, &self.fingers, &mut combo[..size], &mut |combo| {
                 let mut cost = dropped;
                 for (&note, &col) in keep.iter().zip(combo) {
                     cost += costs[note][col as usize];
@@ -926,13 +1130,31 @@ impl Ctx<'_> {
             state.last_is_ln[col as usize] = end > row.time;
         }
 
+        for col in keys_of(dst_mask & self.pinkies) {
+            let col = col as usize;
+            let decay = (-(row.time - state.pinky_time[col]) / (PINKY_BALANCE_BEATS * row.beat_len)).exp();
+            state.pinky_level[col] = state.pinky_level[col] * decay + 1.0;
+            state.pinky_time[col] = row.time;
+        }
+        for col in keys_of(dst_mask & self.scratches) {
+            let col = col as usize;
+            let decay = (-(row.time - state.scratch_time[col]) / (SCRATCH_DECAY_BEATS * row.beat_len)).exp();
+            state.scratch_level[col] = state.scratch_level[col] * decay + 1.0;
+            state.scratch_time[col] = row.time;
+        }
+
         // The other keys of a finger wait for it as its own key does, so a
         // finger going to another of its keys costs what a new jack does.
+        // After a long note the finger is up already: its column may go on to
+        // the other key as it would on its own (a 7K FLN column leaving the
+        // scratch for the key next to it, 1/4 beat after its release).
         for col in keys_of(dst_mask) {
-            for key in keys_of(self.fingers[col as usize] & !dst_mask) {
+            let col = col as usize;
+            let src = if state.last_is_ln[col] { state.last_src[col] } else { NONE };
+            for key in keys_of(self.fingers[col] & !dst_mask) {
                 let key = key as usize;
-                state.release[key] = state.release[key].max(state.release[col as usize]);
-                state.last_src[key] = NONE;
+                state.release[key] = state.release[key].max(state.release[col]);
+                state.last_src[key] = src;
                 state.last_is_ln[key] = false;
             }
         }
@@ -1009,6 +1231,235 @@ fn search(ctx: &Ctx, rows: &[Row]) -> Vec<Decision> {
     path
 }
 
+/// Adds the extra notes to a placement made without them (`path`), row by row,
+/// without moving its notes: each row gets what [`Ctx::pick_extras`] gives
+/// it, on keys with no note, on them or on another key of their finger, from
+/// a jack of the map's ([`SOURCE_JACK_BEATS`]) before the extra note to one
+/// after it: it does not turn a jack of two into three, nor shield a long
+/// note, as 15 to 24% of a 10K map's extra notes did with a jack's gap of
+/// the converter's own (3/8 beat). A repeated pattern copies the extra notes
+/// of the row it repeats.
+fn add_extras(ctx: &Ctx, rows: &[Row], path: &[Decision]) -> Vec<Decision> {
+    // Per row, when each key next has a note of the placement, after it.
+    let mut next_use = vec![[f64::INFINITY; MAX_KEYS]; rows.len()];
+    let mut upcoming = [f64::INFINITY; MAX_KEYS];
+    for (ri, (row, decision)) in rows.iter().zip(path).enumerate().rev() {
+        next_use[ri] = upcoming;
+        for col in keys_of(decision.keys) {
+            upcoming[col as usize] = row.time;
+        }
+    }
+
+    let mut state = State::new();
+    let mut out = Vec::with_capacity(rows.len());
+    for (ri, (row, placed)) in rows.iter().zip(path).enumerate() {
+        let jack_gap = row.beat_len * SOURCE_JACK_BEATS;
+        // Whether an extra note in `col` of `decision` leaves the placement's
+        // next notes alone.
+        let clear = |decision: &Decision, col: u8| {
+            let end = ctx.template(row, decision, col).map_or(row.time, |n| ctx.notes[n].end);
+            keys_of(ctx.fingers[col as usize]).all(|k| next_use[ri][k as usize] - end > jack_gap)
+        };
+        let copied = (row.copy > 0)
+            .then(|| state.history[row.copy as usize - 1].decision)
+            .filter(|past| {
+                past.keys == placed.keys
+                    && ctx.fits(&state, row, past)
+                    && past.extras[..past.n_extras as usize].iter().all(|&col| clear(past, col))
+            });
+        let decision = match copied {
+            Some(past) => past,
+            None if placed.keys == 0 => *placed,
+            None => {
+                let mut costs = ctx.extra_costs(&state, row);
+                for col in 0..ctx.dst_keys as u8 {
+                    // `release` holds the last note of the key's finger too.
+                    if !clear(placed, col) || row.time - state.release[col as usize] <= jack_gap {
+                        costs[col as usize] = f64::INFINITY;
+                    }
+                }
+                let combo: Vec<u8> = keys_of(placed.keys).collect();
+                let (extras, n_extras, _) = ctx.pick_extras(&state, row, &combo, &costs);
+                Decision { keys: placed.keys, extras, n_extras }
+            }
+        };
+        ctx.commit(&mut state, row, &decision);
+        out.push(decision);
+    }
+    out
+}
+
+/// Scratches as lanes of their own (see [`Layout::inner_keys`]): moves a map of
+/// `inner_keys` keys onto the layout's other keys as it is, and gives each
+/// scratch notes of its own on top, where hand-made 10K2S maps hit one: on
+/// rows its hand has no note on, less the closer its hand plays around them
+/// (see [`SCRATCH_HAND_NEAR`]), mostly on the first beat of a bar, then on the
+/// other beats and the 1/2s, more in the first and third bar of a phrase. The
+/// density's extra notes in a scratch's way make room for it. The rows add up how often a
+/// scratch comes there and get one each time the sum passes a whole: on the
+/// strong beats more than the weak ones, never drawn at random. The key of
+/// the scratch's pinky has no note 3/8 beat around it nor holds one, and the
+/// map stands as it was without them.
+fn add_scratch_lanes(beatmap: &mut Beatmap, layout: &Layout, inner_keys: usize, extras: &[bool]) {
+    let keys = layout.keys();
+    let scratches = layout.digit_mask(Digit::Scratch);
+    let inner: Vec<usize> = (0..keys).filter(|&k| scratches & 1 << k == 0).collect();
+    debug_assert_eq!(inner.len(), inner_keys);
+
+    // Per key, the map's notes as (start, end), in time: the density's extra
+    // notes make way for the scratches rather than keep them out.
+    let mut lanes: Vec<Vec<(f64, f64)>> = vec![Vec::new(); keys];
+    let mut rows: Vec<f64> = Vec::new();
+    for (i, obj) in beatmap.hit_objects.iter_mut().enumerate() {
+        let Some((x, end)) = mania::note(obj) else { continue };
+        let key = inner[mania::column(x, inner_keys).min(inner_keys - 1)];
+        set_x(obj, mania::column_x(key, keys));
+        if extras.get(i).copied().unwrap_or(false) {
+            continue;
+        }
+        lanes[key].push((obj.start_time, end));
+        if rows.last().is_none_or(|&t| (obj.start_time - t).abs() >= 1.0) {
+            rows.push(obj.start_time);
+        }
+    }
+    beatmap.circle_size = keys as f32;
+    for lane in &mut lanes {
+        lane.sort_by(|a, b| a.0.total_cmp(&b.0));
+    }
+
+    // For the keys of `mask` at `time`: whether one holds a long note across
+    // it, how far the nearest note starts, and how far one ended before it.
+    let nearest = |mask: u32, time: f64| {
+        let (mut held, mut press, mut release) = (false, f64::INFINITY, f64::INFINITY);
+        for k in keys_of(mask) {
+            let lane = &lanes[k as usize];
+            let i = lane.partition_point(|&(start, _)| start <= time + 1.0);
+            if let Some(&(start, end)) = i.checked_sub(1).map(|i| &lane[i]) {
+                press = press.min((time - start).abs());
+                if start < time - 1.0 && end > time + 1.0 {
+                    held = true;
+                } else {
+                    release = release.min((time - end).max(0.0));
+                }
+            }
+            if let Some(&(start, _)) = lane.get(i) {
+                press = press.min(start - time);
+            }
+        }
+        (held, press, release)
+    };
+    // `factor` of the first `(up to, factor)` the gap (in beats) is within.
+    let near = |table: &[(f64, f64)], gap: f64| table.iter().find(|&&(within, _)| gap <= within).map_or(1.0, |&(_, f)| f);
+    let fingers = shared_fingers(layout);
+    let hand = |s: usize| {
+        (0..keys).filter(|&k| k != s && layout.fingers[k].hand == layout.fingers[s].hand).fold(0u32, |m, k| m | 1 << k)
+    };
+    let grid = BeatGrid::new(beatmap);
+    let timing = &beatmap.control_points.timing_points;
+    let meter = |time: f64| {
+        let i = timing.partition_point(|tp| tp.time <= time + 1.0);
+        i.checked_sub(1).map_or(4, |i| timing[i].time_signature.numerator.get() as i64)
+    };
+    let effects = &beatmap.control_points.effect_points;
+    let kiai_starts: Vec<f64> =
+        effects.iter().enumerate().filter(|&(i, e)| e.kiai && (i == 0 || !effects[i - 1].kiai)).map(|(_, e)| e.time).collect();
+
+    let mut sum = 0.5;
+    let mut last = [f64::NEG_INFINITY; MAX_KEYS];
+    // The timing point and bar the current phrase started at.
+    let mut phrase: Option<(f64, i64)> = None;
+    let mut prev = f64::NEG_INFINITY;
+    let mut added: Vec<(f64, usize, f64)> = Vec::new();
+    for &time in &rows {
+        let (tp_time, beat_len) = grid.at(time);
+        let meter = meter(time).max(1);
+        let pos = (time - tp_time) / beat_len;
+        let bar = ((pos + 0.01).floor() as i64).div_euclid(meter);
+        let rest = time - prev > beat_len * 2.0 + ROUNDING_MS;
+        let kiai = kiai_starts.iter().any(|&k| k > prev + 1.0 && k <= time + 1.0);
+        if rest || kiai || phrase.is_none_or(|(t, _)| t != tp_time) {
+            phrase = Some((tp_time, bar));
+        }
+        prev = time;
+
+        // How each scratch's rate changes with its hand and its pinky's key.
+        let mut sides: Vec<(usize, f64)> = Vec::new();
+        for s in keys_of(scratches).map(|s| s as usize) {
+            if time - last[s] <= beat_len * JACK_BEATS {
+                continue;
+            }
+            let (pinky_held, pinky_press, pinky_release) = nearest(fingers[s] & !(1 << s), time);
+            let (hand_held, hand_press, _) = nearest(hand(s), time);
+            let pinky = if pinky_held { 0.0 } else { near(&SCRATCH_PINKY_NEAR, pinky_press.min(pinky_release) / beat_len) };
+            let hand = if hand_held { SCRATCH_HAND_BUSY } else { near(&SCRATCH_HAND_NEAR, hand_press / beat_len) };
+            if pinky * hand > 0.0 {
+                sides.push((s, pinky * hand));
+            }
+        }
+        if sides.is_empty() {
+            continue;
+        }
+        let on_beat = match patterns::beat_position(time, tp_time, beat_len) {
+            0 if (pos.round() as i64).rem_euclid(meter) == 0 => SCRATCH_ON_BAR,
+            0 => SCRATCH_ON_BEAT,
+            1 => SCRATCH_ON_HALF,
+            _ => SCRATCH_ELSEWHERE,
+        };
+        let in_phrase = phrase.map_or(0, |(_, start)| (bar - start).rem_euclid(2) as usize);
+        let sides_rate: f64 = sides.iter().map(|&(_, f)| f).sum();
+        sum += on_beat * SCRATCH_PHRASE[in_phrase] * SCRATCH_SCALE * sides_rate;
+        if sum < 1.0 {
+            continue;
+        }
+        sum -= 1.0;
+        // The likelier scratch, or the one that waited longest.
+        let (s, _) = sides
+            .iter()
+            .copied()
+            .max_by(|a, b| a.1.total_cmp(&b.1).then(last[b.0].total_cmp(&last[a.0])))
+            .unwrap_or(sides[0]);
+        last[s] = time;
+        added.push((time, s, beat_len));
+    }
+
+    // The extra notes in a scratch's way go: its hand's 1/8 beat around or
+    // across it, its pinky's key 3/8 beat around.
+    let in_way = |key: usize, start: f64, end: f64| {
+        added.iter().any(|&(time, s, beat_len)| {
+            let hand = hand(s) & 1 << key != 0
+                && ((start - time).abs() <= beat_len * SCRATCH_HAND_NEAR[0].0 || (start < time && end > time));
+            let pinky = fingers[s] & !(1 << s) & 1 << key != 0
+                && start <= time + beat_len * SCRATCH_PINKY_NEAR[0].0
+                && end >= time - beat_len * SCRATCH_PINKY_NEAR[0].0;
+            hand || pinky
+        })
+    };
+    let mut i = 0;
+    beatmap.hit_objects.retain(|obj| {
+        let extra = extras.get(i).copied().unwrap_or(false);
+        i += 1;
+        !extra || mania::note(obj).is_none_or(|(x, end)| !in_way(mania::column(x, keys), obj.start_time, end))
+    });
+
+    // Plain notes: a note of the row, without its sample or additions.
+    for (time, s, _) in added {
+        let Some(template) = beatmap.hit_objects.iter().find(|o| (o.start_time - time).abs() < 1.0) else { continue };
+        let mut note = template.clone();
+        note.kind = HitObjectKind::Circle(HitObjectCircle {
+            pos: Pos::new(mania::column_x(s, keys), 192.0),
+            new_combo: false,
+            combo_offset: 0,
+        });
+        let volume = note.samples.first().map_or(100, |sample| sample.volume);
+        note.samples.retain(|sample| sample.name == HitSampleInfo::HIT_NORMAL);
+        if note.samples.is_empty() {
+            note.samples.push(HitSampleInfo::new(HitSampleInfo::HIT_NORMAL, None, 0, volume));
+        }
+        beatmap.hit_objects.push(note);
+    }
+    beatmap.hit_objects.sort_by(|a, b| a.start_time.total_cmp(&b.start_time));
+}
+
 fn set_x(obj: &mut HitObject, x: f32) {
     match &mut obj.kind {
         HitObjectKind::Circle(circle) => circle.pos.x = x,
@@ -1042,8 +1493,8 @@ fn mark_patterns(rows: &mut [Row], notes: &[Note], keep_jacks: bool) {
     // Length of the alternation ending at each row.
     let mut run = vec![0usize; rows.len()];
     for i in 2..rows.len() {
-        let fast = rows[i].time - rows[i - 1].time <= rows[i].beat_len * TRILL_MAX_GAP_BEATS
-            && rows[i - 1].time - rows[i - 2].time <= rows[i].beat_len * TRILL_MAX_GAP_BEATS;
+        let max_gap = rows[i].beat_len * TRILL_MAX_GAP_BEATS + ROUNDING_MS;
+        let fast = rows[i].time - rows[i - 1].time <= max_gap && rows[i - 1].time - rows[i - 2].time <= max_gap;
         if fast && cols[i] == cols[i - 2] && cols[i] & cols[i - 1] == 0 {
             run[i] = if run[i - 1] > 0 { run[i - 1] + 1 } else { 3 };
         }
@@ -1071,25 +1522,54 @@ fn mark_patterns(rows: &mut [Row], notes: &[Note], keep_jacks: bool) {
     }
 }
 
+/// Sets [`Note::ahead`]: for each note, the notes of its source column that
+/// would have to follow it onto its key, each weighted by how soon it comes:
+/// one starting within a jack of a short note (going to the other key of the
+/// finger would be one; after a long note it is not, see [`Ctx::commit`]), a
+/// jack of the map in the next row, or a copy of its row. A note other notes
+/// come after but may go elsewhere has none. Where the target has few new
+/// keys (`near`), columns keep to their keys (see [`W_STICK`]): any note of
+/// its column within a beat follows it.
+fn look_ahead(rows: &[Row], notes: &mut [Note], near: bool) {
+    // Per source column, the row and start of its next note and its `ahead`.
+    let mut next: [Option<(usize, f64, f64)>; MAX_KEYS] = [None; MAX_KEYS];
+    for (i, row) in rows.iter().enumerate().rev() {
+        for note in &mut notes[row.notes.clone()] {
+            let col = note.src as usize;
+            note.ahead = match next[col] {
+                Some((j, time, ahead))
+                    if (note.end <= row.time && time - row.time <= row.beat_len * JACK_BEATS)
+                        || (j == i + 1 && time - row.time <= row.beat_len * SOURCE_JACK_BEATS)
+                        || (rows[j].copy > 0 && j == i + rows[j].copy as usize)
+                        || (near && time - row.time <= row.beat_len + ROUNDING_MS) =>
+                {
+                    (-(time - row.time) / (SCRATCH_DECAY_BEATS * row.beat_len)).exp() * (1.0 + ahead)
+                }
+                _ => 0.0,
+            };
+            next[col] = Some((i, row.time, note.ahead));
+        }
+    }
+}
+
 /// How strong a position in the beat is: on the beat, on a half, on a
 /// quarter, or anything else.
 fn beat_strength(time: f64, tp_time: f64, beat_len: f64) -> f64 {
-    let frac = ((time - tp_time) / beat_len).rem_euclid(1.0);
-    let tolerance = 3.0 / beat_len;
-    let near = |x: f64| (frac - x).abs() < tolerance || (frac - x + 1.0).abs() < tolerance;
-
-    if near(0.0) {
-        1.0
-    } else if near(0.5) {
-        0.7
-    } else if near(0.25) || near(0.75) {
-        0.45
-    } else {
-        0.25
+    match patterns::beat_position(time, tp_time, beat_len) {
+        0 => 1.0,
+        1 => 0.7,
+        2 => 0.45,
+        _ => 0.25,
     }
 }
 
 pub fn apply(beatmap: &mut Beatmap, params: &KeyConverterParams) -> Result<()> {
+    convert_marked(beatmap, params).map(|_| ())
+}
+
+/// [`apply`], telling for each hit object of the result whether it is an
+/// extra note of the density, not one of the map's.
+fn convert_marked(beatmap: &mut Beatmap, params: &KeyConverterParams) -> Result<Vec<bool>> {
     if beatmap.mode != GameMode::Mania {
         bail!("the key converter only works on osu!mania maps");
     }
@@ -1103,7 +1583,7 @@ pub fn apply(beatmap: &mut Beatmap, params: &KeyConverterParams) -> Result<()> {
     }
     if src_keys == dst_keys {
         log::warn!("key converter: the map is already {}K, left as is", dst_keys);
-        return Ok(());
+        return Ok(vec![false; beatmap.hit_objects.len()]);
     }
 
     let grid = BeatGrid::new(beatmap);
@@ -1113,6 +1593,19 @@ pub fn apply(beatmap: &mut Beatmap, params: &KeyConverterParams) -> Result<()> {
     let dst_layout = layout::layout(dst_keys, params.playstyle.as_deref());
     if dst_layout.fingers.iter().any(|f| f.player > 0) {
         bail!("the key converter maps for one player, not {}", dst_layout.name);
+    }
+
+    // 10K2S: the map converted to 10K on the inner keys, and the scratches'
+    // own notes on top.
+    if let Some(inner_keys) = dst_layout.inner_keys() {
+        let extras = if src_keys != inner_keys {
+            let inner = KeyConverterParams { target_keys: inner_keys as u8, playstyle: None, ..params.clone() };
+            convert_marked(beatmap, &inner)?
+        } else {
+            vec![false; beatmap.hit_objects.len()]
+        };
+        add_scratch_lanes(beatmap, &dst_layout, inner_keys, &extras);
+        return Ok(vec![false; beatmap.hit_objects.len()]);
     }
     let source = Some(patterns::label(beatmap, &src_layout));
     let source_at = |time: f64| -> (Pattern, Zone, u8) {
@@ -1149,13 +1642,14 @@ pub fn apply(beatmap: &mut Beatmap, params: &KeyConverterParams) -> Result<()> {
                     quota: 0,
                     share: 0,
                     pill: false,
+                    adjacent: false,
                     pattern,
                     zone,
                     beat,
                 });
             }
         }
-        notes.push(Note { idx, end, src });
+        notes.push(Note { idx, end, src, ahead: 0.0 });
     }
 
     let src_hands = hands(&src_layout);
@@ -1168,12 +1662,31 @@ pub fn apply(beatmap: &mut Beatmap, params: &KeyConverterParams) -> Result<()> {
             let (a, b) = (w[0].src as usize, w[1].src as usize);
             b == a + 1 && src_hands[a] != Hand::Either && src_hands[a] == src_hands[b]
         });
+        row.adjacent = notes[row.notes.clone()].windows(2).any(|w| w[1].src == w[0].src + 1);
     }
 
+    // How much a column coming back to its key is spread over the others
+    // (see `SPREAD_FULL`); going down in keys, as before: the target has no
+    // room to keep them.
+    let spread = if dst_keys < src_keys {
+        1.0
+    } else {
+        let room = (dst_keys - src_keys) as f64 / src_keys as f64;
+        ((room - SPREAD_FROM) / (SPREAD_FULL - SPREAD_FROM)).clamp(0.0, 1.0)
+    };
+
     mark_patterns(&mut rows, &notes, params.keep_jacks);
+    look_ahead(&rows, &mut notes, spread < 1.0);
 
     // Extra notes only make sense with more keys.
     let fill = fill_settings(params.density).filter(|_| dst_keys > src_keys);
+
+    // A row has a note per finger at most: on 10K2S, 12 keys but 10 fingers.
+    let fingers = shared_fingers(&dst_layout);
+    let max_chord = fingers_count(&fingers, dst_keys);
+    let scratches = (0..dst_keys)
+        .filter(|&k| dst_layout.fingers[k].digit == Digit::Scratch && fingers[k] != 1 << k)
+        .fold(0u32, |m, k| m | 1 << k);
 
     // Going down, each row keeps its size times the key ratio, rounded, at
     // least one note: hand-made maps do it that consistently.
@@ -1181,9 +1694,9 @@ pub fn apply(beatmap: &mut Beatmap, params: &KeyConverterParams) -> Result<()> {
         let k = row.notes.len();
         row.share = if dst_keys < src_keys {
             let size = (k as f64 * dst_keys as f64 / src_keys as f64).round() as usize;
-            size.clamp(1, k.min(dst_keys)) as u8
+            size.clamp(1, k.min(max_chord)) as u8
         } else {
-            k.min(dst_keys) as u8
+            k.min(max_chord) as u8
         };
     }
 
@@ -1194,10 +1707,20 @@ pub fn apply(beatmap: &mut Beatmap, params: &KeyConverterParams) -> Result<()> {
         for (i, row) in rows.iter_mut().enumerate() {
             let k = row.notes.len();
             let target = if k == src_keys { k as f64 + FULL_ROW_GROWTH } else { k as f64 * scale };
-            // Any choice index no row uses, so it is independent noise.
+            // Any choice index no row uses, so it is independent noise. A
+            // repeated pattern (a trill, a chordjack) is copied from its first
+            // rows, so it takes their size all along. Where the target has few
+            // new keys it gets the size its rows should have, not a draw: a
+            // 10K trill on 12K (1 note x 1.08) turned into a jumptrill 8% of
+            // the time. With more room the draw stays, or 4K -> 7K (x1.575)
+            // would double every jack.
             let dither = tie_break(i, u32::MAX as usize) / TIE_BREAK;
-            let size = (target.floor() + if dither < target.fract() { 1.0 } else { 0.0 }) as usize;
-            row.quota = size.saturating_sub(k).min(dst_keys - k.min(dst_keys)).min(MAX_EXTRAS) as u8;
+            let size = if row.grouped && spread < 1.0 {
+                target.round() as usize
+            } else {
+                (target.floor() + if dither < target.fract() { 1.0 } else { 0.0 }) as usize
+            };
+            row.quota = size.saturating_sub(k).min(max_chord - k.min(max_chord)).min(MAX_EXTRAS) as u8;
         }
     }
     // The two rows a trill or jumptrill alternates get the same size, so
@@ -1224,10 +1747,22 @@ pub fn apply(beatmap: &mut Beatmap, params: &KeyConverterParams) -> Result<()> {
         dst_hands,
         dst_groups,
         wide,
-        fingers: shared_fingers(&dst_layout),
+        scratches,
+        pinkies: keys_of(scratches).fold(scratches, |m, s| m | fingers[s as usize]),
+        spread,
+        fingers,
     };
 
-    let path = search(&ctx, &rows);
+    // Where the target has few new keys, the extra notes go on top of the
+    // source's own placement, the one without them: placing both at once, a
+    // good key for an extra note moved the notes of the map, and the streams
+    // lost their direction.
+    let path = if spread < 1.0 && fill.is_some() {
+        let placed = search(&Ctx { fill: None, ..ctx }, &rows);
+        add_extras(&ctx, &rows, &placed)
+    } else {
+        search(&ctx, &rows)
+    };
 
     let mut targets: Vec<Option<u8>> = vec![None; beatmap.hit_objects.len()];
     let mut extra: Vec<HitObject> = Vec::new();
@@ -1246,22 +1781,24 @@ pub fn apply(beatmap: &mut Beatmap, params: &KeyConverterParams) -> Result<()> {
     }
 
     let total = beatmap.hit_objects.len();
-    let mut objects: Vec<HitObject> = Vec::with_capacity(total + extra.len());
+    // The hit objects, and whether each is an extra note.
+    let mut objects: Vec<(HitObject, bool)> = Vec::with_capacity(total + extra.len());
     for (mut obj, target) in std::mem::take(&mut beatmap.hit_objects).into_iter().zip(&targets) {
         match (&obj.kind, target) {
             (HitObjectKind::Circle(_) | HitObjectKind::Hold(_), Some(col)) => {
                 set_x(&mut obj, mania::column_x(*col as usize, dst_keys));
-                objects.push(obj);
+                objects.push((obj, false));
             }
             (HitObjectKind::Circle(_) | HitObjectKind::Hold(_), None) => {}
-            _ => objects.push(obj),
+            _ => objects.push((obj, false)),
         }
     }
 
     let dropped = total - objects.len();
     let added = extra.len();
-    objects.extend(extra);
-    objects.sort_by(|a, b| a.start_time.total_cmp(&b.start_time));
+    objects.extend(extra.into_iter().map(|obj| (obj, true)));
+    objects.sort_by(|a, b| a.0.start_time.total_cmp(&b.0.start_time));
+    let (objects, extras): (Vec<HitObject>, Vec<bool>) = objects.into_iter().unzip();
 
     beatmap.hit_objects = objects;
     beatmap.circle_size = dst_keys as f32;
@@ -1275,7 +1812,7 @@ pub fn apply(beatmap: &mut Beatmap, params: &KeyConverterParams) -> Result<()> {
         added
     );
 
-    Ok(())
+    Ok(extras)
 }
 
 #[cfg(test)]
@@ -1583,13 +2120,16 @@ mod tests {
     #[test]
     fn two_stages_stay_playable() {
         // 12K to 18K in every playstyle of the osu! wiki: every note kept and
-        // no new jacks, and with Full no overlaps either.
+        // no new jacks, and with Full no overlaps either. 10K2S adds the
+        // scratches' own notes to them.
         for dst in [12, 14, 16, 18] {
             for layout in layout::layouts(dst).iter().filter(|l| l.fingers.iter().all(|f| f.player == 0)) {
+                let scratches = layout.inner_keys().map_or(0, |_| layout.digit_mask(Digit::Scratch));
                 for src in [4, 7, 10] {
                     let original = rosu_map::from_str::<Beatmap>(&map(src)).unwrap();
                     let beatmap = convert_to(&map(src), layout.name, dst, Density::None);
-                    assert_eq!(beatmap.hit_objects.len(), original.hit_objects.len(), "{}K -> {}K {}", src, dst, layout.name);
+                    let kept = beatmap.hit_objects.iter().filter(|o| scratches & 1 << column(o, dst) == 0).count();
+                    assert_eq!(kept, original.hit_objects.len(), "{}K -> {}K {}", src, dst, layout.name);
                     assert!(check(&beatmap, dst) <= check(&original, src), "{}K -> {}K {}", src, dst, layout.name);
                     check(&convert_to(&map(src), layout.name, dst, Density::Full), dst);
                 }
@@ -1631,6 +2171,312 @@ mod tests {
         }
     }
 
+    /// Checks no finger plays two of its keys at once (see [`shared_fingers`]):
+    /// in one row, or while it holds a long note on the other.
+    fn check_fingers(beatmap: &Beatmap, layout: &Layout, what: &str) {
+        let keys = layout.keys();
+        let shared = shared_fingers(layout);
+        let mut release = vec![f64::NEG_INFINITY; keys];
+        for obj in &beatmap.hit_objects {
+            let (x, end) = mania::note(obj).expect("only notes");
+            let col = mania::column(x, keys);
+            for k in keys_of(shared[col] & !(1 << col)) {
+                assert!(obj.start_time > release[k as usize], "{}: keys {} and {} at {}", what, k, col, obj.start_time);
+            }
+            release[col] = end;
+        }
+    }
+
+    /// A 7K full LN map at 120 BPM: rows of one or two notes in 1/4s, each
+    /// note held until 1/4 beat before the next of its column, as FLN maps do.
+    fn fln_map() -> String {
+        let keys = 7;
+        let mut seed = 11u64;
+        let mut notes: Vec<(i64, usize)> = Vec::new();
+        for step in 0..400i64 {
+            seed = seed.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+            for k in 0..1 + (seed >> 62) as usize % 2 {
+                let col = ((seed >> (8 * k + 8)) as usize) % keys;
+                if !notes.contains(&(step * 125, col)) {
+                    notes.push((step * 125, col));
+                }
+            }
+        }
+        let mut osu = String::from(
+            "osu file format v14\n\n[General]\nMode: 3\n\n[Difficulty]\nCircleSize:7\n\n[TimingPoints]\n0,500,4,1,0,60,1,0\n\n[HitObjects]\n",
+        );
+        for &(time, col) in &notes {
+            let x = mania::column_x(col, keys) as i32;
+            match notes.iter().filter(|&&(t, c)| c == col && t > time).map(|&(t, _)| t).min() {
+                Some(next) if next - 125 > time => osu.push_str(&format!("{},192,{},128,0,{}:0:0:0:0:\n", x, time, next - 125)),
+                _ => osu.push_str(&format!("{},192,{},1,0,0:0:0:0:\n", x, time)),
+            }
+        }
+        osu
+    }
+
+    /// How many notes each scratch of a 12K map and the key next to it get
+    /// against an even key, and the scratch's longest run of notes a beat
+    /// apart or closer (at 120 BPM).
+    fn scratch_use(beatmap: &Beatmap) -> (f64, f64, usize) {
+        let cols = columns(beatmap, 12);
+        let share = |a, b| cols.iter().filter(|&&c| c == a || c == b).count() as f64 / 2.0 / cols.len() as f64 * 12.0;
+        let (scratch, pinky) = (share(0, 11), share(1, 10));
+        let mut longest = 0;
+        for s in [0, 11] {
+            let times: Vec<f64> = beatmap.hit_objects.iter().filter(|o| column(o, 12) == s).map(|o| o.start_time).collect();
+            let mut run = 0;
+            for (i, t) in times.iter().enumerate() {
+                run = if i > 0 && t - times[i - 1] <= 505.0 { run + 1 } else { 1 };
+                longest = longest.max(run);
+            }
+        }
+        (scratch, pinky, longest)
+    }
+
+    #[test]
+    fn scratches_are_accents() {
+        // 10K2S from 4K, 7K, 10K and 7K FLN: the scratches get about as many
+        // notes as a key, and the pinky shares its notes with the key next to
+        // them, but never for bars on end. With FLN a column can leave the
+        // scratch when its long note ends.
+        let sources = [("4K", map(4)), ("7K", map(7)), ("10K", map(10)), ("7K FLN", fln_map())];
+        for (src, osu) in &sources {
+            for (name, density) in [("None", Density::None), ("MoreDense", Density::MoreDense), ("Full", Density::Full)] {
+                let beatmap = convert_to(osu, "12K", 12, density);
+                let (share, pinky, longest) = scratch_use(&beatmap);
+                assert!(share >= 0.35, "{} -> 12K {}: {:.2}x a key", src, name, share);
+                assert!((0.6..=1.6).contains(&(share / pinky)), "{} -> 12K {}: {:.2}x a key, the key next to it {:.2}x", src, name, share, pinky);
+                assert!(longest <= 8, "{} -> 12K {}: a run of {}", src, name, longest);
+            }
+        }
+    }
+
+    #[test]
+    fn near_key_counts_keep_the_source_patterns() {
+        // 10K -> 12K has 2 new keys: a 10K column coming back two notes later
+        // stays on its key, as its mapper meant it, instead of rolling over
+        // the keys next to it. Two columns take turns in 1/2s at 174 BPM
+        // (osu! rounds them to 172 or 173 ms), with a chord on every beat
+        // pair, so they are no trill to copy.
+        let beat = 60000.0 / 174.0;
+        let mut osu = format!(
+            "osu file format v14\n\n[General]\nMode: 3\n\n[Difficulty]\nCircleSize:10\n\n[TimingPoints]\n0,{},4,1,0,60,1,0\n\n[HitObjects]\n",
+            beat
+        );
+        let mut odd = Vec::new();
+        for step in 0..48 {
+            let time = (step as f64 * beat / 2.0).round();
+            let cols: &[usize] = match step % 4 {
+                0 => &[1, 8],
+                1 | 3 => &[4],
+                _ => &[1],
+            };
+            if step % 2 == 1 {
+                odd.push(time);
+            }
+            for &col in cols {
+                osu.push_str(&format!("{},192,{},1,0,0:0:0:0:\n", mania::column_x(col, 10) as i32, time));
+            }
+        }
+        for density in [Density::None, Density::Full] {
+            let (_, beatmap) = convert(&osu, 12, density);
+            // The keys column 4 went to: mostly one.
+            let mut keys = [0usize; 12];
+            for obj in beatmap.hit_objects.iter().filter(|o| odd.contains(&o.start_time)) {
+                keys[column(obj, 12)] += 1;
+            }
+            let most = keys.iter().max().copied().unwrap_or(0);
+            assert!(most * 10 >= odd.len() * 8, "{:?}", keys);
+        }
+    }
+
+    #[test]
+    fn near_key_counts_keep_columns_by_the_scratch() {
+        // 10K -> 12K: a column by the edge comes back every beat, taking turns
+        // with another, with a chord now and then. Its notes stay on one key
+        // rather than going to the scratch for a few and then to the keys
+        // around it as the scratch's costs and the pinky's balance change.
+        let beat = 60000.0 / 174.0;
+        let mut osu = format!(
+            "osu file format v14\n\n[General]\nMode: 3\n\n[Difficulty]\nCircleSize:10\n\n[TimingPoints]\n0,{},4,1,0,60,1,0\n\n[HitObjects]\n",
+            beat
+        );
+        let mut edge = Vec::new();
+        for step in 0..48 {
+            let time = (step as f64 * beat / 2.0).round();
+            let cols: &[usize] = match step % 8 {
+                1 | 3 => &[0, 8],
+                s if s % 2 == 1 => &[8],
+                _ => &[6],
+            };
+            if step % 2 == 1 {
+                edge.push(time);
+            }
+            for &col in cols {
+                osu.push_str(&format!("{},192,{},1,0,0:0:0:0:\n", mania::column_x(col, 10) as i32, time));
+            }
+        }
+        for density in [Density::None, Density::Full] {
+            let (_, beatmap) = convert(&osu, 12, density);
+            let mut keys = [0usize; 12];
+            for obj in beatmap.hit_objects.iter().filter(|o| edge.contains(&o.start_time)) {
+                let key = column(obj, 12);
+                // The chords' other note goes to the left; this is the right.
+                if key >= 6 {
+                    keys[key] += 1;
+                }
+            }
+            let most = keys.iter().max().copied().unwrap_or(0);
+            assert!(most * 10 >= edge.len() * 8, "{:?}", keys);
+        }
+    }
+
+    /// The notes of a map as (start, end, key), in time.
+    fn notes_of(beatmap: &Beatmap, keys: usize) -> Vec<(f64, f64, usize)> {
+        beatmap.hit_objects.iter().map(|o| (o.start_time, mania::note(o).unwrap().1, column(o, keys))).collect()
+    }
+
+    #[test]
+    fn ten_k_two_s_is_a_10k_map_and_scratches() {
+        // 10K2S: the 10K map as it is on the inner keys, and notes of their
+        // own on the scratches, plain, never with the key of their pinky nor
+        // 3/8 beat around it, mostly on the beats.
+        let layout = layout::layout(12, Some("10K2S"));
+        let original = rosu_map::from_str::<Beatmap>(&map(10)).unwrap();
+        for density in [Density::None, Density::Full] {
+            let beatmap = convert_to(&map(10), "10K2S", 12, density);
+            check(&beatmap, 12);
+            check_fingers(&beatmap, &layout, "10K -> 10K2S");
+            let notes = notes_of(&beatmap, 12);
+            let inner: Vec<(f64, f64, usize)> = notes.iter().filter(|n| n.2 != 0 && n.2 != 11).map(|&(s, e, k)| (s, e, k - 1)).collect();
+            assert_eq!(inner, notes_of(&original, 10), "{:?}", density == Density::Full);
+            let scratch: Vec<&(f64, f64, usize)> = notes.iter().filter(|n| n.2 == 0 || n.2 == 11).collect();
+            // 25 bars at 120 BPM.
+            assert!(scratch.len() >= 5, "{} scratch notes", scratch.len());
+            for &&(start, end, key) in &scratch {
+                assert_eq!(start, end, "a scratch note is a plain note");
+                let pinky = if key == 0 { 1 } else { 10 };
+                let gap = 500.0 * JACK_BEATS;
+                assert!(
+                    notes.iter().filter(|n| n.2 == pinky).all(|&(s, e, _)| s - start > gap || start - e > gap),
+                    "a scratch at {} next to its pinky's key",
+                    start
+                );
+            }
+            // Hand-made maps: 3% on the 1/4s and 2% elsewhere.
+            let on_half = scratch.iter().filter(|n| (n.0 / 250.0 - (n.0 / 250.0).round()).abs() < 0.01).count();
+            assert!(on_half * 10 >= scratch.len() * 9, "{} of {} on the 1/2s", on_half, scratch.len());
+            for obj in beatmap.hit_objects.iter().filter(|o| matches!(column(o, 12), 0 | 11)) {
+                assert!(obj.samples.iter().all(|s| s.name == HitSampleInfo::HIT_NORMAL), "{:?}", obj.samples);
+            }
+        }
+        // From 7K, the inner keys hold the 7K map converted to 10K: every note
+        // of it, and the density's extra notes but those in a scratch's way.
+        let original = rosu_map::from_str::<Beatmap>(&map(7)).unwrap();
+        let (_, ten) = convert(&map(7), 10, Density::Full);
+        let beatmap = convert_to(&map(7), "10K2S", 12, Density::Full);
+        let ten = notes_of(&ten, 10);
+        let inner: Vec<(f64, f64, usize)> =
+            notes_of(&beatmap, 12).into_iter().filter(|n| n.2 != 0 && n.2 != 11).map(|(s, e, k)| (s, e, k - 1)).collect();
+        assert!(inner.iter().all(|n| ten.contains(n)));
+        assert!(inner.len() >= original.hit_objects.len());
+        assert!(inner.len() > ten.len() * 9 / 10, "{} of {}", inner.len(), ten.len());
+    }
+
+    #[test]
+    fn near_key_counts_add_notes_around_the_map() {
+        // 10K -> 12K: the denser fills place the map's notes where the plain
+        // conversion does, so its streams keep their direction, and add their
+        // notes around them, still playable, not next to a note of their row
+        // where the source has none next to each other, and not within a
+        // jack of the map's (1/2 beat) of a note on their key: no jack of two
+        // turns into three, no long note gets a shield.
+        let (original, plain) = convert(&map(10), 12, Density::None);
+        let adjacent = |r: &[usize]| r.windows(2).any(|w| w[1] == w[0] + 1);
+        let source = key_rows(&original, 10);
+        let rows = key_rows(&plain, 12);
+        let times: Vec<f64> = {
+            let mut t: Vec<f64> = plain.hit_objects.iter().map(|o| o.start_time).collect();
+            t.dedup();
+            t
+        };
+        for density in [Density::Dense, Density::MoreDense, Density::Full] {
+            let (_, beatmap) = convert(&map(10), 12, density);
+            assert!(beatmap.hit_objects.len() > plain.hit_objects.len());
+            check(&beatmap, 12);
+            check_fingers(&beatmap, &layout::layout(12, None), "10K -> 12K");
+            for ((time, row), src) in times.iter().zip(&rows).zip(&source) {
+                let mut keys: Vec<usize> =
+                    beatmap.hit_objects.iter().filter(|o| o.start_time == *time).map(|o| column(o, 12)).collect();
+                keys.sort();
+                assert!(row.iter().all(|k| keys.contains(k)), "at {}: {:?} then {:?}", time, row, keys);
+                if keys.len() > row.len() && !adjacent(src) && !adjacent(row) {
+                    assert!(!adjacent(&keys), "at {}: {:?} from {:?}", time, keys, src);
+                }
+            }
+            let placed: Vec<(f64, f64, usize)> = plain
+                .hit_objects
+                .iter()
+                .map(|o| (o.start_time, mania::note(o).unwrap().1, column(o, 12)))
+                .collect();
+            let gap = 500.0 * SOURCE_JACK_BEATS;
+            for obj in &beatmap.hit_objects {
+                let (start, end, key) = (obj.start_time, mania::note(obj).unwrap().1, column(obj, 12));
+                if placed.contains(&(start, end, key)) {
+                    continue;
+                }
+                let near = placed.iter().any(|&(s, e, k)| k == key && ((0.0..=gap).contains(&(start - e)) || (0.0..=gap).contains(&(s - end))));
+                assert!(!near, "an extra note at {} in key {} next to a note of the map", start, key);
+            }
+        }
+    }
+
+    #[test]
+    fn near_key_counts_keep_trills_of_single_notes() {
+        // A 10K trill of single notes on 12K: Full (x1.08) keeps it single
+        // notes instead of drawing a jumptrill for the whole of it, and the
+        // denser fills add their notes open, not as pills next to the trill.
+        let beat = 60000.0 / 174.0;
+        let mut osu = format!(
+            "osu file format v14\n\n[General]\nMode: 3\n\n[Difficulty]\nCircleSize:10\n\n[TimingPoints]\n0,{},4,1,0,60,1,0\n\n[HitObjects]\n",
+            beat
+        );
+        for (trill, cols) in [(0, [5, 8]), (1, [6, 9]), (2, [1, 3]), (3, [2, 7])] {
+            for step in 0..12 {
+                let time = ((trill * 16 + step) as f64 * beat / 2.0).round();
+                osu.push_str(&format!("{},192,{},1,0,0:0:0:0:\n", mania::column_x(cols[step % 2], 10) as i32, time));
+            }
+        }
+        let (_, beatmap) = convert(&osu, 12, Density::Full);
+        let rows = key_rows(&beatmap, 12);
+        assert!(rows.iter().all(|r| r.len() == 1), "{:?}", rows);
+        for density in [Density::Dense, Density::MoreDense] {
+            let (_, beatmap) = convert(&osu, 12, density);
+            let rows = key_rows(&beatmap, 12);
+            let pills = rows.iter().filter(|r| r.windows(2).any(|w| w[1] == w[0] + 1 && (w[0] < 6) == (w[1] < 6))).count();
+            assert!(pills * 10 <= rows.len(), "{} pills: {:?}", pills, rows);
+        }
+    }
+
+    #[test]
+    fn a_finger_plays_one_key_at_a_time() {
+        // 10K2S: the pinky plays the scratch and the key next to it, so the
+        // first two keys (and the last two) never have notes at once. The same
+        // goes for the fingers with two keys on DP, 9K9K and 10K8K.
+        let densities = [("None", Density::None), ("MoreDense", Density::MoreDense), ("Full", Density::Full)];
+        for dst in [12, 14, 16, 18] {
+            for layout in layout::layouts(dst).iter().filter(|l| l.fingers.iter().all(|f| f.player == 0)) {
+                for src in [4, 7, 10] {
+                    for (name, density) in densities {
+                        let beatmap = convert_to(&map(src), layout.name, dst, density);
+                        check_fingers(&beatmap, layout, &format!("{}K -> {}K {} {}", src, dst, layout.name, name));
+                    }
+                }
+            }
+        }
+    }
+
     #[test]
     fn shared_fingers_follow_the_playstyle() {
         for keys in 1..=10 {
@@ -1658,9 +2504,19 @@ mod tests {
 
     #[test]
     fn combos_go_in_the_order_of_their_masks() {
+        let own: [u32; MAX_KEYS] = std::array::from_fn(|k| 1 << k);
         let mut seen = Vec::new();
-        each_combo(&[&[0, 1, 2], &[1, 2, 3]], &mut [0; 2], &mut |c| seen.push(c.to_vec()));
+        each_combo(&[&[0, 1, 2], &[1, 2, 3]], &own, &mut [0; 2], &mut |c| seen.push(c.to_vec()));
         assert_eq!(seen, [[0, 1], [0, 2], [1, 2], [0, 3], [1, 3], [2, 3]]);
+        // Keys 0 and 1 of one finger (a scratch and its pinky) never go together.
+        let mut shared = own;
+        shared[0] = 0b11;
+        shared[1] = 0b11;
+        seen.clear();
+        each_combo(&[&[0, 1, 2], &[1, 2, 3]], &shared, &mut [0; 2], &mut |c| seen.push(c.to_vec()));
+        assert_eq!(seen, [[0, 2], [1, 2], [0, 3], [1, 3], [2, 3]]);
+        assert_eq!(fingers_count(&shared, 4), 3);
+        assert_eq!(fingers_count(&shared_fingers(&layout::layout(12, Some("10K2S"))), 12), 10);
         // And their tie breaks are the ones of the list of every mask.
         let mut next = [0usize; 11];
         for mask in 1u32..1 << 10 {

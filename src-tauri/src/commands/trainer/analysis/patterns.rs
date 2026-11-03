@@ -225,7 +225,11 @@ pub fn rows(beatmap: &Beatmap) -> Vec<Row> {
 pub fn beat_position(time: f64, tp_time: f64, beat_len: f64) -> u8 {
     let frac = ((time - tp_time) / beat_len).rem_euclid(1.0);
     let tolerance = 3.0 / beat_len;
-    let near = |x: f64| (frac - x).abs() < tolerance || (frac - x + 1.0).abs() < tolerance;
+    // Around the beat both ways: a note a ms before the next beat is on it.
+    let near = |x: f64| {
+        let d = (frac - x).rem_euclid(1.0);
+        d.min(1.0 - d) < tolerance
+    };
     if near(0.0) {
         0
     } else if near(0.5) {
@@ -632,6 +636,18 @@ pub fn summarize(l: &Labelled, layout: &Layout) -> MapAnalysis {
 mod tests {
     use super::super::layout::layout;
     use super::*;
+
+    #[test]
+    fn beat_positions_allow_a_few_ms_either_way() {
+        // 175 BPM: osu! rounds the notes to the ms, so some fall just before
+        // the beat.
+        let beat = 60000.0 / 175.0;
+        assert_eq!(beat_position(beat * 4.0 - 1.0, 0.0, beat), 0);
+        assert_eq!(beat_position(beat * 4.0 + 1.0, 0.0, beat), 0);
+        assert_eq!(beat_position(beat * 4.5 - 1.0, 0.0, beat), 1);
+        assert_eq!(beat_position(beat * 4.75 + 1.0, 0.0, beat), 2);
+        assert_eq!(beat_position(beat * 4.0 - 10.0, 0.0, beat), 3);
+    }
 
     /// A map from rows of columns, in 1/4s at 120 BPM.
     fn map(keys: usize, rows: &[&[usize]]) -> Beatmap {
