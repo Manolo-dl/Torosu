@@ -20,8 +20,7 @@
       "osuPathPlaceholder": "C:\\Users\\tú\\AppData\\Local\\osu!",
       "pickOsuPath": "Elige tu carpeta de osu!",
       "language": "Idioma",
-      "languageHint": "El idioma de Torosu: Sistema sigue el de tu ordenador",
-      "system": "Sistema ({{ name }})",
+      "languageHint": "El idioma de Torosu",
       "devMode": "Modo desarrollador",
       "devModeHint": "Muestra el botón de las páginas de desarrollo: logs y datos de osu!",
       "tools": "Herramientas"
@@ -100,5 +99,71 @@
         "keys": "7K, solo en mania"
       }
     }
+  },
+  "nav": {
+    "home": "Inicio",
+    "downloader": "Descargador",
+    "downloaderDescription": "Descarga sets de mapas desde una lista de enlaces directamente a tu carpeta Songs, saltándose los que ya tienes.",
+    "exportCollections": "Exportar colecciones",
+    "exportCollectionsDescription": "Guarda tus colecciones como enlaces de mapas, o como una lista para importarla en otra instalación.",
+    "importCollections": "Importar colecciones",
+    "importCollectionsDescription": "Trae colecciones de un archivo a osu!, juntándolas con las que ya tienes.",
+    "exportSongFolder": "Exportar carpeta Songs",
+    "exportSongFolderDescription": "Filtra tu biblioteca por modo, estado, estrellas, duración y más, y expórtala como enlaces de mapas.",
+    "createPacks": "Crear packs",
+    "createPacksDescription": "Junta dificultades de cualquier set, también rates y mapas sin subir, en un pack propio.",
+    "trainer": "Trainer",
+    "trainerDescription": "Cambia el rate, los stats, las notas largas o el número de teclas del mapa seleccionado en osu!.",
+    "logs": "logs",
+    "osuData": "osu-data",
+    "changelog": "Novedades",
+    "github": "Github",
+    "issues": "Problemas",
+    "support": "Apoyar"
+  },
+  "header": {
+    "toggleTheme": "Cambiar tema",
+    "settings": "Configuración",
+    "updateTo": "Actualizar a {{ version }}",
+    "new": "Nuevo",
+    "youHave": "Tienes la {{ version }}. Torosu se reinicia al instalarla.",
+    "updateFailed": "Torosu no ha podido instalarla por sí mismo, como pasa con el paquete de Arch Linux. Descárgala de la página de versiones e instálala como la primera vez.",
+    "openReleases": "Abrir la página de versiones",
+    "updateAndRestart": "Actualizar y reiniciar"
+  },
+  "window": {
+    "minimize": "Minimizar",
+    "maximize": "Maximizar",
+    "close": "Cerrar"
+  },
+  "home": {
+    "subtitle": "Todas las herramientas que necesitas para osu!, en un mismo sitio.",
+    "madeFor": "Hecho para osu! stable",
+    "noLazer": "Lazer no está soportado: las herramientas leen y escriben los archivos de osu! stable.",
+    "changeFolder": "Cámbiala en la configuración",
+    "tools": "Herramientas",
+    "noTools": "Todas las herramientas están desactivadas. Actívalas en la configuración, en General."
+  },
+  "osuPath": {
+    "notFound": "No se encuentra la carpeta de osu!",
+    "needed": "Todas las herramientas la necesitan. Elige la carpeta que tiene <strong>osu!.db</strong>, o abre osu! y vuelve a detectarla.",
+    "select": "Elegir carpeta",
+    "detect": "Detectar",
+    "found": "Carpeta de osu! encontrada",
+    "pick": "Elige tu carpeta de osu!",
+    "saved": "Carpeta de osu! guardada"
+  },
+  "update": {
+    "available": "Torosu {{ version }} está disponible. Actualízalo desde el icono de la cabecera.",
+    "failed": "Torosu no ha podido actualizarse. Descarga la versión nueva de la página de versiones."
+  },
+  "osuReader": {
+    "closed": "Se ha cerrado osu!; esperando a que vuelva a abrirse.",
+    "connected": "Conectado a osu!",
+    "cantRead": "No se puede leer osu!: {{ message }}",
+    "exported": "Exportado {{ name }}",
+    "exportFailed": "No se ha podido exportar el mapa: {{ error }}",
+    "looking": "Buscando osu!...",
+    "startFailed": "No se ha podido iniciar el lector de osu!."
   }
 }

@@ -7,7 +7,7 @@ export interface AppConfig {
     open_file: boolean;
     /** Shows the developer pages (logs, osu! data). */
     dev_mode: boolean;
-    /** The language of the interface (`en`, `es`); none follows the system's. */
+    /** The language of the interface (`en`, `es`); none is English. */
     language?: string | null;
 }
 

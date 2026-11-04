@@ -13,7 +13,7 @@ import { CollectionStore } from '@entities/collection';
 import { OsuPathStore } from '@entities/osu-path';
 import { NotifyService } from '@shared/services';
 import { PlatformStore } from '@shared/stores';
-import { LANGUAGES, LanguageService, systemLanguage } from '@shared/i18n';
+import { DEFAULT_LANGUAGE, LANGUAGES } from '@shared/i18n';
 import { OptionGroupComponent, OptionGroupItem } from '@shared/ui';
 import { NameFormatField, NameFormatFieldComponent, NameFormatPreset } from '../name-format-field/name-format-field.component';
 
@@ -65,7 +65,6 @@ export class ConfigDrawerComponent {
   private readonly collections = inject(CollectionStore);
   private readonly notify = inject(NotifyService);
   private readonly transloco = inject(TranslocoService);
-  private readonly language = inject(LanguageService);
   /** Global shortcuts don't work on Wayland. */
   readonly platform = inject(PlatformStore);
 
@@ -89,30 +88,16 @@ export class ConfigDrawerComponent {
     })),
   });
 
-  /** The language the system has, for the first option. */
-  private readonly systemName = signal('');
+  /** Each language named in itself. */
+  readonly languageOptions: OptionGroupItem[] = LANGUAGES.map(language => ({ label: language.name }));
 
-  /** System first, then each language named in itself. */
-  readonly languageOptions = computed<OptionGroupItem[]>(() => {
-    this.language.current();
-    return [
-      { label: this.transloco.translate('settings.general.system', { name: this.systemName() }) },
-      ...LANGUAGES.map(language => ({ label: language.name })),
-    ];
-  });
+  /** English when none is saved. */
+  readonly languageIndex = computed(() =>
+    Math.max(0, LANGUAGES.findIndex(language => language.code === (this.draft().language ?? DEFAULT_LANGUAGE))),
+  );
 
-  readonly languageIndex = computed(() => {
-    const index = LANGUAGES.findIndex(language => language.code === this.draft().language);
-    return index + 1;
-  });
-
-  constructor() {
-    systemLanguage().then(code => this.systemName.set(LANGUAGES.find(language => language.code === code)?.name ?? code));
-  }
-
-  /** Index 0 follows the system (no language saved). */
   setLanguage(index: number) {
-    this.draft.update(draft => ({ ...draft, language: index === 0 ? null : LANGUAGES[index - 1].code }));
+    this.draft.update(draft => ({ ...draft, language: LANGUAGES[index].code }));
   }
 
   readonly trainerNameFormats: NameFormatPreset[] = [

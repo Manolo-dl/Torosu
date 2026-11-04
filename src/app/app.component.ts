@@ -9,7 +9,7 @@ import { PlatformStore } from "@shared/stores";
 import { ConfigurationStore } from "@entities/configuration";
 import { WindowControlsComponent } from "@widgets/window-controls/window-controls.component";
 import { TrainerShortcutsService } from "@features/trainer";
-import { isLanguage, LanguageService, systemLanguage } from "@shared/i18n";
+import { DEFAULT_LANGUAGE, isLanguage, LanguageService } from "@shared/i18n";
 
 @Component({
   selector: "app-root",
@@ -32,12 +32,12 @@ export class AppComponent implements OnInit {
   private readonly settingsRead = signal(false);
 
   constructor() {
-    // The language saved in the settings, or the system's; again when it
-    // changes. Not before they are read, or the system's would show first.
+    // The language saved in the settings, English without one; again when it
+    // changes. Not before they are read, or English would show first.
     effect(() => {
       if (!this.settingsRead()) return;
       const chosen = this.config.config()?.language;
-      untracked(async () => this.language.use(isLanguage(chosen) ? chosen : await systemLanguage()));
+      untracked(() => this.language.use(isLanguage(chosen) ? chosen : DEFAULT_LANGUAGE));
     });
 
     // Taiga surfaces animate their background, so without this they fade

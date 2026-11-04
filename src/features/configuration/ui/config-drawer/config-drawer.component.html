@@ -56,7 +56,7 @@
                     <h3 tuiTitle="s">{{ 'settings.general.language' | transloco }}</h3>
                     <app-option-group
                         [active]="languageIndex()"
-                        [options]="languageOptions()"
+                        [options]="languageOptions"
                         (activeChange)="setLanguage($event)"
                     />
                     <span class="hint">{{ 'settings.general.languageHint' | transloco }}</span>
@@ -100,7 +100,7 @@
                     <h3 tuiTitle="s">{{ 'settings.general.tools' | transloco }}</h3>
                     @for (tool of tools; track tool.route) {
                         <label tuiCell>
-                            <span tuiTitle>{{ tool.label }}</span>
+                            <span tuiTitle>{{ tool.label | transloco }}</span>
                             <input
                                 tuiSwitch
                                 type="checkbox"

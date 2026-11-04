@@ -1,9 +1,7 @@
 <div appearance="warning" size="m" tuiNotification>
     <div tuiTitle>
-        osu! folder not found
-        <span tuiSubtitle>
-            Every tool needs it. Select the folder that has <strong>osu!.db</strong>, or open osu! and detect it again.
-        </span>
+        {{ 'osuPath.notFound' | transloco }}
+        <span tuiSubtitle [innerHTML]="'osuPath.needed' | transloco"></span>
     </div>
     <div class="actions">
         <button
@@ -13,7 +11,7 @@
             [disabled]="osuPath.isLoading()"
             (click)="osuPath.selectManually()"
         >
-            Select folder
+            {{ 'osuPath.select' | transloco }}
         </button>
         <button
             appearance="secondary"
@@ -23,7 +21,7 @@
             [loading]="osuPath.isLoading()"
             (click)="osuPath.retry()"
         >
-            Detect
+            {{ 'osuPath.detect' | transloco }}
         </button>
     </div>
 </div>

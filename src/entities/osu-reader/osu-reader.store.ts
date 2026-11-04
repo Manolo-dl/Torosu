@@ -4,6 +4,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { computed, inject } from "@angular/core";
 import { NotifyService } from '@shared/services';
+import { TranslocoService } from '@jsverse/transloco';
 import { save } from '@tauri-apps/plugin-dialog';
 
 interface OsuReaderStoreState {
@@ -48,7 +49,7 @@ export const OsuReaderStore = signalStore(
         originalMode: computed(() => store.data()?.attributes?.originalMode ?? null),
     })),
 
-    withMethods((store, notify = inject(NotifyService)) => {
+    withMethods((store, notify = inject(NotifyService), transloco = inject(TranslocoService)) => {
         // Path of the background being shown (or loading), to skip reloading it
         // and to drop responses that arrive late.
         let backgroundPath: string | null = null;
@@ -91,14 +92,14 @@ export const OsuReaderStore = signalStore(
             switch (status.state) {
                 case 'waiting':
                     if (previous.state === 'connected') {
-                        notify.info('osu! was closed, waiting for it to start again.');
+                        notify.info(transloco.translate('osuReader.closed'));
                     }
                     break;
                 case 'connected':
-                    notify.success('Connected to osu!');
+                    notify.success(transloco.translate('osuReader.connected'));
                     break;
                 case 'error':
-                    notify.error(`Can't read osu!: ${status.message}`);
+                    notify.error(transloco.translate('osuReader.cantRead', { message: status.message }));
                     break;
             }
         }
@@ -121,10 +122,10 @@ export const OsuReaderStore = signalStore(
                 patchState(store, { exporting: true });
                 try {
                     await invoke('export_selected_osz', { path });
-                    notify.success(`Exported ${name}`);
+                    notify.success(transloco.translate('osuReader.exported', { name }));
                 } catch (e) {
                     console.error('export_selected_osz failed', e);
-                    notify.error(`Failed to export the beatmap: ${e}`);
+                    notify.error(transloco.translate('osuReader.exportFailed', { error: String(e) }));
                 } finally {
                     patchState(store, { exporting: false });
                 }
@@ -144,14 +145,14 @@ export const OsuReaderStore = signalStore(
                     if (snapshot.beatmap && !store.data()) setBeatmap(snapshot.beatmap);
                     if (store.status().state === 'waiting') {
                         if (snapshot.status.state === 'waiting') {
-                            notify.info('Looking for osu!...');
+                            notify.info(transloco.translate('osuReader.looking'));
                         } else {
                             setStatus(snapshot.status);
                         }
                     }
                 } catch (e) {
                     console.error('connect_osu_reader failed', e);
-                    notify.error('Failed to start the osu! reader.');
+                    notify.error(transloco.translate('osuReader.startFailed'));
                     patchState(store, { started: false });
                 }
             },

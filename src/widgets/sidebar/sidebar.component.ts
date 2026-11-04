@@ -1,3 +1,4 @@
+import { TranslocoPipe } from '@jsverse/transloco';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { APP_ITEMS, DEV_ITEMS, NavItem, NavStore, USER_ITEMS } from '@entities/nav-item';
 import { RouterLink, RouterLinkActive } from "@angular/router";
@@ -7,7 +8,7 @@ import { TuiIcon } from '@taiga-ui/core';
 
 @Component({
   selector: 'app-sidebar',
-  imports: [RouterLink, RouterLinkActive, TuiIcon],
+  imports: [RouterLink, RouterLinkActive, TuiIcon, TranslocoPipe],
   templateUrl: './sidebar.component.html',
   styleUrl: './sidebar.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -20,8 +20,7 @@
       "osuPathPlaceholder": "C:\\Users\\you\\AppData\\Local\\osu!",
       "pickOsuPath": "Select your osu! folder",
       "language": "Language",
-      "languageHint": "The language of Torosu: System follows your computer's",
-      "system": "System ({{ name }})",
+      "languageHint": "The language of Torosu",
       "devMode": "Developer mode",
       "devModeHint": "Show the button for the developer pages: logs and osu! data",
       "tools": "Tools"
@@ -100,5 +99,71 @@
         "keys": "7K, only in mania"
       }
     }
+  },
+  "nav": {
+    "home": "Home",
+    "downloader": "Downloader",
+    "downloaderDescription": "Download beatmap sets from a list of links straight into your Songs folder, skipping the ones you have.",
+    "exportCollections": "Export Collections",
+    "exportCollectionsDescription": "Save your collections as beatmap links, or as a list to import on another install.",
+    "importCollections": "Import Collections",
+    "importCollectionsDescription": "Bring collections from a file into osu!, merged with the ones you already have.",
+    "exportSongFolder": "Export Song Folder",
+    "exportSongFolderDescription": "Filter your library by mode, status, stars, length and more, and export it as beatmap links.",
+    "createPacks": "Create Packs",
+    "createPacksDescription": "Put diffs from any sets, rates and unsubmitted maps too, into a pack of your own.",
+    "trainer": "Trainer",
+    "trainerDescription": "Change the rate, the stats, the long notes or the key count of the map selected in osu!.",
+    "logs": "logs",
+    "osuData": "osu-data",
+    "changelog": "Changelog",
+    "github": "Github",
+    "issues": "Issues",
+    "support": "Support"
+  },
+  "header": {
+    "toggleTheme": "Toggle theme",
+    "settings": "Settings",
+    "updateTo": "Update to {{ version }}",
+    "new": "New",
+    "youHave": "You have {{ version }}. Torosu restarts once it is installed.",
+    "updateFailed": "Torosu could not install it itself, as with the Arch Linux package. Download it from the releases page and install it as you did the first time.",
+    "openReleases": "Open the releases page",
+    "updateAndRestart": "Update and restart"
+  },
+  "window": {
+    "minimize": "Minimize",
+    "maximize": "Maximize",
+    "close": "Close"
+  },
+  "home": {
+    "subtitle": "All the tools you would need for osu! in the same place.",
+    "madeFor": "Made for osu! stable",
+    "noLazer": "Lazer is not supported: the tools read and write osu! stable's files.",
+    "changeFolder": "Change it in the settings",
+    "tools": "Tools",
+    "noTools": "Every tool is turned off. Turn them on in the settings, under General."
+  },
+  "osuPath": {
+    "notFound": "osu! folder not found",
+    "needed": "Every tool needs it. Select the folder that has <strong>osu!.db</strong>, or open osu! and detect it again.",
+    "select": "Select folder",
+    "detect": "Detect",
+    "found": "osu! folder found",
+    "pick": "Select your osu! folder",
+    "saved": "osu! folder saved"
+  },
+  "update": {
+    "available": "Torosu {{ version }} is available. Update it from the icon in the header.",
+    "failed": "Torosu could not update itself. Download the new version from the releases page."
+  },
+  "osuReader": {
+    "closed": "osu! was closed, waiting for it to start again.",
+    "connected": "Connected to osu!",
+    "cantRead": "Can't read osu!: {{ message }}",
+    "exported": "Exported {{ name }}",
+    "exportFailed": "Failed to export the beatmap: {{ error }}",
+    "looking": "Looking for osu!...",
+    "startFailed": "Failed to start the osu! reader."
   }
 }
