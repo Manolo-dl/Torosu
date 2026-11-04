@@ -3,11 +3,14 @@
 //! that mark accents (the scratches of 10K2S) where the music has them.
 //!
 //! A sound starting is measured as the spectral flux: how much louder each
-//! frequency gets from one frame to the next, kicks to cymbals, compared with
-//! the loudest of it and the frequencies next to it a little before
-//! (SuperFlux), so a vibrato or a slide does not count as a new sound.
-//! Against hand-made 10K2S maps, that and the loudness tell where their
-//! mappers hit a scratch (see `corpus_scratch_truth`).
+//! frequency gets from one frame to the next, compared with the loudest of
+//! it and the frequencies next to it a little before (SuperFlux), so a
+//! vibrato or a slide does not count as a new sound. It is measured in three
+//! bands, kicks and bass (30 to 200 Hz), the middle (200 Hz to 2 kHz) and
+//! cymbals and hats (2 to 11 kHz): over every frequency at once, the many
+//! high ones drowned the kicks. Against hand-made 10K2S maps, the bands and
+//! the loudness tell where their mappers hit a scratch (see
+//! `corpus_scratch_sounds`).
 
 use std::path::Path;
 
@@ -31,14 +34,17 @@ const COMPRESSION: f32 = 100.0;
 /// An onset counts for a time this many ms around it: osu! rounds the notes
 /// to the ms, and the flux of a sound peaks a frame or two after it starts.
 const ONSET_MS: f64 = 30.0;
+/// The edges of the bands (low, mid, high), in Hz.
+const BANDS_HZ: [f64; 4] = [LOW_HZ, 200.0, 2000.0, HIGH_HZ];
 
 pub struct Accents {
     /// The length of a frame in ms; frame `i` is centred on `i * hop_ms`.
     hop_ms: f64,
-    /// Per frame, how strongly sounds start (the spectral flux).
-    onset: Vec<f32>,
     /// Per frame, the loudness in dB.
     loudness: Vec<f32>,
+    /// Per frame, how strongly sounds start in each band (the spectral flux,
+    /// see [`BANDS_HZ`]).
+    bands: Vec<[f32; 3]>,
 }
 
 impl Accents {
@@ -58,9 +64,8 @@ impl Accents {
         let hop = (sample_rate * HOP_MS / 1000.0).round().max(1.0) as usize;
         let bin_hz = sample_rate / n as f64;
         let bins = n / 2 + 1;
-        // The bins of the onsets, and the ones the loudness is measured over.
-        let low = ((LOW_HZ / bin_hz).ceil() as usize).min(bins);
-        let high = ((HIGH_HZ / bin_hz).ceil() as usize).clamp(low, bins);
+        // The bins of each band, and the ones the loudness is measured over.
+        let edges = BANDS_HZ.map(|hz| ((hz / bin_hz).ceil() as usize).clamp(1, bins));
         let audible = ((HIGH_HZ / bin_hz).ceil() as usize).clamp(1, bins);
         // As loud as a window of 2048 samples would make it, whatever the size.
         let scale = 2048.0 / n as f32;
@@ -74,8 +79,8 @@ impl Accents {
         // The spectra of the last frames, each frequency the loudest of it and
         // its neighbours: frame `f` in `past[f % LAG_FRAMES]`.
         let mut past = vec![vec![0.0f32; bins]; LAG_FRAMES];
-        let mut onset = Vec::with_capacity(frames);
         let mut loudness = Vec::with_capacity(frames);
+        let mut bands = Vec::with_capacity(frames);
 
         for frame in 0..frames {
             // Centred on its time: half a window before it, half after.
@@ -100,18 +105,20 @@ impl Accents {
 
             // The slot of this frame holds the one LAG_FRAMES before it.
             let before = &mut past[frame % LAG_FRAMES];
-            let flux = if frame >= LAG_FRAMES {
-                (low..high).map(|k| (spectrum[k] - before[k]).max(0.0)).sum::<f32>() / (high - low).max(1) as f32
-            } else {
-                0.0
-            };
-            onset.push(flux);
+            let mut band = [0.0f32; 3];
+            if frame >= LAG_FRAMES {
+                for (b, flux) in band.iter_mut().enumerate() {
+                    let (lo, hi) = (edges[b], edges[b + 1]);
+                    *flux = (lo..hi).map(|k| (spectrum[k] - before[k]).max(0.0)).sum::<f32>() / (hi - lo).max(1) as f32;
+                }
+            }
+            bands.push(band);
             for (k, value) in before.iter_mut().enumerate() {
                 *value = spectrum[k].max(spectrum[k.saturating_sub(1)]).max(spectrum[(k + 1).min(bins - 1)]);
             }
         }
 
-        Self { hop_ms: hop as f64 / sample_rate * 1000.0, onset, loudness }
+        Self { hop_ms: hop as f64 / sample_rate * 1000.0, loudness, bands }
     }
 
     fn frame(&self, ms: f64) -> isize {
@@ -120,15 +127,18 @@ impl Accents {
 
     /// The frames from `from` to `to` ms, both included, within the song.
     fn frames(&self, from: f64, to: f64) -> std::ops::Range<usize> {
-        let len = self.onset.len() as isize;
+        let len = self.bands.len() as isize;
         let a = self.frame(from).clamp(0, len) as usize;
         let b = (self.frame(to) + 1).clamp(0, len) as usize;
         a..b.max(a)
     }
 
-    /// How strongly a sound starts at `ms`: the strongest onset around it.
-    pub fn onset(&self, ms: f64) -> f32 {
-        self.onset[self.frames(ms - ONSET_MS, ms + ONSET_MS)].iter().copied().fold(0.0, f32::max)
+    /// How strongly a sound starts at `ms` in each band (low, mid, high, see
+    /// [`BANDS_HZ`]): the strongest onset around it.
+    pub fn band_onsets(&self, ms: f64) -> [f32; 3] {
+        self.bands[self.frames(ms - ONSET_MS, ms + ONSET_MS)].iter().fold([0.0f32; 3], |most, band| {
+            [most[0].max(band[0]), most[1].max(band[1]), most[2].max(band[2])]
+        })
     }
 
     /// How loud the song is from `from` to `to` ms, in dB; `None` outside it.
@@ -152,12 +162,12 @@ pub struct MapAccents<'a> {
 }
 
 impl MapAccents<'_> {
-    pub fn onset(&self, time: f64) -> f32 {
-        self.accents.onset(time * self.rate)
-    }
-
     pub fn loudness(&self, from: f64, to: f64) -> Option<f32> {
         self.accents.loudness(from * self.rate, to * self.rate)
+    }
+
+    pub fn band_onsets(&self, time: f64) -> [f32; 3] {
+        self.accents.band_onsets(time * self.rate)
     }
 }
 
@@ -184,11 +194,14 @@ mod tests {
     fn finds_sounds_where_they_start() {
         for sample_rate in [22_050.0, 44_100.0, 48_000.0] {
             let accents = Accents::from_mono(&clicks(sample_rate), sample_rate);
-            let quiet = accents.onset(700.0);
-            let onsets: Vec<f32> = [1000.0, 1500.0, 2000.0, 2500.0, 3000.0].iter().map(|&t| accents.onset(t)).collect();
+            // The clicks are noise: they start in every band.
+            let onset = |t: f64| accents.band_onsets(t).into_iter().fold(f32::INFINITY, f32::min);
+            let quiet = accents.band_onsets(700.0).into_iter().fold(0.0, f32::max);
+            let onsets: Vec<f32> = [1000.0, 1500.0, 2000.0, 2500.0, 3000.0].iter().map(|&t| onset(t)).collect();
             assert!(onsets.iter().all(|&o| o > quiet * 10.0 + 1e-3), "{} Hz: {:?} against {}", sample_rate, onsets, quiet);
             // Between the clicks nothing starts.
-            assert!(accents.onset(1250.0) < onsets[0] / 4.0, "{} Hz", sample_rate);
+            let between = accents.band_onsets(1250.0).into_iter().fold(0.0, f32::max);
+            assert!(between < onsets[0] / 4.0, "{} Hz", sample_rate);
             // The louder clicks are louder.
             let loud = |t: f64| accents.loudness(t, t + 20.0).unwrap();
             assert!(loud(3000.0) > loud(1000.0), "{} Hz", sample_rate);
@@ -196,19 +209,41 @@ mod tests {
         }
     }
 
-    /// Writes the onsets and loudness of `AUDIO` to `OUT`, a frame a line, to
-    /// look at them next to the map.
+    #[test]
+    fn tells_kicks_from_hats() {
+        // A kick (a 60 Hz tone) at 1 s and a hat (noise through a crude high
+        // pass, each sample minus the last) at 2 s.
+        let sample_rate = 44_100.0;
+        let mut samples = vec![0.0f32; (sample_rate * 3.0) as usize];
+        for (i, sample) in samples[(sample_rate as usize)..(sample_rate * 1.1) as usize].iter_mut().enumerate() {
+            *sample = (2.0 * std::f64::consts::PI * 60.0 * i as f64 / sample_rate).sin() as f32 * 0.5;
+        }
+        let (mut seed, mut last) = (5u32, 0.0f32);
+        for sample in &mut samples[(sample_rate * 2.0) as usize..(sample_rate * 2.03) as usize] {
+            seed = seed.wrapping_mul(1_664_525).wrapping_add(1_013_904_223);
+            let noise = (seed >> 8) as f32 / (1 << 24) as f32 - 0.5;
+            *sample = (noise - last) * 0.5;
+            last = noise;
+        }
+        let accents = Accents::from_mono(&samples, sample_rate);
+        let (kick, hat) = (accents.band_onsets(1000.0), accents.band_onsets(2000.0));
+        assert!(kick[0] > hat[0] * 2.0 && kick[0] > kick[2] * 2.0, "kick {:?}, hat {:?}", kick, hat);
+        assert!(hat[2] > kick[2] * 2.0 && hat[2] > hat[0] * 2.0, "kick {:?}, hat {:?}", kick, hat);
+    }
+
+    /// Writes the onsets of each band and the loudness of `AUDIO` to `OUT`,
+    /// a frame a line, to look at them next to the map.
     #[test]
     #[ignore = "reads an audio file; run by hand"]
     fn dump() {
         let path = std::env::var("AUDIO").expect("AUDIO");
         let accents = Accents::read(Path::new(&path)).unwrap();
         let text: String = accents
-            .onset
+            .bands
             .iter()
             .zip(&accents.loudness)
             .enumerate()
-            .map(|(i, (o, l))| format!("{:.2} {} {}\n", i as f64 * accents.hop_ms, o, l))
+            .map(|(i, (b, l))| format!("{:.2} {} {} {} {}\n", i as f64 * accents.hop_ms, b[0], b[1], b[2], l))
             .collect();
         std::fs::write(std::env::var("OUT").expect("OUT"), text).unwrap();
     }
@@ -218,7 +253,7 @@ mod tests {
         let accents = Accents::from_mono(&clicks(44_100.0), 44_100.0);
         // At 1.5x the click at 3 s of the audio is at 2 s of the map.
         let fast = accents.at_rate(1.5);
-        assert_eq!(fast.onset(2000.0), accents.onset(3000.0));
+        assert_eq!(fast.band_onsets(2000.0), accents.band_onsets(3000.0));
         assert!(accents.loudness(10_000.0, 11_000.0).is_none());
     }
 }
