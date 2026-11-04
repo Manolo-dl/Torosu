@@ -18,9 +18,9 @@ import { ConfigurationStore } from '@entities/configuration';
 import { OsuReaderStore } from '@entities/osu-reader';
 import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDropList } from '@angular/cdk/drag-drop';
 import { TuiButton, TuiCheckbox, TuiDataList, TuiDropdown, TuiIcon, TuiInput, TuiNotificationDirective, TuiTitle } from '@taiga-ui/core';
-import { TuiSegmented } from '@taiga-ui/kit';
 import { TuiCardLarge } from '@taiga-ui/layout';
 import { TrainerNoteLengthComponent } from '../trainer-note-length/trainer-note-length.component';
+import { OptionGroupComponent, OptionGroupItem } from '@shared/ui';
 
 interface DensityOption {
   value: KeyDensity;
@@ -31,7 +31,7 @@ interface DensityOption {
 /** The tasks of one convert. */
 @Component({
   selector: 'app-trainer-task-pipeline',
-  imports: [CdkDrag, CdkDropList, CdkDragHandle, FormsModule, TuiButton, TuiCardLarge, TuiCheckbox, TuiDataList, TuiDropdown, TuiIcon, TuiInput, TuiNotificationDirective, TuiSegmented, TuiTitle, TrainerNoteLengthComponent],
+  imports: [CdkDrag, CdkDropList, CdkDragHandle, FormsModule, TuiButton, TuiCardLarge, TuiCheckbox, TuiDataList, TuiDropdown, TuiIcon, TuiInput, TuiNotificationDirective, TuiTitle, TrainerNoteLengthComponent, OptionGroupComponent],
   templateUrl: './trainer-task-pipeline.component.html',
   styleUrl: './trainer-task-pipeline.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -82,6 +82,10 @@ export class TrainerTaskPipelineComponent {
 
   /** One stage up to 10K; 12K to 18K are two stages of the same size. */
   readonly keyOptions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 18];
+  /** The map's own key count can't be picked. */
+  readonly keyItems = computed<OptionGroupItem[]>(() =>
+    this.keyOptions.map(keys => ({ label: String(keys), disabled: keys === this.sourceKeys() })),
+  );
   readonly densityOptions: DensityOption[] = [
     { value: 'none', label: 'None', hint: 'Only the notes of the original map.' },
     {
@@ -182,6 +186,12 @@ export class TrainerTaskPipelineComponent {
   playstyles(targetKeys: number): { name: string; hint: string }[] {
     return PLAYSTYLES[targetKeys] ?? [];
   }
+
+  /** The playstyles of `targetKeys` as options, the same list each time. */
+  playstyleItems(targetKeys: number): OptionGroupItem[] {
+    return (this.playstyleOptions[targetKeys] ??= this.playstyles(targetKeys).map(p => ({ label: p.name })));
+  }
+  private readonly playstyleOptions: Record<number, OptionGroupItem[]> = {};
 
   playstyleIndex(params: KeyConverterParams): number {
     return Math.max(0, this.playstyles(params.targetKeys).findIndex(p => p.name === params.playstyle));

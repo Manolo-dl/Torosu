@@ -206,15 +206,11 @@
                   ({{ sourceKeys() }}K → {{ entry.task.params.targetKeys }}K)
                 }
               </span>
-              <tui-segmented
-                size="s"
-                [activeItemIndex]="keyOptions.indexOf(entry.task.params.targetKeys)"
-                (activeItemIndexChange)="onTargetKeys(entry.id, entry.task.params, keyOptions[$event])"
-              >
-                @for (keys of keyOptions; track keys) {
-                  <button type="button" [disabled]="keys === sourceKeys()">{{ keys }}</button>
-                }
-              </tui-segmented>
+              <app-option-group
+                [active]="keyOptions.indexOf(entry.task.params.targetKeys)"
+                [options]="keyItems()"
+                (activeChange)="onTargetKeys(entry.id, entry.task.params, keyOptions[$event])"
+              />
             </div>
 
             @if (isReducing(entry.task.params.targetKeys)) {
@@ -226,15 +222,11 @@
               @let densityAt = densityIndex(entry.task.params.density);
               <div class="setting">
                 <span class="setting-title">Extra notes</span>
-                <tui-segmented
-                  size="s"
-                  [activeItemIndex]="densityAt"
-                  (activeItemIndexChange)="onKeyChange(entry.id, entry.task.params, { density: densityOptions[$event].value })"
-                >
-                  @for (option of densityOptions; track option.value) {
-                    <button type="button">{{ option.label }}</button>
-                  }
-                </tui-segmented>
+                <app-option-group
+                  [active]="densityAt"
+                  [options]="densityOptions"
+                  (activeChange)="onKeyChange(entry.id, entry.task.params, { density: densityOptions[$event].value })"
+                />
                 <span class="setting-hint">{{ densityOptions[densityAt].hint }}</span>
               </div>
             }
@@ -244,15 +236,11 @@
               @let playstyleAt = playstyleIndex(entry.task.params);
               <div class="setting">
                 <span class="setting-title">Playstyle</span>
-                <tui-segmented
-                  size="s"
-                  [activeItemIndex]="playstyleAt"
-                  (activeItemIndexChange)="onPlaystyle(entry.id, entry.task.params, $event)"
-                >
-                  @for (playstyle of playstyles; track playstyle.name) {
-                    <button type="button">{{ playstyle.name }}</button>
-                  }
-                </tui-segmented>
+                <app-option-group
+                  [active]="playstyleAt"
+                  [options]="playstyleItems(entry.task.params.targetKeys)"
+                  (activeChange)="onPlaystyle(entry.id, entry.task.params, $event)"
+                />
                 <span class="setting-hint">{{ playstyles[playstyleAt].hint }}</span>
               </div>
             } @else if (playstyles.length === 1) {
