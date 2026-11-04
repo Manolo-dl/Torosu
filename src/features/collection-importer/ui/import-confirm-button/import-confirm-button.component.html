@@ -7,7 +7,7 @@
   [loading]="store.isImporting()"
   (click)="onImport()"
 >
-  Import {{ store.totalMaps() }} maps
+  {{ 'collections.import.importMaps' | transloco: { count: store.totalMaps() } }}
 </button>
 <button
   appearance="secondary"
@@ -17,5 +17,5 @@
   [disabled]="store.isImporting() || store.parsedImports().length === 0"
   (click)="store.clear()"
 >
-  Clear
+  {{ 'collections.import.clear' | transloco }}
 </button>

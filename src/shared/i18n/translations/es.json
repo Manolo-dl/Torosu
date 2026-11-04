@@ -422,5 +422,47 @@
     "collectionsFailed": "No se han podido cargar las colecciones",
     "logs": "Cargando logs, espera...",
     "logsFailed": "No se han podido cargar los logs"
+  },
+  "collections": {
+    "export": {
+      "list": "Colecciones",
+      "selectAll": "Seleccionar todas",
+      "notLoaded": "Abre una colección para empezar",
+      "none": "No se han encontrado colecciones",
+      "summary": "Resumen",
+      "selected": "Seleccionadas",
+      "totalSets": "Sets de mapas en total",
+      "format": "Formato",
+      "links": "Enlaces de descarga",
+      "importFormat": "Formato para importar",
+      "preview": "Vista previa",
+      "sets": "{{ count }} sets",
+      "empty": "Selecciona una colección para verla"
+    },
+    "import": {
+      "subtitle": "Importa colecciones desde un archivo de texto con los hashes de los mapas.",
+      "file": "Archivo",
+      "fileHint": "Una colección por bloque, con hashes o enlaces de mapas.",
+      "preview": "Vista previa",
+      "empty": "Sube un archivo .txt para ver las colecciones que se importarán",
+      "merge": "Se juntará",
+      "new": "Nueva",
+      "sets": "{{ count }} sets",
+      "noInstalled": "No se han encontrado mapas instalados",
+      "importMaps": "Importar {{ count }} mapas",
+      "clear": "Vaciar",
+      "done": "Colecciones importadas",
+      "failed": "No se han podido importar las colecciones"
+    }
+  },
+  "export": {
+    "button": "Exportar {{ count }} sets de mapas",
+    "textFiles": "Texto",
+    "urls": "URLs"
+  },
+  "unchecked": {
+    "title": "{{ count }} sets de mapas que osu! aún no ha comprobado",
+    "titleOne": "1 set de mapas que osu! aún no ha comprobado",
+    "hint": "osu! sabe si un mapa está en la web cuando lo comprueba online, en la selección de canciones. Estos tienen un id, así que se exportan como subidos, pero puede que alguno no lo esté."
   }
 }

@@ -6,7 +6,7 @@ import { TuiTitle } from '@taiga-ui/core';
 import { TuiCardLarge } from '@taiga-ui/layout';
 
 const FORMATS: ExportFormat[] = [
-  { value: 'urls', label: 'URLs' },
+  { value: 'urls', label: 'export.urls' },
 ];
 
 @Component({

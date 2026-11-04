@@ -1,6 +1,6 @@
 <div appearance="floating" tuiCardLarge="compact">
   <header>
-    <h3 tuiTitle>Collections</h3>
+    <h3 tuiTitle>{{ 'collections.export.list' | transloco }}</h3>
     <label tuiLabel>
       <input
         size="s"
@@ -10,16 +10,16 @@
         [ngModel]="store.allSelected()"
         (ngModelChange)="$event ? store.selectAll() : store.clearSelection()"
       />
-      Select all
+      {{ 'collections.export.selectAll' | transloco }}
     </label>
   </header>
 
   @if (store.isLoading()) {
     <tui-loader size="m" class="state" />
   } @else if (!store.isLoaded()) {
-    <p class="state">Open a collection to get started</p>
+    <p class="state">{{ 'collections.export.notLoaded' | transloco }}</p>
   } @else if (store.collectionsWithBeatmaps().length === 0) {
-    <p class="state">No collections found</p>
+    <p class="state">{{ 'collections.export.none' | transloco }}</p>
   } @else {
     <tui-scrollbar class="list">
       @for (col of store.collectionsWithBeatmaps(); track col.name) {

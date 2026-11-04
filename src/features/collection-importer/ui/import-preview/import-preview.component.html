@@ -1,8 +1,8 @@
 <div appearance="floating" tuiCardLarge="compact">
-  <h3 tuiTitle>Preview</h3>
+  <h3 tuiTitle>{{ 'collections.import.preview' | transloco }}</h3>
 
   @if (store.previewGroups().length === 0) {
-    <p class="empty">Upload a .txt file to preview collections to import</p>
+    <p class="empty">{{ 'collections.import.empty' | transloco }}</p>
   } @else {
     <tui-scrollbar class="groups">
       <tui-accordion size="s">
@@ -15,9 +15,9 @@
                 tuiBadge
                 [appearance]="group.isExisting ? 'warning' : 'positive'"
               >
-                {{ group.isExisting ? 'Will merge' : 'New' }}
+                {{ (group.isExisting ? 'collections.import.merge' : 'collections.import.new') | transloco }}
               </span>
-              <span appearance="neutral" size="s" tuiBadge>{{ group.sets.length }} sets</span>
+              <span appearance="neutral" size="s" tuiBadge>{{ 'collections.import.sets' | transloco: { count: group.sets.length } }}</span>
             </span>
           </button>
           <tui-expand>
@@ -25,7 +25,7 @@
               @for (set of group.sets; track set.folderName) {
                 <app-beatmap-set-card [set]="set" />
               } @empty {
-                <p class="empty">No installed beatmaps found</p>
+                <p class="empty">{{ 'collections.import.noInstalled' | transloco }}</p>
               }
             </div>
           </tui-expand>

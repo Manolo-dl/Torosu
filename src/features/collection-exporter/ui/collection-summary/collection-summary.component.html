@@ -1,12 +1,12 @@
 <div appearance="floating" tuiCardLarge="compact">
-  <h3 tuiTitle>Summary</h3>
+  <h3 tuiTitle>{{ 'collections.export.summary' | transloco }}</h3>
   <div class="metrics">
     <div tuiTitle>
-      <span tuiSubtitle>Selected</span>
+      <span tuiSubtitle>{{ 'collections.export.selected' | transloco }}</span>
       <strong>{{ store.selectedCount() }}</strong>
     </div>
     <div tuiTitle>
-      <span tuiSubtitle>Total beatmapsets</span>
+      <span tuiSubtitle>{{ 'collections.export.totalSets' | transloco }}</span>
       <strong>{{ store.totalSelectedSets() }}</strong>
     </div>
   </div>

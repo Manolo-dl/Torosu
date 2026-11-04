@@ -1,3 +1,4 @@
+import { TranslocoPipe } from '@jsverse/transloco';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { ImportCollectionStore } from '../../import-collections.store';
 import { BeatmapSetCardComponent } from '@entities/osu-db/ui';
@@ -7,7 +8,7 @@ import { TuiCardLarge } from '@taiga-ui/layout';
 
 @Component({
   selector: 'app-import-preview',
-  imports: [BeatmapSetCardComponent, TuiAccordion, TuiBadge, TuiCardLarge, TuiExpand, TuiScrollbar, TuiTitle],
+  imports: [BeatmapSetCardComponent, TuiAccordion, TuiBadge, TuiCardLarge, TuiExpand, TuiScrollbar, TuiTitle, TranslocoPipe],
   templateUrl: './import-preview.component.html',
   styleUrl: './import-preview.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,
