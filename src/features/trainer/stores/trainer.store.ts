@@ -1,3 +1,4 @@
+import { errorText } from '@shared/i18n';
 import { TranslocoService } from '@jsverse/transloco';
 import { effect, inject, untracked } from "@angular/core";
 import { OsuReaderStore } from "@entities/osu-reader";
@@ -174,7 +175,7 @@ export const TrainerStore = signalStore(
                             : transloco.translate('trainer.createdMany', { count: names.length }),
                     );
                 } catch (e) {
-                    notify.error(String(e));
+                    notify.error(errorText(transloco, e));
                 } finally {
                     unlisten();
                     patchState(store, { creating: false });

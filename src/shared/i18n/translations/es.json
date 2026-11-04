@@ -366,6 +366,10 @@
       "downloading": "descargando",
       "done": "hecha",
       "failed": "fallida"
+    },
+    "notification": {
+      "title": "Descargador",
+      "body": "{{ succeeded }} descargadas, {{ failed }} fallidas"
     }
   },
   "dropzone": {
@@ -408,7 +412,7 @@
     "search": "Busca por título, artista o nombre de archivo...",
     "created": "¡Pack {{ title }} creado!",
     "createdParts": "¡Pack {{ title }} creado en {{ parts }} partes!",
-    "createFailed": "No se ha podido crear el pack"
+    "createFailed": "No se ha podido crear el pack: {{ error }}"
   },
   "beatmaps": {
     "none": "No hay mapas"
@@ -452,7 +456,7 @@
       "importMaps": "Importar {{ count }} mapas",
       "clear": "Vaciar",
       "done": "Colecciones importadas",
-      "failed": "No se han podido importar las colecciones"
+      "failed": "No se han podido importar las colecciones: {{ error }}"
     }
   },
   "export": {
@@ -488,5 +492,40 @@
     "export": "Exportar",
     "preview": "Vista previa",
     "empty": "Ningún mapa cumple los filtros actuales"
+  },
+  "errors": {
+    "io": "Error de archivo: {{ detail }}",
+    "notFound": "No se encuentra un archivo o carpeta: {{ detail }}",
+    "permissionDenied": "Torosu no tiene permiso para usar un archivo o carpeta: {{ detail }}",
+    "zip": "No se ha podido leer o escribir un archivo comprimido: {{ detail }}",
+    "osuDb": "No se ha podido leer osu!.db: {{ detail }}",
+    "config": "No se ha podido guardar la configuración: {{ detail }}",
+    "http": "Error de red: {{ detail }}",
+    "offline": "No se ha podido conectar: comprueba tu conexión a internet.",
+    "timeout": "El servidor ha tardado demasiado en responder. Inténtalo de nuevo.",
+    "updater": "No se ha podido actualizar Torosu: {{ detail }}",
+    "internal": "Algo ha salido mal: {{ detail }}",
+    "message": "{{ detail }}",
+    "osuFolderNotFound": "No se encuentra la carpeta de osu!",
+    "notOsuFolder": "{{ path }} no es una carpeta de osu!: no tiene osu!.db",
+    "osuDbCorrupted": "osu!.db parece estar dañado ({{ path }}) y no se ha podido leer",
+    "collectionDbRead": "No se ha podido leer collection.db: {{ detail }}",
+    "collectionDbWrite": "No se ha podido guardar collection.db: {{ detail }}",
+    "noBeatmapSelected": "No hay ningún mapa seleccionado en osu!, o no se encuentra su carpeta",
+    "noSession": "No hay ninguna cookie osu_session",
+    "outputFolderNotFound": "No se encuentra la carpeta de salida: {{ path }}",
+    "httpStatus": "El servidor ha respondido con un error (HTTP {{ status }})",
+    "setTooLarge": "El set {{ id }} es demasiado grande ({{ bytes }} bytes)",
+    "createFolder": "No se ha podido crear {{ path }}: {{ detail }}",
+    "readDiff": "No se ha podido leer {{ file }}: {{ detail }}",
+    "nothingToConvert": "No hay nada que convertir",
+    "sameDifficulty": "Los converts {{ first }} y {{ second }} crean la misma dificultad, \"{{ name }}\": cambia uno de los dos.",
+    "convert": "Convert {{ number }}: {{ cause }}",
+    "maniaOnly": "{{ task }} solo funciona en mapas de osu!mania",
+    "unsupportedKeys": "El conversor de teclas admite de 1K a 10K y 12K, 14K, 16K y 18K, no {{ keys }}K",
+    "onePlayer": "El conversor de teclas mapea para un jugador, no {{ layout }}",
+    "noAudio": "El audio del mapa no tiene ninguna pista compatible",
+    "video": "No se ha podido recodificar el vídeo: {{ detail }}",
+    "noUpdate": "No hay ninguna actualización que instalar"
   }
 }

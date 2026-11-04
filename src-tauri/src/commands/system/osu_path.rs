@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 
 use tauri::Manager;
 
-use crate::{error::Result, state::AppConfigState};
+use crate::{error::{Error, Result}, state::AppConfigState};
 
 /// Allows the Songs folder in the `asset:` protocol scope at runtime.
 fn allow_songs_in_asset_scope(app: &tauri::AppHandle, osu_path: &str) {
@@ -78,7 +78,7 @@ async fn resolve_osu_path(app: &tauri::AppHandle) -> Result<String> {
     }
 
     log::error!("osu! folder not found");
-    Err("osu! folder not found".into())
+    Err(Error::OsuFolderNotFound)
 }
 
 /// Uses the folder found by `get_osu_path` or chosen by the user, and keeps it
@@ -88,7 +88,7 @@ pub fn save_osu_path(app: tauri::AppHandle, path: String) -> Result<()> {
     // Every tool reads osu!.db, so a folder without it is not osu!'s.
     if !Path::new(&path).join("osu!.db").is_file() {
         log::warn!("refused osu! path {:?}: no osu!.db in it", path);
-        return Err(format!("{} is not an osu! folder: it has no osu!.db", path).into());
+        return Err(Error::NotOsuFolder { path: path.to_string() });
     }
 
     allow_songs_in_asset_scope(&app, &path);

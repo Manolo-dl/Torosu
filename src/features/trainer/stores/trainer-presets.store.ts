@@ -1,3 +1,4 @@
+import { errorText } from '@shared/i18n';
 import { TranslocoService } from '@jsverse/transloco';
 import { inject } from "@angular/core";
 import { ConfigurationStore, TrainerShortcut } from "@entities/configuration";
@@ -53,7 +54,7 @@ export const TrainerPresetsStore = signalStore(
                     await write(custom);
                     notify.success(transloco.translate(replaced ? 'trainer.presets.updated' : 'trainer.presets.saved', { name }));
                 } catch (e) {
-                    notify.error(transloco.translate('trainer.presets.saveFailed', { error: String(e) }));
+                    notify.error(transloco.translate('trainer.presets.saveFailed', { error: errorText(transloco, e) }));
                 }
             },
 
@@ -62,7 +63,7 @@ export const TrainerPresetsStore = signalStore(
                     await write(store.custom().filter(p => p.name !== name));
                     await writeShortcuts(shortcuts => shortcuts.filter(s => s.preset !== name));
                 } catch (e) {
-                    notify.error(transloco.translate('trainer.presets.deleteFailed', { error: String(e) }));
+                    notify.error(transloco.translate('trainer.presets.deleteFailed', { error: errorText(transloco, e) }));
                 }
             },
 

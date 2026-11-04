@@ -80,7 +80,8 @@
 //! A note that cannot be placed (every key it could go to is held) is dropped,
 //! so the output is always a valid map.
 
-use anyhow::{Result, bail};
+use anyhow::Result;
+use crate::error::Error;
 use rosu_map::{
     Beatmap,
     section::{
@@ -2240,14 +2241,14 @@ pub fn uses_audio(params: &KeyConverterParams) -> bool {
 /// an extra note of the density, not one of the map's.
 fn convert_marked(beatmap: &mut Beatmap, params: &KeyConverterParams, accents: Option<MapAccents>) -> Result<Vec<bool>> {
     if beatmap.mode != GameMode::Mania {
-        bail!("the key converter only works on osu!mania maps");
+        return Err(Error::ManiaOnly { task: "KeyConverter" }.into());
     }
 
     let src_keys = mania::key_count(beatmap);
     let dst_keys = params.target_keys as usize;
     for keys in [src_keys, dst_keys] {
         if !mania::is_playable(keys) {
-            bail!("the key converter supports 1K to 10K and 12K, 14K, 16K and 18K, not {}K", keys);
+            return Err(Error::UnsupportedKeys { keys }.into());
         }
     }
     if src_keys == dst_keys {
@@ -2261,7 +2262,7 @@ fn convert_marked(beatmap: &mut Beatmap, params: &KeyConverterParams, accents: O
     let src_layout = layout::layout(src_keys, None);
     let dst_layout = layout::layout(dst_keys, params.playstyle.as_deref());
     if dst_layout.fingers.iter().any(|f| f.player > 0) {
-        bail!("the key converter maps for one player, not {}", dst_layout.name);
+        return Err(Error::OnePlayer { layout: dst_layout.name.to_string() }.into());
     }
 
     // 10K2S: the map converted to 10K on the inner keys, and the scratches'

@@ -1,3 +1,4 @@
+import { errorText } from '@shared/i18n';
 import { patchState, signalStore, withComputed, withMethods, withState } from "@ngrx/signals";
 import { OsuReaderSnapshot, OsuReaderStatus, SelectedBeatmap } from "./osu-reader.model";
 import { invoke } from "@tauri-apps/api/core";
@@ -125,7 +126,7 @@ export const OsuReaderStore = signalStore(
                     notify.success(transloco.translate('osuReader.exported', { name }));
                 } catch (e) {
                     console.error('export_selected_osz failed', e);
-                    notify.error(transloco.translate('osuReader.exportFailed', { error: String(e) }));
+                    notify.error(transloco.translate('osuReader.exportFailed', { error: errorText(transloco, e) }));
                 } finally {
                     patchState(store, { exporting: false });
                 }

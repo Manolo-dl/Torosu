@@ -37,7 +37,7 @@ use crate::{
 pub async fn run_trainer(app: AppHandle, request: RunTrainerRequest) -> Result<Vec<String>> {
     log::debug!("run_trainer called for {} with {} convert(s)", request.osu_file_path, request.converts.len());
     if request.converts.is_empty() {
-        return Err("there is nothing to convert".into());
+        return Err(Error::NothingToConvert);
     }
 
     let config = Arc::new(app.state::<AppConfigState>().config.lock().unwrap().trainer.clone());
@@ -206,7 +206,7 @@ fn build_convert(source: &Source, number: usize, mut tasks: Vec<TrainerTask>, co
     let mut beatmap = source.beatmap.clone();
     pipeline::run(&mut beatmap, &tasks, || source.accents()).map_err(|e| {
         log::error!("convert {}: pipeline execution failed: {}", number, e);
-        format!("Convert {}: {}", number, e)
+        Error::Convert { number, cause: Box::new(e.into()) }
     })?;
 
     let rate = tasks.iter().find_map(|t| match &t.task {
@@ -324,11 +324,7 @@ fn check_names(converts: &[Convert]) -> Result<()> {
     let mut seen: HashMap<(&Path, String), usize> = HashMap::new();
     for convert in converts {
         if let Some(first) = seen.insert((&convert.osz, convert.osu_name.to_lowercase()), convert.number) {
-            return Err(format!(
-                "Converts {} and {} make the same difficulty, \"{}\": change one of them.",
-                first, convert.number, convert.version
-            )
-            .into());
+            return Err(Error::SameDifficulty { first, second: convert.number, name: convert.version.clone() });
         }
     }
     Ok(())
@@ -411,7 +407,7 @@ async fn make_media(source: &Source, converts: &[Convert], config: &TrainerConfi
             .await?
             .map_err(|e| {
                 log::error!("video processing failed: {:#}", e);
-                format!("video processing failed: {:#}", e)
+                Error::Video { detail: format!("{:#}", e) }
             })?;
             Ok::<_, Error>((job.name, tmp))
         }

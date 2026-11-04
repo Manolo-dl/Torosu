@@ -1,3 +1,4 @@
+import { errorText } from '@shared/i18n';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { invoke } from '@tauri-apps/api/core';
 import { open } from '@tauri-apps/plugin-dialog';
@@ -34,7 +35,7 @@ export const OsuPathStore = signalStore(
         if (announce) notify.success(transloco.translate('osuPath.found'));
       } catch (error) {
         if (announce) notify.error(transloco.translate('osuPath.notFound'));
-        patchState(store, { error: String(error) });
+        patchState(store, { error: errorText(transloco, error) });
         detectPromise = undefined;
       } finally {
         patchState(store, { isLoading: false });
@@ -84,7 +85,7 @@ export const OsuPathStore = signalStore(
           await setPath(selected as string);
           notify.success(transloco.translate('osuPath.saved'));
         } catch (e) {
-          notify.error(String(e));
+          notify.error(errorText(transloco, e));
         }
       },
     };

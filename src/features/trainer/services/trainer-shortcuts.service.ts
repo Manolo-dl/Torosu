@@ -1,3 +1,4 @@
+import { errorText } from '@shared/i18n';
 import { effect, inject, Injectable, signal, untracked } from '@angular/core';
 import { invoke } from '@tauri-apps/api/core';
 import { register, ShortcutEvent, unregister, unregisterAll } from '@tauri-apps/plugin-global-shortcut';
@@ -126,7 +127,7 @@ export class TrainerShortcutsService {
                 'success',
             );
         } catch (e) {
-            this.tell(this.t('trainer.shortcuts.convertFailed', { error: String(e) }), 'error');
+            this.tell(this.t('trainer.shortcuts.convertFailed', { error: errorText(this.transloco, e) }), 'error');
         } finally {
             this.running = false;
         }

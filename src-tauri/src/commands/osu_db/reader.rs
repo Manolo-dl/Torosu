@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::panic;
 use std::path::Path;
 use osynic_osudb::entity::osu::osudb::OsuDB;
-use crate::{commands::osu_db::model::{OsuBeatmapSet, OsuDiff}, error::Result, state::AppConfigState};
+use crate::{commands::osu_db::model::{OsuBeatmapSet, OsuDiff}, error::{Error, Result}, state::AppConfigState};
 
 #[tauri::command]
 pub async fn read_osu_db_full(
@@ -31,7 +31,7 @@ fn read_from_osudb(osu_path: &Path) -> Result<Vec<OsuBeatmapSet>> {
     let db = panic::catch_unwind(move || OsuDB::from_file(&db_path_clone))
         .map_err(|e| {
             log::error!("osu!.db parsing panicked unexpectedly: {:?}", e);
-            format!("osu!.db appears to be corrupted at {:?} and could not be parsed", db_path)
+            Error::OsuDbCorrupted { path: db_path.display().to_string() }
         })?
         .map_err(|e| {
             log::error!("Failed to parse osu!.db at {:?}: {}", db_path, e);

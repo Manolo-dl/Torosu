@@ -1,3 +1,4 @@
+import { errorText } from '@shared/i18n';
 import { TranslocoService } from '@jsverse/transloco';
 import { computed, inject } from "@angular/core";
 import { CollectionStore } from "@entities/collection";
@@ -89,7 +90,7 @@ export const ImportCollectionStore = signalStore(
                 notify.success(transloco.translate('collections.import.done'));
                 patchState(store, initialState);
             } catch (error) {
-                notify.error(transloco.translate('collections.import.failed'));
+                notify.error(transloco.translate('collections.import.failed', { error: errorText(transloco, error) }));
                 patchState(store, { isImporting: false });
                 throw error;
             }

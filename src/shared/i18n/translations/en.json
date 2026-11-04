@@ -366,6 +366,10 @@
       "downloading": "downloading",
       "done": "done",
       "failed": "failed"
+    },
+    "notification": {
+      "title": "Downloader",
+      "body": "{{ succeeded }} downloaded, {{ failed }} failed"
     }
   },
   "dropzone": {
@@ -408,7 +412,7 @@
     "search": "Search by title, artist or file name...",
     "created": "Pack {{ title }} created!",
     "createdParts": "Pack {{ title }} created in {{ parts }} parts!",
-    "createFailed": "Failed to create the pack"
+    "createFailed": "Failed to create the pack: {{ error }}"
   },
   "beatmaps": {
     "none": "No beatmaps"
@@ -452,7 +456,7 @@
       "importMaps": "Import {{ count }} maps",
       "clear": "Clear",
       "done": "Collections imported",
-      "failed": "Failed to import the collections"
+      "failed": "Failed to import the collections: {{ error }}"
     }
   },
   "export": {
@@ -488,5 +492,40 @@
     "export": "Export",
     "preview": "Preview",
     "empty": "No beatmaps match the current filters"
+  },
+  "errors": {
+    "io": "File error: {{ detail }}",
+    "notFound": "A file or folder was not found: {{ detail }}",
+    "permissionDenied": "Torosu has no permission to use a file or folder: {{ detail }}",
+    "zip": "Could not read or write a compressed file: {{ detail }}",
+    "osuDb": "Could not read osu!.db: {{ detail }}",
+    "config": "Could not save the settings: {{ detail }}",
+    "http": "Network error: {{ detail }}",
+    "offline": "Could not connect: check your internet connection.",
+    "timeout": "The server took too long to answer. Try again.",
+    "updater": "Could not update Torosu: {{ detail }}",
+    "internal": "Something went wrong: {{ detail }}",
+    "message": "{{ detail }}",
+    "osuFolderNotFound": "osu! folder not found",
+    "notOsuFolder": "{{ path }} is not an osu! folder: it has no osu!.db",
+    "osuDbCorrupted": "osu!.db seems to be corrupted ({{ path }}) and could not be read",
+    "collectionDbRead": "Could not read collection.db: {{ detail }}",
+    "collectionDbWrite": "Could not save collection.db: {{ detail }}",
+    "noBeatmapSelected": "No beatmap selected in osu!, or its folder could not be found",
+    "noSession": "The osu_session cookie is not set",
+    "outputFolderNotFound": "Output folder not found: {{ path }}",
+    "httpStatus": "The server answered with an error (HTTP {{ status }})",
+    "setTooLarge": "The beatmap set {{ id }} is too large ({{ bytes }} bytes)",
+    "createFolder": "Could not create {{ path }}: {{ detail }}",
+    "readDiff": "Could not read {{ file }}: {{ detail }}",
+    "nothingToConvert": "There is nothing to convert",
+    "sameDifficulty": "Converts {{ first }} and {{ second }} make the same difficulty, \"{{ name }}\": change one of them.",
+    "convert": "Convert {{ number }}: {{ cause }}",
+    "maniaOnly": "{{ task }} only works on osu!mania maps",
+    "unsupportedKeys": "The key converter supports 1K to 10K and 12K, 14K, 16K and 18K, not {{ keys }}K",
+    "onePlayer": "The key converter maps for one player, not {{ layout }}",
+    "noAudio": "The map's audio has no supported track",
+    "video": "Could not re-encode the video: {{ detail }}",
+    "noUpdate": "There is no update to install"
   }
 }

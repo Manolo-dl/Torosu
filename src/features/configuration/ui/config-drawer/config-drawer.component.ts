@@ -13,7 +13,7 @@ import { CollectionStore } from '@entities/collection';
 import { OsuPathStore } from '@entities/osu-path';
 import { NotifyService } from '@shared/services';
 import { PlatformStore } from '@shared/stores';
-import { DEFAULT_LANGUAGE, LANGUAGES } from '@shared/i18n';
+import { DEFAULT_LANGUAGE, errorText, LANGUAGES } from '@shared/i18n';
 import { OptionGroupComponent, OptionGroupItem } from '@shared/ui';
 import { NameFormatField, NameFormatFieldComponent, NameFormatPreset } from '../name-format-field/name-format-field.component';
 
@@ -144,7 +144,7 @@ export class ConfigDrawerComponent {
         if (path) await this.osuPath.setPath(path);
         else await this.osuPath.clearPath();
       } catch (e) {
-        this.notify.error(String(e));
+        this.notify.error(errorText(this.transloco, e));
         return;
       }
     }

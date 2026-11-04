@@ -2,7 +2,7 @@ use std::{collections::HashSet, path::Path};
 
 use osynic_osudb::entity::collection::{collection::Collection, collectiondb::CollectionDB};
 
-use crate::{commands::collections::model::ImportCollection, error::Result, state::AppConfigState};
+use crate::{commands::collections::model::ImportCollection, error::{Error, Result}, state::AppConfigState};
 
 #[tauri::command]
 pub async fn import_collections(
@@ -23,7 +23,7 @@ fn merge_into_collectiondb(collection_path: &Path, collections: Vec<ImportCollec
     let mut collection_list = CollectionDB::from_file(collection_path)
         .map_err(|e| {
             log::error!("Failed to parse collection.db: {:?}", e);
-            format!("Failed to parse collection.db: {:?}", e)
+            Error::CollectionDbRead { detail: format!("{:?}", e) }
         })?;
 
     let mut added_count = 0;
@@ -62,7 +62,7 @@ fn merge_into_collectiondb(collection_path: &Path, collections: Vec<ImportCollec
 
     collection_list.to_file(collection_path).map_err(|e| {
         log::error!("Failed to save collection.db: {:?}", e);
-        format!("Failed to save collection.db: {:?}", e)
+        Error::CollectionDbWrite { detail: format!("{:?}", e) }
     })?;
 
     log::info!("Imported collections: {} new collections, {} maps added", new_collections_count, added_count);

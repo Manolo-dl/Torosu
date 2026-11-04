@@ -1,3 +1,4 @@
+import { errorText } from '@shared/i18n';
 import { TranslocoService } from '@jsverse/transloco';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withState } from "@ngrx/signals";
 import { OsuBeatmapSet, OsuDiff } from "@entities/osu-db";
@@ -164,7 +165,7 @@ export const PackStore = signalStore(
                     patchState(store, initialState);
                 } catch (error) {
                     patchState(store, { isCreating: false });
-                    notify.error(transloco.translate('packs.createFailed'));
+                    notify.error(transloco.translate('packs.createFailed', { error: errorText(transloco, error) }));
                     throw error;
                 }
             },
