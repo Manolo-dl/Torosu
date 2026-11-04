@@ -2611,8 +2611,9 @@ fn auc(scores: &[f64], ys: &[bool]) -> f64 {
 /// sound starts there by band and how loud it is (as `accent_scores` scores
 /// them), against whether the mapper put a scratch there: the weights of a
 /// logistic regression (the `ACCENT_*` constants), how well they tell the
-/// places apart (the area under the ROC curve, left out song by song), and
-/// how strong the sounds of the mappers' scratches are against their song's.
+/// places apart (the area under the ROC curve, left out song by song), how
+/// strong the sounds of the mappers' scratches are against their song's, and
+/// how the scratches of each phrase follow how loud it is.
 #[test]
 #[ignore = "reads a whole Songs folder; run by hand"]
 fn corpus_scratch_sounds() {
@@ -2620,7 +2621,7 @@ fn corpus_scratch_sounds() {
     const NAMES: [&str; 11] = ["bias", "bar", "beat", "1/2", "off the 1/2s", "row", "low", "mid", "high", "loud", "section"];
     // Per map, per place: the song, the features, whether it has a scratch,
     // whether one is a beat or less away, and the sound alone.
-    type Place = (String, Vec<f64>, bool, bool, f64);
+    type Place = (String, Vec<f64>, bool, bool, f64, i64);
     let sets = mania_sets(&songs_dir());
     let places: Vec<Vec<Place>> = parallel(
         &sets,
@@ -2700,7 +2701,8 @@ fn corpus_scratch_sounds() {
                     let next_to = scratched[i]
                         && (0..merged.len()).any(|j| j != i && scratched[j] && (merged[j].0 - time).abs() <= beat_len + 3.0);
                     let sound = features[6..].iter().zip([0.98, 1.42, 0.90, 1.48, 0.23]).map(|(f, w)| f * w).sum();
-                    map.push((beatmap.title.clone(), features, scratched[i], next_to, sound));
+                    let phrase = (((time - tp) / beat_len).round() as i64).div_euclid(meter * 4);
+                    map.push((beatmap.title.clone(), features, scratched[i], next_to, sound, phrase));
                 }
                 acc.push(map);
             }
@@ -2734,6 +2736,62 @@ fn corpus_scratch_sounds() {
             let share = sounds.partition_point(|&s| s < p.4) as f64 / sounds.len() as f64;
             if p.3 { in_a_row.push(share) } else { alone.push(share) }
         }
+    }
+    // Per map, how the scratches of each phrase (4 bars) follow how loud the
+    // phrase is, how strong its sound and how many rows it has, as a rank
+    // correlation.
+    let spearman = |a: &[f64], b: &[f64]| -> Option<f64> {
+        let rank = |v: &[f64]| {
+            let mut order: Vec<usize> = (0..v.len()).collect();
+            order.sort_by(|&x, &y| v[x].total_cmp(&v[y]));
+            let mut r = vec![0.0; v.len()];
+            for (k, &i) in order.iter().enumerate() {
+                r[i] = k as f64;
+            }
+            r
+        };
+        let (ra, rb) = (rank(a), rank(b));
+        let n = a.len() as f64;
+        let (ma, mb) = (ra.iter().sum::<f64>() / n, rb.iter().sum::<f64>() / n);
+        let num: f64 = ra.iter().zip(&rb).map(|(x, y)| (x - ma) * (y - mb)).sum();
+        let den = (ra.iter().map(|x| (x - ma).powi(2)).sum::<f64>() * rb.iter().map(|y| (y - mb).powi(2)).sum::<f64>()).sqrt();
+        (a.len() >= 4 && den > 0.0).then(|| num / den)
+    };
+    let mut by_loud = Vec::new();
+    let mut by_sound = Vec::new();
+    let mut by_notes = Vec::new();
+    for map in &places {
+        let mut phrases: BTreeMap<i64, (f64, f64, f64, f64)> = BTreeMap::new();
+        for p in map {
+            let e = phrases.entry(p.5).or_default();
+            e.0 += p.2 as u8 as f64;
+            if p.1[5] > 0.0 {
+                e.1 += p.1[9];
+                e.2 += p.4;
+                e.3 += 1.0;
+            }
+        }
+        let rows: Vec<&(f64, f64, f64, f64)> = phrases.values().filter(|v| v.3 > 0.0).collect();
+        let scratches: Vec<f64> = rows.iter().map(|v| v.0).collect();
+        if let Some(c) = spearman(&rows.iter().map(|v| v.1 / v.3).collect::<Vec<_>>(), &scratches) {
+            by_loud.push(c);
+        }
+        if let Some(c) = spearman(&rows.iter().map(|v| v.2 / v.3).collect::<Vec<_>>(), &scratches) {
+            by_sound.push(c);
+        }
+        if let Some(c) = spearman(&rows.iter().map(|v| v.3).collect::<Vec<_>>(), &scratches) {
+            by_notes.push(c);
+        }
+    }
+    for (name, values) in [("loudness", &mut by_loud), ("sound", &mut by_sound), ("rows", &mut by_notes)] {
+        println!(
+            "  the scratches of a phrase against its {}: rank correlation {:+.2} (quartiles {:+.2} to {:+.2}) over {} maps",
+            name,
+            quantile(values, 0.5),
+            quantile(values, 0.25),
+            quantile(values, 0.75),
+            values.len()
+        );
     }
     for (name, values) in [("alone", &mut alone), ("a beat or less from another", &mut in_a_row)] {
         let below = values.iter().filter(|&&v| v < 0.5).count() as f64 / values.len().max(1) as f64;

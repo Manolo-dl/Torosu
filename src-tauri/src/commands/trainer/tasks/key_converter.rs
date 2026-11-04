@@ -64,7 +64,9 @@
 //!   there: nothing pressed or held with it (a muri), and its next notes as
 //!   far as the map is easy. On a chord, the hand's note in it may go to the
 //!   scratch instead, moving out (see [`add_scratch_lanes`]). The easier the
-//!   map, the fewer scratches come close together.
+//!   map, the fewer scratches come close together; the quiet parts are left
+//!   to the keys, but for the accent sounds of the map (a crash), whose notes
+//!   move out to the scratches.
 //!
 //! The hands come from the playstyle of the target (`analysis::layout`): on
 //! 8K `3+2+3` the two middle keys are the thumbs', on `1+7` the first key is
@@ -245,6 +247,34 @@ const ACCENT_AVERAGE: f64 = 2.4;
 /// Without the audio, a row sounds like the ones around it, and a place with
 /// no note has no sound to mark.
 const ACCENT_UNHEARD: f64 = 0.45;
+/// A row with an accent sound of the map scores this much more, as much as
+/// the biggest chord around, and strong enough whatever the audio says: its
+/// mapper picked it for an accent (a crash, a water drop). That is additions or a sample of its own that fewer
+/// than [`SCRATCH_RARE_SOUND`] of the map's notes have, [`SCRATCH_RARE_APART`]
+/// beats apart or more as a rule: one on every beat for bars is a part to
+/// play (a hi-hat roll). A scratch of its hand takes that note, moved out to
+/// it, so the sound comes from the scratch. Hand-made 10K2S maps keep their
+/// sounds out of their notes, so they tell nothing of it, but the maps they
+/// are converted from often have them.
+const ACCENT_HITSOUND: f64 = 2.0;
+const SCRATCH_RARE_SOUND: f64 = 0.02;
+const SCRATCH_RARE_APART: f64 = 2.0;
+/// The song goes in phrases of this many bars, and with the audio, not all
+/// of them get scratches, as in hand-made maps, where a third to two thirds
+/// of the bars have none and some parts are left to the keys, strong hits
+/// and all: the phrases more than [`SCRATCH_QUIET_DB`] quieter than the
+/// song's middle one (an intro, a break) get [`SCRATCH_QUIET_MOST`] at most,
+/// on the map's accent sounds alone ([`ACCENT_HITSOUND`]), and the quieter
+/// half of the others [`SCRATCH_SPARSE_MOST`] at most, even in a song as
+/// loud all along.
+/// Hand-made maps put more scratches in their louder phrases (see
+/// `corpus_scratch_sounds`), though not by much. Without it, the converts
+/// had a scratch in 7 to 9 bars in 10.
+const SCRATCH_PHRASE_BARS: f64 = 4.0;
+const SCRATCH_QUIET_DB: f64 = 3.0;
+const SCRATCH_QUIET_MOST: usize = 1;
+const SCRATCH_SPARSE_PHRASE: f64 = 0.5;
+const SCRATCH_SPARSE_MOST: usize = 2;
 /// How many scratches a map gets: this many a bar, times its notes a bar to
 /// this power. Hand-made maps with 4 notes a bar have 0.6 a bar, with 16
 /// 1.5, with 32 2.3, give or take 70%: the more a map plays, the more accents
@@ -1444,6 +1474,8 @@ struct Place {
     /// How strongly a sound starts there in the low, mid and high bands (see
     /// [`ACCENT_LOW`]).
     bands: [f32; 3],
+    /// Whether a note of the row has a rare sound (see [`ACCENT_HITSOUND`]).
+    hitsound: bool,
     /// Per scratch, how likely a note on it is with what its hand plays
     /// around: 0 where it cannot have one.
     sides: Vec<f64>,
@@ -1483,7 +1515,10 @@ struct Around {
 /// only those that score well enough ([`SCRATCH_MIN_SCORE`]) and whose sound
 /// is among the song's stronger ones ([`SCRATCH_SOUND_FROM`]): where the
 /// hands are busy, only the big accents, where they take the hand's notes
-/// ([`SCRATCH_STRONG`]). They are 1/2 beat apart at least, and only so many in a
+/// ([`SCRATCH_STRONG`]). The map's own accent sounds count too, a crash or a
+/// water drop, their note moving out to the scratch ([`ACCENT_HITSOUND`]);
+/// and not every phrase gets scratches, the quiet ones left to the keys but
+/// for those sounds ([`SCRATCH_PHRASE_BARS`]). They are 1/2 beat apart at least, and only so many in a
 /// few beats, the fewer the easier the map ([`SCRATCH_SPANS`]). Each goes on
 /// the scratch whose hand is freer, taking turns when both are, both for the
 /// biggest accents, and a few in a row at most ([`SCRATCH_RUN`]). A
@@ -1506,6 +1541,41 @@ fn add_scratch_lanes(
     let inner: Vec<usize> = (0..keys).filter(|&k| scratches & 1 << k == 0).collect();
     debug_assert_eq!(inner.len(), inner_keys);
 
+    // The sound of a note beyond its hit sound (its additions, or a sample of
+    // its own), and how many of the map's notes have each: the rare ones mark
+    // accents (see [`ACCENT_HITSOUND`]).
+    let sound_of = |obj: &HitObject| -> Option<String> {
+        let names: Vec<String> =
+            obj.samples.iter().filter(|s| s.name != HitSampleInfo::HIT_NORMAL).map(|s| format!("{:?}", s.name)).collect();
+        (!names.is_empty()).then(|| names.join(" "))
+    };
+    let mut sounds: std::collections::HashMap<String, Vec<f64>> = std::collections::HashMap::new();
+    let mut counted = 0;
+    for (i, obj) in beatmap.hit_objects.iter().enumerate() {
+        if mania::note(obj).is_some() && !extras.get(i).copied().unwrap_or(false) {
+            counted += 1;
+            if let Some(sound) = sound_of(obj) {
+                sounds.entry(sound).or_default().push(obj.start_time);
+            }
+        }
+    }
+    // Rare, and apart: a sound on every beat for bars is a part (a hi-hat
+    // roll), not an accent.
+    let beat_grid = BeatGrid::new(beatmap);
+    let accent_sounds: std::collections::HashSet<String> = sounds
+        .iter()
+        .filter(|(_, times)| (times.len() as f64) < counted as f64 * SCRATCH_RARE_SOUND)
+        .filter(|(_, times)| {
+            let mut gaps: Vec<f64> = times.windows(2).map(|w| (w[1] - w[0]) / beat_grid.at(w[0]).1).collect();
+            gaps.sort_by(f64::total_cmp);
+            gaps.get(gaps.len() / 2).is_none_or(|&gap| gap >= SCRATCH_RARE_APART)
+        })
+        .map(|(sound, _)| sound.clone())
+        .collect();
+    let rare = |obj: &HitObject| sound_of(obj).is_some_and(|s| accent_sounds.contains(&s));
+    // The notes with a rare sound, as (time, key), in time.
+    let mut marked: Vec<(f64, usize)> = Vec::new();
+
     // Per key, the map's notes as (start, end), in time: the density's extra
     // notes make way for the scratches rather than keep them out.
     let mut lanes: Vec<Vec<(f64, f64)>> = vec![Vec::new(); keys];
@@ -1522,6 +1592,9 @@ fn add_scratch_lanes(
             continue;
         }
         lanes[key].push((obj.start_time, end));
+        if rare(obj) {
+            marked.push((obj.start_time, key));
+        }
         match rows.last_mut() {
             Some(row) if (obj.start_time - row.0).abs() < 1.0 => row.1 += 1,
             _ => rows.push((obj.start_time, 1)),
@@ -1531,6 +1604,11 @@ fn add_scratch_lanes(
     for lane in &mut lanes {
         lane.sort_by(|a, b| a.0.total_cmp(&b.0));
     }
+    marked.sort_by(|a, b| a.0.total_cmp(&b.0));
+    // The keys with a note of a rare sound at `time`.
+    let marked_at = |time: f64| {
+        marked[marked.partition_point(|m| m.0 < time - 1.0)..].iter().take_while(|m| m.0 <= time + 1.0).fold(0u32, |k, m| k | 1 << m.1)
+    };
     let (Some(&(first, _)), Some(&(last, _))) = (rows.first(), rows.last()) else { return };
     let free_ms = scratch_free_ms(total as f64 / ((to - from) / 1000.0).max(1.0));
 
@@ -1585,9 +1663,9 @@ fn add_scratch_lanes(
             * near(&SCRATCH_FREE_BEFORE, mine.before / free_ms)
             * near(&SCRATCH_PINKY_NEAR, pinky.after.min(pinky.before) / beat_len);
         // Its note in the row can go to it in a chord, the other hand playing
-        // too, or when it is its pinky's.
+        // too, when it is its pinky's, or when it has a rare sound.
         let other = around(others(s), time);
-        let takes = mine.row == pinky.row || other.row != 0 || other.long != 0;
+        let takes = mine.row == pinky.row || other.row != 0 || other.long != 0 || mine.row & marked_at(time) != 0;
         match mine.row.count_ones() {
             0 => (free, 0),
             1 if takes => (free * SCRATCH_MOVE, mine.row),
@@ -1657,6 +1735,7 @@ fn add_scratch_lanes(
                 offbeat: position >= 2,
                 bars: (next - time) / (beat_len * meter as f64),
                 bands: accents.map_or([0.0; 3], |a| a.band_onsets(time)),
+                hitsound: notes > 0 && marked_at(time) != 0,
                 loudness: accents.and_then(|a| a.loudness(time, time + 120.0)),
                 sides: chances.iter().map(|c| c.0).collect(),
                 takes: chances.iter().map(|c| c.1).collect(),
@@ -1703,11 +1782,58 @@ fn add_scratch_lanes(
     // their scratches, against 59% of their 1/2 beats (see
     // `corpus_scratch_sources`). On a 1/2 beat with no note, a scratch adds a
     // sound the map left alone.
+    // A rare sound of the map is strong enough whatever the audio says.
     let eligible = |i: usize| {
-        places[i].notes > 0 && strength[i] >= SCRATCH_ACCENT_FROM && sound_strength[i] >= SCRATCH_SOUND_FROM
+        let place = &places[i];
+        place.notes > 0 && strength[i] >= SCRATCH_ACCENT_FROM && (sound_strength[i] >= SCRATCH_SOUND_FROM || place.hitsound)
     };
+    // How loud each phrase is against the song's others (see
+    // [`SCRATCH_PHRASE_BARS`]), from its rows.
+    let mut bar = 0.0;
+    let phrase: Vec<usize> = places
+        .iter()
+        .map(|p| {
+            let i = (bar / SCRATCH_PHRASE_BARS) as usize;
+            bar += p.bars;
+            i
+        })
+        .collect();
+    let mut sums = vec![(0.0, 0usize); phrase.last().map_or(0, |&i| i + 1)];
+    for (i, place) in places.iter().enumerate().filter(|(_, p)| p.notes > 0) {
+        if let Some(loud) = place.loudness {
+            sums[phrase[i]].0 += loud as f64;
+            sums[phrase[i]].1 += 1;
+        }
+    }
+    let loudness: Vec<f64> = sums.iter().map(|&(sum, n)| if n > 0 { sum / n as f64 } else { f64::NEG_INFINITY }).collect();
+    let mut heard_phrases: Vec<f64> = loudness.iter().copied().filter(|l| l.is_finite()).collect();
+    heard_phrases.sort_by(f64::total_cmp);
+    let middle = heard_phrases.get(heard_phrases.len() / 2).copied().unwrap_or(0.0);
+    // The quiet phrases; of the others, the share of them less loud.
+    let quiet = |p: usize| accents.is_some() && loudness[p] < middle - SCRATCH_QUIET_DB;
+    let others: Vec<f64> = heard_phrases.iter().copied().filter(|&l| l >= middle - SCRATCH_QUIET_DB).collect();
+    let louder = |p: usize| others.partition_point(|&l| l < loudness[p]) as f64 / others.len().max(1) as f64;
+    // The most scratch places each phrase may have.
+    let phrase_most = |p: usize| {
+        if accents.is_none() {
+            usize::MAX
+        } else if quiet(p) {
+            SCRATCH_QUIET_MOST
+        } else if louder(p) < SCRATCH_SPARSE_PHRASE {
+            SCRATCH_SPARSE_MOST
+        } else {
+            usize::MAX
+        }
+    };
+    let mut in_phrase = vec![0usize; sums.len()];
     let adjusted: Vec<f64> = (0..places.len())
-        .map(|i| if eligible(i) && possible(i, true) > 0.0 { scores[i] + possible(i, true).ln() } else { f64::NEG_INFINITY })
+        .map(|i| {
+            if eligible(i) && possible(i, true) > 0.0 {
+                scores[i] + possible(i, true).ln()
+            } else {
+                f64::NEG_INFINITY
+            }
+        })
         .collect();
     let bars: f64 = places.iter().map(|p| p.bars).sum();
     let (count, base) = if bars > 0.0 {
@@ -1752,6 +1878,9 @@ fn add_scratch_lanes(
         if within(gap).iter().any(|&t| (t - place.time).abs() < gap) {
             continue;
         }
+        if (quiet(phrase[i]) && !place.hitsound) || in_phrase[phrase[i]] >= phrase_most(phrase[i]) {
+            continue;
+        }
         // The busiest span of each length with this place in it.
         let crowded = spans.iter().any(|&(beats, most)| {
             let span = place.beat_len * beats + ROUNDING_MS;
@@ -1770,6 +1899,7 @@ fn add_scratch_lanes(
         }
         picked_times.insert(picked_times.partition_point(|&t| t < place.time), place.time);
         chosen[i] = options(i, deleting);
+        in_phrase[phrase[i]] += 1;
         picked.push(i);
     }
     // Best first: the score from which both scratches may go.
@@ -1837,7 +1967,10 @@ fn add_scratch_lanes(
             .take_while(|&i| objects[i].start_time <= time + 1.0)
             .filter(|&i| key(i).is_some_and(|(k, _)| takes & 1 << k != 0))
             .collect();
-        let Some(&moved) = row.iter().min_by_key(|&&i| key(i).map_or((true, usize::MAX), |(k, length)| (length <= 1.0, k.abs_diff(s)))) else {
+        // The note with a rare sound first, then the long one, then the one
+        // next to the scratch.
+        let order = |i: usize| key(i).map_or((true, true, usize::MAX), |(k, length)| (!rare(&objects[i]), length <= 1.0, k.abs_diff(s)));
+        let Some(&moved) = row.iter().min_by_key(|&&i| order(i)) else {
             continue;
         };
         let sounds: Vec<HitSampleInfo> = row
@@ -1963,8 +2096,9 @@ fn accent_scores(places: &[Place], heard: bool) -> Vec<(f64, Option<f64>)> {
             } else {
                 0.0
             };
+            let picked = if place.hitsound { ACCENT_HITSOUND } else { 0.0 };
             if !heard {
-                return (metre + chord + if row { ACCENT_UNHEARD } else { 0.0 }, None);
+                return (metre + chord + picked + if row { ACCENT_UNHEARD } else { 0.0 }, None);
             }
             let near = around(i, 4.0);
             let high = places[near.clone()].iter().filter(|p| p.bands[2] < place.bands[2]).count() as f64 / near.len() as f64;
@@ -1976,7 +2110,7 @@ fn accent_scores(places: &[Place], heard: bool) -> Vec<(f64, Option<f64>)> {
                 + ACCENT_LOUD * in_song(&loud, loudness[i])
                 + ACCENT_SECTION * section;
             let scored = if row { chord + sound } else { sound };
-            (metre + scored - ACCENT_AVERAGE, Some(sound))
+            (metre + scored + picked - ACCENT_AVERAGE, Some(sound))
         })
         .collect()
 }
@@ -3215,6 +3349,40 @@ mod tests {
         assert!(scratches.len() >= 10 && loud == scratches.len(), "{} of {} in the loud half: {:?}", loud, scratches.len(), scratches);
         // On the map's notes, the beats, not on the clicks between them.
         assert!(scratches.iter().all(|&t| (t / beat).fract() == 0.0), "{:?}", scratches);
+    }
+
+    #[test]
+    fn ten_k_two_s_moves_the_accent_sounds_out() {
+        // A 10K map of a note every 1/2 beat on the right hand, with a water
+        // drop of its own on the left middle finger's key 1/2 beat into every
+        // 8th bar, and a hi-hat on every beat of a bar: the water drops go to
+        // the left scratch, sound and all, and the hi-hats, a part to play,
+        // stay where they are.
+        let (beat, bars) = (500.0, 32usize);
+        let mut osu = String::from(
+            "osu file format v14\n\n[General]\nMode: 3\n\n[Difficulty]\nCircleSize:10\n\n[TimingPoints]\n0,500,4,1,0,60,1,0\n\n[HitObjects]\n",
+        );
+        let mut drops = Vec::new();
+        for half in 0..bars * 8 {
+            let time = half as f64 * beat / 2.0;
+            let (col, sample) = if half % 64 == 1 {
+                drops.push(time);
+                (2, "water-drop.wav")
+            } else if half / 8 == 21 && half % 2 == 0 {
+                (7, "hihat.wav")
+            } else {
+                ([6, 8][half % 2], "")
+            };
+            osu.push_str(&format!("{},192,{},1,0,0:0:0:0:{}\n", mania::column_x(col, 10) as i32, time, sample));
+        }
+        let beatmap = convert_to(&osu, "10K2S", 12, Density::None);
+        check(&beatmap, 12);
+        let at = |time: f64, col: usize| beatmap.hit_objects.iter().find(|o| o.start_time == time && column(o, 12) == col);
+        let sample = |o: &HitObject, name: &str| o.samples.iter().any(|s| format!("{:?}", s.name).contains(name));
+        let moved = drops.iter().filter(|&&t| at(t, 0).is_some_and(|o| sample(o, "water-drop"))).count();
+        assert!(moved * 10 >= drops.len() * 8, "{} of {} water drops on the scratch", moved, drops.len());
+        let hats = beatmap.hit_objects.iter().filter(|o| sample(o, "hihat")).collect::<Vec<_>>();
+        assert!(hats.len() == 4 && hats.iter().all(|o| column(o, 12) == 8), "{:?}", hats.iter().map(|o| column(o, 12)).collect::<Vec<_>>());
     }
 
     #[test]
