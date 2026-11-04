@@ -25,6 +25,10 @@ pub struct AppConfig {
     /// Shows the developer pages (logs, osu! data).
     #[serde(default = "default_false")]
     pub dev_mode: bool,
+
+    /// The language of the interface (`en`, `es`); `None` follows the system's.
+    #[serde(default)]
+    pub language: Option<String>,
 }
 
 #[derive(Deserialize, Serialize, Clone)]
@@ -135,6 +139,7 @@ impl Default for AppConfig {
             trainer: TrainerConfig::default(),
             open_file: default_false(),
             dev_mode: default_false(),
+            language: None,
         }
     }
 }

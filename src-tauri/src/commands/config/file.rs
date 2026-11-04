@@ -65,11 +65,13 @@ mod tests {
         config.trainer.shortcuts_enabled = true;
         config.trainer.shortcuts = vec![TrainerShortcut { preset: "quick rate change".into(), keys: "Ctrl+Shift+KeyR".into() }];
         config.open_file = true;
+        config.language = Some("es".into());
         let text = toml::to_string_pretty(&config).unwrap();
         let read: AppConfig = toml::from_str(&text).unwrap();
         assert_eq!(read.trainer.shortcuts.len(), 1, "{}", text);
         assert_eq!(read.trainer.shortcuts[0].keys, "Ctrl+Shift+KeyR");
         assert!(read.open_file);
+        assert_eq!(read.language.as_deref(), Some("es"));
         // And with none left.
         config.trainer.shortcuts.clear();
         let read: AppConfig = toml::from_str(&toml::to_string_pretty(&config).unwrap()).unwrap();

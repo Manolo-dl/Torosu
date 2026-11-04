@@ -1,0 +1,104 @@
+{
+  "settings": {
+    "title": "Torosu Configuration",
+    "subtitle": "Manage your Torosu settings",
+    "close": "Close",
+    "cancel": "Cancel",
+    "save": "Save",
+    "browse": "Browse",
+    "output": "Output",
+    "difficultyName": "Difficulty name",
+    "tabs": {
+      "general": "General",
+      "downloader": "Downloader",
+      "packs": "Packs",
+      "trainer": "Trainer"
+    },
+    "general": {
+      "osu": "osu!",
+      "osuPath": "osu! folder path",
+      "osuPathPlaceholder": "C:\\Users\\you\\AppData\\Local\\osu!",
+      "pickOsuPath": "Select your osu! folder",
+      "language": "Language",
+      "languageHint": "The language of Torosu: System follows your computer's",
+      "system": "System ({{ name }})",
+      "devMode": "Developer mode",
+      "devModeHint": "Show the button for the developer pages: logs and osu! data",
+      "tools": "Tools"
+    },
+    "downloader": {
+      "account": "Account",
+      "saveCookie": "Save cookie",
+      "saveCookieHint": "Keep the osu_session cookie when Torosu closes. Off, it lasts only for this session",
+      "outputPath": "Output path",
+      "outputPathPlaceholder": "Defaults to the osu! Songs folder",
+      "pickOutputPath": "Select the download folder",
+      "maxConcurrent": "Max concurrent downloads",
+      "behaviour": "Behaviour",
+      "skipVideo": "Skip video",
+      "skipVideoHint": "Download beatmaps without video",
+      "openFile": "Open file",
+      "openFileHint": "Open each beatmap after downloading it",
+      "loadLibrary": "Load library",
+      "loadLibraryHint": "Load the osu! library when opening the downloader, to skip maps you have",
+      "notify": "Notify",
+      "notifyHint": "Show a notification when downloads finish",
+      "errorFile": "Error file",
+      "errorFileHint": "Write failed IDs to failed_downloads.txt"
+    },
+    "packs": {
+      "createPacks": "Create Packs",
+      "keepBackgrounds": "Keep backgrounds",
+      "keepBackgroundsHint": "Copy each diff's background into the pack",
+      "maxSets": "Max sets per pack (0 never splits)"
+    },
+    "trainer": {
+      "quality": "Quality",
+      "hqAudio": "High quality audio",
+      "hqAudioHint": "Encode the new audio at ~192 kbit/s instead of ~128 kbit/s, half as big again",
+      "hqVideo": "High quality video",
+      "hqVideoHint": "Re-encode a scaled video at a better quality, nearly twice as big",
+      "rateChange": "Rate change",
+      "autoPitch": "Automatic pitch",
+      "autoPitchHint": "Keep the pitch below 1.0x and let it rise with the speed above, instead of choosing it in each rate change",
+      "openOsz": "Open the .osz",
+      "openOszHint": "Open each new .osz with osu!, so it is imported right away",
+      "shortcuts": "Keyboard shortcuts",
+      "runShortcuts": "Run presets with shortcuts",
+      "shortcutsWayland": "Not available on Wayland: an app can't listen to the keys while osu! has the focus",
+      "shortcutsHint": "Convert the map selected in osu! with a preset while you play. Set each preset's keys in the Trainer, none are set at first"
+    },
+    "nameFormat": {
+      "label": "Name format",
+      "example": "For example",
+      "hint": "Anything else is kept as written. Brackets whose placeholders are all empty vanish with them.",
+      "presets": {
+        "default": "Default",
+        "rateFirst": "Rate first",
+        "bpmFirst": "BPM first",
+        "starsFirst": "Stars first",
+        "short": "Short"
+      },
+      "trainer": {
+        "diff": "the original name",
+        "rate": "1.3x",
+        "bpm": "the new BPM",
+        "pitch": "pitch raised or lowered",
+        "sv": "SV normalized",
+        "keys": "the key converter, 10K Dense",
+        "fln": "the FLN converter, FLN BG4 ML4",
+        "tasks": "those three, each in parentheses",
+        "stats": "the changed HP, CS, AR and OD"
+      },
+      "packs": {
+        "creator": "who mapped the diff",
+        "artist": "the artist of the song",
+        "title": "the title of the song",
+        "diff": "the name of the diff",
+        "stars": "5.23",
+        "mode": "osu!mania",
+        "keys": "7K, only in mania"
+      }
+    }
+  }
+}

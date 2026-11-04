@@ -1,0 +1,104 @@
+{
+  "settings": {
+    "title": "Configuración de Torosu",
+    "subtitle": "Ajusta Torosu a tu gusto",
+    "close": "Cerrar",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "browse": "Examinar",
+    "output": "Salida",
+    "difficultyName": "Nombre de la dificultad",
+    "tabs": {
+      "general": "General",
+      "downloader": "Descargador",
+      "packs": "Packs",
+      "trainer": "Trainer"
+    },
+    "general": {
+      "osu": "osu!",
+      "osuPath": "Carpeta de osu!",
+      "osuPathPlaceholder": "C:\\Users\\tú\\AppData\\Local\\osu!",
+      "pickOsuPath": "Elige tu carpeta de osu!",
+      "language": "Idioma",
+      "languageHint": "El idioma de Torosu: Sistema sigue el de tu ordenador",
+      "system": "Sistema ({{ name }})",
+      "devMode": "Modo desarrollador",
+      "devModeHint": "Muestra el botón de las páginas de desarrollo: logs y datos de osu!",
+      "tools": "Herramientas"
+    },
+    "downloader": {
+      "account": "Cuenta",
+      "saveCookie": "Guardar cookie",
+      "saveCookieHint": "Conserva la cookie osu_session al cerrar Torosu. Desactivado, solo dura esta sesión",
+      "outputPath": "Carpeta de salida",
+      "outputPathPlaceholder": "Por defecto, la carpeta Songs de osu!",
+      "pickOutputPath": "Elige la carpeta de descargas",
+      "maxConcurrent": "Descargas simultáneas",
+      "behaviour": "Comportamiento",
+      "skipVideo": "Sin vídeo",
+      "skipVideoHint": "Descarga los mapas sin vídeo",
+      "openFile": "Abrir archivo",
+      "openFileHint": "Abre cada mapa al terminar de descargarlo",
+      "loadLibrary": "Cargar biblioteca",
+      "loadLibraryHint": "Carga la biblioteca de osu! al abrir el descargador, para saltarse los mapas que ya tienes",
+      "notify": "Notificar",
+      "notifyHint": "Muestra una notificación al terminar las descargas",
+      "errorFile": "Archivo de errores",
+      "errorFileHint": "Escribe los IDs que fallen en failed_downloads.txt"
+    },
+    "packs": {
+      "createPacks": "Crear packs",
+      "keepBackgrounds": "Conservar fondos",
+      "keepBackgroundsHint": "Copia el fondo de cada dificultad al pack",
+      "maxSets": "Máximo de sets por pack (0 no divide nunca)"
+    },
+    "trainer": {
+      "quality": "Calidad",
+      "hqAudio": "Audio de alta calidad",
+      "hqAudioHint": "Codifica el audio nuevo a ~192 kbit/s en vez de ~128 kbit/s; ocupa la mitad más",
+      "hqVideo": "Vídeo de alta calidad",
+      "hqVideoHint": "Recodifica el vídeo escalado con más calidad; ocupa casi el doble",
+      "rateChange": "Cambio de rate",
+      "autoPitch": "Tono automático",
+      "autoPitchHint": "Mantiene el tono por debajo de 1.0x y lo deja subir con la velocidad por encima, en vez de elegirlo en cada cambio de rate",
+      "openOsz": "Abrir el .osz",
+      "openOszHint": "Abre cada .osz nuevo con osu!, para que se importe al momento",
+      "shortcuts": "Atajos de teclado",
+      "runShortcuts": "Ejecutar presets con atajos",
+      "shortcutsWayland": "No disponible en Wayland: una aplicación no puede escuchar el teclado mientras osu! tiene el foco",
+      "shortcutsHint": "Convierte el mapa seleccionado en osu! con un preset mientras juegas. Las teclas de cada preset se ponen en el Trainer; al principio no hay ninguna"
+    },
+    "nameFormat": {
+      "label": "Formato del nombre",
+      "example": "Por ejemplo",
+      "hint": "El resto se queda tal cual. Los paréntesis y corchetes cuyos campos estén todos vacíos desaparecen con ellos.",
+      "presets": {
+        "default": "Por defecto",
+        "rateFirst": "Rate primero",
+        "bpmFirst": "BPM primero",
+        "starsFirst": "Estrellas primero",
+        "short": "Corto"
+      },
+      "trainer": {
+        "diff": "el nombre original",
+        "rate": "1.3x",
+        "bpm": "el BPM nuevo",
+        "pitch": "tono subido o bajado",
+        "sv": "SV normalizado",
+        "keys": "el key converter, 10K Dense",
+        "fln": "el FLN converter, FLN BG4 ML4",
+        "tasks": "esos tres, cada uno entre paréntesis",
+        "stats": "el HP, CS, AR y OD cambiados"
+      },
+      "packs": {
+        "creator": "quién mapeó la dificultad",
+        "artist": "el artista de la canción",
+        "title": "el título de la canción",
+        "diff": "el nombre de la dificultad",
+        "stars": "5.23",
+        "mode": "osu!mania",
+        "keys": "7K, solo en mania"
+      }
+    }
+  }
+}

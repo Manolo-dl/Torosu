@@ -13,6 +13,8 @@ mod paths;
 mod state;
 #[cfg(test)]
 mod test_utils;
+#[cfg(test)]
+mod translations;
 
 /// Whether the session is Wayland's (Linux only): the webview needs a
 /// workaround there (see `main`), and global shortcuts don't work.
