@@ -28,9 +28,33 @@
   flex-direction: column;
   gap: 0.5rem;
 
-  .hint {
+  .hint,
+  .status,
+  .problem {
     margin: 0;
     font: var(--tui-typography-body-s);
     color: var(--tui-text-secondary);
+  }
+
+  .problem {
+    color: var(--tui-status-negative);
+  }
+
+  .shortcut {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    tui-textfield {
+      flex: 1;
+    }
+
+    .active {
+      color: var(--tui-status-positive);
+    }
+
+    .failed {
+      color: var(--tui-status-negative);
+    }
   }
 }

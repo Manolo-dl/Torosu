@@ -1,12 +1,11 @@
-import { effect, inject, Injectable, untracked } from '@angular/core';
+import { effect, inject, Injectable, signal, untracked } from '@angular/core';
 import { invoke } from '@tauri-apps/api/core';
-import { register, ShortcutEvent, unregisterAll } from '@tauri-apps/plugin-global-shortcut';
+import { register, ShortcutEvent, unregister, unregisterAll } from '@tauri-apps/plugin-global-shortcut';
 import { ConfigurationStore, TrainerShortcut } from '@entities/configuration';
 import { OsuReaderStore } from '@entities/osu-reader';
 import { NotifyService } from '@shared/services';
 import { PlatformStore } from '@shared/stores';
 import { applicableConverts, BUILT_IN_PRESETS } from '../models/trainer.model';
-import { shortcutLabel } from '../models/shortcut';
 import { TrainerPresetsStore } from '../stores/trainer-presets.store';
 
 /**
@@ -24,42 +23,74 @@ export class TrainerShortcutsService {
     private readonly presets = inject(TrainerPresetsStore);
     private readonly notify = inject(NotifyService);
 
+    /**
+     * Whether a shortcut field is taking keys: the shortcuts are let go
+     * meanwhile, or the system would keep their keys from the field (and run
+     * them).
+     */
+    readonly paused = signal(false);
+    /** How the system took each shortcut set, by its keys: none while paused. */
+    readonly states = signal<Record<string, 'active' | 'failed'>>({});
+
     /** The registering under way: each change of the settings waits for the last. */
     private registering: Promise<void> = Promise.resolve();
     /** A convert started with a shortcut, still running. */
     private running = false;
+    /**
+     * Every shortcut registered since Torosu started: each is let go by its
+     * keys before registering again. `unregisterAll` alone left some taken on
+     * X11: the field of a deleted preset's keys never got them again, and a
+     * new shortcut took two presses to set.
+     */
+    private readonly ever = new Set<string>();
 
     constructor() {
         effect(() => {
             const trainer = this.config.config()?.trainer;
             const on = !!trainer?.shortcuts_enabled && this.platform.wayland() === false;
-            const shortcuts = on ? (trainer?.shortcuts ?? []).filter(s => s.keys) : [];
+            const paused = this.paused();
+            const shortcuts = on && !paused ? (trainer?.shortcuts ?? []).filter(s => s.keys) : [];
             untracked(() => {
                 // The map to convert is the one osu! has selected.
                 if (on) this.reader.connect();
-                this.registering = this.registering.then(() => this.register(shortcuts));
+                this.registering = this.registering.then(() => this.register(shortcuts, !paused));
             });
         });
     }
 
-    private async register(shortcuts: TrainerShortcut[]) {
+    /** Lets go of every shortcut and takes `shortcuts`; with `report`, keeps how each went. */
+    private async register(shortcuts: TrainerShortcut[], report: boolean) {
+        if (report) log(`shortcuts: taking ${shortcuts.map(s => `${s.keys} (${s.preset})`).join(', ') || 'none'}`);
         try {
             await unregisterAll();
         } catch (e) {
-            console.error('unregisterAll failed', e);
+            log(`shortcuts: unregisterAll failed: ${e}`);
         }
-        for (const shortcut of shortcuts) {
+        for (const keys of this.ever) {
             try {
-                await register(shortcut.keys, event => this.run(event, shortcut.preset));
+                await unregister(keys);
             } catch (e) {
-                // Another app has it, most of the time.
-                this.notify.error(`Could not set ${shortcutLabel(shortcut.keys)} for "${shortcut.preset}": ${e}`);
+                log(`shortcuts: unregister ${keys} failed: ${e}`);
             }
         }
+        const states: Record<string, 'active' | 'failed'> = {};
+        for (const shortcut of shortcuts) {
+            this.ever.add(shortcut.keys);
+            try {
+                await register(shortcut.keys, event => this.run(event, shortcut.preset));
+                states[shortcut.keys] = 'active';
+            } catch (e) {
+                // Another app has it, most of the time.
+                states[shortcut.keys] = 'failed';
+                log(`shortcuts: register ${shortcut.keys} failed: ${e}`);
+            }
+        }
+        if (report) this.states.set(states);
     }
 
     private async run(event: ShortcutEvent, name: string) {
         if (event.state !== 'Pressed') return;
+        log(`shortcuts: ${event.shortcut} pressed, for "${name}"`);
 
         const preset = [...BUILT_IN_PRESETS, ...this.presets.custom()].find(p => p.name === name);
         if (!preset) return this.tell(`The preset "${name}" is gone.`, 'error');
@@ -100,4 +131,9 @@ export class TrainerShortcutsService {
             .catch(e => console.error('show_notification failed', e));
         this.notify[kind](message);
     }
+}
+
+/** To the backend's log (see `log_frontend`): the webview's console is out of sight. */
+function log(message: string) {
+    invoke('log_frontend', { message }).catch(() => console.info(message));
 }

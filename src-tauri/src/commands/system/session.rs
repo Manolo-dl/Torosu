@@ -11,6 +11,13 @@ pub fn is_wayland() -> bool {
     crate::wayland_session()
 }
 
+/// Writes a line of the frontend to the log, as `frontend`: what the
+/// keyboard shortcuts do, which the webview's console keeps out of sight.
+#[tauri::command]
+pub fn log_frontend(message: String) {
+    log::info!(target: "frontend", "{}", message);
+}
+
 /// Shows a notification of the system, seen over osu!.
 #[tauri::command]
 pub fn show_notification(app: AppHandle, title: String, body: String) {

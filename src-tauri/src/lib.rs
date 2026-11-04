@@ -101,6 +101,7 @@ pub fn run() {
             commands::system::update::install_update,
             commands::system::session::is_wayland,
             commands::system::session::show_notification,
+            commands::system::session::log_frontend,
             commands::collections::reader::read_osu_collections,
             commands::system::text_file::write_text_file,
             commands::collections::writer::import_collections,
