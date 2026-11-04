@@ -3,6 +3,7 @@ import { DownloadQueueStore } from './download-queue.store';
 import { UserStore } from './user.store';
 import { invoke } from '@tauri-apps/api/core';
 import { listen, UnlistenFn } from '@tauri-apps/api/event';
+import { TranslocoService } from '@jsverse/transloco';
 
 interface DownloadProgress {
   beatmapSetId: number;
@@ -16,6 +17,7 @@ interface DownloadProgress {
 export class BeatmapDownloadService implements OnDestroy {
   private downloadQueue = inject(DownloadQueueStore);
   private userStore = inject(UserStore);
+  private transloco = inject(TranslocoService);
   private unlisten?: UnlistenFn;
 
   readonly error = signal<string | null>(null);
@@ -41,7 +43,7 @@ export class BeatmapDownloadService implements OnDestroy {
         beatmapSetIds: pending.map(i => i.beatmapSetId),
       });
     } catch (e) {
-      const msg = typeof e === 'string' ? e : 'Download failed';
+      const msg = typeof e === 'string' ? e : this.transloco.translate('downloader.queue.downloadFailed');
       this.error.set(msg);
       for (const item of pending) {
         const q = this.downloadQueue.queue().find(q => q.beatmapSetId === item.beatmapSetId);

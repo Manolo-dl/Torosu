@@ -1,3 +1,4 @@
+import { TranslocoPipe } from '@jsverse/transloco';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { BeatmapDownloadService } from '../../beatmap-download.service';
@@ -9,7 +10,7 @@ import { TuiCardLarge } from '@taiga-ui/layout';
 
 @Component({
   selector: 'app-beatmap-queue',
-  imports: [DecimalPipe, TuiButton, TuiButtonLoading, TuiNotificationDirective, TuiScrollbar, TuiBadge, TuiProgress, TuiCardLarge],
+  imports: [DecimalPipe, TuiButton, TuiButtonLoading, TuiNotificationDirective, TuiScrollbar, TuiBadge, TuiProgress, TuiCardLarge, TranslocoPipe],
   templateUrl: './beatmap-queue.component.html',
   styleUrl: './beatmap-queue.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,

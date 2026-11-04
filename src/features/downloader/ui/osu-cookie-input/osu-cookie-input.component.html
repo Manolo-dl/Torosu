@@ -5,33 +5,31 @@
 >
   <div tuiTitle>
     <span>
-      Osu session
+      {{ 'downloader.session' | transloco }}
       @if (userStore.user()?.osuSession) {
-        <span appearance="positive" size="s" tuiBadge>Cookie active</span>
+        <span appearance="positive" size="s" tuiBadge>{{ 'downloader.cookie.active' | transloco }}</span>
       } @else {
-        <span appearance="warning" size="s" tuiBadge>No cookie set</span>
+        <span appearance="warning" size="s" tuiBadge>{{ 'downloader.cookie.none' | transloco }}</span>
       }
     </span>
     <div tuiSubtitle>
-      The <strong>osu_session</strong> cookie is required to download beatmaps.
-      @if (config.config()?.downloader?.save_session) {
-        It is saved and kept when Torosu closes.
-      } @else {
-        It is only kept for this session; turn on <strong>Save cookie</strong> in the downloader settings to keep it.
-      }
+      <span [innerHTML]="'downloader.cookie.required' | transloco"></span>
+      <span
+        [innerHTML]="(config.config()?.downloader?.save_session ? 'downloader.cookie.saved' : 'downloader.cookie.sessionOnly') | transloco"
+      ></span>
     </div>
   </div>
 </div>
 
 <form [formRoot]="osuCookieForm">
   <app-stateful-input
-    [label]="'Osu Session Cookie'"
+    label="downloader.cookie.label"
     [id]="'osuCookie'"
     [formField]="osuCookieForm.osuSession"
-    [placeholder]="'Enter your osu_session cookie'" />
+    placeholder="downloader.cookie.placeholder" />
 
   <div class="button-group">
-    <button size="m" tuiButton type="submit">Use cookie</button>
+    <button size="m" tuiButton type="submit">{{ 'downloader.cookie.use' | transloco }}</button>
     @if (userStore.user()?.osuSession) {
       <button
         appearance="negative"
@@ -40,7 +38,7 @@
         type="button"
         (click)="clearSession()"
       >
-        Clear cookie
+        {{ 'downloader.cookie.clear' | transloco }}
       </button>
     }
   </div>

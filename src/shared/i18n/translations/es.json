@@ -300,5 +300,90 @@
       "18_10K8K": "10K y 4 teclas más por mano para todos los dedos menos el pulgar (4K10K4K).",
       "18_9K9K": "9 teclas por mano en dos filas, como un DP para pop'n music."
     }
+  },
+  "downloader": {
+    "subtitle": "Descarga sets de mapas directamente a tu carpeta Songs.",
+    "session": "Sesión de osu!",
+    "libraryNotLoaded": "Biblioteca sin cargar",
+    "libraryHint": "Carga tu biblioteca de osu! para saltarte automáticamente los mapas que ya tienes.",
+    "loading": "Cargando…",
+    "loadLibrary": "Cargar biblioteca",
+    "import": "Importar",
+    "queueTitle": "Cola de descargas",
+    "stepImage": "Paso {{ number }}",
+    "guide": {
+      "howTo": "Cómo usar el descargador",
+      "howTo1": "Consigue la cookie osu_session (mira Cómo conseguir la sesión de osu!).",
+      "howTo2": "Pégala en el campo de la cookie.",
+      "howTo3": "Arrastra o elige un archivo .txt con los enlaces de descarga (mira Formato del archivo).",
+      "howTo4": "La cola muestra los IDs de los mapas: pulsa Empezar descarga.",
+      "session": "Cómo conseguir la sesión de osu!",
+      "session1": "Abre tu navegador.",
+      "session2": "Entra en la web de osu! y asegúrate de tener la sesión iniciada.",
+      "session3": "Haz clic derecho y elige Inspeccionar, o pulsa F12.",
+      "session4": "Ve a la pestaña Aplicación o Almacenamiento.",
+      "session5": "Ve a Cookies → https://osu.ppy.sh y copia el valor de la cookie llamada osu_session.",
+      "format": "Formato del archivo",
+      "format1": "Un archivo .txt con un enlace de descarga por línea.",
+      "settings": "Configuración",
+      "settings1": "Abre la configuración con el icono del engranaje.",
+      "settings2": "Notificar: muestra una notificación cuando terminan las descargas.",
+      "settings3": "Archivo de errores: guarda las descargas fallidas en un archivo de la carpeta de salida.",
+      "settings4": "Guardar cookie: conserva la cookie osu_session al cerrar Torosu; si no, solo dura esta sesión.",
+      "settings5": "Carpeta de salida: dónde se guardan las descargas; sin ninguna, la carpeta Songs de osu!.",
+      "settings6": "Cargar biblioteca: carga la biblioteca de osu! al abrir el descargador, para saltarse los mapas que ya tienes.",
+      "settings7": "Saltar vídeo: no descarga los vídeos, lo que ahorra ancho de banda y espacio en disco.",
+      "settings8": "Descargas simultáneas: cuántas se descargan a la vez; 1 por defecto, súbelo bajo tu responsabilidad."
+    },
+    "cookie": {
+      "active": "Cookie activa",
+      "none": "Sin cookie",
+      "required": "Hace falta la cookie <strong>osu_session</strong> para descargar mapas.",
+      "saved": "Se guarda y se conserva al cerrar Torosu.",
+      "sessionOnly": "Solo se conserva durante esta sesión; activa <strong>Guardar cookie</strong> en la configuración del descargador para conservarla.",
+      "label": "Cookie osu_session",
+      "placeholder": "Pega tu cookie osu_session",
+      "use": "Usar cookie",
+      "clear": "Borrar cookie",
+      "isRequired": "La cookie es obligatoria",
+      "tooShort": "La cookie es demasiado corta",
+      "tooLong": "La cookie es demasiado larga",
+      "failed": "No se ha podido usar la cookie"
+    },
+    "queue": {
+      "queued": "{{ count }} en cola",
+      "done": "{{ count }} hechas",
+      "pending": "{{ count }} pendientes",
+      "failed": "{{ count }} fallidas",
+      "owned": "{{ count }} ya las tienes",
+      "failedFile": "Los mapas fallidos se guardan en <strong>failed_downloads.txt</strong> en tu carpeta de osu!.",
+      "clear": "Vaciar cola",
+      "start": "Empezar descarga",
+      "downloadFailed": "La descarga ha fallado"
+    },
+    "status": {
+      "pending": "pendiente",
+      "downloading": "descargando",
+      "done": "hecha",
+      "failed": "fallida"
+    }
+  },
+  "dropzone": {
+    "dropHere": "Suelta el archivo <code>.txt</code> aquí",
+    "dropOr": "Suelta un archivo <code>.txt</code> aquí o",
+    "browse": "búscalo"
+  },
+  "packs": {
+    "details": {
+      "title": "Detalles",
+      "packTitle": "Título del pack",
+      "packTitlePlaceholder": "Escribe el título del pack",
+      "creator": "Creador",
+      "creatorPlaceholder": "Tu nombre de usuario",
+      "creatorRequired": "El nombre del creador es obligatorio",
+      "titleRequired": "El título del pack es obligatorio",
+      "titleTaken": "Ya existe un pack con este título",
+      "validationFailed": "No se ha podido comprobar el título"
+    }
   }
 }

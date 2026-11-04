@@ -300,5 +300,90 @@
       "18_10K8K": "10K and 4 more keys per hand for every finger but the thumb (4K10K4K).",
       "18_9K9K": "9 keys per hand in two rows, like a DP for pop'n music."
     }
+  },
+  "downloader": {
+    "subtitle": "Download beatmap sets directly to your Songs folder.",
+    "session": "osu! session",
+    "libraryNotLoaded": "Library not loaded",
+    "libraryHint": "Load your osu! library to automatically skip maps you already own.",
+    "loading": "Loading…",
+    "loadLibrary": "Load library",
+    "import": "Import",
+    "queueTitle": "Download queue",
+    "stepImage": "Step {{ number }}",
+    "guide": {
+      "howTo": "How to use the downloader",
+      "howTo1": "Get the osu_session cookie (see How to get the osu! session).",
+      "howTo2": "Paste it in the cookie field.",
+      "howTo3": "Drop or select a .txt file with the download links (see File format).",
+      "howTo4": "The queue lists the IDs of the maps: click Start download.",
+      "session": "How to get the osu! session",
+      "session1": "Open your browser.",
+      "session2": "Go to the osu! website and make sure you are logged in.",
+      "session3": "Right click and choose Inspect, or press F12.",
+      "session4": "Go to the Application or Storage tab.",
+      "session5": "Go to Cookies → https://osu.ppy.sh and copy the value of the cookie called osu_session.",
+      "format": "File format",
+      "format1": "A .txt file with one download link per line.",
+      "settings": "Settings",
+      "settings1": "Open the settings with the gear icon.",
+      "settings2": "Notify: shows a notification when the downloads finish.",
+      "settings3": "Error file: writes the failed downloads to a file in the output folder.",
+      "settings4": "Save cookie: keeps the osu_session cookie when Torosu closes; otherwise it only lasts for this session.",
+      "settings5": "Output folder: where the downloads are saved; without one, osu!'s Songs folder.",
+      "settings6": "Load library: loads the osu! library when you open the downloader, to skip the maps you already have.",
+      "settings7": "Skip video: doesn't download the videos, which saves bandwidth and disk space.",
+      "settings8": "Max concurrent downloads: how many download at once; 1 by default, raise it at your own risk."
+    },
+    "cookie": {
+      "active": "Cookie active",
+      "none": "No cookie set",
+      "required": "The <strong>osu_session</strong> cookie is required to download beatmaps.",
+      "saved": "It is saved and kept when Torosu closes.",
+      "sessionOnly": "It is only kept for this session; turn on <strong>Save cookie</strong> in the downloader settings to keep it.",
+      "label": "osu_session cookie",
+      "placeholder": "Paste your osu_session cookie",
+      "use": "Use cookie",
+      "clear": "Clear cookie",
+      "isRequired": "The cookie is required",
+      "tooShort": "The cookie is too short",
+      "tooLong": "The cookie is too long",
+      "failed": "Could not use the cookie"
+    },
+    "queue": {
+      "queued": "{{ count }} queued",
+      "done": "{{ count }} done",
+      "pending": "{{ count }} pending",
+      "failed": "{{ count }} failed",
+      "owned": "{{ count }} already owned",
+      "failedFile": "Failed maps are saved to <strong>failed_downloads.txt</strong> in your osu! folder.",
+      "clear": "Clear queue",
+      "start": "Start download",
+      "downloadFailed": "Download failed"
+    },
+    "status": {
+      "pending": "pending",
+      "downloading": "downloading",
+      "done": "done",
+      "failed": "failed"
+    }
+  },
+  "dropzone": {
+    "dropHere": "Drop the <code>.txt</code> file here",
+    "dropOr": "Drop a <code>.txt</code> file here or",
+    "browse": "browse"
+  },
+  "packs": {
+    "details": {
+      "title": "Details",
+      "packTitle": "Pack title",
+      "packTitlePlaceholder": "Enter the pack title",
+      "creator": "Creator",
+      "creatorPlaceholder": "Your username",
+      "creatorRequired": "The creator name is required",
+      "titleRequired": "The pack title is required",
+      "titleTaken": "A pack with this title already exists",
+      "validationFailed": "Could not check the title"
+    }
   }
 }

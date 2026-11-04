@@ -15,9 +15,9 @@
     <div class="content">
       <tui-icon icon="@tui.file-text" />
       @if (dragged || dropzone.isDragOver()) {
-        <span>Drop the <code>.txt</code> file here</span>
+        <span [innerHTML]="'dropzone.dropHere' | transloco"></span>
       } @else {
-        <span>Drop a <code>.txt</code> file here or <a tuiLink>browse</a></span>
+        <span><span [innerHTML]="'dropzone.dropOr' | transloco"></span> <a tuiLink>{{ 'dropzone.browse' | transloco }}</a></span>
       }
     </div>
   </ng-template>

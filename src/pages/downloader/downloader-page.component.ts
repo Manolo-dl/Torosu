@@ -1,3 +1,4 @@
+import { TranslocoPipe } from '@jsverse/transloco';
 import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
 import { BeatmapImportComponent, BeatmapQueueComponent, OsuCookieInputComponent, UserStore } from '@features/downloader';
 import { OsuDbStore } from '@entities/osu-db';
@@ -18,7 +19,7 @@ interface Step {
 
 @Component({
   selector: 'app-downloader',
-  imports: [PageHeaderComponent, BeatmapImportComponent, BeatmapQueueComponent, OsuCookieInputComponent, TuiTitle, TuiNotificationDirective, TuiButton, TuiAccordion],
+  imports: [PageHeaderComponent, BeatmapImportComponent, BeatmapQueueComponent, OsuCookieInputComponent, TuiTitle, TuiNotificationDirective, TuiButton, TuiAccordion, TranslocoPipe],
   templateUrl: './downloader-page.component.html',
   styleUrl: './downloader-page.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -38,85 +39,45 @@ export class DownloaderPageComponent implements OnInit {
     await this.osuDb.load();
   }
 
+  /** Titles and steps are translation keys. */
   readonly downloaderInfo: PageInfo[] = [
     {
-      title: 'How to use the downloader',
+      title: 'downloader.guide.howTo',
       steps: [
-        {
-          desc: 'Get the osu session cookie (check how to get osu session step)'
-        },
-        {
-          desc: 'Put the osu session in the input'
-        },
-        {
-          desc: 'Drop or select a txt file containing all download links (check file format step)'
-        },
-        {
-          desc: 'In the queue there will be a list with all the map IDs click start'
-        }
-      ]
+        { desc: 'downloader.guide.howTo1' },
+        { desc: 'downloader.guide.howTo2' },
+        { desc: 'downloader.guide.howTo3' },
+        { desc: 'downloader.guide.howTo4' },
+      ],
     },
     {
-      title: 'How to get osu session',
+      title: 'downloader.guide.session',
       steps: [
-        {
-          desc: 'Go to your browser',
-        },
-        {
-          desc: 'Go to the osu page, make sure you are logged'
-        },
-        {
-          desc: 'Right click and choose inspect or press F12',
-          image: 'assets/images/downloader/step_3.png'
-        },
-        {
-          desc: 'Go to Application or Storage tab',
-          image: 'assets/images/downloader/step_4.png'
-        },
-        {
-          desc: 'Go to cookies -> https://osu.ppy.sh and copy the value of the cookie with the name of osu_session',
-          image: 'assets/images/downloader/step_5.png',
-        }
-      ]
+        { desc: 'downloader.guide.session1' },
+        { desc: 'downloader.guide.session2' },
+        { desc: 'downloader.guide.session3', image: 'assets/images/downloader/step_3.png' },
+        { desc: 'downloader.guide.session4', image: 'assets/images/downloader/step_4.png' },
+        { desc: 'downloader.guide.session5', image: 'assets/images/downloader/step_5.png' },
+      ],
     },
     {
-      title: 'File format',
+      title: 'downloader.guide.format',
       steps: [
-        {
-          desc: 'The file must be a txt file with one download link per line',
-          image: 'assets/images/downloader/step_6.png'
-        }
-      ]
+        { desc: 'downloader.guide.format1', image: 'assets/images/downloader/step_6.png' },
+      ],
     },
     {
-      title: 'Configuration',
+      title: 'downloader.guide.settings',
       steps: [
-        {
-          desc: 'To go to the configuration click on the gear icon',
-          image: 'assets/images/downloader/step_7.png'
-        },
-        {
-          desc: 'Notify: If enabled, a notification will be shown when the download is finished',
-        },
-        {
-          desc: 'Error file: If enabled, a file with the failed downloads will be created in the output folder',
-        },
-        {
-          desc: 'Save cookie: If enabled, the osu session cookie is kept when Torosu closes; otherwise it only lasts for the session',
-        },
-        {
-          desc: 'Output path: The path where the downloaded files will be saved, if not set, the default osu! songs folder will be used',
-        },
-        {
-          desc: 'Load library: If enabled, the osu! library is loaded when you open the downloader, this is useful for checking if the map is already downloaded',
-        },
-        {
-          desc: 'Skip video: If enabled, the video will not be downloaded, this is useful for saving bandwidth and disk space',
-        },
-        {
-          desc: 'Max concurrent downloads: The maximum number of concurrent downloads, default is 1, increase at your own risk',
-        }
-      ]
-    }
-  ]
+        { desc: 'downloader.guide.settings1', image: 'assets/images/downloader/step_7.png' },
+        { desc: 'downloader.guide.settings2' },
+        { desc: 'downloader.guide.settings3' },
+        { desc: 'downloader.guide.settings4' },
+        { desc: 'downloader.guide.settings5' },
+        { desc: 'downloader.guide.settings6' },
+        { desc: 'downloader.guide.settings7' },
+        { desc: 'downloader.guide.settings8' },
+      ],
+    },
+  ];
 }
