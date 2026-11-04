@@ -1,7 +1,7 @@
 <div appearance="floating" tuiCardLarge="compact">
   <h3 tuiTitle>
-    File
-    <span tuiSubtitle>One collection per block, with beatmap hashes or links.</span>
+    {{ 'collections.import.file' | transloco }}
+    <span tuiSubtitle>{{ 'collections.import.fileHint' | transloco }}</span>
   </h3>
   <app-txt-dropzone (fileContent)="onFileContent($event)" />
 </div>

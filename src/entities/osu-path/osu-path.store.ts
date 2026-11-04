@@ -1,7 +1,9 @@
+import { errorText } from '@shared/i18n';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { invoke } from '@tauri-apps/api/core';
 import { open } from '@tauri-apps/plugin-dialog';
 import { NotifyService } from '@shared/services';
+import { TranslocoService } from '@jsverse/transloco';
 import { computed, inject } from '@angular/core';
 
 interface OsuPathState {
@@ -19,7 +21,7 @@ export const OsuPathStore = signalStore(
     missing: computed(() => !store.path() && store.error() !== null),
   })),
 
-  withMethods((store, notify = inject(NotifyService)) => {
+  withMethods((store, notify = inject(NotifyService), transloco = inject(TranslocoService)) => {
     let detectPromise: Promise<void> | undefined;
 
     /** Finds the folder (saved, from the running osu!, or the usual places). Quiet
@@ -30,10 +32,10 @@ export const OsuPathStore = signalStore(
         const path = await invoke<string>('get_osu_path');
         await invoke('save_osu_path', { path });
         patchState(store, { path, error: null });
-        if (announce) notify.success('osu! folder found');
+        if (announce) notify.success(transloco.translate('osuPath.found'));
       } catch (error) {
-        if (announce) notify.error('osu! folder not found');
-        patchState(store, { error: String(error) });
+        if (announce) notify.error(transloco.translate('osuPath.notFound'));
+        patchState(store, { error: errorText(transloco, error) });
         detectPromise = undefined;
       } finally {
         patchState(store, { isLoading: false });
@@ -75,15 +77,15 @@ export const OsuPathStore = signalStore(
         const selected = await open({
           directory: true,
           multiple: false,
-          title: 'Select your osu! folder',
+          title: transloco.translate('osuPath.pick'),
         });
         if (!selected) return;
 
         try {
           await setPath(selected as string);
-          notify.success('osu! folder saved');
+          notify.success(transloco.translate('osuPath.saved'));
         } catch (e) {
-          notify.error(String(e));
+          notify.error(errorText(transloco, e));
         }
       },
     };

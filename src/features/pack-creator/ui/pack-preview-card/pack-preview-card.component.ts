@@ -1,3 +1,4 @@
+import { TranslocoPipe } from '@jsverse/transloco';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal } from '@angular/core';
 import { form, required, FormField } from '@angular/forms/signals';
 import { SelectedDiff } from '../../pack.model';
@@ -6,7 +7,7 @@ import { TuiButton, TuiHint, TuiIcon, TuiInput, tuiTextfieldOptionsProvider } fr
 
 @Component({
   selector: 'app-pack-preview-card',
-  imports: [FormField, TuiButton, TuiHint, TuiIcon, TuiInput],
+  imports: [FormField, TuiButton, TuiHint, TuiIcon, TuiInput, TranslocoPipe],
   providers: [tuiTextfieldOptionsProvider({ size: signal('s'), cleaner: signal(false) })],
   templateUrl: './pack-preview-card.component.html',
   styleUrl: './pack-preview-card.component.less',
@@ -21,15 +22,16 @@ export class PackPreviewCardComponent {
   readonly nameForm = form(
     this.model,
     (schemaPath) => {
-      required(schemaPath.newDiffName, { message: 'Difficulty name is required' });
+      required(schemaPath.newDiffName, { message: 'packs.diffNameRequired' });
     }
   );
 
   // Shown as an icon hint instead of a line of text so every row keeps the
   // same height, which the virtual scroll in the pack preview relies on.
+  // A translation key.
   readonly error = computed(() => {
     if (this.store.duplicateNames().has(this.diff().md5)) {
-      return 'This name is used by another difficulty';
+      return 'packs.diffNameTaken';
     }
     return this.nameForm.newDiffName().errors()[0]?.message ?? null;
   });

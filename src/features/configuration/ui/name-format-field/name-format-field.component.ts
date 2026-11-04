@@ -1,15 +1,18 @@
 import { ChangeDetectionStrategy, Component, effect, input, model, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { TuiButton, TuiInput, TuiLabel } from '@taiga-ui/core';
 import { invoke } from '@tauri-apps/api/core';
 
 export interface NameFormatPreset {
+  /** A translation key. */
   label: string;
   format: string;
 }
 
 export interface NameFormatField {
   field: string;
+  /** A translation key. */
   meaning: string;
 }
 
@@ -19,7 +22,7 @@ export interface NameFormatField {
  */
 @Component({
   selector: 'app-name-format-field',
-  imports: [FormsModule, TuiButton, TuiInput, TuiLabel],
+  imports: [FormsModule, TuiButton, TuiInput, TuiLabel, TranslocoPipe],
   templateUrl: './name-format-field.component.html',
   styleUrl: './name-format-field.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,

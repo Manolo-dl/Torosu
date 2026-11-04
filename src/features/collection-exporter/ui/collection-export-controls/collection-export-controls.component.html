@@ -1,9 +1,8 @@
 <div appearance="floating" tuiCardLarge="compact">
-  <h3 tuiTitle>Format</h3>
+  <h3 tuiTitle>{{ 'collections.export.format' | transloco }}</h3>
   <app-export-controls
     [formats]="formats"
     [count]="store.totalSelectedSets()"
-    countLabel="beatmapsets"
     [disabled]="store.selectedCount() === 0"
     (doExport)="export($event)"
   />

@@ -1,10 +1,11 @@
+import { TranslocoPipe } from '@jsverse/transloco';
 import { ChangeDetectionStrategy, Component, input, model } from '@angular/core';
 import { TuiError, TuiInput } from '@taiga-ui/core';
 import { DisabledReason, ValidationError, WithOptionalFieldTree } from '@angular/forms/signals';
 
 @Component({
   selector: 'app-stateful-input',
-  imports: [TuiInput, TuiError],
+  imports: [TuiInput, TuiError, TranslocoPipe],
   templateUrl: './stateful-input.component.html',
   styleUrl: './stateful-input.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -21,6 +22,7 @@ export class StatefulInputComponent {
   invalid = input<boolean>(false);
   errors = input<readonly WithOptionalFieldTree<ValidationError>[]>([]);
 
+  /** The label, the placeholder and the errors' messages are translation keys. */
   label = input<string>('');
   id = input<string>('');
   type = input<string>('text');

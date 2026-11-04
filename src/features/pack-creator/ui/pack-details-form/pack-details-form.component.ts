@@ -1,3 +1,4 @@
+import { TranslocoPipe } from '@jsverse/transloco';
 import { Component, effect, inject, resource, Signal, signal } from '@angular/core';
 import { form, required, validateAsync, FormField, debounce } from '@angular/forms/signals';
 import { invoke } from '@tauri-apps/api/core';
@@ -8,7 +9,7 @@ import { TuiCardLarge } from '@taiga-ui/layout';
 
 @Component({
   selector: 'app-pack-details-form',
-  imports: [StatefulInputComponent, FormField, TuiCardLarge, TuiTitle],
+  imports: [StatefulInputComponent, FormField, TuiCardLarge, TuiTitle, TranslocoPipe],
   templateUrl: './pack-details-form.component.html',
   styleUrl: './pack-details-form.component.less',
 })
@@ -20,8 +21,8 @@ export class PackDetailsFormComponent {
   readonly detailsForm = form(
     this.model,
     (schemaPath) => {
-      required(schemaPath.finalCreator, { message: 'Creator name is required' });
-      required(schemaPath.title, { message: 'Pack title is required' });
+      required(schemaPath.finalCreator, { message: 'packs.details.creatorRequired' });
+      required(schemaPath.title, { message: 'packs.details.titleRequired' });
       validateAsync(schemaPath.title, {
         params: ({ value }) => value(),
         factory: (titleSignal: Signal<string | undefined>) =>
@@ -33,8 +34,11 @@ export class PackDetailsFormComponent {
             },
           }),
         onSuccess: (isAvailable) =>
-          isAvailable ? null : { kind: 'folderExists', message: 'A pack with this title already exists' },
-        onError: (error) => ({ kind: 'validationError', message: `Validation failed: ${error}` })
+          isAvailable ? null : { kind: 'folderExists', message: 'packs.details.titleTaken' },
+        onError: (error) => {
+          console.error('validate_pack_folder failed', error);
+          return { kind: 'validationError', message: 'packs.details.validationFailed' };
+        },
       });
       debounce(schemaPath.title, 500);
     }

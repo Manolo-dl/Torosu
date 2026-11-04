@@ -60,4 +60,35 @@ impl BeatGrid {
         let i = self.0.partition_point(|&(t, _)| t <= time + GRID_LENIENCY_MS).saturating_sub(1);
         self.0[i]
     }
+
+    /// Every `1 / division` of a beat from `from` to `to`, as the grid puts
+    /// them (the first timing point's grid before it).
+    pub fn ticks(&self, from: f64, to: f64, division: f64) -> Vec<f64> {
+        let mut ticks = Vec::new();
+        for (i, &(time, beat_len)) in self.0.iter().enumerate() {
+            let step = beat_len / division;
+            let start = if i == 0 { from } else { from.max(time) };
+            let end = self.0.get(i + 1).map_or(to, |&(next, _)| to.min(next - GRID_LENIENCY_MS));
+            let mut tick = time + ((start - time) / step - 1e-6).ceil() * step;
+            while tick <= end + 1e-6 {
+                ticks.push(tick);
+                tick += step;
+            }
+        }
+        ticks
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn ticks_follow_each_timing_point() {
+        // 120 BPM, then 150 BPM from 1000 ms.
+        let osu = "osu file format v14\n\n[General]\nMode: 3\n\n[Difficulty]\nCircleSize:4\n\n[TimingPoints]\n0,500,4,1,0,60,1,0\n1000,400,4,1,0,60,1,0\n\n[HitObjects]\n64,192,0,1,0,0:0:0:0:\n64,192,2000,1,0,0:0:0:0:\n";
+        let beatmap = rosu_map::from_str::<Beatmap>(osu).unwrap();
+        let grid = BeatGrid::new(&beatmap);
+        assert_eq!(grid.ticks(-300.0, 1900.0, 2.0), [-250.0, 0.0, 250.0, 500.0, 750.0, 1000.0, 1200.0, 1400.0, 1600.0, 1800.0]);
+    }
 }

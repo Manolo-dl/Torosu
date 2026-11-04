@@ -5,7 +5,7 @@ the following third-party software, under its own license.
 
 ## osu-memory-reader
 
-- Version: 0.1.0 (<https://crates.io/crates/osu-memory-reader>)
+- Version: 0.2.0 (<https://crates.io/crates/osu-memory-reader>)
 - Source: <https://github.com/Manolo-dl/Osu-memory-reader>
 - Copyright (C) 2026 Manolo-dl
 - License: GNU Lesser General Public License version 3 (LGPL-3.0-only)

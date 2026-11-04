@@ -1,3 +1,4 @@
+import { TranslocoPipe } from '@jsverse/transloco';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { ImportCollectionParserService } from '../../import-collection-parser.service';
 import { ImportCollectionStore } from '../../import-collections.store';
@@ -7,7 +8,7 @@ import { TuiCardLarge } from '@taiga-ui/layout';
 
 @Component({
   selector: 'app-import-file-dropzone',
-  imports: [TxtDropzoneComponent, TuiCardLarge, TuiTitle],
+  imports: [TxtDropzoneComponent, TuiCardLarge, TuiTitle, TranslocoPipe],
   templateUrl: './import-file-dropzone.component.html',
   styleUrl: './import-file-dropzone.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,

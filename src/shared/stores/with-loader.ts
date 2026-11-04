@@ -9,14 +9,18 @@ import {
   type WritableStateSource,
 } from '@ngrx/signals';
 import { NotifyService } from '@shared/services';
+import { TranslocoService } from '@jsverse/transloco';
 
 export interface LoaderOptions<State, Data> {
   /** Reads the data from the backend. */
   read: () => Promise<Data>;
   /** What the store keeps of it. */
   loaded: (data: Data) => Partial<State>;
-  /** Notifications once read and when it fails; none if not given. */
-  success?: (data: Data) => string;
+  /**
+   * Notifications once read and when it fails, as translation keys (with
+   * their parameters); none if not given.
+   */
+  success?: (data: Data) => { key: string; params?: Record<string, unknown> };
   failure?: string;
   /**
    * Whether `load()` rejects when the read fails (the default), which makes
@@ -39,7 +43,7 @@ export function withLoader<State extends object, Data>(initialState: State, opti
     withState(initialState),
     withState<LoaderState>({ isLoading: false, isLoaded: false }),
 
-    withMethods((store, notify = inject(NotifyService)) => {
+    withMethods((store, notify = inject(NotifyService), transloco = inject(TranslocoService)) => {
       // The store as its two parts: with `State` generic, TypeScript can
       // only check the writes to each part on its own.
       const stored = store as unknown as WritableStateSource<State>;
@@ -61,11 +65,14 @@ export function withLoader<State extends object, Data>(initialState: State, opti
           if (started !== generation) return;
           patchState(stored, options.loaded(data));
           patchState(status, { isLoading: false, isLoaded: true });
-          if (options.success) notify.success(options.success(data));
+          if (options.success) {
+            const { key, params } = options.success(data);
+            notify.success(transloco.translate(key, params));
+          }
         } catch (error) {
           if (started !== generation) return;
           patchState(status, { isLoading: false });
-          if (options.failure) notify.error(options.failure);
+          if (options.failure) notify.error(transloco.translate(options.failure));
           if (options.rethrow ?? true) throw error;
         }
       }
@@ -106,13 +113,13 @@ interface Loader {
   load(): Promise<void>;
 }
 
-/** Resolver that loads a `withLoader` store before its page opens, saying so. */
+/** Resolver that loads a `withLoader` store before its page opens, saying so (`message` is a translation key). */
 export function loaderResolver(store: ProviderToken<Loader>, message: string): ResolveFn<void> {
   return async () => {
     const loader = inject(store);
     if (loader.isLoaded()) return;
 
-    inject(NotifyService).info(message);
+    inject(NotifyService).info(inject(TranslocoService).translate(message));
     await loader.load();
   };
 }

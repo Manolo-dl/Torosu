@@ -9,8 +9,14 @@ use rosu_map::{
 /// osu! plays up to 18K (9K+9K).
 pub const MAX_KEYS: usize = 18;
 
-/// osu! stable plays 1K to 10K: the key converter works within these.
-pub const STABLE_MAX_KEYS: usize = 10;
+/// One stage holds up to 10K; more keys are two stages side by side.
+pub const STAGE_MAX_KEYS: usize = 10;
+
+/// Whether osu! plays `keys` keys: 1K to 10K on one stage, 12K to 18K on two
+/// of the same size.
+pub fn is_playable(keys: usize) -> bool {
+    (1..=STAGE_MAX_KEYS).contains(&keys) || (keys <= MAX_KEYS && keys.is_multiple_of(2))
+}
 
 /// Key count of a mania map, which is its circle size.
 pub fn key_count(beatmap: &Beatmap) -> usize {

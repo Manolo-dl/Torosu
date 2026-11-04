@@ -1,5 +1,5 @@
 <div appearance="floating" tuiCardLarge="compact">
-  <h3 tuiTitle>Difficulty</h3>
+  <h3 tuiTitle>{{ 'trainer.difficulty.title' | transloco }}</h3>
 
   <div class="list">
     @for (key of keys; track key) {
@@ -23,10 +23,10 @@
           type="button"
           [appearance]="stat.locked ? 'primary' : 'flat'"
           [iconStart]="stat.locked ? '@tui.lock' : '@tui.lock-open'"
-          [attr.title]="(stat.locked ? 'Unlock ' : 'Lock ') + key.toUpperCase()"
+          [attr.title]="(stat.locked ? 'trainer.difficulty.unlockStat' : 'trainer.difficulty.lockStat') | transloco: { stat: key.toUpperCase() }"
           (click)="trainer.toggleLock(key)"
         >
-          {{ stat.locked ? 'Unlock' : 'Lock' }}
+          {{ (stat.locked ? 'trainer.difficulty.unlock' : 'trainer.difficulty.lock') | transloco }}
         </button>
       </div>
     }

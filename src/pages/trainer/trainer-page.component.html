@@ -1,4 +1,4 @@
-<app-page-header heading="Trainer" subtitle="Fine-tune difficulty stats and chain modifiers before generating a new map." />
+<app-page-header [heading]="'nav.trainer' | transloco" [subtitle]="'trainer.subtitle' | transloco" />
 
 <app-trainer-beatmap-header />
 
@@ -21,7 +21,7 @@
       type="button"
       (click)="trainer.addConvert()"
     >
-      Add convert
+      {{ 'trainer.addConvert' | transloco }}
     </button>
   </section>
 </div>

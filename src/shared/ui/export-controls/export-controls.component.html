@@ -4,7 +4,7 @@
   (activeItemIndexChange)="selectedIndex.set($event)"
 >
   @for (fmt of formats; track fmt.value) {
-    <button type="button">{{ fmt.label }}</button>
+    <button type="button">{{ fmt.label | transloco }}</button>
   }
 </tui-segmented>
 
@@ -16,5 +16,5 @@
   [disabled]="disabled || count === 0"
   (click)="export()"
 >
-  Export {{ count }} {{ countLabel }}
+  {{ 'export.button' | transloco: { count } }}
 </button>

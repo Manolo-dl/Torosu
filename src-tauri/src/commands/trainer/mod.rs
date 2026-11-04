@@ -1,3 +1,4 @@
+pub mod accents;
 // Not used by the app yet: the key converter will build on it.
 #[allow(dead_code)]
 pub mod analysis;

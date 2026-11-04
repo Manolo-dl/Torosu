@@ -1,3 +1,4 @@
+import { TranslocoPipe } from '@jsverse/transloco';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { getVersion } from '@tauri-apps/api/app';
@@ -10,7 +11,7 @@ import { TuiCardLarge } from '@taiga-ui/layout';
 
 @Component({
   selector: 'app-home',
-  imports: [RouterLink, TuiIcon, TuiTitle, TuiBadge, TuiCardLarge],
+  imports: [RouterLink, TuiIcon, TuiTitle, TuiBadge, TuiCardLarge, TranslocoPipe],
   templateUrl: './home-page.component.html',
   styleUrl: './home-page.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,

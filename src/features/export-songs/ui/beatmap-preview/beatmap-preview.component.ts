@@ -1,3 +1,4 @@
+import { TranslocoPipe } from '@jsverse/transloco';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { BeatmapExporterStore } from '../../stores/beatmap-exporter.store';
 import { BeatmapSetListComponent } from '@entities/osu-db/ui';
@@ -6,13 +7,13 @@ import { TuiCardLarge } from '@taiga-ui/layout';
 
 @Component({
   selector: 'app-beatmap-preview',
-  imports: [BeatmapSetListComponent, TuiCardLarge, TuiTitle],
+  imports: [BeatmapSetListComponent, TuiCardLarge, TuiTitle, TranslocoPipe],
   template: `
     <div appearance="floating" tuiCardLarge="compact">
-      <h3 tuiTitle>Preview</h3>
+      <h3 tuiTitle>{{ 'exportSongs.preview' | transloco }}</h3>
       <app-beatmap-set-list
         [sets]="store.filteredBeatmaps()"
-        emptyText="No beatmaps match the current filters"
+        emptyText="exportSongs.empty"
         listHeight="calc(100vh - 26rem)"
       />
     </div>

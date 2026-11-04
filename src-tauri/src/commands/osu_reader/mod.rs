@@ -86,7 +86,9 @@ fn run(app: AppHandle) {
 
         let mut last_checksum = String::new();
         while reader.is_running() {
-            // Isolated read errors are normal while osu! swaps beatmaps; the next poll retries.
+            // Isolated read errors are normal while osu! swaps beatmaps or screens
+            // (`ReadMemory`, or `Inconsistent` for a beatmap read while it moved
+            // in memory); the next poll retries.
             if let Ok(Some(beatmap)) = reader.beatmap() {
                 if beatmap.checksum != last_checksum {
                     last_checksum = beatmap.checksum.clone();

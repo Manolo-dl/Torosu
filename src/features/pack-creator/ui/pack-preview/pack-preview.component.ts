@@ -1,3 +1,4 @@
+import { TranslocoPipe } from '@jsverse/transloco';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { SelectedDiff } from '../../pack.model';
@@ -9,7 +10,7 @@ import { PackPreviewCardComponent } from "../pack-preview-card/pack-preview-card
 
 @Component({
   selector: 'app-pack-preview',
-  imports: [ScrollingModule, PackPreviewCardComponent, TuiBadge, TuiCardLarge, TuiScrollControls, TuiScrollRef, TuiTitle],
+  imports: [ScrollingModule, PackPreviewCardComponent, TuiBadge, TuiCardLarge, TuiScrollControls, TuiScrollRef, TuiTitle, TranslocoPipe],
   templateUrl: './pack-preview.component.html',
   styleUrl: './pack-preview.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,

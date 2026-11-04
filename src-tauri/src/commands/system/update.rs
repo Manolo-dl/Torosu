@@ -3,7 +3,7 @@ use std::time::{Duration, Instant};
 use tauri::{AppHandle, Emitter};
 use tauri_plugin_updater::UpdaterExt;
 
-use crate::{error::Result, state::UpdateState};
+use crate::{error::{Error, Result}, state::UpdateState};
 
 /// A newer version on the update server.
 #[derive(serde::Serialize, Clone)]
@@ -55,7 +55,7 @@ pub async fn check_update(app: AppHandle, state: tauri::State<'_, UpdateState>) 
 /// `update:progress`, then restarts the app.
 #[tauri::command]
 pub async fn install_update(app: AppHandle, state: tauri::State<'_, UpdateState>) -> Result<()> {
-    let update = state.pending.lock().unwrap().clone().ok_or("no update to install")?;
+    let update = state.pending.lock().unwrap().clone().ok_or(Error::NoUpdate)?;
 
     let mut downloaded = 0u64;
     let mut last_emit = Instant::now();

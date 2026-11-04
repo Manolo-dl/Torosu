@@ -3,6 +3,15 @@ import { DownloadQueueStore } from './download-queue.store';
 import { UserStore } from './user.store';
 import { invoke } from '@tauri-apps/api/core';
 import { listen, UnlistenFn } from '@tauri-apps/api/event';
+import { TranslocoService } from '@jsverse/transloco';
+import { ConfigurationStore } from '@entities/configuration';
+import { errorText } from '@shared/i18n';
+
+/** How the downloads went (`DownloadSummary` in download.rs). */
+interface DownloadSummary {
+  succeeded: number;
+  failed: number;
+}
 
 interface DownloadProgress {
   beatmapSetId: number;
@@ -16,6 +25,8 @@ interface DownloadProgress {
 export class BeatmapDownloadService implements OnDestroy {
   private downloadQueue = inject(DownloadQueueStore);
   private userStore = inject(UserStore);
+  private transloco = inject(TranslocoService);
+  private config = inject(ConfigurationStore);
   private unlisten?: UnlistenFn;
 
   readonly error = signal<string | null>(null);
@@ -37,12 +48,12 @@ export class BeatmapDownloadService implements OnDestroy {
     });
 
     try {
-      await invoke('start_downloads', {
+      const summary = await invoke<DownloadSummary>('start_downloads', {
         beatmapSetIds: pending.map(i => i.beatmapSetId),
       });
+      if (this.config.config()?.downloader.notify) this.notifyDone(summary);
     } catch (e) {
-      const msg = typeof e === 'string' ? e : 'Download failed';
-      this.error.set(msg);
+      this.error.set(e ? errorText(this.transloco, e) : this.transloco.translate('downloader.queue.downloadFailed'));
       for (const item of pending) {
         const q = this.downloadQueue.queue().find(q => q.beatmapSetId === item.beatmapSetId);
         if (q?.status === 'pending') {
@@ -54,6 +65,14 @@ export class BeatmapDownloadService implements OnDestroy {
       this.unlisten?.();
       this.unlisten = undefined;
     }
+  }
+
+  /** A notification of the system, seen with Torosu in the background. */
+  private notifyDone({ succeeded, failed }: DownloadSummary) {
+    invoke('show_notification', {
+      title: this.transloco.translate('downloader.notification.title'),
+      body: this.transloco.translate('downloader.notification.body', { succeeded, failed }),
+    }).catch(e => console.warn('failed to show the notification', e));
   }
 
   ngOnDestroy() {

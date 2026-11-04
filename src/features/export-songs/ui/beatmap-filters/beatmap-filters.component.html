@@ -1,6 +1,6 @@
 <div appearance="floating" tuiCardLarge="compact">
   <header>
-    <h3 tuiTitle>Filters</h3>
+    <h3 tuiTitle>{{ 'exportSongs.filters' | transloco }}</h3>
     <button
       appearance="flat"
       iconStart="@tui.rotate-ccw"
@@ -9,7 +9,7 @@
       type="button"
       (click)="reset()"
     >
-      Reset
+      {{ 'exportSongs.reset' | transloco }}
     </button>
   </header>
 
@@ -27,7 +27,7 @@
           size="s"
           tuiSwitch
           type="checkbox"
-          [attr.aria-label]="(isModeExcluded(m.value) ? 'Enable ' : 'Disable ') + m.label"
+          [attr.aria-label]="(isModeExcluded(m.value) ? 'exportSongs.enable' : 'exportSongs.disable') | transloco: { mode: m.label }"
           [ngModel]="!isModeExcluded(m.value)"
           (ngModelChange)="toggleExclude(m.value)"
           (click)="$event.stopPropagation()"
@@ -38,7 +38,7 @@
       <tui-expand [expanded]="isExpanded(m.value)">
         <div class="mode-body">
           <div class="filter-group">
-            <span class="label">Status</span>
+            <span class="label">{{ 'exportSongs.status' | transloco }}</span>
             <div class="chips">
               <button
                 size="xs"
@@ -47,7 +47,7 @@
                 [appearance]="modeFilters(m.value).status === null ? 'primary' : 'neutral'"
                 (click)="setModeFilter(m.value, 'status', null)"
               >
-                All
+                {{ 'exportSongs.all' | transloco }}
               </button>
               @for (s of statuses; track s) {
                 <button
@@ -65,12 +65,12 @@
 
           @for (f of rangeFields.get(m.value); track f.label) {
             <div class="filter-group">
-              <span class="label">{{ f.label }}</span>
+              <span class="label">{{ f.label | transloco }}</span>
               <div class="range">
                 <tui-textfield tuiTextfieldSize="s">
                   <input
                     min="0"
-                    placeholder="Min"
+                    [placeholder]="'exportSongs.min' | transloco"
                     tuiInput
                     type="number"
                     [attr.max]="f.limit ?? null"
@@ -83,7 +83,7 @@
                 <tui-textfield tuiTextfieldSize="s">
                   <input
                     min="0"
-                    placeholder="Max"
+                    [placeholder]="'exportSongs.max' | transloco"
                     tuiInput
                     type="number"
                     [attr.max]="f.limit ?? null"
@@ -98,7 +98,7 @@
 
           @if (m.value === 3) {
             <div class="filter-group">
-              <span class="label">{{ m.csLabel }}</span>
+              <span class="label">{{ m.csLabel ?? '' | transloco }}</span>
               <div class="chips">
                 <button
                   size="xs"
@@ -107,7 +107,7 @@
                   [appearance]="modeKeyCount(m.value) === null ? 'primary' : 'neutral'"
                   (click)="setModeKeyCount(m.value, null)"
                 >
-                  All
+                  {{ 'exportSongs.all' | transloco }}
                 </button>
                 @for (k of keyCounts; track k) {
                   <button
@@ -130,15 +130,15 @@
   </div>
 
   <div class="filter-group other">
-    <span class="label">Played</span>
+    <span class="label">{{ 'exportSongs.played' | transloco }}</span>
     <tui-segmented
       size="s"
       [activeItemIndex]="playedOptions.indexOf(store.filters().lastPlayed)"
       (activeItemIndexChange)="setLastPlayed(playedOptions[$event])"
     >
-      <button type="button">All</button>
-      <button type="button">Played</button>
-      <button type="button">Not played</button>
+      <button type="button">{{ 'exportSongs.all' | transloco }}</button>
+      <button type="button">{{ 'exportSongs.playedYes' | transloco }}</button>
+      <button type="button">{{ 'exportSongs.playedNo' | transloco }}</button>
     </tui-segmented>
   </div>
 </div>

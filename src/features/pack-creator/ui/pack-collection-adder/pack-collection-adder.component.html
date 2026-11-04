@@ -1,6 +1,6 @@
 <div appearance="floating" tuiCardLarge="compact">
   <header>
-    <h3 tuiTitle>From Collection</h3>
+    <h3 tuiTitle>{{ 'packs.fromCollection' | transloco }}</h3>
     @if (!collectionStore.isLoaded() && !collectionStore.isLoading()) {
       <button
         appearance="flat"
@@ -10,7 +10,7 @@
         type="button"
         (click)="collectionStore.load()"
       >
-        Load
+        {{ 'packs.load' | transloco }}
       </button>
     }
   </header>
@@ -18,9 +18,9 @@
   @if (collectionStore.isLoading()) {
     <tui-loader size="m" class="state" />
   } @else if (!collectionStore.isLoaded()) {
-    <p class="state">Collections not loaded yet.</p>
+    <p class="state">{{ 'packs.collectionsNotLoaded' | transloco }}</p>
   } @else if (entries().length === 0) {
-    <p class="state">No collections with local diffs found.</p>
+    <p class="state">{{ 'packs.noCollections' | transloco }}</p>
   } @else {
     <tui-scrollbar class="list">
       @for (entry of entries(); track entry.collection.name) {
@@ -42,7 +42,7 @@
             [iconStart]="entry.added === entry.available ? '@tui.check' : '@tui.plus'"
             (click)="addCollection(entry)"
           >
-            {{ entry.added === entry.available ? 'Added' : 'Add' }}
+            {{ (entry.added === entry.available ? 'packs.added' : 'packs.add') | transloco }}
           </button>
         </div>
       }

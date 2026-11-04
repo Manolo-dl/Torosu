@@ -1,19 +1,21 @@
+import { TranslocoPipe } from '@jsverse/transloco';
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { NoteLength } from '../../models/trainer.model';
 import { TuiInput } from '@taiga-ui/core';
-import { TuiSegmented } from '@taiga-ui/kit';
+import { OptionGroupComponent, OptionGroupItem } from '@shared/ui';
 
 const BEAT_DIVISORS = [1, 2, 3, 4, 6, 8, 12, 16];
 
 /** Picks a length as a fraction of a beat or in milliseconds. */
 @Component({
   selector: 'app-trainer-note-length',
-  imports: [TuiInput, TuiSegmented],
+  imports: [TuiInput, OptionGroupComponent, TranslocoPipe],
   templateUrl: './trainer-note-length.component.html',
   styleUrl: './trainer-note-length.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TrainerNoteLengthComponent {
+  /** Translation keys. */
   readonly label = input.required<string>();
   readonly hint = input.required<string>();
   readonly value = input.required<NoteLength>();
@@ -21,7 +23,8 @@ export class TrainerNoteLengthComponent {
   readonly bpm = input<number | null>(null);
   readonly valueChange = output<NoteLength>();
 
-  readonly divisors = BEAT_DIVISORS;
+  /** The beat fractions, then milliseconds. */
+  readonly options: OptionGroupItem[] = [...BEAT_DIVISORS.map(divisor => ({ label: `1/${divisor}` })), { label: 'ms' }];
 
   readonly activeIndex = computed(() => {
     const value = this.value();

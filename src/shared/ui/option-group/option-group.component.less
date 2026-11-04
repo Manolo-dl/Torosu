@@ -1,0 +1,40 @@
+:host {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.125rem;
+  max-inline-size: 100%;
+  padding: 0.125rem;
+  border-radius: var(--tui-radius-m);
+  background: var(--tui-background-neutral-1);
+}
+
+button {
+  block-size: 1.75rem;
+  padding: 0 0.625rem;
+  border: none;
+  border-radius: calc(var(--tui-radius-m) - 0.125rem);
+  background: transparent;
+  color: var(--tui-text-primary);
+  font: var(--tui-typography-body-s);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover:not(:disabled):not(.active) {
+    background: var(--tui-background-neutral-1-hover);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--tui-border-focus);
+    outline-offset: -2px;
+  }
+
+  &.active {
+    background: var(--tui-background-base);
+  }
+
+  &:disabled {
+    opacity: var(--tui-disabled-opacity);
+    cursor: default;
+  }
+}

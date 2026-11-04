@@ -49,6 +49,15 @@ header {
       font-weight: 700;
     }
 
+    .skipped-note {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      margin-left: 0.5rem;
+      font-weight: 400;
+      color: var(--tui-status-warning);
+    }
+
     .params {
       display: flex;
       flex-wrap: wrap;
@@ -113,4 +122,9 @@ header {
 
 .empty {
   .empty-state(1.5rem 0);
+}
+
+// A task for another mode than the map's: kept, but not applied.
+.task.skipped .params {
+  opacity: 0.5;
 }

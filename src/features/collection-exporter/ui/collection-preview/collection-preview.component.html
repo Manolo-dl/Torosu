@@ -1,13 +1,13 @@
 <div appearance="floating" tuiCardLarge="compact">
   <header>
-    <h3 tuiTitle>Preview</h3>
+    <h3 tuiTitle>{{ 'collections.export.preview' | transloco }}</h3>
     @if (store.selectedCount() > 0) {
-      <span appearance="info" tuiBadge>{{ store.totalSelectedSets() }} sets</span>
+      <span appearance="info" tuiBadge>{{ 'collections.export.sets' | transloco: { count: store.totalSelectedSets() } }}</span>
     }
   </header>
   <app-beatmap-set-list
     [sets]="store.selectedSets()"
-    emptyText="Select a collection to preview"
+    emptyText="collections.export.empty"
     listHeight="calc(100vh - 23rem)"
   />
 </div>

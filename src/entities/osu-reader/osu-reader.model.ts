@@ -8,7 +8,11 @@ export interface OsuBeatmap {
     /** Ruleset selected in osu!, not the map's own; see `BeatmapAttributes.originalMode`. */
     mode: Ruleset | null;
     artist: string;
+    /** Artist in its original language; empty when the map doesn't set one. */
+    artistUnicode: string;
     title: string;
+    /** Title in its original language; empty when the map doesn't set one. */
+    titleUnicode: string;
     creator: string;
     difficulty: string;
     ar: number;

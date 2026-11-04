@@ -9,7 +9,7 @@
                 [class.disabled]="item.disabled"
                 >
                     <tui-icon [icon]="item.icon" />
-                    <span>{{ item.label }}</span>
+                    <span>{{ item.label | transloco }}</span>
                 </a>
             </li>
         }
@@ -26,7 +26,7 @@
                     [class.disabled]="item.disabled"
                     >
                         <tui-icon [icon]="item.icon" />
-                        <span>{{ item.label }}</span>
+                        <span>{{ item.label | transloco }}</span>
                     </a>
                 </li>
             }

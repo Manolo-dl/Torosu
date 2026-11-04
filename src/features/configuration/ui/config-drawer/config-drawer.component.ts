@@ -1,4 +1,5 @@
-import { Component, inject, linkedSignal, model, signal, untracked } from '@angular/core';
+import { Component, computed, inject, linkedSignal, model, signal, untracked } from '@angular/core';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { FormsModule } from '@angular/forms';
 import { TuiDrawer, TuiTabsHorizontal, TuiTab, TuiSwitch, TuiInputNumber } from "@taiga-ui/kit";
 import { open as openDialog } from '@tauri-apps/plugin-dialog';
@@ -11,6 +12,9 @@ import { OsuDbStore } from '@entities/osu-db';
 import { CollectionStore } from '@entities/collection';
 import { OsuPathStore } from '@entities/osu-path';
 import { NotifyService } from '@shared/services';
+import { PlatformStore } from '@shared/stores';
+import { DEFAULT_LANGUAGE, errorText, LANGUAGES } from '@shared/i18n';
+import { OptionGroupComponent, OptionGroupItem } from '@shared/ui';
 import { NameFormatField, NameFormatFieldComponent, NameFormatPreset } from '../name-format-field/name-format-field.component';
 
 /** The names the trainer always gave (`DEFAULT_NAME_FORMAT` in trainer/naming.rs). */
@@ -40,6 +44,8 @@ const DEFAULT_CONFIG: AppConfig = {
     auto_pitch: false,
     open_osz: true,
     name_format: DEFAULT_NAME_FORMAT,
+    shortcuts_enabled: false,
+    shortcuts: [],
   },
   open_file: false,
   dev_mode: false,
@@ -47,7 +53,7 @@ const DEFAULT_CONFIG: AppConfig = {
 
 @Component({
   selector: 'app-config-drawer',
-  imports: [FormsModule, TuiDrawer, TuiHeader, TuiTitle, TuiNavComponent, TuiTabsHorizontal, TuiTab, TuiSwitch, TuiInputNumber, TuiCell, TuiInput, TuiLabel, TuiPopup, TuiButton, NameFormatFieldComponent],
+  imports: [FormsModule, TuiDrawer, TuiHeader, TuiTitle, TuiNavComponent, TuiTabsHorizontal, TuiTab, TuiSwitch, TuiInputNumber, TuiCell, TuiInput, TuiLabel, TuiPopup, TuiButton, NameFormatFieldComponent, OptionGroupComponent, TranslocoPipe],
   templateUrl: './config-drawer.component.html',
   styleUrl: './config-drawer.component.less',
 })
@@ -58,6 +64,9 @@ export class ConfigDrawerComponent {
   private readonly osuDb = inject(OsuDbStore);
   private readonly collections = inject(CollectionStore);
   private readonly notify = inject(NotifyService);
+  private readonly transloco = inject(TranslocoService);
+  /** Global shortcuts don't work on Wayland. */
+  readonly platform = inject(PlatformStore);
 
   /** Opened by the settings button (`ConfigButtonComponent`), which loads the settings first. */
   readonly open = model.required<boolean>();
@@ -79,38 +88,50 @@ export class ConfigDrawerComponent {
     })),
   });
 
+  /** Each language named in itself. */
+  readonly languageOptions: OptionGroupItem[] = LANGUAGES.map(language => ({ label: language.name }));
+
+  /** English when none is saved. */
+  readonly languageIndex = computed(() =>
+    Math.max(0, LANGUAGES.findIndex(language => language.code === (this.draft().language ?? DEFAULT_LANGUAGE))),
+  );
+
+  setLanguage(index: number) {
+    this.draft.update(draft => ({ ...draft, language: LANGUAGES[index].code }));
+  }
+
   readonly trainerNameFormats: NameFormatPreset[] = [
-    { label: 'Default', format: DEFAULT_NAME_FORMAT },
-    { label: 'Rate first', format: '[{rate}] {diff} ({pitch}) {tasks} {stats}' },
-    { label: 'BPM first', format: '[{bpm}bpm] {diff} ({pitch}) {tasks} {stats}' },
+    { label: 'settings.nameFormat.presets.default', format: DEFAULT_NAME_FORMAT },
+    { label: 'settings.nameFormat.presets.rateFirst', format: '[{rate}] {diff} ({pitch}) {tasks} {stats}' },
+    { label: 'settings.nameFormat.presets.bpmFirst', format: '[{bpm}bpm] {diff} ({pitch}) {tasks} {stats}' },
   ];
 
   readonly trainerNameFields: NameFormatField[] = [
-    { field: '{diff}', meaning: 'the original name' },
-    { field: '{rate}', meaning: '1.3x' },
-    { field: '{bpm}', meaning: 'the new BPM' },
-    { field: '{pitch}', meaning: 'pitch raised or lowered' },
-    { field: '{sv}', meaning: 'SV normalized' },
-    { field: '{keys}', meaning: 'the key converter, 10K Dense' },
-    { field: '{fln}', meaning: 'the FLN converter, FLN BG4 ML4' },
-    { field: '{tasks}', meaning: 'those three, each in parentheses' },
-    { field: '{stats}', meaning: 'the changed HP, CS, AR and OD' },
+    { field: '{diff}', meaning: 'settings.nameFormat.trainer.diff' },
+    { field: '{rate}', meaning: 'settings.nameFormat.trainer.rate' },
+    { field: '{bpm}', meaning: 'settings.nameFormat.trainer.bpm' },
+    { field: '{pitch}', meaning: 'settings.nameFormat.trainer.pitch' },
+    { field: '{sv}', meaning: 'settings.nameFormat.trainer.sv' },
+    { field: '{keys}', meaning: 'settings.nameFormat.trainer.keys' },
+    { field: '{fln}', meaning: 'settings.nameFormat.trainer.fln' },
+    { field: '{tasks}', meaning: 'settings.nameFormat.trainer.tasks' },
+    { field: '{stats}', meaning: 'settings.nameFormat.trainer.stats' },
   ];
 
   readonly packNameFormats: NameFormatPreset[] = [
-    { label: 'Default', format: DEFAULT_PACK_NAME_FORMAT },
-    { label: 'Stars first', format: '[{stars}★] {artist} - {title} ({diff})' },
-    { label: 'Short', format: '{title} ({diff})' },
+    { label: 'settings.nameFormat.presets.default', format: DEFAULT_PACK_NAME_FORMAT },
+    { label: 'settings.nameFormat.presets.starsFirst', format: '[{stars}★] {artist} - {title} ({diff})' },
+    { label: 'settings.nameFormat.presets.short', format: '{title} ({diff})' },
   ];
 
   readonly packNameFields: NameFormatField[] = [
-    { field: '{creator}', meaning: 'who mapped the diff' },
-    { field: '{artist}', meaning: 'the artist of the song' },
-    { field: '{title}', meaning: 'the title of the song' },
-    { field: '{diff}', meaning: 'the name of the diff' },
-    { field: '{stars}', meaning: '5.23' },
-    { field: '{mode}', meaning: 'osu!mania' },
-    { field: '{keys}', meaning: '7K, only in mania' },
+    { field: '{creator}', meaning: 'settings.nameFormat.packs.creator' },
+    { field: '{artist}', meaning: 'settings.nameFormat.packs.artist' },
+    { field: '{title}', meaning: 'settings.nameFormat.packs.title' },
+    { field: '{diff}', meaning: 'settings.nameFormat.packs.diff' },
+    { field: '{stars}', meaning: 'settings.nameFormat.packs.stars' },
+    { field: '{mode}', meaning: 'settings.nameFormat.packs.mode' },
+    { field: '{keys}', meaning: 'settings.nameFormat.packs.keys' },
   ];
 
   async save() {
@@ -123,7 +144,7 @@ export class ConfigDrawerComponent {
         if (path) await this.osuPath.setPath(path);
         else await this.osuPath.clearPath();
       } catch (e) {
-        this.notify.error(String(e));
+        this.notify.error(errorText(this.transloco, e));
         return;
       }
     }
@@ -148,12 +169,12 @@ export class ConfigDrawerComponent {
   // Set with `update`, which redraws the form: after the dialog nothing else
   // would.
   async pickOsuPath() {
-    const path = await this.pickFolder('Select your osu! folder', this.draft().osu_path);
+    const path = await this.pickFolder(this.transloco.translate('settings.general.pickOsuPath'), this.draft().osu_path);
     if (path) this.draft.update(draft => ({ ...draft, osu_path: path }));
   }
 
   async pickOutputPath() {
-    const path = await this.pickFolder('Select the download folder', this.draft().downloader.output_path);
+    const path = await this.pickFolder(this.transloco.translate('settings.downloader.pickOutputPath'), this.draft().downloader.output_path);
     if (path) this.draft.update(draft => ({ ...draft, downloader: { ...draft.downloader, output_path: path } }));
   }
 

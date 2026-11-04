@@ -45,7 +45,7 @@ pub fn decode_audio(path: &Path) -> Result<DecodedAudio> {
                 None
             }
         })
-        .ok_or_else(|| anyhow::anyhow!("no supported audio track found"))?;
+        .ok_or(crate::error::Error::NoAudio)?;
 
     let sample_rate = audio_params.sample_rate.unwrap_or(44100);
     let channels = audio_params

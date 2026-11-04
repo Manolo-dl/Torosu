@@ -8,19 +8,45 @@ This project is a modified version of parts of tosu
 tosu is Copyright (C) 2023-2026 Mikhail Babynichev and contributors,
 licensed under the GNU Lesser General Public License version 3.
 
-Modifications (October 2026):
+Modifications (October-November 2026):
 - Ported the osu! stable memory reader from TypeScript and C++ to Rust.
-- Kept only the selected beatmap, the songs folder and the beatmap file paths;
-  removed the HTTP/WebSocket server, overlays, PP calculation, osu!lazer
-  support and all other game state readers.
-- Exposed the result as a Rust library crate with its own public API.
+- Removed the HTTP/WebSocket server, overlays, PP calculation and osu!lazer
+  support.
+- Exposed the result as a Rust library crate with its own public API, where
+  each piece of game data is read on demand by its own method.
+- Memory signatures are resolved lazily: only the ones needed for the
+  beatmap are required when attaching, and missing ones are searched again
+  in executable memory when first needed.
+- Screen-specific readers check the game state before reading.
+- The beatmap is discarded when it was read while the game was moving it in
+  memory.
 - Added translation of Windows paths through Wine drive mappings on Linux.
 
 Origin of each file:
   src/stable.rs           packages/tosu/src/memory/stable.ts
+  src/beatmap.rs          packages/common/enums/osu.ts,
+                          packages/tosu/src/memory/stable.ts
+  src/state.rs            packages/common/enums/osu.ts,
+                          packages/tosu/src/memory/stable.ts
+  src/user.rs             packages/tosu/src/memory/stable.ts,
+                          packages/common/enums/osu.ts
+  src/gameplay.rs         packages/tosu/src/memory/stable.ts,
+                          packages/tosu/src/utils/calculators.ts,
+                          packages/tosu/src/states/gameplay.ts
+  src/result_screen.rs    packages/tosu/src/memory/stable.ts,
+                          packages/tosu/src/utils/converters.ts
+  src/leaderboard.rs      packages/tosu/src/memory/stable.ts
+  src/settings.rs         packages/tosu/src/memory/stable.ts,
+                          packages/tosu/src/utils/bindings.ts,
+                          packages/common/enums/osu.ts
+  src/tourney.rs          packages/tosu/src/memory/stable.ts
+  src/audio.rs            packages/tosu/src/memory/stable.ts,
+                          packages/tosu/src/states/bassDensity.ts
+  src/mods.rs             packages/tosu/src/utils/osuMods.ts,
+                          packages/tosu/src/utils/osuMods.types.ts
+  src/country.rs          packages/common/enums/country.ts
   src/paths.rs            packages/tosu/src/instances/osuInstance.ts,
                           packages/tosu/src/states/beatmap.ts
-  src/beatmap.rs          packages/common/enums/osu.ts
   src/pattern.rs          packages/tsprocess/lib/memory/memory.h,
                           packages/tsprocess/src/process.ts
   src/process/mod.rs      packages/tsprocess/lib/memory/memory.h,
@@ -29,7 +55,8 @@ Origin of each file:
   src/process/linux.rs    packages/tsprocess/lib/memory/memory_linux.cc,
                           packages/tsprocess/src/process.ts
   src/process/windows.rs  packages/tsprocess/lib/memory/memory_windows.cc
-  src/lib.rs, src/error.rs, src/difficulty.rs, examples/watch.rs:
+  src/lib.rs, src/error.rs, src/difficulty.rs, src/macros.rs,
+  examples/watch.rs, examples/dump.rs:
                           new in this project.
 
 This project is licensed under the GNU Lesser General Public License version 3

@@ -1,6 +1,6 @@
 <tui-textfield [invalid]="!!error()">
   <input
-    placeholder="Difficulty name"
+    [placeholder]="'packs.diffName' | transloco"
     tuiInput
     [formField]="nameForm.newDiffName"
   />
@@ -9,7 +9,7 @@
   <tui-icon
     icon="@tui.circle-alert"
     class="error"
-    [tuiHint]="message"
+    [tuiHint]="message | transloco"
   />
 }
 <button
@@ -20,5 +20,5 @@
   type="button"
   (click)="onRemove()"
 >
-  Remove
+  {{ 'packs.remove' | transloco }}
 </button>

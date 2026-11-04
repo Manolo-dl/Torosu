@@ -17,7 +17,7 @@
         [tuiDropdown]="updatePanel"
         [(tuiDropdownOpen)]="updateOpen"
       >
-        Update to {{ available.version }}
+        {{ 'header.updateTo' | transloco: { version: available.version } }}
       </button>
 
       <ng-template #updatePanel>
@@ -25,9 +25,9 @@
           <div tuiTitle>
             <span>
               Torosu {{ available.version }}
-              <span appearance="info" size="s" tuiBadge>New</span>
+              <span appearance="info" size="s" tuiBadge>{{ 'header.new' | transloco }}</span>
             </span>
-            <span tuiSubtitle>You have {{ available.currentVersion }}. Torosu restarts once it is installed.</span>
+            <span tuiSubtitle>{{ 'header.youHave' | transloco: { version: available.currentVersion } }}</span>
           </div>
 
           @if (available.notes) {
@@ -45,11 +45,10 @@
 
           @if (update.failed()) {
             <p class="notes">
-              Torosu could not install it itself, as with the Arch Linux package. Download it from the releases page
-              and install it as you did the first time.
+              {{ 'header.updateFailed' | transloco }}
             </p>
             <button iconStart="@tui.external-link" size="m" tuiButton type="button" (click)="update.openReleases()">
-              Open the releases page
+              {{ 'header.openReleases' | transloco }}
             </button>
           } @else {
             <button
@@ -60,7 +59,7 @@
               [loading]="update.installing()"
               (click)="update.install()"
             >
-              Update and restart
+              {{ 'header.updateAndRestart' | transloco }}
             </button>
           }
         </div>
@@ -75,7 +74,7 @@
       [iconStart]="icon()"
       (click)="darkMode.update(dark => !dark)"
     >
-      Toggle theme
+      {{ 'header.toggleTheme' | transloco }}
     </button>
 
     @if (devMode()) {

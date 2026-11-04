@@ -1,6 +1,6 @@
 <div appearance="floating" tuiCardLarge="compact">
   <header>
-    <h3 tuiTitle>Convert {{ number() }}</h3>
+    <h3 tuiTitle>{{ 'trainer.convert' | transloco: { number: number() } }}</h3>
     <div class="actions">
       <button
         iconStart="@tui.plus"
@@ -11,7 +11,7 @@
         [tuiDropdown]="taskMenu"
         [(tuiDropdownOpen)]="menuOpen"
       >
-        Add task
+        {{ 'trainer.addTask' | transloco }}
       </button>
       <button
         appearance="flat"
@@ -19,10 +19,10 @@
         size="s"
         tuiIconButton
         type="button"
-        title="Duplicate this convert"
+        [title]="'trainer.duplicateTitle' | transloco"
         (click)="trainer.duplicateConvert(convert().id)"
       >
-        Duplicate convert
+        {{ 'trainer.duplicate' | transloco }}
       </button>
       <button
         appearance="flat"
@@ -30,18 +30,18 @@
         size="s"
         tuiIconButton
         type="button"
-        title="Remove this convert"
+        [title]="'trainer.removeTitle' | transloco"
         [disabled]="trainer.converts().length === 1"
         (click)="trainer.removeConvert(convert().id)"
       >
-        Remove convert
+        {{ 'trainer.remove' | transloco }}
       </button>
     </div>
     <ng-template #taskMenu>
       <tui-data-list>
         @for (type of availableTasksFiltered(); track type) {
           <button tuiOption type="button" (click)="addTask(type)">
-            {{ taskLabels[type] }}
+            {{ taskLabels[type] | transloco }}
           </button>
         }
       </tui-data-list>
@@ -50,16 +50,24 @@
 
   <div class="list" cdkDropList (cdkDropListDropped)="onDrop($event)">
     @for (entry of convert().tasks; track entry.id) {
-      <div class="task" cdkDrag>
+      <div class="task" cdkDrag [class.skipped]="isSkipped(entry.task.type)">
         <tui-icon icon="@tui.grip-vertical" class="handle" cdkDragHandle />
 
         <div class="content">
-          <span class="label">{{ taskLabels[entry.task.type] }}</span>
+          <span class="label">
+            {{ taskLabels[entry.task.type] | transloco }}
+            @if (isSkipped(entry.task.type)) {
+              <span class="skipped-note">
+                <tui-icon icon="@tui.ban" />
+                {{ skippedReason(entry.task.type) }}
+              </span>
+            }
+          </span>
 
           @if (entry.task.type === 'RateChange') {
             <div class="params">
               <tui-textfield tuiTextfieldSize="m" [tuiTextfieldCleaner]="false" class="rate">
-                <label tuiLabel>Rate</label>
+                <label tuiLabel>{{ 'trainer.rate.rate' | transloco }}</label>
                 <input
                   max="2"
                   min="0.5"
@@ -97,7 +105,7 @@
                     [ngModel]="entry.task.params.adjustPitch"
                     (ngModelChange)="onRateOptionChange(entry.id, entry.task.params, { adjustPitch: $event })"
                   />
-                  Adjust pitch
+                  {{ 'trainer.rate.adjustPitch' | transloco }}
                 </label>
               }
 
@@ -109,7 +117,7 @@
                   [ngModel]="entry.task.params.scaleStoryboard"
                   (ngModelChange)="onRateOptionChange(entry.id, entry.task.params, { scaleStoryboard: $event })"
                 />
-                Scale storyboard
+                {{ 'trainer.rate.scaleStoryboard' | transloco }}
               </label>
 
               <label tuiLabel class="option">
@@ -121,53 +129,44 @@
                   [ngModel]="entry.task.params.scaleVideo && trainer.ffmpegAvailable()"
                   (ngModelChange)="onRateOptionChange(entry.id, entry.task.params, { scaleVideo: $event })"
                 />
-                Scale video
+                {{ 'trainer.rate.scaleVideo' | transloco }}
               </label>
             </div>
 
             @if (!trainer.ffmpegAvailable()) {
-              <div appearance="neutral" size="s" tuiNotification>
-                Scaling the video needs <strong>ffmpeg</strong>, which was not found. Install it and make sure it is
-                in the PATH, then restart the app.
-              </div>
+              <div appearance="neutral" size="s" tuiNotification [innerHTML]="'trainer.rate.noFfmpeg' | transloco"></div>
             } @else if (entry.task.params.scaleVideo) {
-              <div appearance="info" size="s" tuiNotification>
-                The video is re-encoded at the new speed, which can take a while for long videos.
-              </div>
+              <div appearance="info" size="s" tuiNotification>{{ 'trainer.rate.videoSlow' | transloco }}</div>
             }
 
             @if (entry.task.params.scaleStoryboard) {
-              <div appearance="info" size="s" tuiNotification>
-                If the set has a shared <strong>.osb</strong> storyboard, it is used by every difficulty, so this
-                difficulty will be exported to a <strong>new beatmap set</strong> (title ending in
-                <strong>({{ entry.task.params.rate }}x SB)</strong>) to avoid overlapping with the original one.
-              </div>
+              <div
+                appearance="info"
+                size="s"
+                tuiNotification
+                [innerHTML]="'trainer.rate.storyboard' | transloco: { rate: entry.task.params.rate }"
+              ></div>
             }
           }
 
           @if (entry.task.type === 'SVNormalizer') {
-            <div appearance="info" size="s" tuiNotification>
-              The original SV changes are removed and an SV is set on every BPM change, so the scroll speed stays
-              the one of the main BPM. BPM changes, kiai and hitsounds are kept.
-            </div>
+            <div appearance="info" size="s" tuiNotification>{{ 'trainer.sv.description' | transloco }}</div>
           }
 
           @if (entry.task.type === 'FlnConverter') {
-            <p class="description">
-              Turns every note into a long note held until just before the next note in its column.
-            </p>
+            <p class="description">{{ 'trainer.fln.description' | transloco }}</p>
 
             <app-trainer-note-length
-              hint="How early each long note ends before the next note in the column."
-              label="Release gap"
+              hint="trainer.fln.gapHint"
+              label="trainer.fln.gap"
               [bpm]="originalBpm()"
               [value]="entry.task.params.gap"
               (valueChange)="onFlnChange(entry.id, entry.task.params, { gap: $event })"
             />
 
             <app-trainer-note-length
-              hint="Long notes that would be shorter than this stay as normal notes."
-              label="Minimum length"
+              hint="trainer.fln.minLengthHint"
+              label="trainer.fln.minLength"
               [bpm]="originalBpm()"
               [value]="entry.task.params.minLength"
               (valueChange)="onFlnChange(entry.id, entry.task.params, { minLength: $event })"
@@ -181,53 +180,42 @@
                 [ngModel]="entry.task.params.reworkExistingLn"
                 (ngModelChange)="onFlnChange(entry.id, entry.task.params, { reworkExistingLn: $event })"
               />
-              Also reshape the map's existing long notes
+              {{ 'trainer.fln.rework' | transloco }}
             </label>
           }
 
           @if (entry.task.type === 'KeyConverter') {
-            <p class="description">
-              Moves the notes to another number of keys. Streams roll over the new keys, while real trills, jacks
-              and chords keep their shape.
-            </p>
+            <p class="description">{{ 'trainer.keys.description' | transloco }}</p>
 
             <div class="setting">
               <span class="setting-title">
-                Keys
+                {{ 'trainer.keys.keys' | transloco }}
                 @if (sourceKeys() !== null) {
                   ({{ sourceKeys() }}K → {{ entry.task.params.targetKeys }}K)
                 }
               </span>
-              <tui-segmented
-                size="s"
-                [activeItemIndex]="keyOptions.indexOf(entry.task.params.targetKeys)"
-                (activeItemIndexChange)="onTargetKeys(entry.id, entry.task.params, keyOptions[$event])"
-              >
-                @for (keys of keyOptions; track keys) {
-                  <button type="button" [disabled]="keys === sourceKeys()">{{ keys }}K</button>
-                }
-              </tui-segmented>
+              <app-option-group
+                [active]="keyOptions.indexOf(entry.task.params.targetKeys)"
+                [options]="keyItems()"
+                (activeChange)="onTargetKeys(entry.id, entry.task.params, keyOptions[$event])"
+              />
             </div>
 
             @if (isReducing(entry.task.params.targetKeys)) {
               <div class="setting">
-                <span class="setting-title">Notes per row</span>
-                <span class="setting-hint">{{ reducingHint }}</span>
+                <span class="setting-title">{{ 'trainer.keys.perRow' | transloco }}</span>
+                <span class="setting-hint">{{ 'trainer.keys.reducing' | transloco }}</span>
               </div>
             } @else {
               @let densityAt = densityIndex(entry.task.params.density);
               <div class="setting">
-                <span class="setting-title">Extra notes</span>
-                <tui-segmented
-                  size="s"
-                  [activeItemIndex]="densityAt"
-                  (activeItemIndexChange)="onKeyChange(entry.id, entry.task.params, { density: densityOptions[$event].value })"
-                >
-                  @for (option of densityOptions; track option.value) {
-                    <button type="button">{{ option.label }}</button>
-                  }
-                </tui-segmented>
-                <span class="setting-hint">{{ densityOptions[densityAt].hint }}</span>
+                <span class="setting-title">{{ 'trainer.keys.extra' | transloco }}</span>
+                <app-option-group
+                  [active]="densityAt"
+                  [options]="densityOptions"
+                  (activeChange)="onKeyChange(entry.id, entry.task.params, { density: densityOptions[$event].value })"
+                />
+                <span class="setting-hint">{{ densityOptions[densityAt].hint | transloco }}</span>
               </div>
             }
 
@@ -235,17 +223,18 @@
             @if (playstyles.length > 1) {
               @let playstyleAt = playstyleIndex(entry.task.params);
               <div class="setting">
-                <span class="setting-title">Playstyle</span>
-                <tui-segmented
-                  size="s"
-                  [activeItemIndex]="playstyleAt"
-                  (activeItemIndexChange)="onPlaystyle(entry.id, entry.task.params, $event)"
-                >
-                  @for (playstyle of playstyles; track playstyle.name) {
-                    <button type="button">{{ playstyle.name }}</button>
-                  }
-                </tui-segmented>
-                <span class="setting-hint">{{ playstyles[playstyleAt].hint }}</span>
+                <span class="setting-title">{{ 'trainer.keys.playstyle' | transloco }}</span>
+                <app-option-group
+                  [active]="playstyleAt"
+                  [options]="playstyleItems(entry.task.params.targetKeys)"
+                  (activeChange)="onPlaystyle(entry.id, entry.task.params, $event)"
+                />
+                <span class="setting-hint">{{ playstyles[playstyleAt].hint | transloco }}</span>
+              </div>
+            } @else if (playstyles.length === 1) {
+              <div class="setting">
+                <span class="setting-title">{{ 'trainer.keys.playstyleOne' | transloco: { name: playstyles[0].name } }}</span>
+                <span class="setting-hint">{{ playstyles[0].hint | transloco }}</span>
               </div>
             }
 
@@ -257,7 +246,7 @@
                 [ngModel]="entry.task.params.keepJacks"
                 (ngModelChange)="onKeyChange(entry.id, entry.task.params, { keepJacks: $event })"
               />
-              Keep the map's jacks on a single key
+              {{ 'trainer.keys.keepJacks' | transloco }}
             </label>
           }
         </div>
@@ -270,11 +259,11 @@
           type="button"
           (click)="trainer.removeTask(convert().id, entry.id)"
         >
-          Remove task
+          {{ 'trainer.removeTask' | transloco }}
         </button>
       </div>
     } @empty {
-      <p class="empty">No tasks: only the difficulty settings change.</p>
+      <p class="empty">{{ 'trainer.noTasks' | transloco }}</p>
     }
   </div>
 </div>

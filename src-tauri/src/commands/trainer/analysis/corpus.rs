@@ -19,6 +19,14 @@
 //! - `corpus_compare`: a passage of `MAP` next to its 10K converts, as text.
 //! - `corpus_columns`: how often hand-made 9K and 10K maps use each column,
 //!   the outer ones above all, next to 4K and 7K converts to them.
+//! - `corpus_scratch`, `corpus_scratch_truth`, `corpus_scratch_sources`: the
+//!   scratches of 10K2S, in hand-made maps and converts; the converter on
+//!   hand-made maps without their scratches; and on the other maps of their
+//!   songs, the use it is for.
+//! - `corpus_scratch_hands`, `corpus_scratch_places`: how free the hand of a
+//!   scratch is in hand-made 10K2S maps and in converts (a note of it in the
+//!   row is a muri), by how hard the map is; and how likely a scratch is with
+//!   how far the hand's notes are.
 
 use std::{
     collections::{BTreeMap, HashMap},
@@ -35,6 +43,7 @@ use super::{
     zones::Zone,
 };
 use crate::commands::trainer::{
+    accents::Accents,
     mania::key_count,
     model::{Density, KeyConverterParams},
     tasks::key_converter,
@@ -1669,5 +1678,1129 @@ fn corpus_columns() {
                 agg.print(&format!("{}K -> {}K {}", src, dst, modes[*m].0));
             }
         }
+    }
+}
+
+/// How a map uses its scratches: the outer keys of 10K2S, played by the
+/// pinky of the key next to them.
+#[derive(Default)]
+struct ScratchAgg {
+    maps: usize,
+    notes: u64,
+    keys: usize,
+    scratch: u64,
+    /// Notes on the keys next to the scratches, which the same pinky plays.
+    pinky: u64,
+    /// Scratch notes in a row with a key of their own hand, or while it holds
+    /// one; and with the key next to them (never: the same finger).
+    with_own: u64,
+    with_pinky: u64,
+    /// Scratch notes alone in their row.
+    alone: u64,
+    /// Scratch notes and every row by where they fall in the beat (1/1, 1/2,
+    /// 1/4, anything else).
+    beat: [u64; 4],
+    rows_beat: [u64; 4],
+    /// Scratch notes 1/2 beat or closer after the last one of their scratch.
+    jack_half: u64,
+    /// Scratch notes 4th or later in a run, a beat apart or closer, and the
+    /// longest run of each map, summed.
+    runs4: u64,
+    longest: u64,
+    /// 4-beat windows of 8 notes or more, and those where a hand plays less
+    /// than a quarter of them.
+    windows: u64,
+    lopsided: u64,
+}
+
+impl ScratchAgg {
+    fn add(&mut self, l: &Labelled, layout: &Layout) {
+        use super::layout::{Digit, Hand};
+        let scratch = layout.digit_mask(Digit::Scratch);
+        if scratch == 0 || l.rows.is_empty() {
+            return;
+        }
+        let fingers = &layout.fingers;
+        let side = |hand: Hand| fingers.iter().enumerate().filter(|(_, f)| f.hand == hand).fold(0u32, |m, (c, _)| m | 1 << c);
+        let (left, right) = (side(Hand::Left), side(Hand::Right));
+        let own = |s: usize| if left & 1 << s != 0 { left & !(1 << s) } else { right & !(1 << s) };
+        let pinky = |s: usize| own(s) & layout.digit_mask(Digit::Pinky);
+        self.maps += 1;
+        self.keys = l.keys;
+        let rows = &l.rows;
+        let mut longest = 0;
+        for s in (0..l.keys).filter(|&s| scratch & 1 << s != 0) {
+            let mut run = 0u64;
+            let mut last = f64::NEG_INFINITY;
+            for row in rows.iter().filter(|r| r.mask & 1 << s != 0) {
+                run = if row.time - last <= row.beat_len * 1.01 { run + 1 } else { 1 };
+                self.runs4 += (run >= 4) as u64;
+                longest = longest.max(run);
+                last = row.time;
+            }
+        }
+        self.longest += longest;
+
+        let window = rows[0].beat_len * 4.0;
+        let mut counts: BTreeMap<i64, (u32, u32)> = BTreeMap::new();
+        let pinky_keys = (0..l.keys).filter(|&s| scratch & 1 << s != 0).fold(0u32, |m, s| m | pinky(s));
+        for (i, row) in rows.iter().enumerate() {
+            self.notes += row.mask.count_ones() as u64;
+            self.pinky += (row.mask & pinky_keys).count_ones() as u64;
+            self.rows_beat[row.beat.min(3) as usize] += 1;
+            let w = counts.entry(((row.time - rows[0].time) / window) as i64).or_default();
+            w.0 += (row.mask & left).count_ones();
+            w.1 += (row.mask & right).count_ones();
+            for s in (0..l.keys).filter(|&s| row.mask & scratch & 1 << s != 0) {
+                self.scratch += 1;
+                self.with_own += ((row.mask | row.held) & own(s) != 0) as u64;
+                self.with_pinky += (row.mask & pinky(s) != 0) as u64;
+                self.alone += (row.mask == 1 << s) as u64;
+                self.beat[row.beat.min(3) as usize] += 1;
+                let gap = row.beat_len * 0.51;
+                self.jack_half +=
+                    rows[..i].iter().rev().take_while(|r| row.time - r.time <= gap).any(|r| r.mask & 1 << s != 0) as u64;
+            }
+        }
+        for (l, r) in counts.into_values().filter(|&(l, r)| l + r >= 8) {
+            self.windows += 1;
+            self.lopsided += ((l.min(r) as f64) < (l + r) as f64 * 0.25) as u64;
+        }
+    }
+
+    fn merge(&mut self, b: ScratchAgg) {
+        self.maps += b.maps;
+        self.notes += b.notes;
+        self.keys = self.keys.max(b.keys);
+        self.scratch += b.scratch;
+        self.pinky += b.pinky;
+        self.with_own += b.with_own;
+        self.with_pinky += b.with_pinky;
+        self.alone += b.alone;
+        self.jack_half += b.jack_half;
+        self.runs4 += b.runs4;
+        self.longest += b.longest;
+        self.windows += b.windows;
+        self.lopsided += b.lopsided;
+        for i in 0..4 {
+            self.beat[i] += b.beat[i];
+            self.rows_beat[i] += b.rows_beat[i];
+        }
+    }
+
+    fn print(&self, name: &str) {
+        let of = |x: u64| pct(x as f64 / self.scratch.max(1) as f64);
+        let dist = |c: &[u64; 4]| {
+            let total = c.iter().sum::<u64>().max(1) as f64;
+            c.iter().map(|&x| format!("{:.0}", x as f64 / total * 100.0)).collect::<Vec<_>>().join("/")
+        };
+        let maps = self.maps.max(1) as f64;
+        // Each scratch against an even column.
+        let share = self.scratch as f64 / 2.0 / self.notes.max(1) as f64 * self.keys as f64;
+        let pinky = self.pinky as f64 / 2.0 / self.notes.max(1) as f64 * self.keys as f64;
+        println!(
+            "  {:<30} {:>4} maps | scratch {:.2}x a key, the key next to it {:.2}x | with next key {} | with own hand {} | alone {} | \
+             on 1/1-1/2-1/4-other {} (rows {}) | again within 1/2 {} | 4th+ of a run {}, longest {:.1} | lopsided windows {}",
+            name,
+            self.maps,
+            share,
+            pinky,
+            of(self.with_pinky),
+            of(self.with_own),
+            of(self.alone),
+            dist(&self.beat),
+            dist(&self.rows_beat),
+            of(self.jack_half),
+            of(self.runs4),
+            self.longest as f64 / maps,
+            pct(self.lopsided as f64 / self.windows.max(1) as f64),
+        );
+    }
+}
+
+/// Hand-made 10K2S maps next to 4K, 7K and 10K converts to 12K (`LIMIT`
+/// source maps of each key count, 100 by default, up to `MAX_NPS` notes per
+/// second, 15 by default: hand-made 10K2S maps are easy), in the playstyle
+/// `PLAYSTYLE` (12K by default, or 10K2S, which follows the audio). `MAPS`
+/// (parts of diff file names, split by `;`) converts those diffs instead,
+/// each on its own.
+#[test]
+#[ignore = "reads a whole Songs folder; run by hand"]
+fn corpus_scratch() {
+    const PER_SET: usize = 3;
+    let sets = mania_sets(&songs_dir());
+    let limit: usize = std::env::var("LIMIT").ok().and_then(|s| s.parse().ok()).unwrap_or(100);
+    let max_nps: f64 = std::env::var("MAX_NPS").ok().and_then(|s| s.parse().ok()).unwrap_or(15.0);
+    let picked: Vec<String> = std::env::var("MAPS").map(|m| m.split(';').map(String::from).collect()).unwrap_or_default();
+    let dst = 12usize;
+    let playstyle = std::env::var("PLAYSTYLE").ok();
+    let dst_layout = layout(dst, playstyle.as_deref());
+    let modes = [("None", Density::None), ("Dense", Density::Dense), ("MoreDense", Density::MoreDense), ("Full", Density::Full)];
+    let nps = |b: &Beatmap| {
+        let first = b.hit_objects.first().map_or(0.0, |h| h.start_time);
+        let last = b.hit_objects.last().map_or(0.0, |h| h.start_time);
+        b.hit_objects.len() as f64 / ((last - first) / 1000.0).max(1.0)
+    };
+    let params = |density| KeyConverterParams { target_keys: dst as u8, density, keep_jacks: true, playstyle: playstyle.clone() };
+    // The accents of a map's audio, when the playstyle follows them.
+    let accents = |path: &Path, beatmap: &Beatmap| {
+        let folder = path.parent().filter(|_| key_converter::uses_audio(&params(Density::None)))?;
+        Accents::read(&folder.join(&beatmap.audio_file)).ok()
+    };
+    let converted = |beatmap: &Beatmap, accents: &Option<Accents>, density: Density| {
+        let mut b = beatmap.clone();
+        key_converter::apply_with(&mut b, &params(density), accents.as_ref().map(|a| a.at_rate(1.0))).ok().map(|_| b)
+    };
+    let convert = |beatmap: &Beatmap, accents: &Option<Accents>, density: Density| {
+        converted(beatmap, accents, density).map(|b| label(&b, &dst_layout))
+    };
+
+    let hand_made: ScratchAgg = parallel(
+        &sets,
+        |acc: &mut ScratchAgg, files| {
+            for beatmap in files.iter().filter_map(|p| parse(p)).filter(|b| key_count(b) == dst) {
+                acc.add(&label(&beatmap, &dst_layout), &dst_layout);
+            }
+        },
+        ScratchAgg::merge,
+    );
+    println!("\n=== {}K ({})", dst, dst_layout.name);
+    hand_made.print("hand-made");
+
+    for part in &picked {
+        let Some(path) = sets.iter().flatten().find(|p| p.to_string_lossy().contains(part.as_str())) else {
+            println!("  {}: not found", part);
+            continue;
+        };
+        let Some(beatmap) = parse(path) else { continue };
+        let accents = accents(path, &beatmap);
+        for (name, density) in modes {
+            let mut agg = ScratchAgg::default();
+            if let Some(l) = convert(&beatmap, &accents, density) {
+                agg.add(&l, &dst_layout);
+            }
+            // `DUMP=1` writes the convert to `OUT`, to look at it in osu!.
+            if std::env::var_os("DUMP").is_some() {
+                if let Some(mut b) = converted(&beatmap, &accents, density) {
+                    b.version = format!("{} ({} {})", b.version, dst_layout.name, name);
+                    let osu = crate::commands::trainer::osu_fixups::sanitize(b.encode_to_string().unwrap(), None);
+                    let file = format!("{} [{}].osu", b.title, b.version).replace(['/', '\\'], "_");
+                    std::fs::write(out_dir().join(file), osu).unwrap();
+                }
+            }
+            agg.print(&format!("{} {}K {}", beatmap.version.chars().take(18).collect::<String>(), key_count(&beatmap), name));
+        }
+    }
+    if !picked.is_empty() {
+        return;
+    }
+
+    // A few diffs per set, so a big pack does not make up every source.
+    let maps: Vec<(PathBuf, Beatmap)> = sets
+        .iter()
+        .flat_map(|files| {
+            let diffs: Vec<(PathBuf, Beatmap)> =
+                files.iter().filter_map(|p| parse(p).map(|b| (p.clone(), b))).filter(|(_, b)| nps(b) <= max_nps).collect();
+            [4usize, 7, 10].into_iter().flat_map(move |keys| {
+                diffs.iter().filter(|(_, b)| key_count(b) == keys).take(PER_SET).cloned().collect::<Vec<_>>()
+            })
+        })
+        .collect();
+    let sources: Vec<(PathBuf, Beatmap)> = [4usize, 7, 10]
+        .iter()
+        .flat_map(|&keys| maps.iter().filter(move |(_, b)| key_count(b) == keys).take(limit).cloned())
+        .collect();
+
+    // Keyed by (source keys, mode).
+    let converts: BTreeMap<(usize, usize), ScratchAgg> = parallel(
+        &sources,
+        |acc: &mut BTreeMap<(usize, usize), ScratchAgg>, (path, beatmap)| {
+            let accents = accents(path, beatmap);
+            for (m, (_, density)) in modes.iter().enumerate() {
+                if let Some(l) = convert(beatmap, &accents, *density) {
+                    acc.entry((key_count(beatmap), m)).or_default().add(&l, &dst_layout);
+                }
+            }
+        },
+        |total, part| {
+            for (k, agg) in part {
+                total.entry(k).or_default().merge(agg);
+            }
+        },
+    );
+    for ((src, m), agg) in &converts {
+        agg.print(&format!("{}K -> {}K {}", src, dst, modes[*m].0));
+    }
+}
+
+/// The scratch notes of a 12K map, as (time, key), and the map without them
+/// as a 10K map: what a 10K2S mapper scratched over.
+fn split_scratches(beatmap: &Beatmap) -> (Beatmap, Vec<(f64, usize)>) {
+    use crate::commands::trainer::mania;
+    let mut inner = beatmap.clone();
+    let mut scratches = Vec::new();
+    inner.hit_objects.retain_mut(|obj| {
+        let Some((x, _)) = mania::note(obj) else { return true };
+        let col = mania::column(x, 12);
+        if col == 0 || col == 11 {
+            scratches.push((obj.start_time, col));
+            return false;
+        }
+        let x = mania::column_x(col - 1, 10);
+        match &mut obj.kind {
+            rosu_map::section::hit_objects::HitObjectKind::Circle(c) => c.pos.x = x,
+            rosu_map::section::hit_objects::HitObjectKind::Hold(h) => h.pos_x = x,
+            _ => {}
+        }
+        true
+    });
+    inner.circle_size = 10.0;
+    (inner, scratches)
+}
+
+/// Hand-made 10K2S maps against the converter: each map without its scratches
+/// is a 10K map, converted back to 10K2S with its audio (`AUDIO=0`: without),
+/// and the scratches it gets are compared with the mapper's (same time,
+/// within 3 ms; then the same scratch too). `MAPS` (parts of diff file names,
+/// split by `;`) picks some; `MAX_NPS` (40) leaves out gimmick maps, and maps
+/// with "help" in their name are marks, not maps (see
+/// `corpus_scratch_sources`); `DUMP=1` writes each map's scratches to `OUT`.
+#[test]
+#[ignore = "reads a whole Songs folder; run by hand"]
+fn corpus_scratch_truth() {
+    use crate::commands::trainer::mania;
+    let max_nps: f64 = std::env::var("MAX_NPS").ok().and_then(|s| s.parse().ok()).unwrap_or(40.0);
+    let picked: Vec<String> = std::env::var("MAPS").map(|m| m.split(';').map(String::from).collect()).unwrap_or_default();
+    let nps = |b: &Beatmap| {
+        let first = b.hit_objects.first().map_or(0.0, |h| h.start_time);
+        let last = b.hit_objects.last().map_or(0.0, |h| h.start_time);
+        b.hit_objects.len() as f64 / ((last - first) / 1000.0).max(1.0)
+    };
+    let mut maps: Vec<(PathBuf, Beatmap)> = mania_sets(&songs_dir())
+        .into_iter()
+        .flatten()
+        .filter(|p| picked.is_empty() || picked.iter().any(|m| p.to_string_lossy().contains(m.as_str())))
+        .filter_map(|p| parse(&p).map(|b| (p, b)))
+        .filter(|(_, b)| key_count(b) == 12 && nps(b) <= max_nps && !b.version.to_lowercase().contains("help"))
+        .collect();
+    maps.sort_by(|a, b| a.0.cmp(&b.0));
+
+    // Per map: truth and predicted times, times in both, truth and predicted
+    // notes, notes in both.
+    let results: Vec<(String, [usize; 6])> = parallel(
+        &maps,
+        |acc: &mut Vec<(String, [usize; 6])>, (path, beatmap)| {
+            let (inner, truth) = split_scratches(beatmap);
+            let mut converted = inner.clone();
+            let params =
+                KeyConverterParams { target_keys: 12, density: Density::None, keep_jacks: true, playstyle: Some("10K2S".into()) };
+            let accents = path
+                .parent()
+                .filter(|_| std::env::var("AUDIO").map_or(true, |a| a != "0"))
+                .and_then(|folder| Accents::read(&folder.join(&beatmap.audio_file)).ok());
+            if key_converter::apply_with(&mut converted, &params, accents.as_ref().map(|a| a.at_rate(1.0))).is_err() {
+                return;
+            }
+            let predicted: Vec<(f64, usize)> = converted
+                .hit_objects
+                .iter()
+                .filter_map(|o| mania::note(o).map(|(x, _)| (o.start_time, mania::column(x, 12))))
+                .filter(|&(_, c)| c == 0 || c == 11)
+                .collect();
+            // Times (either scratch) and notes (the same scratch) in both.
+            let times = |notes: &[(f64, usize)]| {
+                let mut times: Vec<f64> = notes.iter().map(|n| n.0).collect();
+                times.dedup();
+                times
+            };
+            let (truth_times, predicted_times) = (times(&truth), times(&predicted));
+            let hits = predicted_times.iter().filter(|&&p| truth_times.iter().any(|&t| (t - p).abs() <= 3.0)).count();
+            let sides = predicted.iter().filter(|p| truth.iter().any(|t| (t.0 - p.0).abs() <= 3.0 && t.1 == p.1)).count();
+            let name = format!("{} [{}]", beatmap.title, beatmap.version);
+            if std::env::var_os("DUMP").is_some() {
+                let text: String = predicted.iter().map(|(t, c)| format!("{} {}\n", t, c)).collect();
+                let file = name.replace(['/', '\\'], "_") + ".pred.txt";
+                std::fs::write(out_dir().join(file), text).unwrap();
+            }
+            acc.push((name, [truth_times.len(), predicted_times.len(), hits, truth.len(), predicted.len(), sides]));
+        },
+        |total, part| total.extend(part),
+    );
+
+    let f1 = |hits: usize, truth: usize, predicted: usize| {
+        let (precision, recall) = (hits as f64 / predicted.max(1) as f64, hits as f64 / truth.max(1) as f64);
+        (precision, recall, 2.0 * precision * recall / (precision + recall).max(1e-9))
+    };
+    let mut results = results;
+    results.sort_by(|a, b| a.0.cmp(&b.0));
+    let mut total = [0usize; 6];
+    let mut f1s = Vec::new();
+    for (name, counts) in &results {
+        let [truth, predicted, hits, truth_notes, predicted_notes, sides] = *counts;
+        let (precision, recall, times_f1) = f1(hits, truth, predicted);
+        let (_, _, notes_f1) = f1(sides, truth_notes, predicted_notes);
+        f1s.push(notes_f1);
+        println!(
+            "  {:<60} truth {:>4} predicted {:>4} | times: precision {} recall {} F1 {:.2} | notes F1 {:.2}",
+            name.chars().take(60).collect::<String>(),
+            truth_notes,
+            predicted_notes,
+            pct(precision),
+            pct(recall),
+            times_f1,
+            notes_f1
+        );
+        for (t, c) in total.iter_mut().zip(counts) {
+            *t += c;
+        }
+    }
+    let [truth, predicted, hits, truth_notes, predicted_notes, sides] = total;
+    let (precision, recall, times_f1) = f1(hits, truth, predicted);
+    let (note_precision, note_recall, notes_f1) = f1(sides, truth_notes, predicted_notes);
+    println!(
+        "\n  {} maps, {} scratch notes, {} predicted\n  times (either scratch): precision {} recall {} F1 {:.3}\n  \
+         notes (the same scratch): precision {} recall {} F1 {:.3} (mean per map {:.3})",
+        results.len(),
+        truth_notes,
+        predicted_notes,
+        pct(precision),
+        pct(recall),
+        times_f1,
+        pct(note_precision),
+        pct(note_recall),
+        notes_f1,
+        f1s.iter().sum::<f64>() / f1s.len().max(1) as f64,
+    );
+}
+
+/// The converter on what it is for, against hand-made 10K2S maps: the other
+/// maps of their sets (the same audio) converted to 10K2S with the audio
+/// (`AUDIO=0`: without), their scratches against the mapper's in time (either
+/// scratch, within 25 ms: two mappers' timing), where both maps play. Per
+/// song, the mean over its pairs. `MAPS` (parts of file paths, split by `;`)
+/// picks some sets; `MAX_NPS` (40) leaves out gimmick maps. `UNTIL` (ms)
+/// compares up to then only, and takes in the maps with "help" in their name,
+/// left out otherwise, as marks: their notes on the left scratch, where their
+/// mapper hears an accent. `DENSITY` (`none`, `dense`, `more`, `full`)
+/// converts with that density; `VERBOSE=1` lists every pair.
+#[test]
+#[ignore = "reads a whole Songs folder; run by hand"]
+fn corpus_scratch_sources() {
+    use crate::commands::trainer::{mania, timing::BeatGrid};
+    let picked: Vec<String> = std::env::var("MAPS").map(|m| m.split(';').map(String::from).collect()).unwrap_or_default();
+    let until: f64 = std::env::var("UNTIL").ok().and_then(|s| s.parse().ok()).unwrap_or(f64::INFINITY);
+    let audio = std::env::var("AUDIO").map_or(true, |a| a != "0");
+    let max_nps: f64 = std::env::var("MAX_NPS").ok().and_then(|s| s.parse().ok()).unwrap_or(40.0);
+    let nps = |b: &Beatmap| {
+        let first = b.hit_objects.first().map_or(0.0, |h| h.start_time);
+        let last = b.hit_objects.last().map_or(0.0, |h| h.start_time);
+        b.hit_objects.len() as f64 / ((last - first) / 1000.0).max(1.0)
+    };
+    let density = match std::env::var("DENSITY").as_deref() {
+        Ok("dense") => Density::Dense,
+        Ok("more") => Density::MoreDense,
+        Ok("full") => Density::Full,
+        _ => Density::None,
+    };
+    let sets: Vec<Vec<PathBuf>> = mania_sets(&songs_dir())
+        .into_iter()
+        .filter(|set| picked.is_empty() || set.iter().any(|p| picked.iter().any(|m| p.to_string_lossy().contains(m.as_str()))))
+        .collect();
+    let help = |b: &Beatmap| b.version.to_lowercase().contains("help");
+    // The scratch times of a map up to `until`, and the time span its notes take.
+    let scratches = |b: &Beatmap, left_only: bool| {
+        let mut times: Vec<f64> = b
+            .hit_objects
+            .iter()
+            .filter_map(|o| mania::note(o).map(|(x, _)| (o.start_time, mania::column(x, 12))))
+            .filter(|&(t, c)| t < until && (c == 0 || (c == 11 && !left_only)))
+            .map(|(t, _)| t)
+            .collect();
+        times.sort_by(f64::total_cmp);
+        times.dedup_by(|a, b| (*a - *b).abs() < 1.0);
+        times
+    };
+    let span = |b: &Beatmap| {
+        let first = b.hit_objects.first().map_or(0.0, |h| h.start_time);
+        (first, b.hit_objects.last().map_or(first, |h| h.start_time).min(until))
+    };
+
+    // Per pair: song, source, truth, and [truth, predicted, hits].
+    // Per pair: song, source, truth, [truth, predicted, hits], and the share
+    // of the mapper's scratches and of the source's 1/2 beats on a note of it.
+    type Pair = (String, String, String, [usize; 3], (f64, f64));
+    let results: Vec<Pair> = parallel(
+        &sets,
+        |acc: &mut Vec<Pair>, set| {
+            let maps: Vec<(PathBuf, Beatmap)> = set.iter().filter_map(|p| parse(p).map(|b| (p.clone(), b))).collect();
+            let truths: Vec<&Beatmap> =
+                maps.iter().map(|(_, b)| b).filter(|b| key_count(b) == 12 && nps(b) <= max_nps && (!help(b) || until.is_finite())).collect();
+            let mut heard: HashMap<String, Option<Accents>> = HashMap::new();
+            for (path, source) in maps.iter().filter(|(_, b)| key_count(b) != 12) {
+                let same: Vec<&&Beatmap> = truths.iter().filter(|t| t.audio_file == source.audio_file).collect();
+                if same.is_empty() {
+                    continue;
+                }
+                let accents = heard.entry(source.audio_file.clone()).or_insert_with(|| {
+                    let folder = path.parent()?;
+                    audio.then(|| Accents::read(&folder.join(&source.audio_file)).ok()).flatten()
+                });
+                let mut converted = source.clone();
+                let params = KeyConverterParams { target_keys: 12, density, keep_jacks: true, playstyle: Some("10K2S".into()) };
+                if key_converter::apply_with(&mut converted, &params, accents.as_ref().map(|a| a.at_rate(1.0))).is_err() {
+                    continue;
+                }
+                let predicted = scratches(&converted, false);
+                for truth in same {
+                    let ((a, b), (c, d)) = (span(source), span(truth));
+                    let (from, to) = (a.max(c) - 1.0, b.min(d) + 1.0);
+                    let within = |times: Vec<f64>| -> Vec<f64> { times.into_iter().filter(|t| (from..=to).contains(t)).collect() };
+                    let (truth_times, predicted) = (within(scratches(truth, help(truth))), within(predicted.clone()));
+                    let hits = predicted.iter().filter(|&&p| truth_times.iter().any(|&t| (t - p).abs() <= 25.0)).count();
+                    let mut rows: Vec<f64> = source.hit_objects.iter().map(|o| o.start_time).collect();
+                    rows.sort_by(f64::total_cmp);
+                    let on_row = |t: &f64| rows.get(rows.partition_point(|&r| r < t - 3.0)).is_some_and(|&r| (r - t).abs() <= 3.0);
+                    let ticks: Vec<f64> = BeatGrid::new(source).ticks(from, to, 2.0).into_iter().map(f64::round).collect();
+                    let share = |times: &[f64]| times.iter().filter(|t| on_row(t)).count() as f64 / times.len().max(1) as f64;
+                    acc.push((
+                        truth.title.clone(),
+                        format!("{}K {}", key_count(source), source.version),
+                        truth.version.clone(),
+                        [truth_times.len(), predicted.len(), hits],
+                        (share(&truth_times), share(&ticks)),
+                    ));
+                }
+            }
+        },
+        |total, part| total.extend(part),
+    );
+
+    let f1 = |[truth, predicted, hits]: [usize; 3]| {
+        let (precision, recall) = (hits as f64 / predicted.max(1) as f64, hits as f64 / truth.max(1) as f64);
+        (precision, recall, 2.0 * precision * recall / (precision + recall).max(1e-9))
+    };
+    let mut results = results;
+    results.sort_by(|a, b| (&a.0, &a.1, &a.2).cmp(&(&b.0, &b.1, &b.2)));
+    let mut songs: BTreeMap<String, Vec<(f64, f64, f64)>> = BTreeMap::new();
+    for (song, source, truth, counts, _) in &results {
+        let (precision, recall, f) = f1(*counts);
+        if std::env::var_os("VERBOSE").is_some() {
+            println!(
+                "  {:<24} {:<34} -> {:<30} truth {:>4} predicted {:>4} | precision {} recall {} F1 {:.2}",
+                song.chars().take(24).collect::<String>(),
+                source.chars().take(34).collect::<String>(),
+                truth.chars().take(30).collect::<String>(),
+                counts[0],
+                counts[1],
+                pct(precision),
+                pct(recall),
+                f
+            );
+        }
+        songs.entry(song.clone()).or_default().push((precision, recall, f));
+    }
+    let mean = |v: &[f64]| v.iter().sum::<f64>() / v.len().max(1) as f64;
+    let mut per_song = Vec::new();
+    for (song, pairs) in &songs {
+        let (p, r, f): (Vec<f64>, Vec<f64>, Vec<f64>) =
+            pairs.iter().fold((vec![], vec![], vec![]), |(mut p, mut r, mut f), x| {
+                p.push(x.0);
+                r.push(x.1);
+                f.push(x.2);
+                (p, r, f)
+            });
+        println!(
+            "  {:<40} {:>3} pairs | precision {} recall {} F1 {:.3}",
+            song.chars().take(40).collect::<String>(),
+            pairs.len(),
+            pct(mean(&p)),
+            pct(mean(&r)),
+            mean(&f)
+        );
+        per_song.push((mean(&p), mean(&r), mean(&f)));
+    }
+    // Where the mappers put their scratches: on the source's notes, against
+    // its 1/2 beats.
+    let (scratched, ticks): (Vec<f64>, Vec<f64>) = results.iter().map(|r| r.4).unzip();
+    let range = |v: &[f64]| (v.iter().copied().fold(f64::INFINITY, f64::min), v.iter().copied().fold(0.0, f64::max));
+    println!(
+        "\n  the mappers' scratches on a note of the other map: {} ({} to {}), its 1/2 beats: {} ({} to {})",
+        pct(mean(&scratched)),
+        pct(range(&scratched).0),
+        pct(range(&scratched).1),
+        pct(mean(&ticks)),
+        pct(range(&ticks).0),
+        pct(range(&ticks).1)
+    );
+    println!(
+        "\n  {} songs: precision {} recall {} F1 {:.3}",
+        per_song.len(),
+        pct(mean(&per_song.iter().map(|x| x.0).collect::<Vec<_>>())),
+        pct(mean(&per_song.iter().map(|x| x.1).collect::<Vec<_>>())),
+        mean(&per_song.iter().map(|x| x.2).collect::<Vec<_>>()),
+    );
+}
+
+/// A scratch note of a 12K map, and what its hand (the five keys next to it)
+/// plays around it.
+#[derive(Clone, Copy)]
+struct ScratchHand {
+    /// Notes per second of the map's keys, the scratches aside.
+    nps: f64,
+    beat_len: f64,
+    /// A note of its hand in its row, or held across it: a muri.
+    in_row: bool,
+    held: bool,
+    /// How long (in ms) since the hand's last note ended (its release for a
+    /// long note), and until its next one starts.
+    before: f64,
+    after: f64,
+    /// Whether the next row of the map has a note of the hand.
+    next_row: bool,
+}
+
+fn scratch_hands(beatmap: &Beatmap) -> Vec<ScratchHand> {
+    use crate::commands::trainer::{mania, timing::BeatGrid};
+    let mut notes: Vec<(f64, f64, usize)> = beatmap
+        .hit_objects
+        .iter()
+        .filter_map(|o| mania::note(o).map(|(x, end)| (o.start_time, end, mania::column(x, 12))))
+        .collect();
+    notes.sort_by(|a, b| a.0.total_cmp(&b.0));
+    let inner: Vec<&(f64, f64, usize)> = notes.iter().filter(|n| n.2 != 0 && n.2 != 11).collect();
+    let (Some(first), Some(last)) = (inner.first(), inner.last()) else { return Vec::new() };
+    let nps = inner.len() as f64 / ((last.0 - first.0) / 1000.0).max(1.0);
+    let grid = BeatGrid::new(beatmap);
+    let mut out = Vec::new();
+    for &(time, _, col) in notes.iter().filter(|n| n.2 == 0 || n.2 == 11) {
+        let hand = if col == 0 { 1..=5 } else { 6..=10 };
+        let mine: Vec<&(f64, f64, usize)> = inner.iter().copied().filter(|n| hand.contains(&n.2)).collect();
+        let ended = mine.iter().filter(|n| n.0 < time - 3.0 && n.1 <= time + 3.0).map(|n| n.1);
+        let next = mine.iter().filter(|n| n.0 > time + 3.0).map(|n| n.0).fold(f64::INFINITY, f64::min);
+        let next_row = inner.iter().map(|n| n.0).find(|&t| t > time + 3.0);
+        out.push(ScratchHand {
+            nps,
+            beat_len: grid.at(time).1,
+            in_row: mine.iter().any(|n| (n.0 - time).abs() <= 3.0),
+            held: mine.iter().any(|n| n.0 < time - 3.0 && n.1 > time + 3.0),
+            before: time - ended.fold(f64::NEG_INFINITY, f64::max),
+            after: next - time,
+            next_row: next_row.is_some_and(|t| (t - next).abs() <= 3.0),
+        });
+    }
+    out
+}
+
+/// The `q` quantile of `values`.
+fn quantile(values: &mut [f64], q: f64) -> f64 {
+    values.sort_by(f64::total_cmp);
+    values.get(((values.len().max(1) - 1) as f64 * q).round() as usize).copied().unwrap_or(f64::NAN)
+}
+
+/// The most scratches (places with one) of a 12K map in any 4 and 8 beats.
+fn busiest_spans(beatmap: &Beatmap) -> (usize, usize) {
+    use crate::commands::trainer::{mania, timing::BeatGrid};
+    let grid = BeatGrid::new(beatmap);
+    let mut times: Vec<f64> = beatmap
+        .hit_objects
+        .iter()
+        .filter(|o| mania::note(o).is_some_and(|(x, _)| matches!(mania::column(x, 12), 0 | 11)))
+        .map(|o| o.start_time)
+        .collect();
+    times.sort_by(f64::total_cmp);
+    times.dedup_by(|a, b| (*a - *b).abs() <= 3.0);
+    let busiest = |beats: f64| {
+        (0..times.len())
+            .map(|i| times[i..].iter().take_while(|&&t| t - times[i] <= beats * grid.at(times[i]).1 + 2.0).count())
+            .max()
+            .unwrap_or(0)
+    };
+    (busiest(4.0), busiest(8.0))
+}
+
+fn print_scratch_hands(name: &str, hands: &[ScratchHand]) {
+    if hands.is_empty() {
+        println!("  {:<44} no scratch", name);
+        return;
+    }
+    let n = hands.len() as f64;
+    let share = |f: &dyn Fn(&ScratchHand) -> bool| pct(hands.iter().filter(|h| f(h)).count() as f64 / n);
+    let free: Vec<&ScratchHand> = hands.iter().filter(|h| !h.in_row && !h.held).collect();
+    let quantiles = |f: &dyn Fn(&ScratchHand) -> f64, qs: &[f64], digits: usize| {
+        let mut values: Vec<f64> = free.iter().map(|h| f(h)).collect();
+        qs.iter().map(|&q| format!("{:.*}", digits, quantile(&mut values, q))).collect::<Vec<_>>().join("/")
+    };
+    println!(
+        "  {:<44} {:>5} scratches | {:>5.1} nps | in row {:>4} held {:>4} | after ms p2/5/10/25/50 {:<24} beats p5/50 {:<10} \
+         | before ms {:<24} | the hand on the next row {:>4}",
+        name.chars().take(44).collect::<String>(),
+        hands.len(),
+        hands.iter().map(|h| h.nps).sum::<f64>() / n,
+        share(&|h| h.in_row),
+        share(&|h| h.held),
+        quantiles(&|h| h.after, &[0.02, 0.05, 0.1, 0.25, 0.5], 0),
+        quantiles(&|h| h.after / h.beat_len, &[0.05, 0.5], 2),
+        quantiles(&|h| h.before, &[0.02, 0.05, 0.1, 0.25, 0.5], 0),
+        share(&|h| !h.in_row && h.next_row),
+    );
+}
+
+/// What the hand of a scratch plays around it in hand-made 10K2S maps (a
+/// note in the row is a muri: the pinky moves out while the other fingers
+/// press), map by map and by how hard they are, next to the converter: the
+/// maps without their scratches converted back to 10K2S, and the other maps
+/// of their songs (`SOURCES=1`), with the audio (`AUDIO=0`: without). Then,
+/// over the maps, how far the hand's notes keep at the closest (the 5% of a
+/// map's scratches) against the map's notes a second, `ms = a * nps^b`: what
+/// `SCRATCH_FREE_MS` holds. `MAPS` (parts of file paths, split by `;`) picks
+/// some sets.
+#[test]
+#[ignore = "reads a whole Songs folder; run by hand"]
+fn corpus_scratch_hands() {
+    let picked: Vec<String> = std::env::var("MAPS").map(|m| m.split(';').map(String::from).collect()).unwrap_or_default();
+    let audio = std::env::var("AUDIO").map_or(true, |a| a != "0");
+    let sources = std::env::var_os("SOURCES").is_some();
+    let sets: Vec<Vec<PathBuf>> = mania_sets(&songs_dir())
+        .into_iter()
+        .filter(|set| picked.is_empty() || set.iter().any(|p| picked.iter().any(|m| p.to_string_lossy().contains(m.as_str()))))
+        .collect();
+    let params = KeyConverterParams { target_keys: 12, density: Density::None, keep_jacks: true, playstyle: Some("10K2S".into()) };
+    // Per map: its name, its scratches' hands and those of the convert of
+    // the map without them, and the most scratches each has in 4 and 8
+    // beats; per other map of the songs, its convert's.
+    type Spans = ((usize, usize), (usize, usize));
+    type Hands = Vec<(String, Vec<ScratchHand>, Vec<ScratchHand>, Spans)>;
+    let (mut hand_made, mut others): (Hands, Vec<(String, Vec<ScratchHand>)>) = parallel(
+        &sets,
+        |acc: &mut (Hands, Vec<(String, Vec<ScratchHand>)>), set| {
+            let maps: Vec<(PathBuf, Beatmap)> = set.iter().filter_map(|p| parse(p).map(|b| (p.clone(), b))).collect();
+            let mut heard: HashMap<String, Option<Accents>> = HashMap::new();
+            let mut convert = |path: &Path, b: &Beatmap| -> Beatmap {
+                let accents = heard
+                    .entry(b.audio_file.clone())
+                    .or_insert_with(|| audio.then(|| Accents::read(&path.parent()?.join(&b.audio_file)).ok()).flatten());
+                let mut converted = b.clone();
+                let _ = key_converter::apply_with(&mut converted, &params, accents.as_ref().map(|a| a.at_rate(1.0)));
+                converted
+            };
+            let truths: Vec<&(PathBuf, Beatmap)> =
+                maps.iter().filter(|(_, b)| key_count(b) == 12 && !b.version.to_lowercase().contains("help")).collect();
+            for (path, beatmap) in &truths {
+                let converted = convert(path, &split_scratches(beatmap).0);
+                let spans = (busiest_spans(beatmap), busiest_spans(&converted));
+                acc.0.push((format!("{} [{}]", beatmap.title, beatmap.version), scratch_hands(beatmap), scratch_hands(&converted), spans));
+            }
+            for (path, source) in maps.iter().filter(|(_, b)| sources && !truths.is_empty() && key_count(b) != 12) {
+                let name = format!("{}K {} [{}]", key_count(source), source.title, source.version);
+                acc.1.push((name, scratch_hands(&convert(path, source))));
+            }
+        },
+        |total, part| {
+            total.0.extend(part.0);
+            total.1.extend(part.1);
+        },
+    );
+    hand_made.sort_by(|a, b| a.0.cmp(&b.0));
+    others.sort_by(|a, b| a.0.cmp(&b.0));
+    println!("\n=== hand-made 10K2S, map by map, and below each the convert of the map without its scratches");
+    for (name, truth, converted, _) in &hand_made {
+        print_scratch_hands(name, truth);
+        print_scratch_hands("    converted back", converted);
+    }
+    if std::env::var_os("VERBOSE").is_some() {
+        println!("\n=== the other maps of the songs, converted");
+        for (name, hands) in &others {
+            print_scratch_hands(name, hands);
+        }
+    }
+    println!("\n=== the most scratches in any 4 and 8 beats, per map: the calmer quarter of the maps and the middle one");
+    for (from, to) in [(0.0, 4.0), (4.0, 7.0), (7.0, 10.0), (10.0, f64::INFINITY)] {
+        let maps: Vec<&Spans> = hand_made.iter().filter(|h| h.1.first().is_some_and(|s| (from..to).contains(&s.nps))).map(|h| &h.3).collect();
+        let quartiles = |f: &dyn Fn(&Spans) -> usize| {
+            let mut values: Vec<f64> = maps.iter().map(|&s| f(s) as f64).collect();
+            format!("{}/{}", quantile(&mut values, 0.25), quantile(&mut values, 0.5))
+        };
+        println!(
+            "  {:>4}-{:<4} nps, {:>2} maps | hand-made 4 beats {} 8 beats {} | converted back 4 beats {} 8 beats {}",
+            from,
+            to,
+            maps.len(),
+            quartiles(&|s| s.0.0),
+            quartiles(&|s| s.0.1),
+            quartiles(&|s| s.1.0),
+            quartiles(&|s| s.1.1),
+        );
+    }
+    println!("\n=== by notes per second (the scratches aside)");
+    for (from, to) in [(0.0, 2.5), (2.5, 3.5), (3.5, 5.0), (5.0, 6.5), (6.5, 8.0), (8.0, 10.0), (10.0, 12.0), (12.0, f64::INFINITY)] {
+        let within = |all: &mut dyn Iterator<Item = &Vec<ScratchHand>>| -> Vec<ScratchHand> {
+            all.flat_map(|h| h.iter().copied()).filter(|h| (from..to).contains(&h.nps)).collect()
+        };
+        print_scratch_hands(&format!("hand-made {}-{}", from, to), &within(&mut hand_made.iter().map(|h| &h.1)));
+        print_scratch_hands(&format!("converted back {}-{}", from, to), &within(&mut hand_made.iter().map(|h| &h.2)));
+        if sources {
+            print_scratch_hands(&format!("other maps converted {}-{}", from, to), &within(&mut others.iter().map(|h| &h.1)));
+        }
+    }
+
+    // ms = a * nps^b, fitted on the logs over the hand-made maps.
+    let fit = |gap: &dyn Fn(&ScratchHand) -> f64| {
+        let points: Vec<(f64, f64)> = hand_made
+            .iter()
+            .filter(|(_, truth, _, _)| truth.len() >= 20)
+            .map(|(_, truth, _, _)| {
+                let mut gaps: Vec<f64> = truth.iter().filter(|h| !h.in_row && !h.held).map(gap).collect();
+                (truth[0].nps.ln(), quantile(&mut gaps, 0.05).max(20.0).ln())
+            })
+            .collect();
+        let n = points.len().max(1) as f64;
+        let (mx, my) = (points.iter().map(|p| p.0).sum::<f64>() / n, points.iter().map(|p| p.1).sum::<f64>() / n);
+        let b = points.iter().map(|p| (p.0 - mx) * (p.1 - my)).sum::<f64>() / points.iter().map(|p| (p.0 - mx).powi(2)).sum::<f64>();
+        ((my - b * mx).exp(), b, points.len())
+    };
+    let (a, b, maps) = fit(&|h| h.after);
+    println!("\n  over {} maps, the hand's next note after a scratch, its closest 5%: {:.0} ms x nps^{:.2}", maps, a, b);
+    let (a, b, _) = fit(&|h| h.before);
+    println!("  and its last one before: {:.0} ms x nps^{:.2}", a, b);
+}
+
+/// How likely a scratch is with how far its hand's notes are, against a free
+/// hand: over every place a scratch could go in the hand-made 10K2S maps
+/// without their scratches (the rows and the 1/2 beats with no note), per
+/// scratch, its hand's next note after it and last one before it, in the
+/// converter's room for the map (`scratch_free_ms`), and the share of them
+/// with a scratch of the mapper, by how far, against the share with both
+/// 1.25 times the room away or more: what `SCRATCH_FREE_AFTER` and
+/// `SCRATCH_FREE_BEFORE` hold.
+#[test]
+#[ignore = "reads a whole Songs folder; run by hand"]
+fn corpus_scratch_places() {
+    use crate::commands::trainer::{mania, timing::BeatGrid};
+    const EDGES: [f64; 10] = [0.35, 0.5, 0.7, 0.85, 1.0, 1.25, 1.5, 2.0, 3.0, f64::INFINITY];
+    let maps: Vec<Beatmap> = mania_sets(&songs_dir())
+        .into_iter()
+        .flatten()
+        .filter_map(|p| parse(&p))
+        .filter(|b| key_count(b) == 12 && !b.version.to_lowercase().contains("help"))
+        .collect();
+    // Per place and scratch: its hand's next note after and last one before
+    // (in the room), whether it plays in the row or holds across it, and
+    // whether the mapper put a scratch there.
+    let places: Vec<(f64, f64, bool, bool)> = parallel(
+        &maps,
+        |acc: &mut Vec<(f64, f64, bool, bool)>, beatmap| {
+            let (inner, truth) = split_scratches(beatmap);
+            let notes: Vec<(f64, f64, usize)> = inner
+                .hit_objects
+                .iter()
+                .filter_map(|o| mania::note(o).map(|(x, end)| (o.start_time, end, mania::column(x, 10))))
+                .collect();
+            let (Some(first), Some(last)) = (notes.first(), notes.last()) else { return };
+            let room = key_converter::scratch_free_ms(notes.len() as f64 / ((last.0 - first.0) / 1000.0).max(1.0));
+            let mut times: Vec<f64> = notes.iter().map(|n| n.0).collect();
+            times.extend(BeatGrid::new(&inner).ticks(first.0, last.0, 2.0).into_iter().map(f64::round));
+            times.sort_by(f64::total_cmp);
+            times.dedup_by(|a, b| (*a - *b).abs() <= 3.0);
+            for &time in &times {
+                for (side, keys) in [(0usize, 0..5usize), (11, 5..10)] {
+                    let (mut busy, mut before, mut after) = (false, f64::INFINITY, f64::INFINITY);
+                    for n in notes.iter().filter(|n| keys.contains(&n.2)) {
+                        if (n.0 - time).abs() <= 3.0 || (n.0 < time && n.1 > time + 3.0) {
+                            busy = true;
+                        } else if n.0 < time {
+                            before = before.min((time - n.1).max(0.0));
+                        } else {
+                            after = after.min(n.0 - time);
+                        }
+                    }
+                    let scratched = truth.iter().any(|&(t, c)| c == side && (t - time).abs() <= 3.0);
+                    acc.push((after / room, before / room, busy, scratched));
+                }
+            }
+        },
+        |total, part| total.extend(part),
+    );
+    let busy = places.iter().filter(|p| p.2).count();
+    let busy_scratched = places.iter().filter(|p| p.2 && p.3).count();
+    println!("\n  {} places, {} with the hand in the row or holding: {} of them with a scratch", places.len(), busy, busy_scratched);
+    let free: Vec<&(f64, f64, bool, bool)> = places.iter().filter(|p| !p.2).collect();
+    let rate = |of: &[&&(f64, f64, bool, bool)]| of.iter().filter(|p| p.3).count() as f64 / of.len().max(1) as f64;
+    let far: Vec<&&(f64, f64, bool, bool)> = free.iter().filter(|p| p.0 >= 1.25 && p.1 >= 1.25).collect();
+    let base = rate(&far);
+    for (name, gap, other) in [("after", 0usize, 1usize), ("before", 1, 0)] {
+        let get = |p: &(f64, f64, bool, bool), i: usize| if i == 0 { p.0 } else { p.1 };
+        let mut line = format!("  by its {} note (the other 1.5 rooms away or more):", name);
+        let mut from = 0.0;
+        for &to in &EDGES {
+            let bin: Vec<&&(f64, f64, bool, bool)> =
+                free.iter().filter(|p| get(p, other) >= 1.5 && (from..to).contains(&get(p, gap))).collect();
+            line.push_str(&format!(" | {:.2}-{:.2}: {:.2} ({})", from, to, rate(&bin) / base.max(1e-9), bin.len()));
+            from = to;
+        }
+        println!("{}", line);
+    }
+}
+
+/// The weights of a logistic regression of `ys` on `xs` (a 1 first for the
+/// bias), by Newton's method with a little L2 penalty.
+fn logistic(xs: &[Vec<f64>], ys: &[bool]) -> Vec<f64> {
+    let n = xs.first().map_or(0, |x| x.len());
+    let mut w = vec![0.0; n];
+    for _ in 0..12 {
+        let mut grad = vec![0.0; n];
+        let mut hessian = vec![vec![0.0; n + 1]; n];
+        for (x, &y) in xs.iter().zip(ys) {
+            let z: f64 = w.iter().zip(x).map(|(a, b)| a * b).sum();
+            let p = 1.0 / (1.0 + (-z.clamp(-30.0, 30.0)).exp());
+            for i in 0..n {
+                grad[i] += (p - y as u8 as f64) * x[i];
+                for j in 0..n {
+                    hessian[i][j] += p * (1.0 - p) * x[i] * x[j];
+                }
+            }
+        }
+        for i in 1..n {
+            hessian[i][i] += 1.0;
+            grad[i] += w[i];
+        }
+        // Solves hessian * step = grad.
+        for (row, g) in hessian.iter_mut().zip(&grad) {
+            row[n] = *g;
+        }
+        for i in 0..n {
+            let pivot = (i..n).max_by(|&a, &b| hessian[a][i].abs().total_cmp(&hessian[b][i].abs())).unwrap();
+            hessian.swap(i, pivot);
+            for r in 0..n {
+                if r != i && hessian[i][i].abs() > 1e-12 {
+                    let f = hessian[r][i] / hessian[i][i];
+                    let pivot_row = hessian[i].clone();
+                    for (v, p) in hessian[r].iter_mut().zip(&pivot_row) {
+                        *v -= f * p;
+                    }
+                }
+            }
+        }
+        for i in 0..n {
+            if hessian[i][i].abs() > 1e-12 {
+                w[i] -= hessian[i][n] / hessian[i][i];
+            }
+        }
+    }
+    w
+}
+
+/// The area under the ROC curve of `scores` for `ys`: how often a place with
+/// a scratch scores more than one without.
+fn auc(scores: &[f64], ys: &[bool]) -> f64 {
+    let mut order: Vec<usize> = (0..scores.len()).collect();
+    order.sort_by(|&a, &b| scores[a].total_cmp(&scores[b]));
+    let (mut rank_sum, mut i) = (0.0, 0);
+    while i < order.len() {
+        let j = (i..order.len()).take_while(|&j| scores[order[j]] == scores[order[i]]).count() + i;
+        let rank = (i + j + 1) as f64 / 2.0;
+        rank_sum += rank * order[i..j].iter().filter(|&&k| ys[k]).count() as f64;
+        i = j;
+    }
+    let positives = ys.iter().filter(|&&y| y).count() as f64;
+    (rank_sum - positives * (positives + 1.0) / 2.0) / (positives * (ys.len() as f64 - positives)).max(1.0)
+}
+
+/// What a scratch marks: over every place a scratch could go in the hand-made
+/// 10K2S maps without their scratches (the rows and the 1/2 beats with no
+/// note), where it falls in the bar, whether it is a row, and how strongly a
+/// sound starts there by band and how loud it is (as `accent_scores` scores
+/// them), against whether the mapper put a scratch there: the weights of a
+/// logistic regression (the `ACCENT_*` constants), how well they tell the
+/// places apart (the area under the ROC curve, left out song by song), how
+/// strong the sounds of the mappers' scratches are against their song's, and
+/// how the scratches of each phrase follow how loud it is.
+#[test]
+#[ignore = "reads a whole Songs folder; run by hand"]
+fn corpus_scratch_sounds() {
+    use crate::commands::trainer::{mania, timing::BeatGrid};
+    const NAMES: [&str; 11] = ["bias", "bar", "beat", "1/2", "off the 1/2s", "row", "low", "mid", "high", "loud", "section"];
+    // Per map, per place: the song, the features, whether it has a scratch,
+    // whether one is a beat or less away, and the sound alone.
+    type Place = (String, Vec<f64>, bool, bool, f64, i64);
+    let sets = mania_sets(&songs_dir());
+    let places: Vec<Vec<Place>> = parallel(
+        &sets,
+        |acc: &mut Vec<Vec<Place>>, set| {
+            let mut heard: HashMap<String, Option<Accents>> = HashMap::new();
+            for (path, beatmap) in set.iter().filter_map(|p| parse(p).map(|b| (p.clone(), b))) {
+                if key_count(&beatmap) != 12 || beatmap.version.to_lowercase().contains("help") {
+                    continue;
+                }
+                let Some(accents) = heard
+                    .entry(beatmap.audio_file.clone())
+                    .or_insert_with(|| Accents::read(&path.parent()?.join(&beatmap.audio_file)).ok())
+                    .as_ref()
+                else {
+                    continue;
+                };
+                let (inner, truth) = split_scratches(&beatmap);
+                let grid = BeatGrid::new(&inner);
+                let timing = &inner.control_points.timing_points;
+                let starts: Vec<f64> = inner.hit_objects.iter().filter(|o| mania::note(o).is_some()).map(|o| o.start_time).collect();
+                let (Some(&first), Some(&last)) = (starts.first(), starts.last()) else { continue };
+                let mut times: Vec<(f64, bool)> = starts.iter().map(|&t| (t, true)).collect();
+                times.extend(grid.ticks(first, last, 2.0).into_iter().map(|t| (t.round(), false)));
+                times.sort_by(|a, b| a.0.total_cmp(&b.0));
+                let mut merged: Vec<(f64, bool)> = Vec::new();
+                for (t, row) in times {
+                    match merged.last_mut() {
+                        Some(m) if t - m.0 <= 3.0 => m.1 |= row,
+                        _ => merged.push((t, row)),
+                    }
+                }
+                let at = accents.at_rate(1.0);
+                let bands: Vec<[f32; 3]> = merged.iter().map(|&(t, _)| at.band_onsets(t)).collect();
+                let loud: Vec<f64> = merged.iter().map(|&(t, _)| at.loudness(t, t + 120.0).map_or(f64::NAN, f64::from)).collect();
+                let sorted = |values: Vec<f64>| {
+                    let mut v: Vec<f64> = values.into_iter().filter(|v| v.is_finite()).collect();
+                    v.sort_by(f64::total_cmp);
+                    v
+                };
+                let in_song = |sorted: &[f64], v: f64| sorted.partition_point(|&x| x < v) as f64 / sorted.len().max(1) as f64;
+                let (low, mid) = (sorted(bands.iter().map(|b| b[0] as f64).collect()), sorted(bands.iter().map(|b| b[1] as f64).collect()));
+                let louds = sorted(loud.clone());
+                // The song's middle loudness and its spread, for the sections.
+                let song = louds.get(louds.len() / 2).copied().unwrap_or(0.0);
+                let spread = (louds.iter().map(|l| (l - song).powi(2)).sum::<f64>() / louds.len().max(1) as f64).sqrt();
+                let scratched: Vec<bool> = merged.iter().map(|&(t, _)| truth.iter().any(|s| (s.0 - t).abs() <= 3.0)).collect();
+                let mut map = Vec::new();
+                for (i, &(time, row)) in merged.iter().enumerate() {
+                    let (tp, beat_len) = grid.at(time);
+                    let meter = {
+                        let i = timing.partition_point(|tp| tp.time <= time + 1.0);
+                        i.checked_sub(1).map_or(4, |i| timing[i].time_signature.numerator.get() as i64).max(1)
+                    };
+                    let position = super::patterns::beat_position(time, tp, beat_len);
+                    let bar = position == 0 && (((time - tp) / beat_len).round() as i64).rem_euclid(meter) == 0;
+                    let near: Vec<usize> = (0..merged.len()).filter(|&j| (merged[j].0 - time).abs() <= 4.0 * beat_len).collect();
+                    let high = near.iter().filter(|&&j| bands[j][2] < bands[i][2]).count() as f64 / near.len() as f64;
+                    let louder = if loud[i].is_finite() { in_song(&louds, loud[i]) } else { 0.5 };
+                    let part: Vec<f64> = (0..merged.len())
+                        .filter(|&j| (merged[j].0 - time).abs() <= 8.0 * beat_len)
+                        .map(|j| if loud[j].is_finite() { loud[j] } else { song })
+                        .collect();
+                    let section = (part.iter().sum::<f64>() / part.len().max(1) as f64 - song) / (spread + 1e-6);
+                    let features = vec![
+                        1.0,
+                        bar as u8 as f64,
+                        (position == 0 && !bar) as u8 as f64,
+                        (position == 1) as u8 as f64,
+                        (position >= 2) as u8 as f64,
+                        row as u8 as f64,
+                        in_song(&low, bands[i][0] as f64),
+                        in_song(&mid, bands[i][1] as f64),
+                        high,
+                        louder,
+                        section,
+                    ];
+                    let next_to = scratched[i]
+                        && (0..merged.len()).any(|j| j != i && scratched[j] && (merged[j].0 - time).abs() <= beat_len + 3.0);
+                    let sound = features[6..].iter().zip([0.98, 1.42, 0.90, 1.48, 0.23]).map(|(f, w)| f * w).sum();
+                    let phrase = (((time - tp) / beat_len).round() as i64).div_euclid(meter * 4);
+                    map.push((beatmap.title.clone(), features, scratched[i], next_to, sound, phrase));
+                }
+                acc.push(map);
+            }
+        },
+        |total, part| total.extend(part),
+    );
+    let all: Vec<&Place> = places.iter().flatten().collect();
+    let xs: Vec<Vec<f64>> = all.iter().map(|p| p.1.clone()).collect();
+    let ys: Vec<bool> = all.iter().map(|p| p.2).collect();
+    println!("\n  {} maps, {} places, {} with a scratch", places.len(), all.len(), ys.iter().filter(|&&y| y).count());
+    let weights = logistic(&xs, &ys);
+    println!("  weights: {}", NAMES.iter().zip(&weights).map(|(n, w)| format!("{} {:+.2}", n, w)).collect::<Vec<_>>().join(", "));
+    // Left out song by song.
+    let songs: Vec<&String> = all.iter().map(|p| &p.0).collect::<std::collections::BTreeSet<_>>().into_iter().collect();
+    let mut scores = vec![0.0; all.len()];
+    for song in songs {
+        let (train, test): (Vec<usize>, Vec<usize>) = (0..all.len()).partition(|&i| &all[i].0 != song);
+        let w = logistic(&train.iter().map(|&i| xs[i].clone()).collect::<Vec<_>>(), &train.iter().map(|&i| ys[i]).collect::<Vec<_>>());
+        for i in test {
+            scores[i] = w.iter().zip(&xs[i]).map(|(a, b)| a * b).sum();
+        }
+    }
+    println!("  area under the ROC curve, each song left out of the fit: {:.3}", auc(&scores, &ys));
+    // The mappers' scratches against their songs' sounds.
+    let mut alone = Vec::new();
+    let mut in_a_row = Vec::new();
+    for map in &places {
+        let mut sounds: Vec<f64> = map.iter().map(|p| p.4).collect();
+        sounds.sort_by(f64::total_cmp);
+        for p in map.iter().filter(|p| p.2) {
+            let share = sounds.partition_point(|&s| s < p.4) as f64 / sounds.len() as f64;
+            if p.3 { in_a_row.push(share) } else { alone.push(share) }
+        }
+    }
+    // Per map, how the scratches of each phrase (4 bars) follow how loud the
+    // phrase is, how strong its sound and how many rows it has, as a rank
+    // correlation.
+    let spearman = |a: &[f64], b: &[f64]| -> Option<f64> {
+        let rank = |v: &[f64]| {
+            let mut order: Vec<usize> = (0..v.len()).collect();
+            order.sort_by(|&x, &y| v[x].total_cmp(&v[y]));
+            let mut r = vec![0.0; v.len()];
+            for (k, &i) in order.iter().enumerate() {
+                r[i] = k as f64;
+            }
+            r
+        };
+        let (ra, rb) = (rank(a), rank(b));
+        let n = a.len() as f64;
+        let (ma, mb) = (ra.iter().sum::<f64>() / n, rb.iter().sum::<f64>() / n);
+        let num: f64 = ra.iter().zip(&rb).map(|(x, y)| (x - ma) * (y - mb)).sum();
+        let den = (ra.iter().map(|x| (x - ma).powi(2)).sum::<f64>() * rb.iter().map(|y| (y - mb).powi(2)).sum::<f64>()).sqrt();
+        (a.len() >= 4 && den > 0.0).then(|| num / den)
+    };
+    let mut by_loud = Vec::new();
+    let mut by_sound = Vec::new();
+    let mut by_notes = Vec::new();
+    for map in &places {
+        let mut phrases: BTreeMap<i64, (f64, f64, f64, f64)> = BTreeMap::new();
+        for p in map {
+            let e = phrases.entry(p.5).or_default();
+            e.0 += p.2 as u8 as f64;
+            if p.1[5] > 0.0 {
+                e.1 += p.1[9];
+                e.2 += p.4;
+                e.3 += 1.0;
+            }
+        }
+        let rows: Vec<&(f64, f64, f64, f64)> = phrases.values().filter(|v| v.3 > 0.0).collect();
+        let scratches: Vec<f64> = rows.iter().map(|v| v.0).collect();
+        if let Some(c) = spearman(&rows.iter().map(|v| v.1 / v.3).collect::<Vec<_>>(), &scratches) {
+            by_loud.push(c);
+        }
+        if let Some(c) = spearman(&rows.iter().map(|v| v.2 / v.3).collect::<Vec<_>>(), &scratches) {
+            by_sound.push(c);
+        }
+        if let Some(c) = spearman(&rows.iter().map(|v| v.3).collect::<Vec<_>>(), &scratches) {
+            by_notes.push(c);
+        }
+    }
+    for (name, values) in [("loudness", &mut by_loud), ("sound", &mut by_sound), ("rows", &mut by_notes)] {
+        println!(
+            "  the scratches of a phrase against its {}: rank correlation {:+.2} (quartiles {:+.2} to {:+.2}) over {} maps",
+            name,
+            quantile(values, 0.5),
+            quantile(values, 0.25),
+            quantile(values, 0.75),
+            values.len()
+        );
+    }
+    for (name, values) in [("alone", &mut alone), ("a beat or less from another", &mut in_a_row)] {
+        let below = values.iter().filter(|&&v| v < 0.5).count() as f64 / values.len().max(1) as f64;
+        println!(
+            "  scratches {}: {}, their sound stronger than {} of their song's (the middle one), weaker than half of them {}",
+            name,
+            values.len(),
+            pct(quantile(values, 0.5)),
+            pct(below)
+        );
     }
 }

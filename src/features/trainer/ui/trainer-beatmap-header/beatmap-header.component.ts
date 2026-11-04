@@ -1,3 +1,4 @@
+import { TranslocoPipe } from '@jsverse/transloco';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { OsuReaderStore } from '@entities/osu-reader';
 import { StarBadgeComponent } from '@shared/ui';
@@ -7,7 +8,7 @@ import { TuiButtonLoading } from '@taiga-ui/kit';
 
 @Component({
   selector: 'app-trainer-beatmap-header',
-  imports: [StarBadgeComponent, TuiButton, TuiButtonLoading, TuiIcon, TuiTitle],
+  imports: [StarBadgeComponent, TuiButton, TuiButtonLoading, TuiIcon, TuiTitle, TranslocoPipe],
   templateUrl: './beatmap-header.component.html',
   styleUrl: './beatmap-header.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,
