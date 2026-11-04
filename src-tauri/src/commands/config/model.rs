@@ -95,6 +95,24 @@ pub struct TrainerConfig {
     /// Template of the difficulty name: see `naming::version`.
     #[serde(default = "default_name_format")]
     pub name_format: String,
+
+    /// Runs the presets with a shortcut while osu! has the focus. Off by
+    /// default, and no shortcut is set: one of the game's would be taken.
+    #[serde(default = "default_false")]
+    pub shortcuts_enabled: bool,
+
+    /// The shortcut of each preset that has one.
+    #[serde(default)]
+    pub shortcuts: Vec<TrainerShortcut>,
+}
+
+/// A preset run on the map selected in osu! with a keyboard shortcut.
+#[derive(Deserialize, Serialize, Clone)]
+pub struct TrainerShortcut {
+    /// The preset's name.
+    pub preset: String,
+    /// The keys, as the global-shortcut plugin reads them (`Ctrl+Shift+KeyK`).
+    pub keys: String,
 }
 
 fn default_true() -> bool { true }
@@ -154,6 +172,8 @@ impl Default for TrainerConfig {
             auto_pitch: default_false(),
             open_osz: default_true(),
             name_format: default_name_format(),
+            shortcuts_enabled: default_false(),
+            shortcuts: Vec::new(),
         }
     }
 }

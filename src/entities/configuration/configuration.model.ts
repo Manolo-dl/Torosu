@@ -20,6 +20,18 @@ export interface TrainerConfig {
     open_osz: boolean;
     /** Template of the difficulty name, with placeholders like `{diff}` and `{rate}` (see `naming.rs`). */
     name_format: string;
+    /** Run the presets with keyboard shortcuts while osu! has the focus; off by default. */
+    shortcuts_enabled: boolean;
+    /** The shortcut of each preset that has one; none by default, so none of the game's is taken. */
+    shortcuts: TrainerShortcut[];
+}
+
+/** A preset run on the map selected in osu! with a keyboard shortcut. */
+export interface TrainerShortcut {
+    /** The preset's name. */
+    preset: string;
+    /** The keys, as the global-shortcut plugin reads them (`Ctrl+Shift+KeyK`). */
+    keys: string;
 }
 
 export interface PacksConfig {

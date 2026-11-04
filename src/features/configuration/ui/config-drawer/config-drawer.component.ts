@@ -11,6 +11,7 @@ import { OsuDbStore } from '@entities/osu-db';
 import { CollectionStore } from '@entities/collection';
 import { OsuPathStore } from '@entities/osu-path';
 import { NotifyService } from '@shared/services';
+import { PlatformStore } from '@shared/stores';
 import { NameFormatField, NameFormatFieldComponent, NameFormatPreset } from '../name-format-field/name-format-field.component';
 
 /** The names the trainer always gave (`DEFAULT_NAME_FORMAT` in trainer/naming.rs). */
@@ -40,6 +41,8 @@ const DEFAULT_CONFIG: AppConfig = {
     auto_pitch: false,
     open_osz: true,
     name_format: DEFAULT_NAME_FORMAT,
+    shortcuts_enabled: false,
+    shortcuts: [],
   },
   open_file: false,
   dev_mode: false,
@@ -58,6 +61,8 @@ export class ConfigDrawerComponent {
   private readonly osuDb = inject(OsuDbStore);
   private readonly collections = inject(CollectionStore);
   private readonly notify = inject(NotifyService);
+  /** Global shortcuts don't work on Wayland. */
+  readonly platform = inject(PlatformStore);
 
   /** Opened by the settings button (`ConfigButtonComponent`), which loads the settings first. */
   readonly open = model.required<boolean>();

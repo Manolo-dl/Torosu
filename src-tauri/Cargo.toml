@@ -96,3 +96,6 @@ opt-level = 3
 
 [profile.dev.package.soundtouch-ffi]
 opt-level = 3
+
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-global-shortcut = "2"

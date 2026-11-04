@@ -8,6 +8,7 @@ import { OsuPathStore } from "@entities/osu-path";
 import { PlatformStore } from "@shared/stores";
 import { ConfigurationStore } from "@entities/configuration";
 import { WindowControlsComponent } from "@widgets/window-controls/window-controls.component";
+import { TrainerShortcutsService } from "@features/trainer";
 
 @Component({
   selector: "app-root",
@@ -22,6 +23,9 @@ export class AppComponent implements OnInit {
   private readonly config = inject(ConfigurationStore);
   readonly osuPath = inject(OsuPathStore);
   private readonly document = inject(DOCUMENT);
+  // Registers the trainer's keyboard shortcuts as the settings say, from the
+  // start: they work while osu! has the focus, whatever page is open.
+  private readonly trainerShortcuts = inject(TrainerShortcutsService);
 
   constructor() {
     // Taiga surfaces animate their background, so without this they fade

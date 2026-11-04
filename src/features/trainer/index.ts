@@ -4,5 +4,6 @@ export { TrainerTaskPipelineComponent } from './ui/trainer-task-pipeline/trainer
 export { TrainerActionsComponent } from './ui/trainer-actions/trainer-actions.component';
 export { TrainerPresetsComponent } from './ui/trainer-presets/trainer-presets.component';
 export { TrainerStore } from './stores/trainer.store';
+export { TrainerShortcutsService } from './services/trainer-shortcuts.service';
 export type { FlnConverterParams, KeyConverterParams, KeyDensity, NoteLength, RateChangeParams, TrainerConvert, TrainerTask, TrainerTaskParams, DifficultyStat, DifficultyKey } from './models/trainer.model';
 export { TASK_LABELS, TASK_MODES, taskSupportsMode } from './models/trainer.model';

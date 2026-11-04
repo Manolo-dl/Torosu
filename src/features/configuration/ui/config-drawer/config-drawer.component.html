@@ -304,6 +304,26 @@
                 </section>
 
                 <section>
+                    <h3 tuiTitle="s">Keyboard shortcuts</h3>
+                    <label tuiCell>
+                        <span tuiTitle>
+                            Run presets with shortcuts
+                            @if (platform.wayland()) {
+                                <span tuiSubtitle>Not available on Wayland: an app can't listen to the keys while osu! has the focus</span>
+                            } @else {
+                                <span tuiSubtitle>Convert the map selected in osu! with a preset while you play. Set each preset's keys in the Trainer, none are set at first</span>
+                            }
+                        </span>
+                        <input
+                            tuiSwitch
+                            type="checkbox"
+                            [disabled]="platform.wayland() === true"
+                            [(ngModel)]="draft().trainer.shortcuts_enabled"
+                        />
+                    </label>
+                </section>
+
+                <section>
                     <h3 tuiTitle="s">Difficulty name</h3>
                     <app-name-format-field
                         exampleCommand="trainer_name_example"

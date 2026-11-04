@@ -44,6 +44,28 @@
     }
   </div>
 
+  <div class="shortcuts">
+    @if (platform.wayland()) {
+      <p class="hint">Keyboard shortcuts are not available on Wayland: an app can't listen to the keys while osu! has the focus.</p>
+    } @else if (!shortcutsOn()) {
+      <p class="hint">Turn on keyboard shortcuts in the settings (Trainer) to run a preset on the map selected in osu! while you play.</p>
+    } @else {
+      <p class="hint">Shortcuts: click a field and press the keys. Backspace removes one. They run on the map selected in osu!, with its own HP, OD and AR.</p>
+      @for (preset of allPresets(); track preset.name) {
+        <tui-textfield tuiTextfieldSize="s" [tuiTextfieldCleaner]="false">
+          <label tuiLabel>{{ preset.name }}</label>
+          <input
+            placeholder="Not set"
+            [readOnly]="true"
+            tuiInput
+            [value]="presets.shortcutOf(preset.name) ? label(presets.shortcutOf(preset.name)) : ''"
+            (keydown)="capture($event, preset.name)"
+          />
+        </tui-textfield>
+      }
+    }
+  </div>
+
   @if (naming()) {
     <div class="save">
       <tui-textfield tuiTextfieldSize="s">

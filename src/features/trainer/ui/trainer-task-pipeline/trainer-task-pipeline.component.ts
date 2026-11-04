@@ -10,6 +10,7 @@ import {
   TrainerConvert,
   rateChangeTask,
   TrainerTaskType,
+  TASK_MODES,
   taskSupportsMode,
 } from '../../models/trainer.model';
 import { TrainerStore } from '../../stores/trainer.store';
@@ -57,6 +58,19 @@ export class TrainerTaskPipelineComponent {
     const mode = this.reader.originalMode();
     return this.availableTasks.filter(type => !existingTypes.has(type) && taskSupportsMode(type, mode));
   });
+
+  /** Whether a task of `type` doesn't work on the map's mode: it stays, but is not applied. */
+  isSkipped(type: TrainerTaskType): boolean {
+    return !taskSupportsMode(type, this.reader.originalMode());
+  }
+
+  /** Why, e.g. `Only for osu!mania maps: skipped on this one`. */
+  skippedReason(type: TrainerTaskType): string {
+    const modes = TASK_MODES[type];
+    const names: Record<string, string> = { osu: 'osu!standard', taiko: 'osu!taiko', fruits: 'osu!catch', mania: 'osu!mania' };
+    if (modes === 'all') return 'Skipped on this map';
+    return `Only for ${modes.map(m => names[m]).join(' and ')} maps: skipped on this one`;
+  }
 
   originalBpm = computed(() => {
     const bpm = this.reader.data()?.attributes?.bpm.common;

@@ -11,7 +11,8 @@ import {
     TrainerConvert,
     TrainerTask,
     TrainerTaskParams,
-    taskSupportsMode,
+    applicableConverts,
+    skippedTasks,
 } from "../models/trainer.model";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
@@ -90,18 +91,15 @@ export const TrainerStore = signalStore(
 
             /**
              * Replaces the converts with `converts`, e.g. a preset's. Returns how
-             * many tasks were left out for not working on the map's mode.
+             * many of their tasks don't work on the map's mode: they stay, marked,
+             * and are skipped when the maps are created.
              */
             setConverts(converts: TrainerTaskParams[][]): number {
-                const mode = reader.originalMode();
-                let dropped = 0;
-                const next = converts.map(tasks => {
-                    const supported = tasks.filter(task => taskSupportsMode(task.type, mode));
-                    dropped += tasks.length - supported.length;
-                    return newConvert(supported.map(task => ({ id: crypto.randomUUID(), task: structuredClone(task) })));
-                });
+                const next = converts.map(tasks =>
+                    newConvert(tasks.map(task => ({ id: crypto.randomUUID(), task: structuredClone(task) })))
+                );
                 patchState(store, { converts: next.length > 0 ? next : [newConvert()] });
-                return dropped;
+                return skippedTasks(converts, reader.originalMode());
             },
 
             addTask(convertId: string, task: TrainerTaskParams) {
@@ -143,6 +141,13 @@ export const TrainerStore = signalStore(
                 const osuFilePath = reader.data()?.paths?.osu;
                 if (!osuFilePath) return;
 
+                // The tasks for another mode are left out (see the marks on them).
+                const converts = applicableConverts(store.converts().map(c => c.tasks.map(t => t.task)), reader.originalMode());
+                if (converts.length === 0) {
+                    notify.error("None of the converts' tasks work on this map's mode.");
+                    return;
+                }
+
                 patchState(store, { creating: true, progress: 0 });
 
                 const unlisten = await listen<{ percent: number }>('trainer-progress', event => {
@@ -159,7 +164,7 @@ export const TrainerStore = signalStore(
                                 od: store.od().value,
                                 ar: store.ar().value,
                             },
-                            converts: store.converts().map(c => ({ tasks: c.tasks })),
+                            converts: converts.map(tasks => ({ tasks: tasks.map(task => ({ task })) })),
                         },
                     });
                     notify.success(names.length === 1 ? `Created ${names[0]}` : `Created ${names.length} difficulties`);
@@ -193,7 +198,6 @@ export const TrainerStore = signalStore(
                 lastBeatmapId = currentBeatmapId;
 
                 const beatmap = data.beatmap;
-                const mode = data.attributes?.originalMode ?? null;
 
                 untracked(() => {
                     (['hp', 'cs', 'ar', 'od'] as const).forEach((stat) => {
@@ -209,14 +213,7 @@ export const TrainerStore = signalStore(
                     });
 
                     // Tasks for another mode (e.g. the key converter after picking an
-                    // osu!standard map) can't run on this map.
-                    const converts = store.converts().map(c => ({
-                        ...c,
-                        tasks: c.tasks.filter(t => taskSupportsMode(t.task.type, mode)),
-                    }));
-                    if (converts.some((c, i) => c.tasks.length !== store.converts()[i].tasks.length)) {
-                        patchState(store, { converts });
-                    }
+                    // osu!standard map) stay: the list marks them, and they are skipped.
                 });
             });
         },

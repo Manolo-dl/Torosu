@@ -50,11 +50,19 @@
 
   <div class="list" cdkDropList (cdkDropListDropped)="onDrop($event)">
     @for (entry of convert().tasks; track entry.id) {
-      <div class="task" cdkDrag>
+      <div class="task" cdkDrag [class.skipped]="isSkipped(entry.task.type)">
         <tui-icon icon="@tui.grip-vertical" class="handle" cdkDragHandle />
 
         <div class="content">
-          <span class="label">{{ taskLabels[entry.task.type] }}</span>
+          <span class="label">
+            {{ taskLabels[entry.task.type] }}
+            @if (isSkipped(entry.task.type)) {
+              <span class="skipped-note">
+                <tui-icon icon="@tui.ban" />
+                {{ skippedReason(entry.task.type) }}
+              </span>
+            }
+          </span>
 
           @if (entry.task.type === 'RateChange') {
             <div class="params">

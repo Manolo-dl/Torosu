@@ -128,6 +128,23 @@ export function taskSupportsMode(type: TrainerTaskType, mode: Ruleset | null): b
     return modes === 'all' || (mode !== null && modes.includes(mode));
 }
 
+/**
+ * The converts as they run on a map made for `mode`: without the tasks for
+ * another mode, which stay in the list but are not applied, and without the
+ * converts left with none of their tasks (they would only copy the map).
+ */
+export function applicableConverts(converts: TrainerTaskParams[][], mode: Ruleset | null): TrainerTaskParams[][] {
+    return converts
+        .map(tasks => ({ tasks, kept: tasks.filter(task => taskSupportsMode(task.type, mode)) }))
+        .filter(({ tasks, kept }) => tasks.length === 0 || kept.length > 0)
+        .map(({ kept }) => kept);
+}
+
+/** How many tasks of `converts` don't apply to a map made for `mode`. */
+export function skippedTasks(converts: TrainerTaskParams[][], mode: Ruleset | null): number {
+    return converts.flat().filter(task => !taskSupportsMode(task.type, mode)).length;
+}
+
 export interface DifficultyStat {
     value: number;
     locked: boolean;
