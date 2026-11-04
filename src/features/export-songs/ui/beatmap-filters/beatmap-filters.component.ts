@@ -1,3 +1,4 @@
+import { TranslocoPipe } from '@jsverse/transloco';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { BeatmapExporterStore, ModeFilters, emptyModeFilters } from '../../stores/beatmap-exporter.store';
@@ -12,6 +13,7 @@ export interface ModeConfig {
   icon: string;
   color: string;
   hasAr: boolean;
+  /** A translation key. */
   csLabel: string | null;
 }
 
@@ -24,6 +26,7 @@ function mode(value: number): Pick<ModeConfig, 'label' | 'value' | 'icon' | 'col
 type RangeKey = { [K in keyof ModeFilters]: ModeFilters[K] extends number | null ? K : never }[keyof ModeFilters];
 
 interface RangeField {
+  /** A translation key. */
   label: string;
   min: RangeKey;
   max: RangeKey;
@@ -37,7 +40,7 @@ interface RangeField {
 
 @Component({
   selector: 'app-beatmap-filters',
-  imports: [FormsModule, TuiButton, TuiCardLarge, TuiChip, TuiExpand, TuiIcon, TuiInput, TuiSegmented, TuiSwitch, TuiTitle],
+  imports: [FormsModule, TuiButton, TuiCardLarge, TuiChip, TuiExpand, TuiIcon, TuiInput, TuiSegmented, TuiSwitch, TuiTitle, TranslocoPipe],
   templateUrl: './beatmap-filters.component.html',
   styleUrl: './beatmap-filters.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -46,12 +49,13 @@ export class BeatmapFiltersComponent {
   readonly store = inject(BeatmapExporterStore);
 
   readonly modeConfigs: ModeConfig[] = [
-    { ...mode(0), hasAr: true,  csLabel: 'CS'   },
-    { ...mode(1), hasAr: false, csLabel: null   },
-    { ...mode(2), hasAr: true,  csLabel: 'CS'   },
-    { ...mode(3), hasAr: false, csLabel: 'Keys' },
+    { ...mode(0), hasAr: true,  csLabel: 'exportSongs.cs'   },
+    { ...mode(1), hasAr: false, csLabel: null               },
+    { ...mode(2), hasAr: true,  csLabel: 'exportSongs.cs'   },
+    { ...mode(3), hasAr: false, csLabel: 'exportSongs.keys' },
   ];
 
+  /** osu!'s own words: not translated. */
   readonly statuses = ['Ranked', 'Loved', 'Approved', 'Qualified', 'Unranked'];
   readonly keyCounts = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 18];
   readonly playedOptions: (boolean | null)[] = [null, true, false];
@@ -92,11 +96,11 @@ export class BeatmapFiltersComponent {
 
   private buildRangeFields(mode: ModeConfig): RangeField[] {
     return [
-      { label: 'Length (s)', min: 'minLength', max: 'maxLength', step: 1, scale: 1000 },
-      { label: 'Stars', min: 'minStars', max: 'maxStars', limit: 15 },
-      ...(mode.hasAr ? [{ label: 'AR', min: 'minAr', max: 'maxAr', limit: 10 } as RangeField] : []),
-      { label: 'OD', min: 'minOd', max: 'maxOd', limit: 10 },
-      { label: 'HP', min: 'minHp', max: 'maxHp', limit: 10 },
+      { label: 'exportSongs.length', min: 'minLength', max: 'maxLength', step: 1, scale: 1000 },
+      { label: 'exportSongs.stars', min: 'minStars', max: 'maxStars', limit: 15 },
+      ...(mode.hasAr ? [{ label: 'exportSongs.ar', min: 'minAr', max: 'maxAr', limit: 10 } as RangeField] : []),
+      { label: 'exportSongs.od', min: 'minOd', max: 'maxOd', limit: 10 },
+      { label: 'exportSongs.hp', min: 'minHp', max: 'maxHp', limit: 10 },
       ...(mode.csLabel && mode.value !== 3 ? [{ label: mode.csLabel, min: 'minCs', max: 'maxCs', limit: 10 } as RangeField] : []),
     ];
   }

@@ -464,5 +464,29 @@
     "title": "{{ count }} beatmap sets not checked by osu! yet",
     "titleOne": "1 beatmap set not checked by osu! yet",
     "hint": "osu! finds out whether a map is on the website when it checks it online, in song select. These have an id, so they are exported as uploaded, but some may not be."
+  },
+  "exportSongs": {
+    "filters": "Filters",
+    "reset": "Reset",
+    "enable": "Enable {{ mode }}",
+    "disable": "Disable {{ mode }}",
+    "status": "Status",
+    "all": "All",
+    "min": "Min",
+    "max": "Max",
+    "length": "Length (s)",
+    "stars": "Stars",
+    "ar": "AR",
+    "od": "OD",
+    "hp": "HP",
+    "cs": "CS",
+    "keys": "Keys",
+    "played": "Played",
+    "playedYes": "Played",
+    "playedNo": "Not played",
+    "filtered": "Filtered beatmap sets",
+    "export": "Export",
+    "preview": "Preview",
+    "empty": "No beatmaps match the current filters"
   }
 }

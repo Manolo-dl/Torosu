@@ -464,5 +464,29 @@
     "title": "{{ count }} sets de mapas que osu! aún no ha comprobado",
     "titleOne": "1 set de mapas que osu! aún no ha comprobado",
     "hint": "osu! sabe si un mapa está en la web cuando lo comprueba online, en la selección de canciones. Estos tienen un id, así que se exportan como subidos, pero puede que alguno no lo esté."
+  },
+  "exportSongs": {
+    "filters": "Filtros",
+    "reset": "Restablecer",
+    "enable": "Activar {{ mode }}",
+    "disable": "Desactivar {{ mode }}",
+    "status": "Estado",
+    "all": "Todos",
+    "min": "Mín",
+    "max": "Máx",
+    "length": "Duración (s)",
+    "stars": "Estrellas",
+    "ar": "AR",
+    "od": "OD",
+    "hp": "HP",
+    "cs": "CS",
+    "keys": "Teclas",
+    "played": "Jugados",
+    "playedYes": "Jugados",
+    "playedNo": "Sin jugar",
+    "filtered": "Sets de mapas filtrados",
+    "export": "Exportar",
+    "preview": "Vista previa",
+    "empty": "Ningún mapa cumple los filtros actuales"
   }
 }
