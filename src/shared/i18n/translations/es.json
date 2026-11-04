@@ -165,5 +165,140 @@
     "exportFailed": "No se ha podido exportar el mapa: {{ error }}",
     "looking": "Buscando osu!...",
     "startFailed": "No se ha podido iniciar el lector de osu!."
+  },
+  "trainer": {
+    "subtitle": "Ajusta los stats de dificultad y encadena modificadores antes de generar un mapa nuevo.",
+    "addConvert": "Añadir convert",
+    "mappedBy": "mapeado por {{ mapper }}",
+    "exportOsz": "Exportar como .osz",
+    "difficulty": {
+      "title": "Dificultad",
+      "lock": "Bloquear",
+      "unlock": "Desbloquear",
+      "lockStat": "Bloquear {{ stat }}",
+      "unlockStat": "Desbloquear {{ stat }}"
+    },
+    "actions": {
+      "reset": "Restablecer",
+      "createMap": "Crear mapa",
+      "createMaps": "Crear {{ count }} mapas"
+    },
+    "presets": {
+      "title": "Presets",
+      "subtitle": "Sustituye los converts por una lista guardada",
+      "delete": "Borrar preset",
+      "deleteTitle": "Borrar este preset",
+      "oneConvert": "1 convert",
+      "converts": "{{ count }} converts",
+      "name": "Nombre del preset",
+      "save": "Guardar",
+      "cancel": "Cancelar",
+      "saveCurrent": "Guardar los actuales como preset",
+      "skipped": "{{ count }} tarea(s) de \"{{ name }}\" no funcionan en el modo de este mapa: se saltarán.",
+      "updated": "Preset \"{{ name }}\" actualizado",
+      "saved": "Preset \"{{ name }}\" guardado",
+      "saveFailed": "No se ha podido guardar el preset: {{ error }}",
+      "deleteFailed": "No se ha podido borrar el preset: {{ error }}"
+    },
+    "shortcuts": {
+      "wayland": "Los atajos de teclado no están disponibles en Wayland: una app no puede escuchar las teclas mientras osu! tiene el foco.",
+      "off": "Activa los atajos de teclado en la configuración (Trainer) para lanzar un preset sobre el mapa seleccionado en osu! mientras juegas.",
+      "how": "Haz clic en el campo de un preset y pulsa sus teclas: Ctrl, Alt, Shift o Super con otra tecla, o una tecla de función (F1 a F24), para que osu! conserve las suyas. Retroceso lo quita, Escape sale del campo. Se aplica al mapa seleccionado en osu!, con su propio HP, OD y AR.",
+      "pressKeys": "Pulsa las teclas…",
+      "notSet": "Sin asignar",
+      "active": "Funciona: púlsalo mientras osu! tiene el foco",
+      "failedTitle": "El sistema no lo ha concedido: puede que otra app lo tenga",
+      "taking": "Leyendo teclas: los atajos están desactivados hasta que salgas del campo.",
+      "failed": "El sistema no ha concedido este atajo: puede que otra app lo tenga. Prueba otras teclas.",
+      "gameKey": "{{ keys }} sola es una tecla del juego: añade Ctrl, Alt, Shift o Super.",
+      "taken": "{{ keys }} ya lanza \"{{ preset }}\".",
+      "gone": "El preset \"{{ name }}\" ya no existe.",
+      "running": "El último convert todavía está en marcha.",
+      "cantRead": "No se puede leer el mapa seleccionado en osu!.",
+      "noTasks": "Ninguna tarea de \"{{ name }}\" funciona en el modo de este mapa.",
+      "converting": "Convirtiendo {{ title }} [{{ difficulty }}] con \"{{ name }}\"…",
+      "convertFailed": "El convert ha fallado: {{ error }}",
+      "notificationTitle": "Trainer de Torosu"
+    },
+    "noTasksForMode": "Ninguna tarea de los converts funciona en el modo de este mapa.",
+    "created": "Creado {{ name }}",
+    "createdMany": "Creadas {{ count }} dificultades",
+    "convert": "Convert {{ number }}",
+    "addTask": "Añadir tarea",
+    "duplicate": "Duplicar convert",
+    "duplicateTitle": "Duplicar este convert",
+    "remove": "Quitar convert",
+    "removeTitle": "Quitar este convert",
+    "removeTask": "Quitar tarea",
+    "noTasks": "Sin tareas: solo cambian los ajustes de dificultad.",
+    "skippedHere": "Se salta en este mapa",
+    "onlyFor": "Solo para mapas de {{ modes }}: se salta en este",
+    "and": " y ",
+    "tasks": {
+      "RateChange": "Cambio de rate",
+      "SVNormalizer": "Normalizador de SV",
+      "FlnConverter": "Conversor a FLN",
+      "KeyConverter": "Conversor de teclas"
+    },
+    "rate": {
+      "rate": "Rate",
+      "adjustPitch": "Ajustar el tono",
+      "scaleStoryboard": "Escalar el storyboard",
+      "scaleVideo": "Escalar el vídeo",
+      "noFfmpeg": "Escalar el vídeo necesita <strong>ffmpeg</strong>, que no se ha encontrado. Instálalo, asegúrate de que está en el PATH y reinicia la app.",
+      "videoSlow": "El vídeo se recodifica a la nueva velocidad, lo que puede tardar con vídeos largos.",
+      "storyboard": "Si el set tiene un storyboard <strong>.osb</strong> compartido, lo usan todas las dificultades, así que esta dificultad se exportará a un <strong>set nuevo</strong> (con el título acabado en <strong>({{ rate }}x SB)</strong>) para no pisar el original."
+    },
+    "sv": {
+      "description": "Se quitan los cambios de SV originales y se pone un SV en cada cambio de BPM, para que la velocidad de scroll sea la del BPM principal. Se mantienen los cambios de BPM, el kiai y los hitsounds."
+    },
+    "fln": {
+      "description": "Convierte cada nota en una nota larga que se mantiene hasta justo antes de la siguiente nota de su columna.",
+      "gap": "Hueco al soltar",
+      "gapHint": "Cuánto antes termina cada nota larga respecto a la siguiente nota de la columna.",
+      "minLength": "Longitud mínima",
+      "minLengthHint": "Las notas largas que quedarían más cortas que esto se quedan como notas normales.",
+      "rework": "Rehacer también las notas largas que ya tiene el mapa"
+    },
+    "noteLength": {
+      "approx": "(1/{{ divisor }} de beat ≈ {{ ms }} ms a {{ bpm }} BPM)"
+    },
+    "keys": {
+      "description": "Pasa las notas a otro número de teclas. Los streams ruedan por las teclas nuevas, mientras que los trills, jacks y acordes de verdad mantienen su forma.",
+      "keys": "Teclas",
+      "perRow": "Notas por fila",
+      "reducing": "Los acordes se reducen con el número de teclas (de 7K a 4K, 3 o 4 notas pasan a 2) y se quitan notas en vez de convertirlas en jacks.",
+      "extra": "Notas extra",
+      "density": {
+        "none": "Ninguna",
+        "noneHint": "Solo las notas del mapa original.",
+        "dense": "Algunas",
+        "denseHint": "Añade una nota en los beats y acordes: junto al acorde hasta 7K, y hacia donde va su mano en 8K o más.",
+        "moreDense": "Más",
+        "moreDenseHint": "Añade notas en casi todas las filas: junto al acorde hasta 7K, y hacia donde va su mano en 8K o más, sobre todo en las partes más densas.",
+        "full": "Completo",
+        "fullHint": "Los acordes crecen con el número de teclas, como en las conversiones hechas a mano: los jumps pasan a hands y los hands a quints. Los handstreams siguen siendo handstreams, y el mapa se vuelve mucho más difícil."
+      },
+      "playstyle": "Estilo de juego",
+      "playstyleOne": "Estilo de juego: {{ name }}",
+      "keepJacks": "Mantener los jacks del mapa en una sola tecla"
+    },
+    "playstyles": {
+      "3_1+1+1": "Índices y un pulgar.",
+      "3_2+1": "Dos teclas con la mano izquierda y una con la derecha.",
+      "5_2+1+2": "Pulgar en la tecla central.",
+      "5_3+2": "Tecla central con el índice izquierdo.",
+      "8_4+4": "Cuatro dedos por mano.",
+      "8_3+2+3": "Los dos pulgares en las teclas centrales.",
+      "8_1+7": "7K con un scratch a la izquierda, al estilo IIDX.",
+      "12_12K": "Cada tecla es un carril: los patrones llegan a las teclas exteriores.",
+      "12_10K2S": "Un mapa de 10K con un scratch a cada lado para los golpes fuertes de la música, que se tocan moviendo un meñique hacia fuera. La densidad también decide cuántos.",
+      "14_DP": "Double Play, al estilo IIDX: 7 teclas por mano en dos filas.",
+      "14_EZ2AC": "10K y 4 teclas centrales a las que va cualquiera de las manos (Space Mix).",
+      "16_DP": "Double Play con un scratch a cada lado (14K2S).",
+      "16_EZ2AC": "10K2S y 4 teclas centrales a las que va cualquiera de las manos.",
+      "18_10K8K": "10K y 4 teclas más por mano para todos los dedos menos el pulgar (4K10K4K).",
+      "18_9K9K": "9 teclas por mano en dos filas, como un DP para pop'n music."
+    }
   }
 }

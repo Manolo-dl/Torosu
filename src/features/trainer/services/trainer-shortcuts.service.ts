@@ -4,6 +4,7 @@ import { register, ShortcutEvent, unregister, unregisterAll } from '@tauri-apps/
 import { ConfigurationStore, TrainerShortcut } from '@entities/configuration';
 import { OsuReaderStore } from '@entities/osu-reader';
 import { NotifyService } from '@shared/services';
+import { TranslocoService } from '@jsverse/transloco';
 import { PlatformStore } from '@shared/stores';
 import { applicableConverts, BUILT_IN_PRESETS } from '../models/trainer.model';
 import { TrainerPresetsStore } from '../stores/trainer-presets.store';
@@ -22,6 +23,7 @@ export class TrainerShortcutsService {
     private readonly reader = inject(OsuReaderStore);
     private readonly presets = inject(TrainerPresetsStore);
     private readonly notify = inject(NotifyService);
+    private readonly transloco = inject(TranslocoService);
 
     /**
      * Whether a shortcut field is taking keys: the shortcuts are let go
@@ -93,22 +95,22 @@ export class TrainerShortcutsService {
         log(`shortcuts: ${event.shortcut} pressed, for "${name}"`);
 
         const preset = [...BUILT_IN_PRESETS, ...this.presets.custom()].find(p => p.name === name);
-        if (!preset) return this.tell(`The preset "${name}" is gone.`, 'error');
-        if (this.running) return this.tell('The last convert is still running.', 'info');
+        if (!preset) return this.tell(this.t('trainer.shortcuts.gone', { name }), 'error');
+        if (this.running) return this.tell(this.t('trainer.shortcuts.running'), 'info');
 
         const data = this.reader.data();
         const osuFilePath = data?.paths?.osu;
         if (!this.reader.connected() || !data || !osuFilePath) {
-            return this.tell("Can't read the map selected in osu!.", 'error');
+            return this.tell(this.t('trainer.shortcuts.cantRead'), 'error');
         }
         const converts = applicableConverts(preset.converts, this.reader.originalMode());
         if (converts.length === 0) {
-            return this.tell(`None of the tasks of "${name}" work on this map's mode.`, 'error');
+            return this.tell(this.t('trainer.shortcuts.noTasks', { name }), 'error');
         }
 
         this.running = true;
         const { title, difficulty, hp, cs, od, ar } = data.beatmap;
-        this.tell(`Converting ${title} [${difficulty}] with "${name}"…`, 'info');
+        this.tell(this.t('trainer.shortcuts.converting', { title, difficulty, name }), 'info');
         try {
             const names = await invoke<string[]>('run_trainer', {
                 request: {
@@ -117,17 +119,26 @@ export class TrainerShortcutsService {
                     converts: converts.map(tasks => ({ tasks: tasks.map(task => ({ task })) })),
                 },
             });
-            this.tell(names.length === 1 ? `Created ${names[0]}` : `Created ${names.length} difficulties`, 'success');
+            this.tell(
+                names.length === 1
+                    ? this.t('trainer.created', { name: names[0] })
+                    : this.t('trainer.createdMany', { count: names.length }),
+                'success',
+            );
         } catch (e) {
-            this.tell(`The convert failed: ${e}`, 'error');
+            this.tell(this.t('trainer.shortcuts.convertFailed', { error: String(e) }), 'error');
         } finally {
             this.running = false;
         }
     }
 
     /** Told over osu!, by the system, and in Torosu. */
+    private t(key: string, params?: Record<string, unknown>): string {
+        return this.transloco.translate(key, params);
+    }
+
     private tell(message: string, kind: 'info' | 'success' | 'error') {
-        invoke('show_notification', { title: 'Torosu trainer', body: message })
+        invoke('show_notification', { title: this.t('trainer.shortcuts.notificationTitle'), body: message })
             .catch(e => console.error('show_notification failed', e));
         this.notify[kind](message);
     }

@@ -1,3 +1,4 @@
+import { TranslocoService } from '@jsverse/transloco';
 import { effect, inject, untracked } from "@angular/core";
 import { OsuReaderStore } from "@entities/osu-reader";
 import { patchState, signalStore, withHooks, withMethods, withState } from "@ngrx/signals";
@@ -49,7 +50,7 @@ export const TrainerStore = signalStore(
     { providedIn: 'root' },
     withState(initialState),
 
-    withMethods((store, reader = inject(OsuReaderStore), notify = inject(NotifyService)) => {
+    withMethods((store, reader = inject(OsuReaderStore), notify = inject(NotifyService), transloco = inject(TranslocoService)) => {
         /** Changes the tasks of convert `id`. */
         function updateTasks(id: string, change: (tasks: TrainerTask[]) => TrainerTask[]) {
             patchState(store, {
@@ -144,7 +145,7 @@ export const TrainerStore = signalStore(
                 // The tasks for another mode are left out (see the marks on them).
                 const converts = applicableConverts(store.converts().map(c => c.tasks.map(t => t.task)), reader.originalMode());
                 if (converts.length === 0) {
-                    notify.error("None of the converts' tasks work on this map's mode.");
+                    notify.error(transloco.translate('trainer.noTasksForMode'));
                     return;
                 }
 
@@ -167,7 +168,11 @@ export const TrainerStore = signalStore(
                             converts: converts.map(tasks => ({ tasks: tasks.map(task => ({ task })) })),
                         },
                     });
-                    notify.success(names.length === 1 ? `Created ${names[0]}` : `Created ${names.length} difficulties`);
+                    notify.success(
+                        names.length === 1
+                            ? transloco.translate('trainer.created', { name: names[0] })
+                            : transloco.translate('trainer.createdMany', { count: names.length }),
+                    );
                 } catch (e) {
                     notify.error(String(e));
                 } finally {

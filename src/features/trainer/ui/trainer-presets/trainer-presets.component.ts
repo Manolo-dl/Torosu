@@ -1,4 +1,6 @@
+import { TranslocoPipe } from '@jsverse/transloco';
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, signal } from '@angular/core';
+import { TranslocoService } from '@jsverse/transloco';
 import { ConfigurationStore } from '@entities/configuration';
 import { PlatformStore } from '@shared/stores';
 import { FormsModule } from '@angular/forms';
@@ -13,7 +15,7 @@ import { TrainerShortcutsService } from '../../services/trainer-shortcuts.servic
 /** Presets that replace the converts, and saving the current ones as one. */
 @Component({
   selector: 'app-trainer-presets',
-  imports: [FormsModule, TuiButton, TuiCardLarge, TuiIcon, TuiInput, TuiLabel, TuiTitle],
+  imports: [FormsModule, TuiButton, TuiCardLarge, TuiIcon, TuiInput, TuiLabel, TuiTitle, TranslocoPipe],
   templateUrl: './trainer-presets.component.html',
   styleUrl: './trainer-presets.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -24,6 +26,7 @@ export class TrainerPresetsComponent {
   private readonly config = inject(ConfigurationStore);
   readonly platform = inject(PlatformStore);
   readonly shortcuts = inject(TrainerShortcutsService);
+  private readonly transloco = inject(TranslocoService);
 
   /** The preset whose shortcut field is taking keys, and what is wrong with the last ones pressed. */
   readonly editing = signal<string | null>(null);
@@ -76,12 +79,12 @@ export class TrainerPresetsComponent {
     const keys = shortcutOf(event);
     if (!keys) return;
     if (!isSafeShortcut(keys)) {
-      this.problem.set({ preset, message: `${shortcutLabel(keys)} alone is a key of the game: add Ctrl, Alt, Shift or Super.` });
+      this.problem.set({ preset, message: this.transloco.translate('trainer.shortcuts.gameKey', { keys: shortcutLabel(keys) }) });
       return;
     }
     const taken = this.config.config()?.trainer.shortcuts?.find(s => s.keys === keys && s.preset !== preset);
     if (taken) {
-      this.problem.set({ preset, message: `${shortcutLabel(keys)} already runs "${taken.preset}".` });
+      this.problem.set({ preset, message: this.transloco.translate('trainer.shortcuts.taken', { keys: shortcutLabel(keys), preset: taken.preset }) });
       return;
     }
     await this.presets.setShortcut(preset, keys);
@@ -109,6 +112,8 @@ export class TrainerPresetsComponent {
   /** What applying it gives, e.g. `4 converts`. */
   describe(preset: TrainerPreset): string {
     const count = preset.converts.length;
-    return count === 1 ? '1 convert' : `${count} converts`;
+    return count === 1
+      ? this.transloco.translate('trainer.presets.oneConvert')
+      : this.transloco.translate('trainer.presets.converts', { count });
   }
 }

@@ -40,37 +40,41 @@ export interface KeyConverterParams {
     playstyle: string | null;
 }
 
-/** The playstyles of each key count, the usual one first (see `analysis/layout.rs`). */
+/**
+ * The playstyles of each key count, the usual one first (see `analysis/layout.rs`).
+ * The name is sent to the backend and goes in the diff name as it is; the hint
+ * is a translation key.
+ */
 export const PLAYSTYLES: Record<number, { name: string; hint: string }[]> = {
     3: [
-        { name: '1+1+1', hint: 'Indexes and a thumb.' },
-        { name: '2+1', hint: 'Two keys on the left hand, one on the right.' },
+        { name: '1+1+1', hint: 'trainer.playstyles.3_1+1+1' },
+        { name: '2+1', hint: 'trainer.playstyles.3_2+1' },
     ],
     5: [
-        { name: '2+1+2', hint: 'Thumb on the middle key.' },
-        { name: '3+2', hint: 'Middle key with the left index.' },
+        { name: '2+1+2', hint: 'trainer.playstyles.5_2+1+2' },
+        { name: '3+2', hint: 'trainer.playstyles.5_3+2' },
     ],
     8: [
-        { name: '4+4', hint: 'Four fingers per hand.' },
-        { name: '3+2+3', hint: 'Both thumbs on the middle keys.' },
-        { name: '1+7', hint: '7K with a scratch on the left, IIDX style.' },
+        { name: '4+4', hint: 'trainer.playstyles.8_4+4' },
+        { name: '3+2+3', hint: 'trainer.playstyles.8_3+2+3' },
+        { name: '1+7', hint: 'trainer.playstyles.8_1+7' },
     ],
     // 12K to 18K: the playstyles of the osu! wiki (osu!mania 10K+ playstyles).
     12: [
-        { name: '12K', hint: 'Every key is a lane: the patterns run into the outer keys.' },
-        { name: '10K2S', hint: 'A 10K map with a scratch on each side for the hard hits of the music, hit by moving a pinky outward. The density also sets how many.' },
+        { name: '12K', hint: 'trainer.playstyles.12_12K' },
+        { name: '10K2S', hint: 'trainer.playstyles.12_10K2S' },
     ],
     14: [
-        { name: 'DP', hint: 'Double Play, IIDX style: 7 keys per hand in two rows.' },
-        { name: 'EZ2AC', hint: '10K and 4 middle keys either hand moves to (Space Mix).' },
+        { name: 'DP', hint: 'trainer.playstyles.14_DP' },
+        { name: 'EZ2AC', hint: 'trainer.playstyles.14_EZ2AC' },
     ],
     16: [
-        { name: 'DP', hint: 'Double Play with a scratch on each side (14K2S).' },
-        { name: 'EZ2AC', hint: '10K2S and 4 middle keys either hand moves to.' },
+        { name: 'DP', hint: 'trainer.playstyles.16_DP' },
+        { name: 'EZ2AC', hint: 'trainer.playstyles.16_EZ2AC' },
     ],
     18: [
-        { name: '10K8K', hint: '10K and 4 more keys per hand for every finger but the thumb (4K10K4K).' },
-        { name: '9K9K', hint: '9 keys per hand in two rows, like a DP for pop\'n music.' },
+        { name: '10K8K', hint: 'trainer.playstyles.18_10K8K' },
+        { name: '9K9K', hint: 'trainer.playstyles.18_9K9K' },
     ],
 };
 
@@ -107,11 +111,12 @@ export const BUILT_IN_PRESETS: TrainerPreset[] = [
     { name: 'Rates 1.1x – 1.4x', converts: [1.1, 1.2, 1.3, 1.4].map(rate => [rateChangeTask(rate)]) },
 ];
 
+/** Translation keys. */
 export const TASK_LABELS: Record<TrainerTaskType, string> = {
-    RateChange: 'Rate Change',
-    SVNormalizer: 'SV Normalizer',
-    FlnConverter: 'FLN Converter',
-    KeyConverter: 'Key Converter',
+    RateChange: 'trainer.tasks.RateChange',
+    SVNormalizer: 'trainer.tasks.SVNormalizer',
+    FlnConverter: 'trainer.tasks.FlnConverter',
+    KeyConverter: 'trainer.tasks.KeyConverter',
 };
 
 /** Modes each task works on. The map's own mode counts, not osu!'s automatic converts. */

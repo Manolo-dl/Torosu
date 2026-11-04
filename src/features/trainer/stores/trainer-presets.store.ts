@@ -1,3 +1,4 @@
+import { TranslocoService } from '@jsverse/transloco';
 import { inject } from "@angular/core";
 import { ConfigurationStore, TrainerShortcut } from "@entities/configuration";
 import { patchState, signalStore, withHooks, withMethods, withState } from "@ngrx/signals";
@@ -21,7 +22,7 @@ export const TrainerPresetsStore = signalStore(
     { providedIn: 'root' },
     withState<TrainerPresetsState>({ custom: [] }),
 
-    withMethods((store, trainer = inject(TrainerStore), notify = inject(NotifyService), config = inject(ConfigurationStore)) => {
+    withMethods((store, trainer = inject(TrainerStore), notify = inject(NotifyService), config = inject(ConfigurationStore), transloco = inject(TranslocoService)) => {
         async function write(custom: TrainerPreset[]) {
             await invoke('write_trainer_presets', { presets: custom });
             patchState(store, { custom });
@@ -39,7 +40,7 @@ export const TrainerPresetsStore = signalStore(
             apply(preset: TrainerPreset) {
                 const skipped = trainer.setConverts(preset.converts);
                 if (skipped > 0) {
-                    notify.info(`${skipped} task(s) of "${preset.name}" don't work on this map's mode: they will be skipped.`);
+                    notify.info(transloco.translate('trainer.presets.skipped', { count: skipped, name: preset.name }));
                 }
             },
 
@@ -50,9 +51,9 @@ export const TrainerPresetsStore = signalStore(
                 const custom = replaced ? store.custom().map(p => (p.name === name ? preset : p)) : [...store.custom(), preset];
                 try {
                     await write(custom);
-                    notify.success(replaced ? `Updated the preset "${name}"` : `Saved the preset "${name}"`);
+                    notify.success(transloco.translate(replaced ? 'trainer.presets.updated' : 'trainer.presets.saved', { name }));
                 } catch (e) {
-                    notify.error(`Could not save the preset: ${e}`);
+                    notify.error(transloco.translate('trainer.presets.saveFailed', { error: String(e) }));
                 }
             },
 
@@ -61,7 +62,7 @@ export const TrainerPresetsStore = signalStore(
                     await write(store.custom().filter(p => p.name !== name));
                     await writeShortcuts(shortcuts => shortcuts.filter(s => s.preset !== name));
                 } catch (e) {
-                    notify.error(`Could not delete the preset: ${e}`);
+                    notify.error(transloco.translate('trainer.presets.deleteFailed', { error: String(e) }));
                 }
             },
 

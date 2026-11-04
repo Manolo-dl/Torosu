@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import {
   FlnConverterParams,
   KeyConverterParams,
@@ -31,7 +32,7 @@ interface DensityOption {
 /** The tasks of one convert. */
 @Component({
   selector: 'app-trainer-task-pipeline',
-  imports: [CdkDrag, CdkDropList, CdkDragHandle, FormsModule, TuiButton, TuiCardLarge, TuiCheckbox, TuiDataList, TuiDropdown, TuiIcon, TuiInput, TuiNotificationDirective, TuiTitle, TrainerNoteLengthComponent, OptionGroupComponent],
+  imports: [CdkDrag, CdkDropList, CdkDragHandle, FormsModule, TuiButton, TuiCardLarge, TuiCheckbox, TuiDataList, TuiDropdown, TuiIcon, TuiInput, TuiNotificationDirective, TuiTitle, TrainerNoteLengthComponent, OptionGroupComponent, TranslocoPipe],
   templateUrl: './trainer-task-pipeline.component.html',
   styleUrl: './trainer-task-pipeline.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -45,6 +46,7 @@ export class TrainerTaskPipelineComponent {
   readonly trainer = inject(TrainerStore);
   readonly reader = inject(OsuReaderStore);
   private readonly config = inject(ConfigurationStore);
+  private readonly transloco = inject(TranslocoService);
 
   /** The rate change sets the pitch itself (see the settings): no option to show. */
   readonly autoPitch = computed(() => this.config.config()?.trainer.auto_pitch ?? false);
@@ -68,8 +70,9 @@ export class TrainerTaskPipelineComponent {
   skippedReason(type: TrainerTaskType): string {
     const modes = TASK_MODES[type];
     const names: Record<string, string> = { osu: 'osu!standard', taiko: 'osu!taiko', fruits: 'osu!catch', mania: 'osu!mania' };
-    if (modes === 'all') return 'Skipped on this map';
-    return `Only for ${modes.map(m => names[m]).join(' and ')} maps: skipped on this one`;
+    if (modes === 'all') return this.transloco.translate('trainer.skippedHere');
+    const and = this.transloco.translate('trainer.and');
+    return this.transloco.translate('trainer.onlyFor', { modes: modes.map(m => names[m]).join(and) });
   }
 
   originalBpm = computed(() => {
@@ -86,28 +89,13 @@ export class TrainerTaskPipelineComponent {
   readonly keyItems = computed<OptionGroupItem[]>(() =>
     this.keyOptions.map(keys => ({ label: String(keys), disabled: keys === this.sourceKeys() })),
   );
-  readonly densityOptions: DensityOption[] = [
-    { value: 'none', label: 'None', hint: 'Only the notes of the original map.' },
-    {
-      value: 'dense',
-      label: 'Some',
-      hint: 'Adds a note on the beats and chords: next to the chord up to 7K, where its hand is going on 8K and more.',
-    },
-    {
-      value: 'moreDense',
-      label: 'More',
-      hint: 'Adds notes on almost every row: next to the chord up to 7K, where its hand is going on 8K and more, mostly in the denser parts.',
-    },
-    {
-      value: 'full',
-      label: 'Full',
-      hint: 'Chords grow with the key count, like hand-made conversions: jumps become hands and hands become quints. Handstreams stay handstreams, and the map gets much harder.',
-    },
-  ];
-
-  /** With fewer keys there are no extra notes: each row keeps its share of notes. */
-  readonly reducingHint =
-    'Chords shrink with the key count (on 7K to 4K, 3 or 4 notes become 2) and notes are dropped rather than turned into jacks.';
+  /** Labels and hints are translation keys. */
+  readonly densityOptions: (DensityOption & OptionGroupItem)[] = (['none', 'dense', 'moreDense', 'full'] as const).map(value => ({
+    value,
+    label: `trainer.keys.density.${value}`,
+    hint: `trainer.keys.density.${value}Hint`,
+    translate: true,
+  }));
 
   newBpm(rate: number): number | null {
     const bpm = this.originalBpm();

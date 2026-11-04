@@ -1,4 +1,4 @@
-<span class="title">{{ label() }}</span>
+<span class="title">{{ label() | transloco }}</span>
 
 <div class="controls">
   <app-option-group [active]="activeIndex()" [options]="options" (activeChange)="onSegment($event)" />
@@ -11,8 +11,8 @@
 </div>
 
 <span class="hint">
-  {{ hint() }}
+  {{ hint() | transloco }}
   @if (approxMs() !== null) {
-    (1/{{ value().value }} beat ≈ {{ approxMs() }} ms at {{ bpm() }} BPM)
+    {{ 'trainer.noteLength.approx' | transloco: { divisor: value().value, ms: approxMs(), bpm: bpm() } }}
   }
 </span>

@@ -1,7 +1,10 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 export interface OptionGroupItem {
   label: string;
+  /** `label` is a translation key. */
+  translate?: boolean;
   disabled?: boolean;
 }
 
@@ -12,6 +15,7 @@ export interface OptionGroupItem {
  */
 @Component({
   selector: 'app-option-group',
+  imports: [TranslocoPipe],
   template: `
     @for (option of options(); track $index) {
       <button
@@ -22,7 +26,7 @@ export interface OptionGroupItem {
         [disabled]="option.disabled"
         (click)="pick($index)"
       >
-        {{ option.label }}
+        {{ option.translate ? (option.label | transloco) : option.label }}
       </button>
     }
   `,

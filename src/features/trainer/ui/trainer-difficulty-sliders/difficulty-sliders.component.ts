@@ -1,3 +1,4 @@
+import { TranslocoPipe } from '@jsverse/transloco';
 import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -8,7 +9,7 @@ import { TuiCardLarge } from '@taiga-ui/layout';
 
 @Component({
   selector: 'app-trainer-difficulty-sliders',
-  imports: [DecimalPipe, FormsModule, TuiButton, TuiCardLarge, TuiSlider, TuiTitle],
+  imports: [DecimalPipe, FormsModule, TuiButton, TuiCardLarge, TuiSlider, TuiTitle, TranslocoPipe],
   templateUrl: './difficulty-sliders.component.html',
   styleUrl: './difficulty-sliders.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,

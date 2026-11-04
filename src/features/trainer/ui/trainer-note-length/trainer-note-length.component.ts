@@ -1,3 +1,4 @@
+import { TranslocoPipe } from '@jsverse/transloco';
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { NoteLength } from '../../models/trainer.model';
 import { TuiInput } from '@taiga-ui/core';
@@ -8,12 +9,13 @@ const BEAT_DIVISORS = [1, 2, 3, 4, 6, 8, 12, 16];
 /** Picks a length as a fraction of a beat or in milliseconds. */
 @Component({
   selector: 'app-trainer-note-length',
-  imports: [TuiInput, OptionGroupComponent],
+  imports: [TuiInput, OptionGroupComponent, TranslocoPipe],
   templateUrl: './trainer-note-length.component.html',
   styleUrl: './trainer-note-length.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TrainerNoteLengthComponent {
+  /** Translation keys. */
   readonly label = input.required<string>();
   readonly hint = input.required<string>();
   readonly value = input.required<NoteLength>();

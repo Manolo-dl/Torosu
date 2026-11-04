@@ -165,5 +165,140 @@
     "exportFailed": "Failed to export the beatmap: {{ error }}",
     "looking": "Looking for osu!...",
     "startFailed": "Failed to start the osu! reader."
+  },
+  "trainer": {
+    "subtitle": "Fine-tune difficulty stats and chain modifiers before generating a new map.",
+    "addConvert": "Add convert",
+    "mappedBy": "mapped by {{ mapper }}",
+    "exportOsz": "Export as .osz",
+    "difficulty": {
+      "title": "Difficulty",
+      "lock": "Lock",
+      "unlock": "Unlock",
+      "lockStat": "Lock {{ stat }}",
+      "unlockStat": "Unlock {{ stat }}"
+    },
+    "actions": {
+      "reset": "Reset",
+      "createMap": "Create map",
+      "createMaps": "Create {{ count }} maps"
+    },
+    "presets": {
+      "title": "Presets",
+      "subtitle": "Replace the converts with a saved list",
+      "delete": "Delete preset",
+      "deleteTitle": "Delete this preset",
+      "oneConvert": "1 convert",
+      "converts": "{{ count }} converts",
+      "name": "Preset name",
+      "save": "Save",
+      "cancel": "Cancel",
+      "saveCurrent": "Save current as preset",
+      "skipped": "{{ count }} task(s) of \"{{ name }}\" don't work on this map's mode: they will be skipped.",
+      "updated": "Updated the preset \"{{ name }}\"",
+      "saved": "Saved the preset \"{{ name }}\"",
+      "saveFailed": "Could not save the preset: {{ error }}",
+      "deleteFailed": "Could not delete the preset: {{ error }}"
+    },
+    "shortcuts": {
+      "wayland": "Keyboard shortcuts are not available on Wayland: an app can't listen to the keys while osu! has the focus.",
+      "off": "Turn on keyboard shortcuts in the settings (Trainer) to run a preset on the map selected in osu! while you play.",
+      "how": "Click a preset's field and press its keys: Ctrl, Alt, Shift or Super with another key, or a function key (F1 to F24), so osu! keeps its own. Backspace takes it away, Escape leaves the field. It runs on the map selected in osu!, with its own HP, OD and AR.",
+      "pressKeys": "Press the keys…",
+      "notSet": "Not set",
+      "active": "Working: press it while osu! has the focus",
+      "failedTitle": "The system did not give it: another app may have it",
+      "taking": "Taking keys: the shortcuts are off until you leave the field.",
+      "failed": "The system did not give this shortcut: another app may have it. Try other keys.",
+      "gameKey": "{{ keys }} alone is a key of the game: add Ctrl, Alt, Shift or Super.",
+      "taken": "{{ keys }} already runs \"{{ preset }}\".",
+      "gone": "The preset \"{{ name }}\" is gone.",
+      "running": "The last convert is still running.",
+      "cantRead": "Can't read the map selected in osu!.",
+      "noTasks": "None of the tasks of \"{{ name }}\" work on this map's mode.",
+      "converting": "Converting {{ title }} [{{ difficulty }}] with \"{{ name }}\"…",
+      "convertFailed": "The convert failed: {{ error }}",
+      "notificationTitle": "Torosu trainer"
+    },
+    "noTasksForMode": "None of the converts' tasks work on this map's mode.",
+    "created": "Created {{ name }}",
+    "createdMany": "Created {{ count }} difficulties",
+    "convert": "Convert {{ number }}",
+    "addTask": "Add task",
+    "duplicate": "Duplicate convert",
+    "duplicateTitle": "Duplicate this convert",
+    "remove": "Remove convert",
+    "removeTitle": "Remove this convert",
+    "removeTask": "Remove task",
+    "noTasks": "No tasks: only the difficulty settings change.",
+    "skippedHere": "Skipped on this map",
+    "onlyFor": "Only for {{ modes }} maps: skipped on this one",
+    "and": " and ",
+    "tasks": {
+      "RateChange": "Rate Change",
+      "SVNormalizer": "SV Normalizer",
+      "FlnConverter": "FLN Converter",
+      "KeyConverter": "Key Converter"
+    },
+    "rate": {
+      "rate": "Rate",
+      "adjustPitch": "Adjust pitch",
+      "scaleStoryboard": "Scale storyboard",
+      "scaleVideo": "Scale video",
+      "noFfmpeg": "Scaling the video needs <strong>ffmpeg</strong>, which was not found. Install it and make sure it is in the PATH, then restart the app.",
+      "videoSlow": "The video is re-encoded at the new speed, which can take a while for long videos.",
+      "storyboard": "If the set has a shared <strong>.osb</strong> storyboard, it is used by every difficulty, so this difficulty will be exported to a <strong>new beatmap set</strong> (title ending in <strong>({{ rate }}x SB)</strong>) to avoid overlapping with the original one."
+    },
+    "sv": {
+      "description": "The original SV changes are removed and an SV is set on every BPM change, so the scroll speed stays the one of the main BPM. BPM changes, kiai and hitsounds are kept."
+    },
+    "fln": {
+      "description": "Turns every note into a long note held until just before the next note in its column.",
+      "gap": "Release gap",
+      "gapHint": "How early each long note ends before the next note in the column.",
+      "minLength": "Minimum length",
+      "minLengthHint": "Long notes that would be shorter than this stay as normal notes.",
+      "rework": "Also reshape the map's existing long notes"
+    },
+    "noteLength": {
+      "approx": "(1/{{ divisor }} beat ≈ {{ ms }} ms at {{ bpm }} BPM)"
+    },
+    "keys": {
+      "description": "Moves the notes to another number of keys. Streams roll over the new keys, while real trills, jacks and chords keep their shape.",
+      "keys": "Keys",
+      "perRow": "Notes per row",
+      "reducing": "Chords shrink with the key count (on 7K to 4K, 3 or 4 notes become 2) and notes are dropped rather than turned into jacks.",
+      "extra": "Extra notes",
+      "density": {
+        "none": "None",
+        "noneHint": "Only the notes of the original map.",
+        "dense": "Some",
+        "denseHint": "Adds a note on the beats and chords: next to the chord up to 7K, where its hand is going on 8K and more.",
+        "moreDense": "More",
+        "moreDenseHint": "Adds notes on almost every row: next to the chord up to 7K, where its hand is going on 8K and more, mostly in the denser parts.",
+        "full": "Full",
+        "fullHint": "Chords grow with the key count, like hand-made conversions: jumps become hands and hands become quints. Handstreams stay handstreams, and the map gets much harder."
+      },
+      "playstyle": "Playstyle",
+      "playstyleOne": "Playstyle: {{ name }}",
+      "keepJacks": "Keep the map's jacks on a single key"
+    },
+    "playstyles": {
+      "3_1+1+1": "Indexes and a thumb.",
+      "3_2+1": "Two keys on the left hand, one on the right.",
+      "5_2+1+2": "Thumb on the middle key.",
+      "5_3+2": "Middle key with the left index.",
+      "8_4+4": "Four fingers per hand.",
+      "8_3+2+3": "Both thumbs on the middle keys.",
+      "8_1+7": "7K with a scratch on the left, IIDX style.",
+      "12_12K": "Every key is a lane: the patterns run into the outer keys.",
+      "12_10K2S": "A 10K map with a scratch on each side for the hard hits of the music, hit by moving a pinky outward. The density also sets how many.",
+      "14_DP": "Double Play, IIDX style: 7 keys per hand in two rows.",
+      "14_EZ2AC": "10K and 4 middle keys either hand moves to (Space Mix).",
+      "16_DP": "Double Play with a scratch on each side (14K2S).",
+      "16_EZ2AC": "10K2S and 4 middle keys either hand moves to.",
+      "18_10K8K": "10K and 4 more keys per hand for every finger but the thumb (4K10K4K).",
+      "18_9K9K": "9 keys per hand in two rows, like a DP for pop'n music."
+    }
   }
 }
