@@ -384,6 +384,43 @@
       "titleRequired": "The pack title is required",
       "titleTaken": "A pack with this title already exists",
       "validationFailed": "Could not check the title"
-    }
+    },
+    "subtitle": "Combine difficulties from different beatmaps into a custom pack.",
+    "reset": "Reset",
+    "createOne": "Create pack ({{ diffs }} diffs)",
+    "createMany": "Create {{ packs }} packs ({{ sets }} sets, {{ diffs }} diffs)",
+    "browse": "Browse maps",
+    "sets": "{{ count }} sets",
+    "noMaps": "No maps found",
+    "add": "Add",
+    "added": "Added",
+    "fromCollection": "From collection",
+    "load": "Load",
+    "collectionsNotLoaded": "Collections not loaded yet.",
+    "noCollections": "No collections with local diffs found.",
+    "diffName": "Difficulty name",
+    "diffNameRequired": "The difficulty name is required",
+    "diffNameTaken": "This name is used by another difficulty",
+    "remove": "Remove",
+    "preview": "Pack preview",
+    "diffs": "{{ count }} diffs",
+    "empty": "Add diffs from the browser to build your pack",
+    "search": "Search by title, artist or file name...",
+    "created": "Pack {{ title }} created!",
+    "createdParts": "Pack {{ title }} created in {{ parts }} parts!",
+    "createFailed": "Failed to create the pack"
+  },
+  "beatmaps": {
+    "none": "No beatmaps"
+  },
+  "loading": {
+    "osuDb": "Loading osu!.db, please wait...",
+    "osuDbDone": "Loaded {{ count }} beatmap sets from osu!.db",
+    "osuDbFailed": "Failed to load osu!.db",
+    "collections": "Loading collections, please wait...",
+    "collectionsDone": "Loaded {{ count }} collections",
+    "collectionsFailed": "Failed to load collections",
+    "logs": "Loading logs, please wait...",
+    "logsFailed": "Failed to load logs"
   }
 }

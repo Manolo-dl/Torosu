@@ -22,8 +22,8 @@ export const CollectionStore = signalStore(
     withLoader(initialState, {
         read: () => invoke<OsuCollection[]>('read_osu_collections'),
         loaded: collections => ({ collections }),
-        success: collections => `Loaded ${collections.length} collections`,
-        failure: 'Failed to load collections',
+        success: collections => ({ key: 'loading.collectionsDone', params: { count: collections.length } }),
+        failure: 'loading.collectionsFailed',
     }),
 
     withComputed((store, osuDb = inject(OsuDbStore)) => {

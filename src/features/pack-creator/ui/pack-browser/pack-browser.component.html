@@ -1,11 +1,11 @@
 <div appearance="floating" tuiCardLarge="compact">
   <header>
-    <h3 tuiTitle>Browse Maps</h3>
-    <span appearance="neutral" tuiBadge>{{ store.filteredSets().length }} sets</span>
+    <h3 tuiTitle>{{ 'packs.browse' | transloco }}</h3>
+    <span appearance="neutral" tuiBadge>{{ 'packs.sets' | transloco: { count: store.filteredSets().length } }}</span>
   </header>
 
   <app-beatmap-set-list
-    emptyText="No maps found"
+    emptyText="packs.noMaps"
     listHeight="max(20rem, calc(100vh - 30rem))"
     [sets]="store.filteredSets()"
     [diffAction]="addButton"
@@ -24,7 +24,7 @@
       type="button"
       (click)="addDiff(set, diff, $event)"
     >
-      Add
+      {{ 'packs.add' | transloco }}
     </button>
   }
 </ng-template>

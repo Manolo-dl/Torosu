@@ -1,3 +1,4 @@
+import { TranslocoService } from '@jsverse/transloco';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withState } from "@ngrx/signals";
 import { OsuBeatmapSet, OsuDiff } from "@entities/osu-db";
 import { SelectedDiff, nameSource, selectedDiff } from "./pack.model";
@@ -84,7 +85,7 @@ export const PackStore = signalStore(
         }),
     })),
 
-    withMethods((store, notify = inject(NotifyService), osuDb = inject(OsuDbStore), config = inject(ConfigurationStore)) => {
+    withMethods((store, notify = inject(NotifyService), osuDb = inject(OsuDbStore), config = inject(ConfigurationStore), transloco = inject(TranslocoService)) => {
         /** The diffs picked for the pack, named with the name format in the settings. */
         async function named(picked: { set: OsuBeatmapSet; diff: OsuDiff }[]): Promise<SelectedDiff[]> {
             const names = await invoke<string[]>('pack_diff_names', {
@@ -157,13 +158,13 @@ export const PackStore = signalStore(
                     });
                     patchState(store, { isCreating: false });
                     const message = store.packCount() > 1
-                        ? `Pack ${store.title()} created successfully in ${store.packCount()} parts!`
-                        : `Pack ${store.title()} created successfully!`;
+                        ? transloco.translate('packs.createdParts', { title: store.title(), parts: store.packCount() })
+                        : transloco.translate('packs.created', { title: store.title() });
                     notify.success(message);
                     patchState(store, initialState);
                 } catch (error) {
                     patchState(store, { isCreating: false });
-                    notify.error('Failed to create pack');
+                    notify.error(transloco.translate('packs.createFailed'));
                     throw error;
                 }
             },

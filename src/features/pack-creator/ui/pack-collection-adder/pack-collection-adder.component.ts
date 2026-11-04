@@ -1,3 +1,4 @@
+import { TranslocoPipe } from '@jsverse/transloco';
 import { Component, computed, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CollectionStore } from '@entities/collection';
 import { OsuDbStore } from '@entities/osu-db';
@@ -15,7 +16,7 @@ interface CollectionEntry {
 
 @Component({
     selector: 'app-pack-collection-adder',
-    imports: [TuiBadge, TuiButton, TuiCardLarge, TuiLoader, TuiScrollbar, TuiTitle],
+    imports: [TuiBadge, TuiButton, TuiCardLarge, TuiLoader, TuiScrollbar, TuiTitle, TranslocoPipe],
     templateUrl: './pack-collection-adder.component.html',
     styleUrl: './pack-collection-adder.component.less',
     changeDetection: ChangeDetectionStrategy.OnPush,

@@ -384,6 +384,43 @@
       "titleRequired": "El título del pack es obligatorio",
       "titleTaken": "Ya existe un pack con este título",
       "validationFailed": "No se ha podido comprobar el título"
-    }
+    },
+    "subtitle": "Junta dificultades de distintos mapas en un pack propio.",
+    "reset": "Restablecer",
+    "createOne": "Crear pack ({{ diffs }} dificultades)",
+    "createMany": "Crear {{ packs }} packs ({{ sets }} sets, {{ diffs }} dificultades)",
+    "browse": "Explorar mapas",
+    "sets": "{{ count }} sets",
+    "noMaps": "No se han encontrado mapas",
+    "add": "Añadir",
+    "added": "Añadida",
+    "fromCollection": "Desde una colección",
+    "load": "Cargar",
+    "collectionsNotLoaded": "Las colecciones aún no se han cargado.",
+    "noCollections": "No hay colecciones con dificultades que tengas en local.",
+    "diffName": "Nombre de la dificultad",
+    "diffNameRequired": "El nombre de la dificultad es obligatorio",
+    "diffNameTaken": "Otra dificultad ya usa este nombre",
+    "remove": "Quitar",
+    "preview": "Vista previa del pack",
+    "diffs": "{{ count }} dificultades",
+    "empty": "Añade dificultades desde el explorador para montar tu pack",
+    "search": "Busca por título, artista o nombre de archivo...",
+    "created": "¡Pack {{ title }} creado!",
+    "createdParts": "¡Pack {{ title }} creado en {{ parts }} partes!",
+    "createFailed": "No se ha podido crear el pack"
+  },
+  "beatmaps": {
+    "none": "No hay mapas"
+  },
+  "loading": {
+    "osuDb": "Cargando osu!.db, espera...",
+    "osuDbDone": "Cargados {{ count }} sets de mapas de osu!.db",
+    "osuDbFailed": "No se ha podido cargar osu!.db",
+    "collections": "Cargando colecciones, espera...",
+    "collectionsDone": "Cargadas {{ count }} colecciones",
+    "collectionsFailed": "No se han podido cargar las colecciones",
+    "logs": "Cargando logs, espera...",
+    "logsFailed": "No se han podido cargar los logs"
   }
 }

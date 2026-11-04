@@ -1,3 +1,4 @@
+import { TranslocoPipe } from '@jsverse/transloco';
 import { ChangeDetectionStrategy, Component, input, TemplateRef } from '@angular/core';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { OsuBeatmapSet } from '../../osu-db.model';
@@ -6,14 +7,15 @@ import { BeatmapSetCardComponent, DiffActionContext } from '../beatmap-set-card/
 
 @Component({
   selector: 'app-beatmap-set-list',
-  imports: [ScrollingModule, TuiScrollRef, TuiScrollControls, BeatmapSetCardComponent],
+  imports: [ScrollingModule, TuiScrollRef, TuiScrollControls, BeatmapSetCardComponent, TranslocoPipe],
   templateUrl: './beatmap-set-list.component.html',
   styleUrl: './beatmap-set-list.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BeatmapSetListComponent {
   readonly sets = input<OsuBeatmapSet[]>([]);
-  readonly emptyText = input('No beatmaps');
+  /** A translation key. */
+  readonly emptyText = input('beatmaps.none');
   readonly listHeight = input('calc(100vh - 320px)');
   /** For each card: see `BeatmapSetCardComponent.diffAction`. */
   readonly diffAction = input<TemplateRef<DiffActionContext>>();

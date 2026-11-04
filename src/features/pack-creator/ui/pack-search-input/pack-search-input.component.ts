@@ -1,3 +1,4 @@
+import { TranslocoPipe } from '@jsverse/transloco';
 import { ChangeDetectionStrategy, Component, DestroyRef, inject } from '@angular/core';
 import { PackStore } from '../../pack.store';
 import { debounceTime, Subject } from 'rxjs';
@@ -5,7 +6,7 @@ import { TuiInput } from '@taiga-ui/core';
 
 @Component({
   selector: 'app-pack-search-input',
-  imports: [TuiInput],
+  imports: [TuiInput, TranslocoPipe],
   templateUrl: './pack-search-input.component.html',
   styleUrl: './pack-search-input.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -1,3 +1,4 @@
+import { TranslocoPipe } from '@jsverse/transloco';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import type { OsuBeatmapSet, OsuDiff } from '@entities/osu-db';
 import { PackStore } from '../../pack.store';
@@ -8,7 +9,7 @@ import { TuiCardLarge } from '@taiga-ui/layout';
 
 @Component({
   selector: 'app-pack-browser',
-  imports: [BeatmapSetListComponent, TuiBadge, TuiButton, TuiCardLarge, TuiIcon, TuiTitle],
+  imports: [BeatmapSetListComponent, TuiBadge, TuiButton, TuiCardLarge, TuiIcon, TuiTitle, TranslocoPipe],
   templateUrl: './pack-browser.component.html',
   styleUrl: './pack-browser.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,

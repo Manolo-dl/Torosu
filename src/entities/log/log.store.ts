@@ -20,7 +20,7 @@ export const LogStore = signalStore(
         loaded: logs => ({
             logs: [...logs].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()),
         }),
-        failure: 'Failed to load logs',
+        failure: 'loading.logsFailed',
     }),
 
     withComputed((store) => ({

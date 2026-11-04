@@ -1,6 +1,6 @@
 <tui-textfield iconStart="@tui.search" tuiTextfieldSize="m">
   <input
-    placeholder="Search by title, artist or file name..."
+    [placeholder]="'packs.search' | transloco"
     tuiInput
     type="search"
     [value]="store.searchQuery()"
