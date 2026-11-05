@@ -30,8 +30,18 @@ export class LanguageService {
         await firstValueFrom(this.transloco.load(language)).catch(() => undefined);
         this.chosen();
         this.document.documentElement.lang = language;
-        this.taiga.set(
-            language === 'es' ? (await import('@taiga-ui/i18n/languages/spanish')).TUI_SPANISH_LANGUAGE : TUI_ENGLISH_LANGUAGE,
-        );
+        this.taiga.set(await taigaLanguage(language));
+    }
+}
+
+/** Taiga's texts in `language`: English is bundled, the others load when chosen. */
+async function taigaLanguage(language: Language): Promise<TuiLanguage> {
+    switch (language) {
+        case 'es':
+            return (await import('@taiga-ui/i18n/languages/spanish')).TUI_SPANISH_LANGUAGE;
+        case 'fr':
+            return (await import('@taiga-ui/i18n/languages/french')).TUI_FRENCH_LANGUAGE;
+        default:
+            return TUI_ENGLISH_LANGUAGE;
     }
 }

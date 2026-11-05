@@ -8,7 +8,13 @@ import { Translation, TranslocoLoader } from '@jsverse/transloco';
 @Injectable({ providedIn: 'root' })
 export class TranslationLoader implements TranslocoLoader {
     async getTranslation(language: string): Promise<Translation> {
-        const texts = language === 'es' ? await import('./translations/es.json') : await import('./translations/en.json');
-        return texts.default;
+        switch (language) {
+            case 'es':
+                return (await import('./translations/es.json')).default;
+            case 'fr':
+                return (await import('./translations/fr.json')).default;
+            default:
+                return (await import('./translations/en.json')).default;
+        }
     }
 }
