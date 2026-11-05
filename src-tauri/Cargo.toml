@@ -53,7 +53,7 @@ rustls = { version = "0.23", default-features = false, features = ["ring"] }
 vorbis_rs = "0.5.6"
 osu-memory-reader = { version = "0.2.0", features = ["serde", "difficulty"] }
 # Mania Tracker's dan calculator. Not on crates.io: pinned to a commit.
-dan-calc = { git = "https://github.com/aleju03/mania-hub", rev = "995b42ef1a8dcc99cb0bd95aaf6c6ae4d69c5eeb" }
+dan-calc = { git = "https://github.com/aleju03/mania-hub", rev = "fdb619f3afa18a14e6a69d061a6c35af156aab31" }
 
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration
@@ -157,10 +157,6 @@ opt-level = 3
 
 [profile.dev.package.jsmath]
 opt-level = 3
-# Its timsort port computes `stack_size - 3` on a usize, which underflows (and
-# panics with overflow checks) when there are fewer than 3 runs; wrapping, as
-# in release, gives the right result.
-overflow-checks = false
 
 [profile.dev.package.cranelift-codegen]
 opt-level = 3
