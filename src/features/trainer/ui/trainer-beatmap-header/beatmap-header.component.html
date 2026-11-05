@@ -12,6 +12,7 @@
     </div>
 
     <div class="side">
+      <app-skill-summary size="l" onImage [skill]="reader.skill()" [display]="skillDisplay()" [keyCount]="reader.keyCount()" />
       @let current = mode();
       @if (current !== null) {
         <tui-icon
@@ -23,7 +24,6 @@
         />
       }
       <app-star-badge size="l" class="stars" [stars]="reader.stars()" />
-      <app-skill-badges size="l" onImage [skill]="reader.skill()" [display]="skillDisplay()" [keyCount]="reader.keyCount()" />
       @if (reader.data()?.paths) {
         <button
           appearance="floating"

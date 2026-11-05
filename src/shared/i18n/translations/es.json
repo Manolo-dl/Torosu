@@ -180,13 +180,16 @@
     "mappedBy": "mapeado por {{ mapper }}",
     "exportOsz": "Exportar como .osz",
     "dan": {
-      "rice": "Dan {{ name }}",
-      "ln": "LN {{ name }}",
       "hint": "Dan estimado por Mania Tracker, {{ confidence }}% de confianza"
     },
     "msd": {
-      "badge": "MSD {{ value }}",
       "hint": "MSD general, de {{ calc }}"
+    },
+    "skill": {
+      "dan": "Dan",
+      "lnDan": "Dan LN",
+      "result": "Resultado",
+      "vsMap": "{{ delta }} respecto al mapa seleccionado"
     },
     "difficulty": {
       "title": "Dificultad",

@@ -21,6 +21,10 @@ pub struct Dan {
     pub family: Family,
     /// As Mania Tracker writes it: `6++`, `zeta-`.
     pub name: String,
+    /// The dan without its variant: `6`, `zeta`, `azimuth` (7K), `terra` (6K).
+    pub label: String,
+    /// `++`, `+`, `-` or `--`; `None` for the dan itself.
+    pub variant: Option<String>,
     /// The dan as a number, for comparing.
     pub value: f64,
     /// How sure the estimator is, from 0 to 1.
@@ -100,7 +104,14 @@ fn dan(dan: &dan_calc::Dan) -> Dan {
         dan_calc::Family::Rice => Family::Rice,
         dan_calc::Family::Ln => Family::Ln,
     };
-    Dan { family, name: dan.display_name.clone(), value: dan.raw_dan, confidence: dan.confidence }
+    Dan {
+        family,
+        name: dan.display_name.clone(),
+        label: dan.label.clone(),
+        variant: dan.variant.map(str::to_string),
+        value: dan.raw_dan,
+        confidence: dan.confidence,
+    }
 }
 
 fn msd(values: &[(String, f64)]) -> Option<Msd> {
@@ -163,6 +174,7 @@ pub mod tests {
         assert_eq!(dan.rice.as_ref(), Some(&dan.primary));
         assert!(dan.ln.is_none());
         assert!(dan.primary.value > 0.0 && !dan.primary.name.is_empty());
+        assert_eq!(dan.primary.name, format!("{}{}", dan.primary.label, dan.primary.variant.as_deref().unwrap_or("")));
 
         let msd = skill.msd.expect("4K maps have an MSD");
         assert!(msd.overall > 0.0);

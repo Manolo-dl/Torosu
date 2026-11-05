@@ -57,6 +57,10 @@ export interface Dan {
     family: 'rice' | 'ln';
     /** `6++`, `zeta-`. */
     name: string;
+    /** The dan without its variant: `6`, `zeta`, `azimuth` (7K), `terra` (6K). */
+    label: string;
+    /** `++`, `+`, `-` or `--`; `null` for the dan itself. */
+    variant: string | null;
     /** The dan as a number, for comparing. */
     value: number;
     /** How sure the estimator is, from 0 to 1. */

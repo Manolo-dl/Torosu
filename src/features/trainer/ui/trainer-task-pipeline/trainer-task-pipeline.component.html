@@ -1,13 +1,6 @@
 <div appearance="floating" tuiCardLarge="compact">
   <header>
-    <div class="heading">
-      <h3 tuiTitle>{{ 'trainer.convert' | transloco: { number: number() } }}</h3>
-      @if (convert().tasks.length > 0 && preview(); as skill) {
-        <div class="skill" [class.stale]="trainer.previewing()" [attr.aria-busy]="trainer.previewing()">
-          <app-skill-badges size="s" [skill]="skill" [display]="skillDisplay()" [keyCount]="previewKeys()" />
-        </div>
-      }
-    </div>
+    <h3 tuiTitle>{{ 'trainer.convert' | transloco: { number: number() } }}</h3>
     <div class="actions">
       <button
         iconStart="@tui.plus"
@@ -54,6 +47,18 @@
       </tui-data-list>
     </ng-template>
   </header>
+
+  @if (convert().tasks.length > 0 && preview(); as skill) {
+    <div class="result" [class.stale]="trainer.previewing()" [attr.aria-busy]="trainer.previewing()">
+      <span class="result-label">{{ 'trainer.skill.result' | transloco }}</span>
+      <app-skill-summary
+        [skill]="skill"
+        [display]="skillDisplay()"
+        [keyCount]="previewKeys()"
+        [compareTo]="reader.skill()"
+      />
+    </div>
+  }
 
   <div class="list" cdkDropList (cdkDropListDropped)="onDrop($event)">
     @for (entry of convert().tasks; track entry.id) {
