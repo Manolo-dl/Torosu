@@ -23,17 +23,7 @@
         />
       }
       <app-star-badge size="l" class="stars" [stars]="reader.stars()" />
-      @for (dan of reader.dans(); track dan.family) {
-        <span
-          tuiBadge
-          size="l"
-          class="dan"
-          [class.ln]="dan.family === 'ln'"
-          [attr.title]="'trainer.dan.hint' | transloco: { confidence: (dan.confidence * 100 | number: '1.0-0') }"
-        >
-          {{ 'trainer.dan.' + dan.family | transloco: { name: dan.name } }}
-        </span>
-      }
+      <app-skill-badges size="l" onImage [skill]="reader.skill()" [display]="skillDisplay()" [keyCount]="reader.keyCount()" />
       @if (reader.data()?.paths) {
         <button
           appearance="floating"

@@ -1,6 +1,13 @@
 <div appearance="floating" tuiCardLarge="compact">
   <header>
-    <h3 tuiTitle>{{ 'trainer.convert' | transloco: { number: number() } }}</h3>
+    <div class="heading">
+      <h3 tuiTitle>{{ 'trainer.convert' | transloco: { number: number() } }}</h3>
+      @if (convert().tasks.length > 0 && preview(); as skill) {
+        <div class="skill" [class.stale]="trainer.previewing()" [attr.aria-busy]="trainer.previewing()">
+          <app-skill-badges size="s" [skill]="skill" [display]="skillDisplay()" [keyCount]="previewKeys()" />
+        </div>
+      }
+    </div>
     <div class="actions">
       <button
         iconStart="@tui.plus"

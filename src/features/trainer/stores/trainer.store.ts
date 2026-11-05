@@ -1,7 +1,8 @@
 import { errorText } from '@shared/i18n';
 import { TranslocoService } from '@jsverse/transloco';
 import { effect, inject, untracked } from "@angular/core";
-import { OsuReaderStore } from "@entities/osu-reader";
+import { ConfigurationStore } from "@entities/configuration";
+import { OsuReaderStore, Skill } from "@entities/osu-reader";
 import { patchState, signalStore, withHooks, withMethods, withState } from "@ngrx/signals";
 import { NotifyService } from "@shared/services";
 import {
@@ -15,6 +16,7 @@ import {
     TrainerTaskParams,
     applicableConverts,
     skippedTasks,
+    taskSupportsMode,
 } from "../models/trainer.model";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
@@ -30,6 +32,13 @@ interface TrainerState {
     progress: number;
     /** Whether the system ffmpeg is there, needed to scale the video. */
     ffmpegAvailable: boolean;
+    /**
+     * The dan and MSD each convert would have, by its id (`null` if it can't
+     * be rated); only for mania maps, and not with the setting on `none`.
+     */
+    previews: Record<string, Skill | null>;
+    /** Whether `previews` are being estimated again; meanwhile they are the previous ones. */
+    previewing: boolean;
 }
 
 function newConvert(tasks: TrainerTask[] = []): TrainerConvert {
@@ -45,7 +54,12 @@ const initialState: TrainerState = {
     creating: false,
     progress: 0,
     ffmpegAvailable: false,
+    previews: {},
+    previewing: false,
 };
+
+/** Wait after the last change before estimating the previews again, e.g. while a rate is dragged. */
+const PREVIEW_DELAY_MS = 300;
 
 export const TrainerStore = signalStore(
     { providedIn: 'root' },
@@ -187,6 +201,7 @@ export const TrainerStore = signalStore(
     withHooks({
         onInit(store) {
             const reader = inject(OsuReaderStore);
+            const config = inject(ConfigurationStore);
 
             invoke<boolean>('is_ffmpeg_available')
                 .then(ffmpegAvailable => patchState(store, { ffmpegAvailable }))
@@ -221,6 +236,51 @@ export const TrainerStore = signalStore(
                     // Tasks for another mode (e.g. the key converter after picking an
                     // osu!standard map) stay: the list marks them, and they are skipped.
                 });
+            });
+
+            // The previews, again on every change of the map, the converts or the
+            // OD (the only stat that changes a mania map's skill).
+            let previewTimer: ReturnType<typeof setTimeout> | undefined;
+            let previewRequest = 0;
+            effect(() => {
+                const osuFilePath = reader.data()?.paths?.osu;
+                const mode = reader.originalMode();
+                const display = config.config()?.trainer.skill_display ?? 'dan';
+                const converts = store.converts();
+                const od = store.od().value;
+
+                clearTimeout(previewTimer);
+                const request = ++previewRequest;
+                if (!osuFilePath || mode !== 'mania' || display === 'none') {
+                    untracked(() => patchState(store, { previews: {}, previewing: false }));
+                    return;
+                }
+
+                untracked(() => patchState(store, { previewing: true }));
+                previewTimer = setTimeout(async () => {
+                    const difficulty = { hp: store.hp().value, cs: store.cs().value, od, ar: store.ar().value };
+                    try {
+                        const skills = await invoke<(Skill | null)[]>('preview_converts', {
+                            request: {
+                                osuFilePath,
+                                difficulty,
+                                // As `createMaps` sends them, but every convert, to keep the order.
+                                converts: converts.map(c => ({
+                                    tasks: c.tasks.filter(t => taskSupportsMode(t.task.type, mode)).map(t => ({ task: t.task })),
+                                })),
+                            },
+                        });
+                        if (request !== previewRequest) return;
+                        patchState(store, {
+                            previews: Object.fromEntries(converts.map((c, i) => [c.id, skills[i] ?? null])),
+                            previewing: false,
+                        });
+                    } catch (e) {
+                        if (request !== previewRequest) return;
+                        console.warn('preview_converts failed', e);
+                        patchState(store, { previews: {}, previewing: false });
+                    }
+                }, PREVIEW_DELAY_MS);
             });
         },
     }),

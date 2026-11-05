@@ -10,6 +10,7 @@ mod error;
 mod name_format;
 mod osz;
 mod paths;
+mod skill;
 mod state;
 #[cfg(test)]
 mod test_utils;
@@ -117,6 +118,7 @@ pub fn run() {
             commands::osu_reader::connect_osu_reader,
             commands::osu_reader::export::export_selected_osz,
             commands::trainer::run::run_trainer,
+            commands::trainer::preview::preview_converts,
             commands::trainer::naming::trainer_name_example,
             commands::packs::naming::pack_diff_names,
             commands::packs::naming::pack_name_example,

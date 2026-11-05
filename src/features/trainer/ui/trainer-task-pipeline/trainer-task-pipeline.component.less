@@ -8,6 +8,26 @@ header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 0.5rem;
+
+  .heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    min-inline-size: 0;
+  }
+
+  .skill {
+    display: flex;
+    gap: 0.25rem;
+    transition: opacity 150ms;
+
+    // The previous estimate, while the new one is on its way.
+    &.stale {
+      opacity: 0.5;
+    }
+  }
 
   .actions {
     display: flex;

@@ -63,8 +63,8 @@ export interface Dan {
     confidence: number;
 }
 
-/** Dans of a 4K, 6K or 7K mania map, at 1.0x and its own OD. */
-export interface BeatmapDan {
+/** The dans of a 4K, 6K or 7K mania map. */
+export interface Dans {
     /** The one Mania Tracker shows first. */
     primary: Dan;
     rice: Dan | null;
@@ -72,10 +72,23 @@ export interface BeatmapDan {
     ln: Dan | null;
 }
 
-/** Payload of `osu-beatmap-dan`, sent after the `osu-beatmap` of that map. */
-export interface DanUpdate {
+/** A map's MSD: MinaCalc's, or Prism's on 6K-8K. */
+export interface Msd {
+    overall: number;
+    /** Every skillset but the overall (`Stream`, `Jumpstream`, ... `LN`), in MinaCalc's order. */
+    skillsets: { name: string; value: number }[];
+}
+
+/** How hard a mania map is, from Mania Tracker's calculator; a 5K map has an MSD but no dan. */
+export interface Skill {
+    dan: Dans | null;
+    msd: Msd | null;
+}
+
+/** Payload of `osu-beatmap-skill`, sent after the `osu-beatmap` of that map. */
+export interface SkillUpdate {
     checksum: string;
-    dan: BeatmapDan;
+    skill: Skill;
 }
 
 export interface SelectedBeatmap {
@@ -84,8 +97,8 @@ export interface SelectedBeatmap {
     paths: BeatmapPaths | null;
     /** `null` if the `.osu` file could not be read. */
     attributes: BeatmapAttributes | null;
-    /** `null` until it arrives as `osu-beatmap-dan`, and for maps that can't be rated. */
-    dan: BeatmapDan | null;
+    /** At 1.0x: `null` until it arrives as `osu-beatmap-skill`, and for maps that can't be rated. */
+    skill: Skill | null;
 }
 
 export type OsuReaderStatus =

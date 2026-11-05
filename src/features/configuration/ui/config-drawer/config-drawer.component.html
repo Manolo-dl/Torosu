@@ -284,6 +284,16 @@
                 </section>
 
                 <section>
+                    <h3 tuiTitle="s">{{ 'settings.trainer.skill' | transloco }}</h3>
+                    <app-option-group
+                        [active]="skillDisplayIndex()"
+                        [options]="skillDisplayOptions"
+                        (activeChange)="setSkillDisplay($event)"
+                    />
+                    <span class="hint">{{ 'settings.trainer.skillHint' | transloco }}</span>
+                </section>
+
+                <section>
                     <h3 tuiTitle="s">{{ 'settings.trainer.rateChange' | transloco }}</h3>
                     <label tuiCell>
                         <span tuiTitle>

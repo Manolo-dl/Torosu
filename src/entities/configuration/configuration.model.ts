@@ -22,6 +22,8 @@ export interface TrainerConfig {
     open_osz: boolean;
     /** Template of the difficulty name, with placeholders like `{diff}` and `{rate}` (see `naming.rs`). */
     name_format: string;
+    /** What the trainer shows of how hard the selected map and each convert are; `dan` by default. */
+    skill_display: 'dan' | 'msd' | 'both' | 'none';
     /** Run the presets with keyboard shortcuts while osu! has the focus; off by default. */
     shortcuts_enabled: boolean;
     /** The shortcut of each preset that has one; none by default, so none of the game's is taken. */

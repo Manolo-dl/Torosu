@@ -8,6 +8,7 @@ pub mod naming;
 pub mod osu_fixups;
 pub mod pipeline;
 pub mod presets;
+pub mod preview;
 pub mod tasks;
 pub mod run;
 pub mod storyboard;

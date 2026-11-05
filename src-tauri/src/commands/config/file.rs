@@ -55,7 +55,21 @@ pub async fn update_config(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::commands::config::model::TrainerShortcut;
+    use crate::commands::config::model::{SkillDisplay, TrainerShortcut};
+
+    #[test]
+    fn skill_display_survives_the_file() {
+        let mut config = AppConfig::default();
+        assert_eq!(config.trainer.skill_display, SkillDisplay::Dan);
+        config.trainer.skill_display = SkillDisplay::Both;
+        let text = toml::to_string_pretty(&config).unwrap();
+        assert!(text.contains("skill_display = \"both\""), "{text}");
+        let read: AppConfig = toml::from_str(&text).unwrap();
+        assert_eq!(read.trainer.skill_display, SkillDisplay::Both);
+        // A file from before it was there.
+        let read: AppConfig = toml::from_str(&text.replace("skill_display = \"both\"", "")).unwrap();
+        assert_eq!(read.trainer.skill_display, SkillDisplay::Dan);
+    }
 
     #[test]
     fn shortcuts_survive_the_file() {

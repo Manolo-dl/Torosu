@@ -16,7 +16,7 @@ import {
 } from '../../models/trainer.model';
 import { TrainerStore } from '../../stores/trainer.store';
 import { ConfigurationStore } from '@entities/configuration';
-import { OsuReaderStore } from '@entities/osu-reader';
+import { OsuReaderStore, SkillBadgesComponent } from '@entities/osu-reader';
 import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDropList } from '@angular/cdk/drag-drop';
 import { TuiButton, TuiCheckbox, TuiDataList, TuiDropdown, TuiIcon, TuiInput, TuiNotificationDirective, TuiTitle } from '@taiga-ui/core';
 import { TuiCardLarge } from '@taiga-ui/layout';
@@ -32,7 +32,7 @@ interface DensityOption {
 /** The tasks of one convert. */
 @Component({
   selector: 'app-trainer-task-pipeline',
-  imports: [CdkDrag, CdkDropList, CdkDragHandle, FormsModule, TuiButton, TuiCardLarge, TuiCheckbox, TuiDataList, TuiDropdown, TuiIcon, TuiInput, TuiNotificationDirective, TuiTitle, TrainerNoteLengthComponent, OptionGroupComponent, TranslocoPipe],
+  imports: [CdkDrag, CdkDropList, CdkDragHandle, FormsModule, TuiButton, TuiCardLarge, TuiCheckbox, TuiDataList, TuiDropdown, TuiIcon, TuiInput, TuiNotificationDirective, TuiTitle, TrainerNoteLengthComponent, OptionGroupComponent, SkillBadgesComponent, TranslocoPipe],
   templateUrl: './trainer-task-pipeline.component.html',
   styleUrl: './trainer-task-pipeline.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -50,6 +50,15 @@ export class TrainerTaskPipelineComponent {
 
   /** The rate change sets the pitch itself (see the settings): no option to show. */
   readonly autoPitch = computed(() => this.config.config()?.trainer.auto_pitch ?? false);
+
+  readonly skillDisplay = computed(() => this.config.config()?.trainer.skill_display ?? 'dan');
+  /** The dan and MSD this convert would have; nothing until they are estimated. */
+  readonly preview = computed(() => this.trainer.previews()[this.convert().id] ?? null);
+  /** The key count the convert ends with, which tells MinaCalc's MSD from Prism's. */
+  readonly previewKeys = computed(() => {
+    const keys = this.convert().tasks.find(t => t.task.type === 'KeyConverter');
+    return keys?.task.type === 'KeyConverter' ? keys.task.params.targetKeys : this.sourceKeys();
+  });
 
   taskLabels = TASK_LABELS;
   availableTasks: TrainerTaskType[] = ['RateChange', 'SVNormalizer', 'FlnConverter', 'KeyConverter'];

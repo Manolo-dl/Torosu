@@ -65,7 +65,15 @@
       "shortcuts": "Keyboard shortcuts",
       "runShortcuts": "Run presets with shortcuts",
       "shortcutsWayland": "Not available on Wayland: an app can't listen to the keys while osu! has the focus",
-      "shortcutsHint": "Convert the map selected in osu! with a preset while you play. Set each preset's keys in the Trainer, none are set at first"
+      "shortcutsHint": "Convert the map selected in osu! with a preset while you play. Set each preset's keys in the Trainer, none are set at first",
+      "skill": "Difficulty estimate",
+      "skillHint": "What the trainer shows of how hard the selected map and each convert are, from Mania Tracker's calculator. Dans are for 4K, 6K and 7K maps; the MSD comes from MinaCalc, or from Prism on 6K-8K",
+      "skillDisplay": {
+        "dan": "Dan",
+        "msd": "MSD",
+        "both": "Both",
+        "none": "None"
+      }
     },
     "nameFormat": {
       "label": "Name format",
@@ -174,7 +182,11 @@
     "dan": {
       "rice": "Dan {{ name }}",
       "ln": "LN {{ name }}",
-      "hint": "Dan estimated by Mania Tracker at 1.0x, {{ confidence }}% confidence"
+      "hint": "Dan estimated by Mania Tracker, {{ confidence }}% confidence"
+    },
+    "msd": {
+      "badge": "MSD {{ value }}",
+      "hint": "Overall MSD, from {{ calc }}"
     },
     "difficulty": {
       "title": "Difficulty",

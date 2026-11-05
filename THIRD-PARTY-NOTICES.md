@@ -48,8 +48,9 @@ copy of osu-memory-reader:
 - Copyright (c) 2026 aleju03
 - License: MIT
 
-Torosu uses it to estimate the dan of the 4K, 6K and 7K mania maps selected in
-osu!. It is statically linked into the Torosu executable, and includes:
+Torosu uses it to estimate the dan and the MSD of mania maps, the one selected in
+osu! and the converts of the trainer. It is statically linked into the Torosu
+executable, and includes:
 
 - Estimators ported from
   [LeoBlackMT/osumania_map_analyser](https://github.com/LeoBlackMT/osumania_map_analyser),

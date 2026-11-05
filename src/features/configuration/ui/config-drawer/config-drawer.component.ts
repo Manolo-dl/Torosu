@@ -44,6 +44,7 @@ const DEFAULT_CONFIG: AppConfig = {
     auto_pitch: false,
     open_osz: true,
     name_format: DEFAULT_NAME_FORMAT,
+    skill_display: 'dan',
     shortcuts_enabled: false,
     shortcuts: [],
   },
@@ -98,6 +99,19 @@ export class ConfigDrawerComponent {
 
   setLanguage(index: number) {
     this.draft.update(draft => ({ ...draft, language: LANGUAGES[index].code }));
+  }
+
+  readonly skillDisplays = ['dan', 'msd', 'both', 'none'] as const;
+  readonly skillDisplayOptions: OptionGroupItem[] = this.skillDisplays.map(display => ({
+    label: `settings.trainer.skillDisplay.${display}`,
+    translate: true,
+  }));
+  readonly skillDisplayIndex = computed(() =>
+    Math.max(0, this.skillDisplays.indexOf(this.draft().trainer.skill_display ?? 'dan')),
+  );
+
+  setSkillDisplay(index: number) {
+    this.draft.update(draft => ({ ...draft, trainer: { ...draft.trainer, skill_display: this.skillDisplays[index] } }));
   }
 
   readonly trainerNameFormats: NameFormatPreset[] = [

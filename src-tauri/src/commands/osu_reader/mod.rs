@@ -1,4 +1,3 @@
-pub mod dan;
 pub mod export;
 
 use std::{sync::atomic::Ordering, thread, time::Duration};
@@ -7,9 +6,8 @@ use osu_memory_reader::{Beatmap, BeatmapAttributes, BeatmapPaths, Error, OsuRead
 use serde::Serialize;
 use tauri::{AppHandle, Emitter, Manager};
 
+use crate::skill::{self, Skill};
 use crate::state::{AppConfigState, OsuReaderState};
-
-use self::dan::BeatmapDan;
 
 /// How often the selected beatmap is read while osu! is open.
 const POLL_INTERVAL: Duration = Duration::from_millis(250);
@@ -24,17 +22,18 @@ pub struct SelectedBeatmap {
     pub paths: Option<BeatmapPaths>,
     /// `None` if the `.osu` file could not be read.
     pub attributes: Option<BeatmapAttributes>,
-    /// `None` until it is estimated (it arrives later as `osu-beatmap-dan`),
-    /// and for maps that can't be rated: only 4K, 6K and 7K mania maps are.
-    pub dan: Option<BeatmapDan>,
+    /// Its dan and MSD at 1.0x: `None` until they are estimated (they arrive
+    /// later as `osu-beatmap-skill`), and for maps that can't be rated, those
+    /// of other modes.
+    pub skill: Option<Skill>,
 }
 
-/// The dan of the beatmap `checksum`, sent to the frontend as `osu-beatmap-dan`
-/// after its `osu-beatmap`.
+/// The skill of the beatmap `checksum`, sent to the frontend as
+/// `osu-beatmap-skill` after its `osu-beatmap`.
 #[derive(Clone, Serialize)]
-pub struct DanUpdate {
+pub struct SkillUpdate {
     pub checksum: String,
-    pub dan: BeatmapDan,
+    pub skill: Skill,
 }
 
 /// State of the reader, sent to the frontend as `osu-reader-status`.
@@ -107,9 +106,9 @@ fn run(app: AppHandle) {
                 if beatmap.checksum != last_checksum {
                     last_checksum = beatmap.checksum.clone();
                     let selected = read_selected(&reader, beatmap);
-                    // Sent first: the dan takes longer than the star rating.
+                    // Sent first: the skill takes longer than the star rating.
                     set_beatmap(&app, selected.clone());
-                    estimate_dan(&app, &selected);
+                    estimate_skill(&app, &selected);
                 }
             }
             thread::sleep(POLL_INTERVAL);
@@ -140,28 +139,28 @@ fn read_selected(reader: &OsuReader, beatmap: Beatmap) -> SelectedBeatmap {
             .ok()
     });
 
-    SelectedBeatmap { beatmap, paths, attributes, dan: None }
+    SelectedBeatmap { beatmap, paths, attributes, skill: None }
 }
 
-/// Estimates the dan of `selected` and sends it, if it is still the selected
-/// beatmap. Blocks the poll loop meanwhile, which is fine: the beatmap that
-/// is selected when it ends is the next one read.
-fn estimate_dan(app: &AppHandle, selected: &SelectedBeatmap) {
+/// Estimates the skill of `selected` and sends it, if it is still the
+/// selected beatmap. Blocks the poll loop meanwhile, which is fine: the
+/// beatmap that is selected when it ends is the next one read.
+fn estimate_skill(app: &AppHandle, selected: &SelectedBeatmap) {
     let (Some(paths), Some(attributes)) = (&selected.paths, &selected.attributes) else { return };
-    if !dan::supported(attributes) {
+    if !skill::supported(attributes) {
         return;
     }
-    let Some(dan) = dan::estimate(&paths.osu) else { return };
+    let Some(skill) = skill::estimate_file(&paths.osu) else { return };
 
     let checksum = &selected.beatmap.checksum;
     let state = app.state::<OsuReaderState>();
     let mut snapshot = state.snapshot.lock().unwrap();
     match &mut snapshot.beatmap {
-        Some(current) if current.beatmap.checksum == *checksum => current.dan = Some(dan.clone()),
+        Some(current) if current.beatmap.checksum == *checksum => current.skill = Some(skill.clone()),
         _ => return,
     }
     drop(snapshot);
-    let _ = app.emit("osu-beatmap-dan", DanUpdate { checksum: checksum.clone(), dan });
+    let _ = app.emit("osu-beatmap-skill", SkillUpdate { checksum: checksum.clone(), skill });
 }
 
 fn set_status(app: &AppHandle, status: ReaderStatus) {

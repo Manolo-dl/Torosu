@@ -100,6 +100,11 @@ pub struct TrainerConfig {
     #[serde(default = "default_name_format")]
     pub name_format: String,
 
+    /// What the trainer shows of how hard the selected map and each convert
+    /// are (see `skill`).
+    #[serde(default)]
+    pub skill_display: SkillDisplay,
+
     /// Runs the presets with a shortcut while osu! has the focus. Off by
     /// default, and no shortcut is set: one of the game's would be taken.
     #[serde(default = "default_false")]
@@ -108,6 +113,19 @@ pub struct TrainerConfig {
     /// The shortcut of each preset that has one.
     #[serde(default)]
     pub shortcuts: Vec<TrainerShortcut>,
+}
+
+/// How hard a mania map is, as the trainer shows it.
+#[derive(Deserialize, Serialize, Clone, Copy, Default, PartialEq, Eq, Debug)]
+#[serde(rename_all = "lowercase")]
+pub enum SkillDisplay {
+    /// Mania Tracker's dan: only 4K, 6K and 7K maps have one.
+    #[default]
+    Dan,
+    /// The MSD: MinaCalc's, or Prism's on 6K-8K.
+    Msd,
+    Both,
+    None,
 }
 
 /// A preset run on the map selected in osu! with a keyboard shortcut.
@@ -177,6 +195,7 @@ impl Default for TrainerConfig {
             auto_pitch: default_false(),
             open_osz: default_true(),
             name_format: default_name_format(),
+            skill_display: SkillDisplay::default(),
             shortcuts_enabled: default_false(),
             shortcuts: Vec::new(),
         }
