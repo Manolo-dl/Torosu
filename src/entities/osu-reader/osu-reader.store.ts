@@ -50,7 +50,6 @@ export const OsuReaderStore = signalStore(
         originalMode: computed(() => store.data()?.attributes?.originalMode ?? null),
         /** Dan and MSD at 1.0x; `null` while they are estimated. */
         skill: computed(() => store.data()?.skill ?? null),
-        keyCount: computed(() => store.data()?.attributes?.keyCount ?? null),
     })),
 
     withMethods((store, notify = inject(NotifyService), transloco = inject(TranslocoService)) => {

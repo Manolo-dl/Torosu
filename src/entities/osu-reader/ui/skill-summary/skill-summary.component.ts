@@ -19,7 +19,7 @@ interface Delta {
  * value in its colour with the skillset it comes from. Nothing for what the
  * map doesn't have (a 5K map has no dan).
  *
- * `<app-skill-summary size="l" [skill]="reader.skill()" display="both" [keyCount]="4" />`
+ * `<app-skill-summary size="l" [skill]="reader.skill()" display="both" />`
  */
 @Component({
   selector: 'app-skill-summary',
@@ -35,8 +35,6 @@ interface Delta {
 export class SkillSummaryComponent {
   readonly skill = input.required<Skill | null>();
   readonly display = input.required<SkillDisplay>();
-  /** Of the map rated: tells MinaCalc's MSD from Prism's. */
-  readonly keyCount = input<number | null>(null);
   readonly size = input<'m' | 'l'>('m');
   /** Over a beatmap background: light text on dark, in both themes. */
   readonly onImage = input(false, { transform: booleanAttribute });
@@ -48,6 +46,8 @@ export class SkillSummaryComponent {
   readonly showDan = computed(() => this.display() === 'dan' || this.display() === 'both');
   readonly showMsd = computed(() => this.display() === 'msd' || this.display() === 'both');
   readonly emblemSize = computed(() => (this.size() === 'l' ? 46 : 38));
+  /** Of the map rated, not the one shown now: picks the badges and tells MinaCalc's MSD from Prism's. */
+  readonly keyCount = computed(() => this.skill()?.keyCount ?? null);
 
   /** The primary dan first, then the other one of a hybrid map. */
   readonly dans = computed((): Dan[] => {

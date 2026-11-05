@@ -64,6 +64,8 @@ pub struct Msd {
 #[derive(Clone, Debug, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Skill {
+    /// Of the map rated: a convert can change it.
+    pub key_count: i32,
     pub dan: Option<Dans>,
     pub msd: Option<Msd>,
 }
@@ -96,7 +98,7 @@ pub fn estimate(osu: &str, rate: f64) -> Option<Skill> {
         ln: estimate.ln.as_ref().map(dan),
     });
     let msd = estimate.msd.as_deref().and_then(msd);
-    (dan.is_some() || msd.is_some()).then_some(Skill { dan, msd })
+    (dan.is_some() || msd.is_some()).then_some(Skill { key_count: estimate.key_count, dan, msd })
 }
 
 fn dan(dan: &dan_calc::Dan) -> Dan {
@@ -176,6 +178,7 @@ pub mod tests {
         assert!(dan.primary.value > 0.0 && !dan.primary.name.is_empty());
         assert_eq!(dan.primary.name, format!("{}{}", dan.primary.label, dan.primary.variant.as_deref().unwrap_or("")));
 
+        assert_eq!(skill.key_count, 4);
         let msd = skill.msd.expect("4K maps have an MSD");
         assert!(msd.overall > 0.0);
         assert!(msd.skillsets.iter().any(|s| s.name == "Stream"));

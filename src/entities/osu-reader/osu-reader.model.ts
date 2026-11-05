@@ -85,6 +85,8 @@ export interface Msd {
 
 /** How hard a mania map is, from Mania Tracker's calculator; a 5K map has an MSD but no dan. */
 export interface Skill {
+    /** Of the map rated: a convert can change it. */
+    keyCount: number;
     dan: Dans | null;
     msd: Msd | null;
 }

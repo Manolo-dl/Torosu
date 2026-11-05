@@ -52,12 +52,19 @@ export class TrainerTaskPipelineComponent {
   readonly autoPitch = computed(() => this.config.config()?.trainer.auto_pitch ?? false);
 
   readonly skillDisplay = computed(() => this.config.config()?.trainer.skill_display ?? 'dan');
-  /** The dan and MSD this convert would have; nothing until they are estimated. */
-  readonly preview = computed(() => this.trainer.previews()[this.convert().id] ?? null);
-  /** The key count the convert ends with, which tells MinaCalc's MSD from Prism's. */
-  readonly previewKeys = computed(() => {
+  /** The key count the convert ends with. */
+  readonly targetKeys = computed(() => {
     const keys = this.convert().tasks.find(t => t.task.type === 'KeyConverter');
     return keys?.task.type === 'KeyConverter' ? keys.task.params.targetKeys : this.sourceKeys();
+  });
+  /**
+   * The dan and MSD this convert would have; nothing until they are estimated.
+   * One for another key count, from before the key converter changed, goes
+   * at once: it would show a 7K dan on a 9K convert until the new one came.
+   */
+  readonly preview = computed(() => {
+    const skill = this.trainer.previews()[this.convert().id] ?? null;
+    return skill && skill.keyCount === this.targetKeys() ? skill : null;
   });
 
   taskLabels = TASK_LABELS;

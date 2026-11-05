@@ -12,7 +12,7 @@
     </div>
 
     <div class="side">
-      <app-skill-summary size="l" onImage [skill]="reader.skill()" [display]="skillDisplay()" [keyCount]="reader.keyCount()" />
+      <app-skill-summary size="l" onImage [skill]="reader.skill()" [display]="skillDisplay()" />
       @let current = mode();
       @if (current !== null) {
         <tui-icon
