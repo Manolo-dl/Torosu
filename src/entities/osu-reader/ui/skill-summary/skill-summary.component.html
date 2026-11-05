@@ -19,7 +19,7 @@
   <div class="item" [attr.title]="msdHint()">
     <span class="msd-value" [style.background]="msdBg()" [style.color]="msdFg()">{{ msd.overall | number: '1.2-2' }}</span>
     <div class="text">
-      <span class="caption">MSD</span>
+      <span class="caption">MSD · {{ calculator() }}</span>
       <span class="value">{{ topSkillset() }}</span>
     </div>
     @if (msdDelta(); as change) {

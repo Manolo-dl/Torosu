@@ -46,7 +46,7 @@ export class SkillSummaryComponent {
   readonly showDan = computed(() => this.display() === 'dan' || this.display() === 'both');
   readonly showMsd = computed(() => this.display() === 'msd' || this.display() === 'both');
   readonly emblemSize = computed(() => (this.size() === 'l' ? 46 : 38));
-  /** Of the map rated, not the one shown now: picks the badges and tells MinaCalc's MSD from Prism's. */
+  /** Of the map rated, not the one shown now: picks the badges. */
   readonly keyCount = computed(() => this.skill()?.keyCount ?? null);
 
   /** The primary dan first, then the other one of a hybrid map. */
@@ -67,34 +67,51 @@ export class SkillSummaryComponent {
     return skillsets.reduce<{ name: string; value: number } | null>((top, s) => (!top || s.value > top.value ? s : top), null)?.name ?? '';
   });
 
+  /** `MinaCalc` or `Prism`. */
+  readonly calculator = computed(() => (this.msd()?.calculator === 'prism' ? 'Prism' : 'MinaCalc'));
+
   readonly msdHint = computed(() => {
     const msd = this.msd();
     if (!msd) return '';
-    const keys = this.keyCount();
-    const calc = keys !== null && keys >= 6 && keys <= 8 ? 'Prism' : 'MinaCalc';
     const lines = msd.skillsets.map(s => `${s.name}: ${s.value.toFixed(2)}`);
-    return [this.transloco.translate('trainer.msd.hint', { calc }), ...lines].join('\n');
+    return [this.transloco.translate('trainer.msd.hint', { calc: this.calculator() }), ...lines].join('\n');
   });
 
+  /** Only against an MSD on the same scale (see `sameMsdScale`). */
   readonly msdDelta = computed(() => {
-    const [now, before] = [this.msd()?.overall, this.compareTo()?.msd?.overall];
-    return now === undefined || before === undefined ? null : delta(now - before, 2);
+    const [skill, other] = [this.skill(), this.compareTo()];
+    if (!skill?.msd || !other?.msd || !sameMsdScale(skill, other)) return null;
+    return delta(skill.msd.overall - other.msd.overall, 2);
   });
 
   danHint(dan: Dan): string {
     return this.transloco.translate('trainer.dan.hint', { confidence: Math.round(dan.confidence * 100) });
   }
 
-  /** Against the compared map's dan of the same family (rice with rice, LN with LN). */
+  /**
+   * Against the compared map's dan of the same family (rice with rice, LN with
+   * LN) and keymode: 4K, 6K and 7K dans are different courses, not one scale.
+   */
   danDelta(dan: Dan): Delta | null {
-    const other = this.compareTo()?.dan;
-    const before = dan.family === 'rice' ? other?.rice : other?.ln;
+    const other = this.compareTo();
+    if (!other || other.keyCount !== this.keyCount()) return null;
+    const before = dan.family === 'rice' ? other.dan?.rice : other.dan?.ln;
     return before ? delta(dan.value - before.value, 1) : null;
   }
 
   deltaHint(delta: Delta): string {
     return this.transloco.translate('trainer.skill.vsMap', { delta: delta.text });
   }
+}
+
+/**
+ * Whether the MSDs of `a` and `b` are on the same scale: from the same
+ * calculator, and for MinaCalc from the same build, as dan-calc picks them
+ * (0.72.3 on 4K, 0.75.0 on the other keymodes Prism doesn't rate).
+ */
+function sameMsdScale(a: Skill, b: Skill): boolean {
+  if (a.msd?.calculator !== b.msd?.calculator) return false;
+  return a.msd?.calculator === 'prism' || (a.keyCount === 4) === (b.keyCount === 4);
 }
 
 function delta(change: number, digits: number): Delta | null {

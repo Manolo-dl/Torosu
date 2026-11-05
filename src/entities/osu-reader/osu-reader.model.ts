@@ -78,6 +78,8 @@ export interface Dans {
 
 /** A map's MSD: MinaCalc's, or Prism's on 6K-8K. */
 export interface Msd {
+    /** Each gives its own scale: two MSDs only compare when the same one gives both. */
+    calculator: 'minaCalc' | 'prism';
     overall: number;
     /** Every skillset but the overall (`Stream`, `Jumpstream`, ... `LN`), in MinaCalc's order. */
     skillsets: { name: string; value: number }[];

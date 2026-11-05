@@ -50,10 +50,30 @@ pub struct Skillset {
     pub value: f64,
 }
 
+/// What gives a map's MSD. Their numbers are on scales of their own, so two
+/// MSDs only compare when the same one gives both.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub enum Calculator {
+    /// Etterna's: 0.72.3 on 4K, 0.75.0 told the key count on the others.
+    MinaCalc,
+    /// Mania Tracker's, for the 6K, 7K and 8K MinaCalc was never built for.
+    Prism,
+}
+
+impl Calculator {
+    /// The one dan-calc rates `key_count` keys with (`uses_prism` in its
+    /// chart-pipeline).
+    fn of(key_count: i32) -> Self {
+        if (6..=8).contains(&key_count) { Calculator::Prism } else { Calculator::MinaCalc }
+    }
+}
+
 /// A map's MSD.
 #[derive(Clone, Debug, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Msd {
+    pub calculator: Calculator,
     pub overall: f64,
     /// Every skillset but the overall, in MinaCalc's order.
     pub skillsets: Vec<Skillset>,
@@ -97,7 +117,7 @@ pub fn estimate(osu: &str, rate: f64) -> Option<Skill> {
         rice: estimate.rice.as_ref().map(dan),
         ln: estimate.ln.as_ref().map(dan),
     });
-    let msd = estimate.msd.as_deref().and_then(msd);
+    let msd = estimate.msd.as_deref().and_then(|values| msd(values, Calculator::of(estimate.key_count)));
     (dan.is_some() || msd.is_some()).then_some(Skill { key_count: estimate.key_count, dan, msd })
 }
 
@@ -116,14 +136,14 @@ fn dan(dan: &dan_calc::Dan) -> Dan {
     }
 }
 
-fn msd(values: &[(String, f64)]) -> Option<Msd> {
+fn msd(values: &[(String, f64)], calculator: Calculator) -> Option<Msd> {
     let overall = values.iter().find(|(name, _)| name == "Overall").map(|(_, v)| *v).filter(|v| v.is_finite())?;
     let skillsets = values
         .iter()
         .filter(|(name, value)| name != "Overall" && value.is_finite())
         .map(|(name, value)| Skillset { name: name.clone(), value: *value })
         .collect();
-    Some(Msd { overall, skillsets })
+    Some(Msd { calculator, overall, skillsets })
 }
 
 #[cfg(test)]
@@ -198,6 +218,14 @@ pub mod tests {
     fn no_dan_on_5k() {
         let osu = stream_map(5);
         assert!(estimate(&osu, 1.0).is_none_or(|skill| skill.dan.is_none()));
+    }
+
+    #[test]
+    fn msd_calculator_by_keymode() {
+        for (keys, calculator) in [(4, Calculator::MinaCalc), (7, Calculator::Prism), (9, Calculator::MinaCalc)] {
+            let msd = estimate(&stream_map(keys), 1.0).and_then(|skill| skill.msd).expect("the stream has an MSD");
+            assert_eq!(msd.calculator, calculator, "{keys}K");
+        }
     }
 
     #[test]
