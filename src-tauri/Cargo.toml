@@ -53,7 +53,9 @@ rustls = { version = "0.23", default-features = false, features = ["ring"] }
 vorbis_rs = "0.5.6"
 osu-memory-reader = { version = "0.2.0", features = ["serde", "difficulty"] }
 # Mania Tracker's dan calculator. Not on crates.io: pinned to a commit.
-dan-calc = { git = "https://github.com/aleju03/mania-hub", rev = "fdb619f3afa18a14e6a69d061a6c35af156aab31" }
+# `aot`: MinaCalc's wasm is compiled when Torosu is built, so there is no
+# compiler (cranelift) in the binary and no wait on the first map rated.
+dan-calc = { git = "https://github.com/aleju03/mania-hub", rev = "1edb4c3cc7664c9cb660b6d028fce92317f0c891", default-features = false, features = ["aot"] }
 
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration
@@ -99,8 +101,8 @@ opt-level = 3
 [profile.dev.package.soundtouch-ffi]
 opt-level = 3
 
-# The dan estimate (dan-calc) runs on every mania beatmap selected in osu!:
-# its estimators, and cranelift, which compiles MinaCalc's wasm the first time.
+# The dan estimate (dan-calc) runs on every mania beatmap selected in osu!,
+# and on every convert previewed in the trainer.
 [profile.release.package.chart-pipeline]
 opt-level = 3
 
@@ -128,9 +130,6 @@ opt-level = 3
 [profile.release.package.jsmath]
 opt-level = 3
 
-[profile.release.package.cranelift-codegen]
-opt-level = 3
-
 [profile.dev.package.chart-pipeline]
 opt-level = 3
 
@@ -156,12 +155,6 @@ opt-level = 3
 opt-level = 3
 
 [profile.dev.package.jsmath]
-opt-level = 3
-
-[profile.dev.package.cranelift-codegen]
-opt-level = 3
-
-[profile.dev.package.wasmtime]
 opt-level = 3
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]

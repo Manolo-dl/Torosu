@@ -71,11 +71,6 @@ pub fn connect_osu_reader(app: AppHandle, state: tauri::State<'_, OsuReaderState
             .name("osu-reader".into())
             .spawn(move || run(app))
             .map_err(|e| format!("failed to start the osu! reader: {e}"))?;
-        // While the reader looks for osu!: then the first map selected is
-        // rated without waiting for MinaCalc to compile.
-        if let Err(e) = thread::Builder::new().name("skill-warm-up".into()).spawn(skill::warm_up) {
-            log::warn!("could not warm up the dan calculator: {e}");
-        }
     }
 
     Ok(snapshot)

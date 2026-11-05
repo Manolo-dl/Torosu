@@ -101,40 +101,6 @@ pub fn estimate(osu: &str, rate: f64) -> Option<Skill> {
     (dan.is_some() || msd.is_some()).then_some(Skill { key_count: estimate.key_count, dan, msd })
 }
 
-/// Rates a short 4K and a short 7K map, so the MinaCalc builds they use are
-/// compiled (~0.5 s) before the first map that needs them. Their compiled
-/// code is shared by every thread; call it on one of its own.
-pub fn warm_up() {
-    let start = std::time::Instant::now();
-    for keys in [4, 7] {
-        let _ = estimate(&short_map(keys), 1.0);
-    }
-    log::debug!("dan calculator warmed up in {:?}", start.elapsed());
-}
-
-/// A `keys`K map of a minute at 180 BPM: 1/4 streams with a jump and a
-/// chord every beat, so every estimator has something to rate.
-fn short_map(keys: u32) -> String {
-    let mut osu = format!(
-        "osu file format v14\n\n[General]\nMode: 3\n\n[Difficulty]\nHPDrainRate:8\nCircleSize:{keys}\n\
-         OverallDifficulty:8\nApproachRate:5\nSliderMultiplier:1\nSliderTickRate:1\n\n\
-         [TimingPoints]\n1000,333.333333333333,4,2,0,100,1,0\n\n[HitObjects]\n"
-    );
-    let x = |column: u32| (column * 512 + 256) / keys;
-    for i in 0..720u32 {
-        let time = (1000.0 + f64::from(i) * 333.333_333_333_333 / 4.0).round();
-        let columns: Vec<u32> = match i % 4 {
-            0 => (0..keys).step_by(2).collect(),
-            2 => vec![i / 4 % keys, (i / 4 + keys / 2) % keys],
-            _ => vec![(i * 3) % keys],
-        };
-        for column in columns {
-            osu.push_str(&format!("{},192,{time},1,0,0:0:0:0:\n", x(column)));
-        }
-    }
-    osu
-}
-
 fn dan(dan: &dan_calc::Dan) -> Dan {
     let family = match dan.family {
         dan_calc::Family::Rice => Family::Rice,
@@ -232,14 +198,6 @@ pub mod tests {
     fn no_dan_on_5k() {
         let osu = stream_map(5);
         assert!(estimate(&osu, 1.0).is_none_or(|skill| skill.dan.is_none()));
-    }
-
-    #[test]
-    fn warm_up_maps_are_rated() {
-        for keys in [4, 7] {
-            let skill = estimate(&short_map(keys), 1.0).expect("the warm-up map is rated");
-            assert_eq!(skill.key_count, keys as i32);
-        }
     }
 
     #[test]
