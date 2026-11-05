@@ -1,7 +1,7 @@
 @if (showDan()) {
   @for (dan of dans(); track dan.family) {
     <div class="item" [attr.title]="danHint(dan)">
-      <app-dan-emblem [dan]="dan" [size]="emblemSize()" />
+      <app-dan-emblem [dan]="dan" [size]="emblemSize()" [keyCount]="keyCount()" />
       <div class="text">
         <span class="caption">{{ (dan.family === 'ln' ? 'trainer.skill.lnDan' : 'trainer.skill.dan') | transloco }}</span>
         <span class="value">{{ dan.name }}</span>

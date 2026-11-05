@@ -58,6 +58,15 @@ executable, and includes:
 - MinaCalc compiled to WebAssembly, from [Etterna](https://github.com/etternagame/etterna),
   Copyright (c) 2016-2023 Etterna, MIT License.
 
+### Dan badges
+
+The dan badges in `src/assets/images/dans/` (and `assets/images/dans/` in the
+installed app) are Mania Tracker's, from `public/images/dans/` in
+<https://github.com/aleju03/mania-hub> (commit `3628364`), and are used with
+the permission of its author, aleju03. They are drawn after the marks of the
+dan courses they stand for: the 4K reform and LN dans, JinJin's 7K dans, and
+Arkman's and sunnyxxy's 6K dans. They are not covered by Torosu's MIT License.
+
 The MIT License of each of them reads:
 
 > Permission is hereby granted, free of charge, to any person obtaining a copy
