@@ -1,3 +1,4 @@
+pub mod dan;
 pub mod export;
 
 use std::{sync::atomic::Ordering, thread, time::Duration};
@@ -7,6 +8,8 @@ use serde::Serialize;
 use tauri::{AppHandle, Emitter, Manager};
 
 use crate::state::{AppConfigState, OsuReaderState};
+
+use self::dan::BeatmapDan;
 
 /// How often the selected beatmap is read while osu! is open.
 const POLL_INTERVAL: Duration = Duration::from_millis(250);
@@ -21,6 +24,17 @@ pub struct SelectedBeatmap {
     pub paths: Option<BeatmapPaths>,
     /// `None` if the `.osu` file could not be read.
     pub attributes: Option<BeatmapAttributes>,
+    /// `None` until it is estimated (it arrives later as `osu-beatmap-dan`),
+    /// and for maps that can't be rated: only 4K, 6K and 7K mania maps are.
+    pub dan: Option<BeatmapDan>,
+}
+
+/// The dan of the beatmap `checksum`, sent to the frontend as `osu-beatmap-dan`
+/// after its `osu-beatmap`.
+#[derive(Clone, Serialize)]
+pub struct DanUpdate {
+    pub checksum: String,
+    pub dan: BeatmapDan,
 }
 
 /// State of the reader, sent to the frontend as `osu-reader-status`.
@@ -92,7 +106,10 @@ fn run(app: AppHandle) {
             if let Ok(Some(beatmap)) = reader.beatmap() {
                 if beatmap.checksum != last_checksum {
                     last_checksum = beatmap.checksum.clone();
-                    set_beatmap(&app, read_selected(&reader, beatmap));
+                    let selected = read_selected(&reader, beatmap);
+                    // Sent first: the dan takes longer than the star rating.
+                    set_beatmap(&app, selected.clone());
+                    estimate_dan(&app, &selected);
                 }
             }
             thread::sleep(POLL_INTERVAL);
@@ -123,7 +140,28 @@ fn read_selected(reader: &OsuReader, beatmap: Beatmap) -> SelectedBeatmap {
             .ok()
     });
 
-    SelectedBeatmap { beatmap, paths, attributes }
+    SelectedBeatmap { beatmap, paths, attributes, dan: None }
+}
+
+/// Estimates the dan of `selected` and sends it, if it is still the selected
+/// beatmap. Blocks the poll loop meanwhile, which is fine: the beatmap that
+/// is selected when it ends is the next one read.
+fn estimate_dan(app: &AppHandle, selected: &SelectedBeatmap) {
+    let (Some(paths), Some(attributes)) = (&selected.paths, &selected.attributes) else { return };
+    if !dan::supported(attributes) {
+        return;
+    }
+    let Some(dan) = dan::estimate(&paths.osu) else { return };
+
+    let checksum = &selected.beatmap.checksum;
+    let state = app.state::<OsuReaderState>();
+    let mut snapshot = state.snapshot.lock().unwrap();
+    match &mut snapshot.beatmap {
+        Some(current) if current.beatmap.checksum == *checksum => current.dan = Some(dan.clone()),
+        _ => return,
+    }
+    drop(snapshot);
+    let _ = app.emit("osu-beatmap-dan", DanUpdate { checksum: checksum.clone(), dan });
 }
 
 fn set_status(app: &AppHandle, status: ReaderStatus) {

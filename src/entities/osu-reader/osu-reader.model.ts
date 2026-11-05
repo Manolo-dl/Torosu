@@ -51,12 +51,41 @@ export interface BeatmapAttributes {
     keyCount: number | null;
 }
 
+/** A dan from Mania Tracker's calculator, e.g. `6++` (6.37). */
+export interface Dan {
+    /** Rice and LN dans use the same names (`1` ... `10`, `alpha` ... `zeta`). */
+    family: 'rice' | 'ln';
+    /** `6++`, `zeta-`. */
+    name: string;
+    /** The dan as a number, for comparing. */
+    value: number;
+    /** How sure the estimator is, from 0 to 1. */
+    confidence: number;
+}
+
+/** Dans of a 4K, 6K or 7K mania map, at 1.0x and its own OD. */
+export interface BeatmapDan {
+    /** The one Mania Tracker shows first. */
+    primary: Dan;
+    rice: Dan | null;
+    /** A hybrid map has both a rice and an LN dan. */
+    ln: Dan | null;
+}
+
+/** Payload of `osu-beatmap-dan`, sent after the `osu-beatmap` of that map. */
+export interface DanUpdate {
+    checksum: string;
+    dan: BeatmapDan;
+}
+
 export interface SelectedBeatmap {
     beatmap: OsuBeatmap;
     /** `null` if the osu! folder was not found. */
     paths: BeatmapPaths | null;
     /** `null` if the `.osu` file could not be read. */
     attributes: BeatmapAttributes | null;
+    /** `null` until it arrives as `osu-beatmap-dan`, and for maps that can't be rated. */
+    dan: BeatmapDan | null;
 }
 
 export type OsuReaderStatus =

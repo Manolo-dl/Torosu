@@ -52,6 +52,8 @@ reqwest = { version = "0.13.5", default-features = false, features = ["rustls-no
 rustls = { version = "0.23", default-features = false, features = ["ring"] }
 vorbis_rs = "0.5.6"
 osu-memory-reader = { version = "0.2.0", features = ["serde", "difficulty"] }
+# Mania Tracker's dan calculator. Not on crates.io: pinned to a commit.
+dan-calc = { git = "https://github.com/aleju03/mania-hub", rev = "995b42ef1a8dcc99cb0bd95aaf6c6ae4d69c5eeb" }
 
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration
@@ -95,6 +97,75 @@ opt-level = 3
 opt-level = 3
 
 [profile.dev.package.soundtouch-ffi]
+opt-level = 3
+
+# The dan estimate (dan-calc) runs on every mania beatmap selected in osu!:
+# its estimators, and cranelift, which compiles MinaCalc's wasm the first time.
+[profile.release.package.chart-pipeline]
+opt-level = 3
+
+[profile.release.package.leoblack-estimators]
+opt-level = 3
+
+[profile.release.package.leoblack-rework]
+opt-level = 3
+
+[profile.release.package.leoblack-patterns]
+opt-level = 3
+
+[profile.release.package.leoblack-ett]
+opt-level = 3
+
+[profile.release.package.dan-core]
+opt-level = 3
+
+[profile.release.package.prism]
+opt-level = 3
+
+[profile.release.package.ln-skill]
+opt-level = 3
+
+[profile.release.package.jsmath]
+opt-level = 3
+
+[profile.release.package.cranelift-codegen]
+opt-level = 3
+
+[profile.dev.package.chart-pipeline]
+opt-level = 3
+
+[profile.dev.package.leoblack-estimators]
+opt-level = 3
+
+[profile.dev.package.leoblack-rework]
+opt-level = 3
+
+[profile.dev.package.leoblack-patterns]
+opt-level = 3
+
+[profile.dev.package.leoblack-ett]
+opt-level = 3
+
+[profile.dev.package.dan-core]
+opt-level = 3
+
+[profile.dev.package.prism]
+opt-level = 3
+
+[profile.dev.package.ln-skill]
+opt-level = 3
+
+[profile.dev.package.jsmath]
+opt-level = 3
+# Its timsort port computes `stack_size - 3` on a usize, which underflows (and
+# panics with overflow checks) when there are fewer than 3 runs; wrapping, as
+# in release, gives the right result.
+overflow-checks = false
+
+[profile.dev.package.cranelift-codegen]
+opt-level = 3
+
+[profile.dev.package.wasmtime]
 opt-level = 3
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]

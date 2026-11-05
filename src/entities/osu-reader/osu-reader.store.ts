@@ -1,6 +1,6 @@
 import { errorText } from '@shared/i18n';
 import { patchState, signalStore, withComputed, withMethods, withState } from "@ngrx/signals";
-import { OsuReaderSnapshot, OsuReaderStatus, SelectedBeatmap } from "./osu-reader.model";
+import { Dan, DanUpdate, OsuReaderSnapshot, OsuReaderStatus, SelectedBeatmap } from "./osu-reader.model";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { computed, inject } from "@angular/core";
@@ -48,6 +48,13 @@ export const OsuReaderStore = signalStore(
         stars: computed(() => store.data()?.attributes?.stars ?? 0),
         /** Mode the map was made for; `null` if its `.osu` file could not be read. */
         originalMode: computed(() => store.data()?.attributes?.originalMode ?? null),
+        /** The primary dan first, then the other one of a hybrid map; empty while it is estimated. */
+        dans: computed((): Dan[] => {
+            const dan = store.data()?.dan;
+            if (!dan) return [];
+            const other = dan.primary.family === 'rice' ? dan.ln : dan.rice;
+            return other ? [dan.primary, other] : [dan.primary];
+        }),
     })),
 
     withMethods((store, notify = inject(NotifyService), transloco = inject(TranslocoService)) => {
@@ -85,6 +92,13 @@ export const OsuReaderStore = signalStore(
         function setBeatmap(data: SelectedBeatmap | null) {
             patchState(store, { data });
             loadBackground(data?.paths?.background ?? null);
+        }
+
+        function setDan({ checksum, dan }: DanUpdate) {
+            const data = store.data();
+            // Late, for a beatmap that is no longer selected.
+            if (data?.beatmap.checksum !== checksum) return;
+            patchState(store, { data: { ...data, dan } });
         }
 
         function setStatus(status: OsuReaderStatus) {
@@ -140,6 +154,7 @@ export const OsuReaderStore = signalStore(
                     // Listen first: the snapshot covers what happened before.
                     await listen<OsuReaderStatus>('osu-reader-status', event => setStatus(event.payload));
                     await listen<SelectedBeatmap>('osu-beatmap', event => setBeatmap(event.payload));
+                    await listen<DanUpdate>('osu-beatmap-dan', event => setDan(event.payload));
 
                     // An event that arrived meanwhile is newer than the snapshot.
                     const snapshot = await invoke<OsuReaderSnapshot>('connect_osu_reader');

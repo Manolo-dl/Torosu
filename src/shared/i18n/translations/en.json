@@ -171,6 +171,11 @@
     "addConvert": "Add convert",
     "mappedBy": "mapped by {{ mapper }}",
     "exportOsz": "Export as .osz",
+    "dan": {
+      "rice": "Dan {{ name }}",
+      "ln": "LN {{ name }}",
+      "hint": "Dan estimated by Mania Tracker at 1.0x, {{ confidence }}% confidence"
+    },
     "difficulty": {
       "title": "Difficulty",
       "lock": "Lock",
