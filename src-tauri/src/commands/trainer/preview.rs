@@ -1,9 +1,6 @@
 //! The skill (dan and MSD) each convert would have, shown before making them.
 
-use std::{
-    path::{Path, PathBuf},
-    sync::{Arc, Mutex, OnceLock},
-};
+use std::{path::PathBuf, sync::Arc};
 
 use futures_util::future::join_all;
 use rosu_map::section::general::GameMode;
@@ -11,7 +8,6 @@ use tauri::{AppHandle, Manager};
 
 use crate::{
     commands::trainer::{
-        accents::Accents,
         model::{RateChangeParams, RunTrainerRequest, TrainerTask, TrainerTaskParams},
         pipeline,
         run::{self, Source},
@@ -78,35 +74,14 @@ fn rate(source: &Source, tasks: &[TrainerTask]) -> anyhow::Result<Option<Skill>>
     let tasks: Vec<&TrainerTask> =
         tasks.iter().filter(|t| timed_after_rate || !matches!(t.task, TrainerTaskParams::RateChange(_))).collect();
 
-    let accents = OnceLock::new();
     let mut beatmap = source.beatmap.clone();
-    pipeline::run(&mut beatmap, tasks, || accents.get_or_init(|| cached_accents(&source.audio_path())).as_ref().as_ref())?;
+    pipeline::run(&mut beatmap, tasks, || source.accents())?;
     if timed_after_rate {
         let params = RateChangeParams { rate: 1.0 / rate, adjust_pitch: false, scale_storyboard: false, scale_video: false };
         rate_change::apply(&mut beatmap, &params)?;
     }
 
     Ok(skill::estimate(&beatmap.encode_to_string()?, rate))
-}
-
-/// The accents of the audio at `path`, for the key converter. Kept for the
-/// last audio: the preview runs again on every change of a task, and reading
-/// them decodes the whole song.
-fn cached_accents(path: &Path) -> Arc<Option<Accents>> {
-    static CACHE: Mutex<Option<(PathBuf, Arc<Option<Accents>>)>> = Mutex::new(None);
-    if let Some((cached, accents)) = CACHE.lock().unwrap().as_ref() {
-        if cached == path {
-            return accents.clone();
-        }
-    }
-
-    let accents = Arc::new(
-        Accents::read(path)
-            .inspect_err(|e| log::warn!("could not read the audio {path:?}, the preview goes by the map alone: {e}"))
-            .ok(),
-    );
-    *CACHE.lock().unwrap() = Some((path.to_path_buf(), accents.clone()));
-    accents
 }
 
 #[cfg(test)]

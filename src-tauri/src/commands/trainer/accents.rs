@@ -12,7 +12,11 @@
 //! the loudness tell where their mappers hit a scratch (see
 //! `corpus_scratch_sounds`).
 
-use std::path::Path;
+use std::{
+    path::{Path, PathBuf},
+    sync::{Arc, Mutex},
+    time::SystemTime,
+};
 
 use anyhow::Result;
 use symphonia::core::dsp::{complex::Complex, fft::Fft};
@@ -52,6 +56,29 @@ impl Accents {
         Ok(Self::new(&audio_processing::decode_audio(path)?))
     }
 
+    /// [`read`](Self::read), kept for the last audio read: the preview of the
+    /// converts asks again on every change of a task, and the converts made
+    /// after it are of the same song. `None` if it can't be read.
+    pub fn cached(path: &Path) -> Arc<Option<Accents>> {
+        // The file as it was: a song replaced in its folder is read again.
+        type Key = (PathBuf, u64, Option<SystemTime>);
+        static CACHE: Mutex<Option<(Key, Arc<Option<Accents>>)>> = Mutex::new(None);
+
+        let meta = std::fs::metadata(path).ok();
+        let key: Key = (path.to_path_buf(), meta.as_ref().map_or(0, |m| m.len()), meta.and_then(|m| m.modified().ok()));
+        if let Some((cached, accents)) = CACHE.lock().unwrap().as_ref() {
+            if *cached == key {
+                return accents.clone();
+            }
+        }
+
+        let accents = Arc::new(
+            Self::read(path).inspect_err(|e| log::warn!("could not read the accents of {path:?}: {e}")).ok(),
+        );
+        *CACHE.lock().unwrap() = Some((key, accents.clone()));
+        accents
+    }
+
     pub fn new(audio: &DecodedAudio) -> Self {
         let channels = audio.channels.max(1);
         let mono: Vec<f32> =
@@ -60,65 +87,38 @@ impl Accents {
     }
 
     pub(crate) fn from_mono(samples: &[f32], sample_rate: f64) -> Self {
-        let n = 1usize << (WINDOW_MS / 1000.0 * sample_rate).log2().round().clamp(6.0, 16.0) as u32;
-        let hop = (sample_rate * HOP_MS / 1000.0).round().max(1.0) as usize;
-        let bin_hz = sample_rate / n as f64;
-        let bins = n / 2 + 1;
-        // The bins of each band, and the ones the loudness is measured over.
-        let edges = BANDS_HZ.map(|hz| ((hz / bin_hz).ceil() as usize).clamp(1, bins));
-        let audible = ((HIGH_HZ / bin_hz).ceil() as usize).clamp(1, bins);
-        // As loud as a window of 2048 samples would make it, whatever the size.
-        let scale = 2048.0 / n as f32;
-        let window: Vec<f32> =
-            (0..n).map(|i| (0.5 - 0.5 * (2.0 * std::f64::consts::PI * i as f64 / n as f64).cos()) as f32).collect();
+        let threads = std::thread::available_parallelism().map_or(1, |n| n.get());
+        Self::from_mono_on(samples, sample_rate, threads)
+    }
 
-        let frames = samples.len() / hop + 1;
-        let mut fft = Fft::new(n);
-        let mut buffer = vec![Complex::new(0.0f32, 0.0); n];
-        let mut spectrum = vec![0.0f32; bins];
-        // The spectra of the last frames, each frequency the loudest of it and
-        // its neighbours: frame `f` in `past[f % LAG_FRAMES]`.
-        let mut past = vec![vec![0.0f32; bins]; LAG_FRAMES];
-        let mut loudness = Vec::with_capacity(frames);
-        let mut bands = Vec::with_capacity(frames);
+    /// [`from_mono`](Self::from_mono) on up to `threads` threads, each over a
+    /// part of the song: the frames don't depend on each other but for the
+    /// [`LAG_FRAMES`] before them, which each part works out first. The
+    /// result is the same, to the bit, on any number.
+    fn from_mono_on(samples: &[f32], sample_rate: f64, threads: usize) -> Self {
+        let analysis = Analysis::new(sample_rate);
+        let frames = samples.len() / analysis.hop + 1;
+        // Not worth a thread below this many frames (10 s of song).
+        let parts = threads.min(frames / 1000).max(1);
+        let size = frames.div_ceil(parts);
 
-        for frame in 0..frames {
-            // Centred on its time: half a window before it, half after.
-            let start = (frame * hop) as isize - (n / 2) as isize;
-            buffer.fill(Complex::new(0.0, 0.0));
-            let first = (-start).max(0) as usize;
-            let last = (samples.len() as isize - start).clamp(0, n as isize) as usize;
-            for i in first..last {
-                buffer[i].re = samples[(start + i as isize) as usize] * window[i];
+        let (mut loudness, mut bands) = (Vec::with_capacity(frames), Vec::with_capacity(frames));
+        std::thread::scope(|scope| {
+            let handles: Vec<_> = (0..parts)
+                .map(|part| {
+                    let analysis = &analysis;
+                    let range = part * size..((part + 1) * size).min(frames);
+                    scope.spawn(move || analysis.frames(samples, range))
+                })
+                .collect();
+            for handle in handles {
+                let (part_loudness, part_bands) = handle.join().expect("accents thread panicked");
+                loudness.extend(part_loudness);
+                bands.extend(part_bands);
             }
-            fft.fft_inplace(&mut buffer);
+        });
 
-            let mut power = 0.0f64;
-            for (k, value) in spectrum.iter_mut().enumerate() {
-                let magnitude = buffer[k].norm() * scale;
-                if k < audible {
-                    power += (magnitude * magnitude) as f64;
-                }
-                *value = (COMPRESSION * magnitude).ln_1p();
-            }
-            loudness.push((10.0 * (power / audible as f64 + 1e-10).log10()) as f32);
-
-            // The slot of this frame holds the one LAG_FRAMES before it.
-            let before = &mut past[frame % LAG_FRAMES];
-            let mut band = [0.0f32; 3];
-            if frame >= LAG_FRAMES {
-                for (b, flux) in band.iter_mut().enumerate() {
-                    let (lo, hi) = (edges[b], edges[b + 1]);
-                    *flux = (lo..hi).map(|k| (spectrum[k] - before[k]).max(0.0)).sum::<f32>() / (hi - lo).max(1) as f32;
-                }
-            }
-            bands.push(band);
-            for (k, value) in before.iter_mut().enumerate() {
-                *value = spectrum[k].max(spectrum[k.saturating_sub(1)]).max(spectrum[(k + 1).min(bins - 1)]);
-            }
-        }
-
-        Self { hop_ms: hop as f64 / sample_rate * 1000.0, loudness, bands }
+        Self { hop_ms: analysis.hop as f64 / sample_rate * 1000.0, loudness, bands }
     }
 
     fn frame(&self, ms: f64) -> isize {
@@ -154,6 +154,89 @@ impl Accents {
     }
 }
 
+/// What the frames of a song at a sample rate are worked out with.
+struct Analysis {
+    /// Samples per window, a power of two.
+    n: usize,
+    /// Samples from a frame to the next.
+    hop: usize,
+    bins: usize,
+    /// The bins of each band, and the ones the loudness is measured over.
+    edges: [usize; 4],
+    audible: usize,
+    scale: f32,
+    window: Vec<f32>,
+}
+
+impl Analysis {
+    fn new(sample_rate: f64) -> Self {
+        let n = 1usize << (WINDOW_MS / 1000.0 * sample_rate).log2().round().clamp(6.0, 16.0) as u32;
+        let hop = (sample_rate * HOP_MS / 1000.0).round().max(1.0) as usize;
+        let bin_hz = sample_rate / n as f64;
+        let bins = n / 2 + 1;
+        let edges = BANDS_HZ.map(|hz| ((hz / bin_hz).ceil() as usize).clamp(1, bins));
+        let audible = ((HIGH_HZ / bin_hz).ceil() as usize).clamp(1, bins);
+        // As loud as a window of 2048 samples would make it, whatever the size.
+        let scale = 2048.0 / n as f32;
+        let window: Vec<f32> =
+            (0..n).map(|i| (0.5 - 0.5 * (2.0 * std::f64::consts::PI * i as f64 / n as f64).cos()) as f32).collect();
+        Self { n, hop, bins, edges, audible, scale, window }
+    }
+
+    /// The loudness and the band onsets of the frames in `range`.
+    fn frames(&self, samples: &[f32], range: std::ops::Range<usize>) -> (Vec<f32>, Vec<[f32; 3]>) {
+        let Self { n, hop, bins, edges, audible, scale, ref window } = *self;
+        let mut fft = Fft::new(n);
+        let mut buffer = vec![Complex::new(0.0f32, 0.0); n];
+        let mut spectrum = vec![0.0f32; bins];
+        // The spectra of the last frames, each frequency the loudest of it and
+        // its neighbours: frame `f` in `past[f % LAG_FRAMES]`.
+        let mut past = vec![vec![0.0f32; bins]; LAG_FRAMES];
+        let mut loudness = Vec::with_capacity(range.len());
+        let mut bands = Vec::with_capacity(range.len());
+
+        // Of the frames before the range, only their spectra are needed.
+        for frame in range.start.saturating_sub(LAG_FRAMES)..range.end {
+            // Centred on its time: half a window before it, half after.
+            let start = (frame * hop) as isize - (n / 2) as isize;
+            buffer.fill(Complex::new(0.0, 0.0));
+            let first = (-start).max(0) as usize;
+            let last = (samples.len() as isize - start).clamp(0, n as isize) as usize;
+            for i in first..last {
+                buffer[i].re = samples[(start + i as isize) as usize] * window[i];
+            }
+            fft.fft_inplace(&mut buffer);
+
+            let mut power = 0.0f64;
+            for (k, value) in spectrum.iter_mut().enumerate() {
+                let magnitude = buffer[k].norm() * scale;
+                if k < audible {
+                    power += (magnitude * magnitude) as f64;
+                }
+                *value = (COMPRESSION * magnitude).ln_1p();
+            }
+
+            // The slot of this frame holds the one LAG_FRAMES before it.
+            let before = &mut past[frame % LAG_FRAMES];
+            if frame >= range.start {
+                loudness.push((10.0 * (power / audible as f64 + 1e-10).log10()) as f32);
+                let mut band = [0.0f32; 3];
+                if frame >= LAG_FRAMES {
+                    for (b, flux) in band.iter_mut().enumerate() {
+                        let (lo, hi) = (edges[b], edges[b + 1]);
+                        *flux = (lo..hi).map(|k| (spectrum[k] - before[k]).max(0.0)).sum::<f32>() / (hi - lo).max(1) as f32;
+                    }
+                }
+                bands.push(band);
+            }
+            for (k, value) in before.iter_mut().enumerate() {
+                *value = spectrum[k].max(spectrum[k.saturating_sub(1)]).max(spectrum[(k + 1).min(bins - 1)]);
+            }
+        }
+        (loudness, bands)
+    }
+}
+
 /// The accents of a map's audio, in the map's times.
 #[derive(Clone, Copy)]
 pub struct MapAccents<'a> {
@@ -174,6 +257,34 @@ impl MapAccents<'_> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Whether `a` and `b` are the same to the bit.
+    fn same(a: &Accents, b: &Accents) -> bool {
+        a.hop_ms == b.hop_ms
+            && a.loudness.len() == b.loudness.len()
+            && a.loudness.iter().zip(&b.loudness).all(|(x, y)| x.to_bits() == y.to_bits())
+            && a.bands.len() == b.bands.len()
+            && a.bands.iter().zip(&b.bands).all(|(x, y)| x.iter().zip(y).all(|(p, q)| p.to_bits() == q.to_bits()))
+    }
+
+    #[test]
+    fn same_on_any_number_of_threads() {
+        // 30 s of noise bursts of every loudness: 3000 frames, up to 3 parts.
+        let sample_rate = 44_100.0;
+        let mut seed = 7u32;
+        let samples: Vec<f32> = (0..(sample_rate * 30.0) as usize)
+            .map(|i| {
+                seed = seed.wrapping_mul(1_664_525).wrapping_add(1_013_904_223);
+                let burst = (i / 4410) % 3 == 0;
+                if burst { ((seed >> 8) as f32 / (1 << 24) as f32 - 0.5) * ((i / 44_100) as f32 / 30.0) } else { 0.0 }
+            })
+            .collect();
+        let one = Accents::from_mono_on(&samples, sample_rate, 1);
+        assert_eq!(one.bands.len(), samples.len() / 441 + 1);
+        for threads in [2, 3, 7] {
+            assert!(same(&one, &Accents::from_mono_on(&samples, sample_rate, threads)), "{threads} threads");
+        }
+    }
 
     /// One second of silence, then a click every half second: a burst of
     /// noise 20 ms long, louder each time.

@@ -37,8 +37,8 @@ interface TrainerState {
      * be rated); only for mania maps, and not with the setting on `none`.
      */
     previews: Record<string, Skill | null>;
-    /** Whether `previews` are being estimated again; meanwhile they are the previous ones. */
-    previewing: boolean;
+    /** The converts whose preview is being estimated again; meanwhile it is the previous one. */
+    previewing: string[];
 }
 
 function newConvert(tasks: TrainerTask[] = []): TrainerConvert {
@@ -55,11 +55,13 @@ const initialState: TrainerState = {
     progress: 0,
     ffmpegAvailable: false,
     previews: {},
-    previewing: false,
+    previewing: [],
 };
 
 /** Wait after the last change before estimating the previews again, e.g. while a rate is dragged. */
 const PREVIEW_DELAY_MS = 300;
+/** How many previews are kept, by map, OD and tasks; above it they are all estimated again. */
+const PREVIEW_CACHE_SIZE = 200;
 
 export const TrainerStore = signalStore(
     { providedIn: 'root' },
@@ -239,11 +241,16 @@ export const TrainerStore = signalStore(
             });
 
             // The previews, again on every change of the map, the converts or the
-            // OD (the only stat that changes a mania map's skill).
+            // OD (the only stat that changes a mania map's skill). Only the converts
+            // that changed are estimated: the others, and the settings tried before,
+            // come from the cache at once.
+            const previewCache = new Map<string, Skill | null>();
             let previewTimer: ReturnType<typeof setTimeout> | undefined;
             let previewRequest = 0;
+            let previewMap: string | null = null;
             effect(() => {
-                const osuFilePath = reader.data()?.paths?.osu;
+                const data = reader.data();
+                const osuFilePath = data?.paths?.osu;
                 const mode = reader.originalMode();
                 const display = config.config()?.trainer.skill_display ?? 'dan';
                 const converts = store.converts();
@@ -251,34 +258,50 @@ export const TrainerStore = signalStore(
 
                 clearTimeout(previewTimer);
                 const request = ++previewRequest;
-                if (!osuFilePath || mode !== 'mania' || display === 'none') {
-                    untracked(() => patchState(store, { previews: {}, previewing: false }));
+                if (!data || !osuFilePath || mode !== 'mania' || display === 'none') {
+                    untracked(() => patchState(store, { previews: {}, previewing: [] }));
                     return;
                 }
 
-                untracked(() => patchState(store, { previewing: true }));
+                // As `createMaps` sends them, but every convert, to keep the order.
+                const requests = converts.map(c => ({
+                    id: c.id,
+                    tasks: c.tasks.filter(t => taskSupportsMode(t.task.type, mode)).map(t => ({ task: t.task })),
+                }));
+                const key = (tasks: unknown) => JSON.stringify([data.beatmap.checksum, od, tasks]);
+                const known = (r: { tasks: unknown }) => previewCache.has(key(r.tasks));
+                const missing = requests.filter(r => !known(r));
+                const fromCache = () => Object.fromEntries(
+                    requests.filter(known).map(r => [r.id, previewCache.get(key(r.tasks)) ?? null]),
+                );
+
+                // Another map's previews would be wrong meanwhile; the same map's are
+                // the previous ones of a convert being changed, shown dimmed.
+                const sameMap = previewMap === data.beatmap.checksum;
+                previewMap = data.beatmap.checksum;
+                untracked(() => patchState(store, {
+                    previews: { ...(sameMap ? store.previews() : {}), ...fromCache() },
+                    previewing: missing.map(r => r.id),
+                }));
+                if (missing.length === 0) return;
+
                 previewTimer = setTimeout(async () => {
                     const difficulty = { hp: store.hp().value, cs: store.cs().value, od, ar: store.ar().value };
                     try {
                         const skills = await invoke<(Skill | null)[]>('preview_converts', {
-                            request: {
-                                osuFilePath,
-                                difficulty,
-                                // As `createMaps` sends them, but every convert, to keep the order.
-                                converts: converts.map(c => ({
-                                    tasks: c.tasks.filter(t => taskSupportsMode(t.task.type, mode)).map(t => ({ task: t.task })),
-                                })),
-                            },
+                            request: { osuFilePath, difficulty, converts: missing.map(r => ({ tasks: r.tasks })) },
                         });
+                        if (previewCache.size + missing.length > PREVIEW_CACHE_SIZE) previewCache.clear();
+                        missing.forEach((r, i) => previewCache.set(key(r.tasks), skills[i] ?? null));
                         if (request !== previewRequest) return;
                         patchState(store, {
-                            previews: Object.fromEntries(converts.map((c, i) => [c.id, skills[i] ?? null])),
-                            previewing: false,
+                            previews: { ...store.previews(), ...fromCache() },
+                            previewing: [],
                         });
                     } catch (e) {
                         if (request !== previewRequest) return;
                         console.warn('preview_converts failed', e);
-                        patchState(store, { previews: {}, previewing: false });
+                        patchState(store, { previews: fromCache(), previewing: [] });
                     }
                 }, PREVIEW_DELAY_MS);
             });

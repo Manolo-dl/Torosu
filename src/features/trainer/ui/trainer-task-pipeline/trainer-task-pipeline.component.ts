@@ -62,6 +62,8 @@ export class TrainerTaskPipelineComponent {
    * One for another key count, from before the key converter changed, goes
    * at once: it would show a 7K dan on a 9K convert until the new one came.
    */
+  /** Whether the preview shown is the previous one, while this convert's is estimated again. */
+  readonly stale = computed(() => this.trainer.previewing().includes(this.convert().id));
   readonly preview = computed(() => {
     const skill = this.trainer.previews()[this.convert().id] ?? null;
     return skill && skill.keyCount === this.targetKeys() ? skill : null;

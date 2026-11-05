@@ -94,7 +94,7 @@ pub(super) struct Source {
     difficulty: DifficultySettings,
     /// The accents of its audio, read the first time a convert asks for
     /// them (see [`Source::accents`]).
-    accents: OnceLock<Option<Accents>>,
+    accents: OnceLock<Arc<Option<Accents>>>,
 }
 
 impl Source {
@@ -152,17 +152,11 @@ impl Source {
     }
 
     /// The accents of the map's audio, for the converts that follow the
-    /// music (10K2S): read once, the first time one asks, and shared by the
-    /// others. Without them those converts go by the map alone.
-    fn accents(&self) -> Option<&Accents> {
-        self.accents
-            .get_or_init(|| {
-                let path = self.audio_path();
-                Accents::read(&path)
-                    .inspect_err(|e| log::warn!("could not read the audio {:?}, the converts go by the map alone: {}", path, e))
-                    .ok()
-            })
-            .as_ref()
+    /// music (10K2S): read the first time one asks, or kept from the preview
+    /// (see [`Accents::cached`]), and shared by the others. Without them those
+    /// converts go by the map alone.
+    pub(super) fn accents(&self) -> Option<&Accents> {
+        self.accents.get_or_init(|| Accents::cached(&self.audio_path())).as_ref().as_ref()
     }
 }
 

@@ -49,7 +49,7 @@
   </header>
 
   @if (convert().tasks.length > 0 && preview(); as skill) {
-    <div class="result" [class.stale]="trainer.previewing()" [attr.aria-busy]="trainer.previewing()">
+    <div class="result" [class.stale]="stale()" [attr.aria-busy]="stale()">
       <span class="result-label">{{ 'trainer.skill.result' | transloco }}</span>
       <app-skill-summary
         [skill]="skill"
