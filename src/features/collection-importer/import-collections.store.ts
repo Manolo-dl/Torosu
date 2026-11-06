@@ -1,3 +1,5 @@
+import { errorText } from '@shared/i18n';
+import { TranslocoService } from '@jsverse/transloco';
 import { computed, inject } from "@angular/core";
 import { CollectionStore } from "@entities/collection";
 import { OsuDbStore, setsOfDiffs } from "@entities/osu-db";
@@ -68,7 +70,7 @@ export const ImportCollectionStore = signalStore(
         };
     }),
 
-    withMethods((store, notify = inject(NotifyService)) => ({
+    withMethods((store, notify = inject(NotifyService), transloco = inject(TranslocoService)) => ({
         setParsed(parsedImports: ParsedImport[]) {
             patchState(store, { parsedImports });
         },
@@ -85,10 +87,10 @@ export const ImportCollectionStore = signalStore(
 
             try {
                 await invoke('import_collections', { collections });
-                notify.success('Collections imported successfully');
+                notify.success(transloco.translate('collections.import.done'));
                 patchState(store, initialState);
             } catch (error) {
-                notify.error('Failed to import collections');
+                notify.error(transloco.translate('collections.import.failed', { error: errorText(transloco, error) }));
                 patchState(store, { isImporting: false });
                 throw error;
             }

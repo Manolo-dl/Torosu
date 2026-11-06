@@ -7,7 +7,7 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::Semaphore;
 
-use crate::{error::Result, paths, state::{AppConfigState, SessionState}};
+use crate::{error::{Error, Result}, paths, state::{AppConfigState, SessionState}};
 
 const MAX_SIZE: u64 = 200 * 1024 * 1024;
 const DELAY_BETWEEN_DOWNLOADS_MS: u64 = 1000; // ~1 req/seg, osu! documentation recommendation
@@ -23,11 +23,20 @@ pub struct DownloadProgress {
     pub status: String,
 }
 
+/// How the downloads went. The frontend notifies with it when the settings
+/// say so: it has the texts in the language in use.
+#[derive(serde::Serialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct DownloadSummary {
+    pub succeeded: usize,
+    pub failed: usize,
+}
+
 #[tauri::command]
 pub async fn start_downloads(
     app: tauri::AppHandle,
     beatmap_set_ids: Vec<u64>,
-) -> Result<()> {
+) -> Result<DownloadSummary> {
 
     let config_state = app.state::<AppConfigState>();
     let (downloader_config, open_file) = {
@@ -41,7 +50,7 @@ pub async fn start_downloads(
         .lock()
         .unwrap()
         .clone()
-        .ok_or("osu_session cookie not set")?;
+        .ok_or(Error::NoSession)?;
 
     let songs_folder = match &downloader_config.output_path {
         Some(path) => PathBuf::from(path),
@@ -50,7 +59,7 @@ pub async fn start_downloads(
 
     if !songs_folder.exists() {
         log::error!("Output folder not found: {}", songs_folder.display());
-        return Err(format!("Output folder not found: {}", songs_folder.display()).into());
+        return Err(Error::OutputFolderNotFound { path: songs_folder.display().to_string() });
     }
 
     let client = Client::new();
@@ -115,21 +124,7 @@ pub async fn start_downloads(
         }
     }
 
-    if downloader_config.notify {
-        use tauri_plugin_notification::NotificationExt;
-
-        if let Err(e) = app.notification()
-            .builder()
-            .title("Downloader")
-            .body(format!("{} succeeded, {} failed", results.len() - failed_ids.len(), failed_ids.len()))
-            .show()
-        {
-            log::error!("Failed to show notification: {}", e);
-        }
-
-    }
-
-    Ok(())
+    Ok(DownloadSummary { succeeded: results.len() - failed_ids.len(), failed: failed_ids.len() })
 }
 
 async fn download_beatmap(
@@ -161,14 +156,14 @@ async fn download_beatmap(
 
     if !response.status().is_success() {
         log::error!("Failed to download {}: HTTP {}", beatmap_set_id, response.status());
-        return Err(format!("HTTP {}", response.status()).into());
+        return Err(Error::HttpStatus { status: response.status().as_u16() });
     }
 
     let total = response.content_length().unwrap_or(0);
 
     if total > MAX_SIZE {
         log::error!("Beatmap set {} is too large: {} bytes", beatmap_set_id, total);
-        return Err(format!("Beatmap set {} is too large ({} bytes)", beatmap_set_id, total).into());
+        return Err(Error::SetTooLarge { id: beatmap_set_id, bytes: total });
     }
 
     let disposition = response.headers()

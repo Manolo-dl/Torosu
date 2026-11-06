@@ -1,3 +1,4 @@
+import { TranslocoPipe } from '@jsverse/transloco';
 import { ChangeDetectionStrategy, Component, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TxtFileDropDirective } from '@shared/directives';
@@ -10,7 +11,7 @@ import { TuiFiles } from '@taiga-ui/kit';
  */
 @Component({
   selector: 'app-txt-dropzone',
-  imports: [FormsModule, TxtFileDropDirective, TuiFiles, TuiIcon, TuiLink],
+  imports: [FormsModule, TxtFileDropDirective, TuiFiles, TuiIcon, TuiLink, TranslocoPipe],
   templateUrl: './txt-dropzone.component.html',
   styleUrl: './txt-dropzone.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,

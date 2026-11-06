@@ -25,6 +25,10 @@ pub struct AppConfig {
     /// Shows the developer pages (logs, osu! data).
     #[serde(default = "default_false")]
     pub dev_mode: bool,
+
+    /// The language of the interface (`en`, `es`, `fr`); `None` is English.
+    #[serde(default)]
+    pub language: Option<String>,
 }
 
 #[derive(Deserialize, Serialize, Clone)]
@@ -95,6 +99,42 @@ pub struct TrainerConfig {
     /// Template of the difficulty name: see `naming::version`.
     #[serde(default = "default_name_format")]
     pub name_format: String,
+
+    /// What the trainer shows of how hard the selected map and each convert
+    /// are (see `skill`).
+    #[serde(default)]
+    pub skill_display: SkillDisplay,
+
+    /// Runs the presets with a shortcut while osu! has the focus. Off by
+    /// default, and no shortcut is set: one of the game's would be taken.
+    #[serde(default = "default_false")]
+    pub shortcuts_enabled: bool,
+
+    /// The shortcut of each preset that has one.
+    #[serde(default)]
+    pub shortcuts: Vec<TrainerShortcut>,
+}
+
+/// How hard a mania map is, as the trainer shows it.
+#[derive(Deserialize, Serialize, Clone, Copy, Default, PartialEq, Eq, Debug)]
+#[serde(rename_all = "lowercase")]
+pub enum SkillDisplay {
+    /// Mania Tracker's dan: only 4K, 6K and 7K maps have one.
+    #[default]
+    Dan,
+    /// The MSD: MinaCalc's, or Prism's on 6K-8K.
+    Msd,
+    Both,
+    None,
+}
+
+/// A preset run on the map selected in osu! with a keyboard shortcut.
+#[derive(Deserialize, Serialize, Clone)]
+pub struct TrainerShortcut {
+    /// The preset's name.
+    pub preset: String,
+    /// The keys, as the global-shortcut plugin reads them (`Ctrl+Shift+KeyK`).
+    pub keys: String,
 }
 
 fn default_true() -> bool { true }
@@ -117,6 +157,7 @@ impl Default for AppConfig {
             trainer: TrainerConfig::default(),
             open_file: default_false(),
             dev_mode: default_false(),
+            language: None,
         }
     }
 }
@@ -146,6 +187,14 @@ impl Default for DownloaderConfig {
     }
 }
 
+impl TrainerConfig {
+    /// Whether the trainer shows the dan or the MSD: otherwise nothing rates
+    /// the maps (see `skill`).
+    pub fn shows_skill(&self) -> bool {
+        self.skill_display != SkillDisplay::None
+    }
+}
+
 impl Default for TrainerConfig {
     fn default() -> Self {
         Self {
@@ -154,6 +203,9 @@ impl Default for TrainerConfig {
             auto_pitch: default_false(),
             open_osz: default_true(),
             name_format: default_name_format(),
+            skill_display: SkillDisplay::default(),
+            shortcuts_enabled: default_false(),
+            shortcuts: Vec::new(),
         }
     }
 }

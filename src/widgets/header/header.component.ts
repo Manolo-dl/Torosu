@@ -1,3 +1,4 @@
+import { TranslocoPipe } from '@jsverse/transloco';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { Router } from '@angular/router';
 import { ConfigurationStore } from '@entities/configuration';
@@ -9,7 +10,7 @@ import { ConfigButtonComponent } from "@features/configuration";
 
 @Component({
   selector: 'app-header',
-  imports: [TuiButton, TuiButtonLoading, TuiDropdown, TuiTitle, TuiBadge, TuiProgress, ConfigButtonComponent],
+  imports: [TuiButton, TuiButtonLoading, TuiDropdown, TuiTitle, TuiBadge, TuiProgress, ConfigButtonComponent, TranslocoPipe],
   templateUrl: './header.component.html',
   styleUrl: './header.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,

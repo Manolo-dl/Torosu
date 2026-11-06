@@ -1,13 +1,13 @@
 @if (!hidden()) {
     <tui-textfield [invalid]="invalid() && touched()">
         @if (label()) {
-            <label tuiLabel [for]="id()">{{ label() }}</label>
+            <label tuiLabel [for]="id()">{{ label() | transloco }}</label>
         }
         <input
             tuiInput
             [id]="id()"
             [type]="type()"
-            [placeholder]="placeholder()"
+            [placeholder]="placeholder() | transloco"
             [value]="value()"
             [disabled]="disabled()"
             [readonly]="readonly()"
@@ -18,7 +18,7 @@
 
     @if (invalid() && touched()) {
         @for (error of errors(); track error) {
-            <tui-error [error]="error.message ?? null" />
+            <tui-error [error]="error.message ? (error.message | transloco) : null" />
         }
     }
 }

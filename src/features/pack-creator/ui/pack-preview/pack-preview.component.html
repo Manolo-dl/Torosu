@@ -1,11 +1,11 @@
 <div appearance="floating" tuiCardLarge="compact">
   <header>
-    <h3 tuiTitle>Pack Preview</h3>
-    <span appearance="info" tuiBadge>{{ store.selectedDiffs().length }} diffs</span>
+    <h3 tuiTitle>{{ 'packs.preview' | transloco }}</h3>
+    <span appearance="info" tuiBadge>{{ 'packs.diffs' | transloco: { count: store.selectedDiffs().length } }}</span>
   </header>
 
   @if (store.selectedDiffs().length === 0) {
-    <p class="empty">Add diffs from the browser to build your pack</p>
+    <p class="empty">{{ 'packs.empty' | transloco }}</p>
   } @else {
     <!-- itemSize must match the fixed height of app-pack-preview-card -->
     <cdk-virtual-scroll-viewport

@@ -6,7 +6,7 @@
   [disabled]="store.isCreating()"
   (click)="store.clear()"
 >
-  Reset
+  {{ 'packs.reset' | transloco }}
 </button>
 <button
   iconStart="@tui.package"
@@ -20,8 +20,8 @@
   (click)="onCreate()"
 >
   @if (store.packCount() > 1) {
-    Create {{ store.packCount() }} packs ({{ store.setCount() }} sets, {{ store.selectedDiffs().length }} diffs)
+    {{ 'packs.createMany' | transloco: { packs: store.packCount(), sets: store.setCount(), diffs: store.selectedDiffs().length } }}
   } @else {
-    Create pack ({{ store.selectedDiffs().length }} diffs)
+    {{ 'packs.createOne' | transloco: { diffs: store.selectedDiffs().length } }}
   }
 </button>

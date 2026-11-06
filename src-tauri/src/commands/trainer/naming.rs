@@ -132,7 +132,7 @@ pub fn trainer_name_example(format: String) -> String {
     })
 }
 
-/// `10K`, `10K More Dense`, `8K Full 1+7`, `7K, split jacks`... Every setting
+/// `10K`, `10K More Dense`, `8K Full 7K+1`, `7K, split jacks`... Every setting
 /// that changes the notes is in the name.
 fn key_tag(params: &KeyConverterParams) -> String {
     let mut tag = format!("{}K", params.target_keys);

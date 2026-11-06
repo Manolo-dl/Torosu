@@ -1,6 +1,6 @@
 [package]
 name = "torosu"
-version = "1.1.1"
+version = "1.2.0"
 description = "osu! stable tools in one app: beatmap downloader, collections, packs and a map trainer"
 license = "MIT"
 authors = ["Manolo-dl"]
@@ -46,13 +46,21 @@ soundtouch = { version = "0.5.4", features = ["bundled"] }
 symphonia = { version = "0.6.1", default-features = false, features = ["mp3", "ogg", "vorbis", "wav", "pcm", "id3v2"] }
 log = "0.4.34"
 tokio = { version = "1.54.0", features = ["fs", "io-util", "macros", "net", "sync", "time"] }
-zip = { version = "8.6.0", default-features = false, features = ["deflate-flate2-zlib-rs"] }
+zip = { version = "9.2.2", default-features = false, features = ["deflate-flate2-zlib-rs"] }
 futures-util = { version = "0.3.34", default-features = false }
 reqwest = { version = "0.13.5", default-features = false, features = ["rustls-no-provider", "stream"] }
 rustls = { version = "0.23", default-features = false, features = ["ring"] }
 vorbis_rs = "0.5.6"
-osu-memory-reader = { version = "0.1.0", features = ["serde", "difficulty"] }
+osu-memory-reader = { version = "0.2.1", features = ["serde", "difficulty"] }
+# Mania Tracker's dan calculator. Not on crates.io: pinned to a commit.
+# `aot`: MinaCalc's wasm is compiled when Torosu is built, so there is no
+# compiler (cranelift) in the binary and no wait on the first map rated.
+dan-calc = { git = "https://github.com/aleju03/mania-hub", rev = "0d4353b5037b4f8d85763751bea9e0f41f586c58", default-features = false, features = ["aot"] }
 
+
+[dev-dependencies]
+# The mock app of tauri::test, for the reader's tests.
+tauri = { version = "2", default-features = false, features = ["test"] }
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration
 [profile.release]
@@ -96,3 +104,77 @@ opt-level = 3
 
 [profile.dev.package.soundtouch-ffi]
 opt-level = 3
+
+# The dan estimate (dan-calc) runs on every mania beatmap selected in osu!,
+# and on every convert previewed in the trainer.
+[profile.release.package.chart-pipeline]
+opt-level = 3
+
+[profile.release.package.leoblack-estimators]
+opt-level = 3
+
+[profile.release.package.leoblack-rework]
+opt-level = 3
+
+[profile.release.package.leoblack-patterns]
+opt-level = 3
+
+[profile.release.package.leoblack-ett]
+opt-level = 3
+
+[profile.release.package.dan-core]
+opt-level = 3
+
+[profile.release.package.prism]
+opt-level = 3
+
+[profile.release.package.ln-skill]
+opt-level = 3
+
+[profile.release.package.jsmath]
+opt-level = 3
+
+[profile.dev.package.chart-pipeline]
+opt-level = 3
+
+[profile.dev.package.leoblack-estimators]
+opt-level = 3
+
+[profile.dev.package.leoblack-rework]
+opt-level = 3
+
+[profile.dev.package.leoblack-patterns]
+opt-level = 3
+
+[profile.dev.package.leoblack-ett]
+opt-level = 3
+
+[profile.dev.package.dan-core]
+opt-level = 3
+
+[profile.dev.package.prism]
+opt-level = 3
+
+[profile.dev.package.ln-skill]
+opt-level = 3
+
+[profile.dev.package.jsmath]
+opt-level = 3
+
+# osu-memory-reader finds the game's memory signatures when it attaches,
+# with memchr: 2.8 s at opt-level 0, 0.05 s at 3, before the trainer can
+# show the map in `tauri dev`. rosu-pp and rosu-map read the .osu files.
+[profile.dev.package.osu-memory-reader]
+opt-level = 3
+
+[profile.dev.package.memchr]
+opt-level = 3
+
+[profile.dev.package.rosu-pp]
+opt-level = 3
+
+[profile.dev.package.rosu-map]
+opt-level = 3
+
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-global-shortcut = "2"

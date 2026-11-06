@@ -7,7 +7,7 @@
     [disabled]="trainer.creating()"
     (click)="trainer.reset()"
   >
-    Reset
+    {{ 'trainer.actions.reset' | transloco }}
   </button>
   <button
     iconStart="@tui.wand-sparkles"
@@ -18,9 +18,9 @@
     (click)="trainer.createMaps()"
   >
     @if (trainer.converts().length === 1) {
-      Create map
+      {{ 'trainer.actions.createMap' | transloco }}
     } @else {
-      Create {{ trainer.converts().length }} maps
+      {{ 'trainer.actions.createMaps' | transloco: { count: trainer.converts().length } }}
     }
   </button>
 </div>

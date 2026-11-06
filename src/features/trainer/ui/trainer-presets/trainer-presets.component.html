@@ -1,7 +1,7 @@
 <div appearance="floating" tuiCardLarge="compact">
   <h3 tuiTitle>
-    Presets
-    <span tuiSubtitle>Replace the converts with a saved list</span>
+    {{ 'trainer.presets.title' | transloco }}
+    <span tuiSubtitle>{{ 'trainer.presets.subtitle' | transloco }}</span>
   </h3>
 
   <div class="presets">
@@ -35,19 +35,60 @@
           size="xs"
           tuiIconButton
           type="button"
-          title="Delete this preset"
+          [title]="'trainer.presets.deleteTitle' | transloco"
           (click)="presets.remove(preset.name)"
         >
-          Delete preset
+          {{ 'trainer.presets.delete' | transloco }}
         </button>
       </span>
+    }
+  </div>
+
+  <div class="shortcuts">
+    @if (platform.wayland()) {
+      <p class="hint">{{ 'trainer.shortcuts.wayland' | transloco }}</p>
+    } @else if (!shortcutsOn()) {
+      <p class="hint">{{ 'trainer.shortcuts.off' | transloco }}</p>
+    } @else {
+      <p class="hint">{{ 'trainer.shortcuts.how' | transloco }}</p>
+      @for (preset of allPresets(); track preset.name) {
+        <div class="shortcut">
+          <tui-textfield tuiTextfieldSize="s" [tuiTextfieldCleaner]="false">
+            <label tuiLabel>{{ preset.name }}</label>
+            <input
+              tuiInput
+              [placeholder]="(editing() === preset.name ? 'trainer.shortcuts.pressKeys' : 'trainer.shortcuts.notSet') | transloco"
+              [readOnly]="true"
+              [value]="presets.shortcutOf(preset.name) ? label(presets.shortcutOf(preset.name)) : ''"
+              (blur)="stopEditing()"
+              (focus)="startEditing(preset.name)"
+              (keydown)="capture($event, preset.name)"
+            />
+          </tui-textfield>
+          @switch (stateOf(preset.name)) {
+            @case ('active') {
+              <tui-icon class="active" icon="@tui.circle-check" [title]="'trainer.shortcuts.active' | transloco" />
+            }
+            @case ('failed') {
+              <tui-icon class="failed" icon="@tui.circle-alert" [title]="'trainer.shortcuts.failedTitle' | transloco" />
+            }
+          }
+        </div>
+        @if (problem()?.preset === preset.name) {
+          <p class="problem">{{ problem()?.message }}</p>
+        } @else if (editing() === preset.name) {
+          <p class="status">{{ 'trainer.shortcuts.taking' | transloco }}</p>
+        } @else if (stateOf(preset.name) === 'failed') {
+          <p class="problem">{{ 'trainer.shortcuts.failed' | transloco }}</p>
+        }
+      }
     }
   </div>
 
   @if (naming()) {
     <div class="save">
       <tui-textfield tuiTextfieldSize="s">
-        <label tuiLabel>Preset name</label>
+        <label tuiLabel>{{ 'trainer.presets.name' | transloco }}</label>
         <input
           tuiInput
           [(ngModel)]="name"
@@ -61,7 +102,7 @@
         [disabled]="!name().trim()"
         (click)="save()"
       >
-        Save
+        {{ 'trainer.presets.save' | transloco }}
       </button>
       <button
         appearance="flat"
@@ -70,7 +111,7 @@
         type="button"
         (click)="naming.set(false)"
       >
-        Cancel
+        {{ 'trainer.presets.cancel' | transloco }}
       </button>
     </div>
   } @else {
@@ -83,7 +124,7 @@
       [disabled]="!canSave()"
       (click)="naming.set(true)"
     >
-      Save current as preset
+      {{ 'trainer.presets.saveCurrent' | transloco }}
     </button>
   }
 </div>

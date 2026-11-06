@@ -1,5 +1,5 @@
 <tui-textfield>
-  <label tuiLabel>Name format</label>
+  <label tuiLabel>{{ 'settings.nameFormat.label' | transloco }}</label>
   <input
     tuiInput
     [ngModel]="format()"
@@ -16,21 +16,21 @@
       type="button"
       (click)="format.set(preset.format)"
     >
-      {{ preset.label }}
+      {{ preset.label | transloco }}
     </button>
   }
 </div>
 
 @if (example()) {
-  <p class="example">For example <strong>{{ example() }}</strong></p>
+  <p class="example">{{ 'settings.nameFormat.example' | transloco }} <strong>{{ example() }}</strong></p>
 }
 
 <ul class="fields">
   @for (item of fields(); track item.field) {
-    <li><code>{{ item.field }}</code> {{ item.meaning }}</li>
+    <li><code>{{ item.field }}</code> {{ item.meaning | transloco }}</li>
   }
 </ul>
 
 <p class="hint">
-  Anything else is kept as written. Brackets whose placeholders are all empty vanish with them.
+  {{ 'settings.nameFormat.hint' | transloco }}
 </p>

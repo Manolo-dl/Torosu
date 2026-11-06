@@ -1,6 +1,6 @@
 use std::{collections::HashMap, fs, path::{Path, PathBuf}};
 use tauri::Manager;
-use crate::{error::Result, osz::{self, OszWriter}, paths, state::AppConfigState};
+use crate::{error::{Error, Result}, osz::{self, OszWriter}, paths, state::AppConfigState};
 use crate::commands::config::model::PacksConfig;
 
 #[derive(serde::Deserialize)]
@@ -47,7 +47,8 @@ fn build_pack(request: &PackRequest, songs: &Path, exports: &Path, packs: &Packs
         log::info!("splitting {} diffs into {} packs (max {} sets per pack)", request.diffs.len(), parts.len(), packs.max_sets_per_pack);
     }
 
-    fs::create_dir_all(exports).map_err(|e| format!("{}: {}", exports.display(), e))?;
+    fs::create_dir_all(exports)
+        .map_err(|e| Error::CreateFolder { path: exports.display().to_string(), detail: e.to_string() })?;
 
     let mut osz_paths = Vec::with_capacity(parts.len());
     for (index, diffs) in parts.iter().enumerate() {
@@ -132,7 +133,7 @@ fn write_osz(
 
         let content = fs::read_to_string(&osu_file_path).map_err(|e| {
             log::error!("failed to read {:?}: {}", osu_file_path, e);
-            format!("Failed to read {}: {}", diff.file_name, e)
+            Error::ReadDiff { file: diff.file_name.clone(), detail: e.to_string() }
         })?;
 
         let audio = match find_file(&folder, &diff.audio) {

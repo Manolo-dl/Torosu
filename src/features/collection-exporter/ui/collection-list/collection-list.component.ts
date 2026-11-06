@@ -1,3 +1,4 @@
+import { TranslocoPipe } from '@jsverse/transloco';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CollectionStore } from '@entities/collection';
@@ -7,7 +8,7 @@ import { TuiCardLarge } from '@taiga-ui/layout';
 
 @Component({
   selector: 'app-collection-list',
-  imports: [FormsModule, TuiCardLarge, TuiCell, TuiCheckbox, TuiLabel, TuiLoader, TuiScrollbar, TuiTitle, TuiBadge],
+  imports: [FormsModule, TuiCardLarge, TuiCell, TuiCheckbox, TuiLabel, TuiLoader, TuiScrollbar, TuiTitle, TuiBadge, TranslocoPipe],
   templateUrl: './collection-list.component.html',
   styleUrl: './collection-list.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,

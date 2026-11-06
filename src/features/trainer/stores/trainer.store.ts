@@ -1,5 +1,8 @@
+import { errorText } from '@shared/i18n';
+import { TranslocoService } from '@jsverse/transloco';
 import { effect, inject, untracked } from "@angular/core";
-import { OsuReaderStore } from "@entities/osu-reader";
+import { ConfigurationStore } from "@entities/configuration";
+import { OsuReaderStore, Skill } from "@entities/osu-reader";
 import { patchState, signalStore, withHooks, withMethods, withState } from "@ngrx/signals";
 import { NotifyService } from "@shared/services";
 import {
@@ -11,6 +14,8 @@ import {
     TrainerConvert,
     TrainerTask,
     TrainerTaskParams,
+    applicableConverts,
+    skippedTasks,
     taskSupportsMode,
 } from "../models/trainer.model";
 import { invoke } from "@tauri-apps/api/core";
@@ -27,6 +32,13 @@ interface TrainerState {
     progress: number;
     /** Whether the system ffmpeg is there, needed to scale the video. */
     ffmpegAvailable: boolean;
+    /**
+     * The dan and MSD each convert would have, by its id (`null` if it can't
+     * be rated); only for mania maps, and not with the setting on `none`.
+     */
+    previews: Record<string, Skill | null>;
+    /** The converts whose preview is being estimated again; meanwhile it is the previous one. */
+    previewing: string[];
 }
 
 function newConvert(tasks: TrainerTask[] = []): TrainerConvert {
@@ -42,13 +54,20 @@ const initialState: TrainerState = {
     creating: false,
     progress: 0,
     ffmpegAvailable: false,
+    previews: {},
+    previewing: [],
 };
+
+/** Wait after the last change before estimating the previews again, e.g. while a rate is dragged. */
+const PREVIEW_DELAY_MS = 300;
+/** How many previews are kept, by map, OD and tasks; above it they are all estimated again. */
+const PREVIEW_CACHE_SIZE = 200;
 
 export const TrainerStore = signalStore(
     { providedIn: 'root' },
     withState(initialState),
 
-    withMethods((store, reader = inject(OsuReaderStore), notify = inject(NotifyService)) => {
+    withMethods((store, reader = inject(OsuReaderStore), notify = inject(NotifyService), transloco = inject(TranslocoService)) => {
         /** Changes the tasks of convert `id`. */
         function updateTasks(id: string, change: (tasks: TrainerTask[]) => TrainerTask[]) {
             patchState(store, {
@@ -90,18 +109,15 @@ export const TrainerStore = signalStore(
 
             /**
              * Replaces the converts with `converts`, e.g. a preset's. Returns how
-             * many tasks were left out for not working on the map's mode.
+             * many of their tasks don't work on the map's mode: they stay, marked,
+             * and are skipped when the maps are created.
              */
             setConverts(converts: TrainerTaskParams[][]): number {
-                const mode = reader.originalMode();
-                let dropped = 0;
-                const next = converts.map(tasks => {
-                    const supported = tasks.filter(task => taskSupportsMode(task.type, mode));
-                    dropped += tasks.length - supported.length;
-                    return newConvert(supported.map(task => ({ id: crypto.randomUUID(), task: structuredClone(task) })));
-                });
+                const next = converts.map(tasks =>
+                    newConvert(tasks.map(task => ({ id: crypto.randomUUID(), task: structuredClone(task) })))
+                );
                 patchState(store, { converts: next.length > 0 ? next : [newConvert()] });
-                return dropped;
+                return skippedTasks(converts, reader.originalMode());
             },
 
             addTask(convertId: string, task: TrainerTaskParams) {
@@ -143,6 +159,13 @@ export const TrainerStore = signalStore(
                 const osuFilePath = reader.data()?.paths?.osu;
                 if (!osuFilePath) return;
 
+                // The tasks for another mode are left out (see the marks on them).
+                const converts = applicableConverts(store.converts().map(c => c.tasks.map(t => t.task)), reader.originalMode());
+                if (converts.length === 0) {
+                    notify.error(transloco.translate('trainer.noTasksForMode'));
+                    return;
+                }
+
                 patchState(store, { creating: true, progress: 0 });
 
                 const unlisten = await listen<{ percent: number }>('trainer-progress', event => {
@@ -159,12 +182,16 @@ export const TrainerStore = signalStore(
                                 od: store.od().value,
                                 ar: store.ar().value,
                             },
-                            converts: store.converts().map(c => ({ tasks: c.tasks })),
+                            converts: converts.map(tasks => ({ tasks: tasks.map(task => ({ task })) })),
                         },
                     });
-                    notify.success(names.length === 1 ? `Created ${names[0]}` : `Created ${names.length} difficulties`);
+                    notify.success(
+                        names.length === 1
+                            ? transloco.translate('trainer.created', { name: names[0] })
+                            : transloco.translate('trainer.createdMany', { count: names.length }),
+                    );
                 } catch (e) {
-                    notify.error(String(e));
+                    notify.error(errorText(transloco, e));
                 } finally {
                     unlisten();
                     patchState(store, { creating: false });
@@ -176,6 +203,7 @@ export const TrainerStore = signalStore(
     withHooks({
         onInit(store) {
             const reader = inject(OsuReaderStore);
+            const config = inject(ConfigurationStore);
 
             invoke<boolean>('is_ffmpeg_available')
                 .then(ffmpegAvailable => patchState(store, { ffmpegAvailable }))
@@ -193,7 +221,6 @@ export const TrainerStore = signalStore(
                 lastBeatmapId = currentBeatmapId;
 
                 const beatmap = data.beatmap;
-                const mode = data.attributes?.originalMode ?? null;
 
                 untracked(() => {
                     (['hp', 'cs', 'ar', 'od'] as const).forEach((stat) => {
@@ -209,15 +236,74 @@ export const TrainerStore = signalStore(
                     });
 
                     // Tasks for another mode (e.g. the key converter after picking an
-                    // osu!standard map) can't run on this map.
-                    const converts = store.converts().map(c => ({
-                        ...c,
-                        tasks: c.tasks.filter(t => taskSupportsMode(t.task.type, mode)),
-                    }));
-                    if (converts.some((c, i) => c.tasks.length !== store.converts()[i].tasks.length)) {
-                        patchState(store, { converts });
-                    }
+                    // osu!standard map) stay: the list marks them, and they are skipped.
                 });
+            });
+
+            // The previews, again on every change of the map, the converts or the
+            // OD (the only stat that changes a mania map's skill). Only the converts
+            // that changed are estimated: the others, and the settings tried before,
+            // come from the cache at once.
+            const previewCache = new Map<string, Skill | null>();
+            let previewTimer: ReturnType<typeof setTimeout> | undefined;
+            let previewRequest = 0;
+            let previewMap: string | null = null;
+            effect(() => {
+                const data = reader.data();
+                const osuFilePath = data?.paths?.osu;
+                const mode = reader.originalMode();
+                const display = config.config()?.trainer.skill_display ?? 'dan';
+                const converts = store.converts();
+                const od = store.od().value;
+
+                clearTimeout(previewTimer);
+                const request = ++previewRequest;
+                if (!data || !osuFilePath || mode !== 'mania' || display === 'none') {
+                    untracked(() => patchState(store, { previews: {}, previewing: [] }));
+                    return;
+                }
+
+                // As `createMaps` sends them, but every convert, to keep the order.
+                const requests = converts.map(c => ({
+                    id: c.id,
+                    tasks: c.tasks.filter(t => taskSupportsMode(t.task.type, mode)).map(t => ({ task: t.task })),
+                }));
+                const key = (tasks: unknown) => JSON.stringify([data.beatmap.checksum, od, tasks]);
+                const known = (r: { tasks: unknown }) => previewCache.has(key(r.tasks));
+                const missing = requests.filter(r => !known(r));
+                const fromCache = () => Object.fromEntries(
+                    requests.filter(known).map(r => [r.id, previewCache.get(key(r.tasks)) ?? null]),
+                );
+
+                // Another map's previews would be wrong meanwhile; the same map's are
+                // the previous ones of a convert being changed, shown dimmed.
+                const sameMap = previewMap === data.beatmap.checksum;
+                previewMap = data.beatmap.checksum;
+                untracked(() => patchState(store, {
+                    previews: { ...(sameMap ? store.previews() : {}), ...fromCache() },
+                    previewing: missing.map(r => r.id),
+                }));
+                if (missing.length === 0) return;
+
+                previewTimer = setTimeout(async () => {
+                    const difficulty = { hp: store.hp().value, cs: store.cs().value, od, ar: store.ar().value };
+                    try {
+                        const skills = await invoke<(Skill | null)[]>('preview_converts', {
+                            request: { osuFilePath, difficulty, converts: missing.map(r => ({ tasks: r.tasks })) },
+                        });
+                        if (previewCache.size + missing.length > PREVIEW_CACHE_SIZE) previewCache.clear();
+                        missing.forEach((r, i) => previewCache.set(key(r.tasks), skills[i] ?? null));
+                        if (request !== previewRequest) return;
+                        patchState(store, {
+                            previews: { ...store.previews(), ...fromCache() },
+                            previewing: [],
+                        });
+                    } catch (e) {
+                        if (request !== previewRequest) return;
+                        console.warn('preview_converts failed', e);
+                        patchState(store, { previews: fromCache(), previewing: [] });
+                    }
+                }, PREVIEW_DELAY_MS);
             });
         },
     }),

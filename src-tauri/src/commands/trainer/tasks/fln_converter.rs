@@ -1,4 +1,5 @@
-use anyhow::{Result, bail};
+use anyhow::Result;
+use crate::error::Error;
 use rosu_map::{
     Beatmap,
     section::{
@@ -25,7 +26,7 @@ const MIN_LENGTH_LENIENCY: f64 = 2.0;
 /// it is.
 pub fn apply(beatmap: &mut Beatmap, params: &FlnConverterParams) -> Result<()> {
     if beatmap.mode != GameMode::Mania {
-        bail!("the FLN converter only works on osu!mania maps");
+        return Err(Error::ManiaOnly { task: "FlnConverter" }.into());
     }
 
     let keys = mania::key_count(beatmap);

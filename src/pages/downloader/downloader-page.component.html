@@ -1,5 +1,5 @@
 <div class="page-container">
-  <app-page-header heading="Downloader" subtitle="Download beatmap sets directly to your Songs folder." />
+  <app-page-header [heading]="'nav.downloader' | transloco" [subtitle]="'downloader.subtitle' | transloco" />
 
   <section>
     <tui-accordion>
@@ -8,15 +8,15 @@
           type="button"
           [tuiAccordion]="false"
         >
-        {{ item.title }}
+        {{ item.title | transloco }}
         </button>
         <tui-expand>
           <div class="step-container">
             @for (step of item.steps; track $index) {
               <div class="step">
-                <span><strong>{{ $index + 1 }}.</strong> {{ step.desc }}</span>
+                <span><strong>{{ $index + 1 }}.</strong> {{ step.desc | transloco }}</span>
                 @if (step.image) {
-                  <img [src]="step.image" alt="Step {{ $index + 1 }}" />
+                  <img [src]="step.image" [alt]="'downloader.stepImage' | transloco: { number: $index + 1 }" />
                 }
               </div>
             }
@@ -27,7 +27,7 @@
   </section>
 
   <section>
-    <h2 tuiTitle="m">Osu Session</h2>
+    <h2 tuiTitle="m">{{ 'downloader.session' | transloco }}</h2>
     <app-osu-cookie-input />
   </section>
 
@@ -40,8 +40,8 @@
         tuiTitle="m"
         [style.padding-inline-end.rem]="2"
       >
-        Library not loaded
-        <div tuiSubtitle>Load your osu! library to automatically skip maps you already own.</div>
+        {{ 'downloader.libraryNotLoaded' | transloco }}
+        <div tuiSubtitle>{{ 'downloader.libraryHint' | transloco }}</div>
         <div>
           <button
           type="button"
@@ -51,7 +51,7 @@
             [disabled]="osuDb.isLoading()"
             (click)="loadLibrary()"
           >
-            {{ osuDb.isLoading() ? 'Loading…' : 'Load library' }}
+            {{ (osuDb.isLoading() ? 'downloader.loading' : 'downloader.loadLibrary') | transloco }}
           </button>
         </div>
       </div>
@@ -61,12 +61,12 @@
   <!-- Nothing can be downloaded without the cookie. -->
   @if (userStore.user()?.osuSession) {
     <section>
-      <h2 tuiTitle="m">Import</h2>
+      <h2 tuiTitle="m">{{ 'downloader.import' | transloco }}</h2>
       <app-beatmap-import />
     </section>
 
     <section>
-      <h2 tuiTitle="m">Download Queue</h2>
+      <h2 tuiTitle="m">{{ 'downloader.queueTitle' | transloco }}</h2>
       <app-beatmap-queue />
     </section>
   }

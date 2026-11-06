@@ -1,3 +1,4 @@
+import { TranslocoPipe } from '@jsverse/transloco';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { CollectionStore } from '@entities/collection';
 import { CollectionExportService } from '../../services/collection-export.service';
@@ -6,13 +7,13 @@ import { TuiTitle } from '@taiga-ui/core';
 import { TuiCardLarge } from '@taiga-ui/layout';
 
 const FORMATS: ExportFormat[] = [
-  { value: 'urls',   label: 'Download links' },
-  { value: 'import', label: 'Import format' },
+  { value: 'urls',   label: 'collections.export.links' },
+  { value: 'import', label: 'collections.export.importFormat' },
 ];
 
 @Component({
   selector: 'app-collection-export-controls',
-  imports: [ExportControlsComponent, TuiCardLarge, TuiTitle],
+  imports: [ExportControlsComponent, TuiCardLarge, TuiTitle, TranslocoPipe],
   templateUrl: './collection-export-controls.component.html',
   styleUrl: './collection-export-controls.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,

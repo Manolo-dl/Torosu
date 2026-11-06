@@ -1,13 +1,13 @@
 <div appearance="floating" tuiCardLarge="compact">
-  <h3 tuiTitle>Details</h3>
+  <h3 tuiTitle>{{ 'packs.details.title' | transloco }}</h3>
   <app-stateful-input
     [formField]="detailsForm.title"
-    [label]="'Pack title'"
-    [placeholder]="'Enter pack title'"
+    label="packs.details.packTitle"
+    placeholder="packs.details.packTitlePlaceholder"
   />
   <app-stateful-input
     [formField]="detailsForm.finalCreator"
-    [label]="'Creator'"
-    [placeholder]="'Your username'"
+    label="packs.details.creator"
+    placeholder="packs.details.creatorPlaceholder"
   />
 </div>

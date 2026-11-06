@@ -8,11 +8,31 @@ header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 0.5rem;
 
   .actions {
     display: flex;
     align-items: center;
     gap: 0.25rem;
+  }
+}
+
+// What the convert would be, under its title.
+.result {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  transition: opacity 150ms;
+
+  // The previous estimate, while the new one is on its way.
+  &.stale {
+    opacity: 0.55;
+  }
+
+  .result-label {
+    font: var(--tui-typography-ui-s);
+    color: var(--tui-text-secondary);
   }
 }
 
@@ -47,6 +67,15 @@ header {
     .label {
       font: var(--tui-typography-body-s);
       font-weight: 700;
+    }
+
+    .skipped-note {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      margin-left: 0.5rem;
+      font-weight: 400;
+      color: var(--tui-status-warning);
     }
 
     .params {
@@ -113,4 +142,9 @@ header {
 
 .empty {
   .empty-state(1.5rem 0);
+}
+
+// A task for another mode than the map's: kept, but not applied.
+.task.skipped .params {
+  opacity: 0.5;
 }

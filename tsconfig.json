@@ -4,6 +4,7 @@
   "compileOnSave": false,
   "compilerOptions": {
     "strict": true,
+    "resolveJsonModule": true,
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": true,
     "noImplicitReturns": true,

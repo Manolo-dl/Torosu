@@ -10,15 +10,25 @@ mod error;
 mod name_format;
 mod osz;
 mod paths;
+mod skill;
 mod state;
 #[cfg(test)]
 mod test_utils;
+#[cfg(test)]
+mod translations;
+
+/// Whether the session is Wayland's (Linux only): the webview needs a
+/// workaround there (see `main`), and global shortcuts don't work.
+pub fn wayland_session() -> bool {
+    cfg!(target_os = "linux") && std::env::var_os("WAYLAND_DISPLAY").is_some()
+}
 
 pub fn run() {
     // reqwest is built without a bundled crypto provider; share ring with the updater
     let _ = rustls::crypto::ring::default_provider().install_default();
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .setup(|app| {
             app.handle().plugin(tauri_plugin_updater::Builder::new().build())?;
 
@@ -92,6 +102,9 @@ pub fn run() {
             commands::system::songs_file::read_songs_file,
             commands::system::update::check_update,
             commands::system::update::install_update,
+            commands::system::session::is_wayland,
+            commands::system::session::show_notification,
+            commands::system::session::log_frontend,
             commands::collections::reader::read_osu_collections,
             commands::system::text_file::write_text_file,
             commands::collections::writer::import_collections,
@@ -105,6 +118,7 @@ pub fn run() {
             commands::osu_reader::connect_osu_reader,
             commands::osu_reader::export::export_selected_osz,
             commands::trainer::run::run_trainer,
+            commands::trainer::preview::preview_converts,
             commands::trainer::naming::trainer_name_example,
             commands::packs::naming::pack_diff_names,
             commands::packs::naming::pack_name_example,

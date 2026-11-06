@@ -52,3 +52,53 @@ pub async fn update_config(
         *current = config;
     })
 }
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::commands::config::model::{SkillDisplay, TrainerShortcut};
+
+    #[test]
+    fn maps_are_rated_only_while_the_skill_is_shown() {
+        let mut config = AppConfig::default();
+        assert!(config.trainer.shows_skill());
+        for (display, shown) in [(SkillDisplay::Msd, true), (SkillDisplay::Both, true), (SkillDisplay::None, false)] {
+            config.trainer.skill_display = display;
+            assert_eq!(config.trainer.shows_skill(), shown);
+        }
+    }
+
+    #[test]
+    fn skill_display_survives_the_file() {
+        let mut config = AppConfig::default();
+        assert_eq!(config.trainer.skill_display, SkillDisplay::Dan);
+        config.trainer.skill_display = SkillDisplay::Both;
+        let text = toml::to_string_pretty(&config).unwrap();
+        assert!(text.contains("skill_display = \"both\""), "{text}");
+        let read: AppConfig = toml::from_str(&text).unwrap();
+        assert_eq!(read.trainer.skill_display, SkillDisplay::Both);
+        // A file from before it was there.
+        let read: AppConfig = toml::from_str(&text.replace("skill_display = \"both\"", "")).unwrap();
+        assert_eq!(read.trainer.skill_display, SkillDisplay::Dan);
+    }
+
+    #[test]
+    fn shortcuts_survive_the_file() {
+        // The trainer's shortcuts, a list of tables inside a table, and the
+        // values that follow it in `AppConfig`.
+        let mut config = AppConfig::default();
+        config.trainer.shortcuts_enabled = true;
+        config.trainer.shortcuts = vec![TrainerShortcut { preset: "quick rate change".into(), keys: "Ctrl+Shift+KeyR".into() }];
+        config.open_file = true;
+        config.language = Some("es".into());
+        let text = toml::to_string_pretty(&config).unwrap();
+        let read: AppConfig = toml::from_str(&text).unwrap();
+        assert_eq!(read.trainer.shortcuts.len(), 1, "{}", text);
+        assert_eq!(read.trainer.shortcuts[0].keys, "Ctrl+Shift+KeyR");
+        assert!(read.open_file);
+        assert_eq!(read.language.as_deref(), Some("es"));
+        // And with none left.
+        config.trainer.shortcuts.clear();
+        let read: AppConfig = toml::from_str(&toml::to_string_pretty(&config).unwrap()).unwrap();
+        assert!(read.trainer.shortcuts.is_empty());
+    }
+}

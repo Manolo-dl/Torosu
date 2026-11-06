@@ -8,10 +8,11 @@
       <span class="title">
         {{ reader.title() }} <span class="artist">— {{ reader.artist() }}</span>
       </span>
-      <span tuiSubtitle>{{ reader.version() }} · mapped by {{ reader.mapper() }}</span>
+      <span tuiSubtitle>{{ reader.version() }} · {{ 'trainer.mappedBy' | transloco: { mapper: reader.mapper() } }}</span>
     </div>
 
     <div class="side">
+      <app-skill-summary size="l" onImage [skill]="reader.skill()" [display]="skillDisplay()" />
       @let current = mode();
       @if (current !== null) {
         <tui-icon
@@ -30,11 +31,11 @@
           size="s"
           tuiIconButton
           type="button"
-          title="Export as .osz"
+          [title]="'trainer.exportOsz' | transloco"
           [loading]="reader.exporting()"
           (click)="reader.exportOsz()"
         >
-          Export as .osz
+          {{ 'trainer.exportOsz' | transloco }}
         </button>
       }
     </div>

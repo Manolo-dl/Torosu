@@ -6,6 +6,10 @@
 
 <p align="center">All the tools you would need for <strong>osu! stable</strong> in the same place.</p>
 
+<p align="center">
+  <img src="docs/trainer.png" alt="The Trainer: the map selected in osu! with its dan, and two rate changes with the dan each one would have" width="800" />
+</p>
+
 ---
 
 ## Features
@@ -15,7 +19,11 @@
 - **Import Collections**: bring collections from a file into osu!, merged with the ones you already have.
 - **Export Song Folder**: filter your library by mode, status, stars, length and more, and export it as beatmap links.
 - **Create Packs**: put diffs from any sets, rates and unsubmitted maps too, into a pack of your own, with the diffs named the way you choose.
-- **Trainer**: change the rate, the stats, the long notes or the key count of the map selected in osu!. It reads the map straight from the game, so there is nothing to open by hand. Make several versions in one go, each with its own changes (1.1x, 1.2x, 1.3x and 1.4x, say), and keep the ones you use as presets.
+- **Trainer**: change the rate, the stats, the long notes or the key count of the map selected in osu!. It reads the map straight from the game, so there is nothing to open by hand. Make several versions in one go, each with its own changes (1.1x, 1.2x, 1.3x and 1.4x, say), and keep the ones you use as presets, which can also run with a keyboard shortcut while you play (not on Wayland).
+  - **Dan and MSD**: for 4K, 6K and 7K maps the Trainer shows the dan of the selected map, and the dan each version would have before you make it, with [Mania Tracker](https://mania-tracker.com)'s calculator. It also shows the MSD (MinaCalc's, or Prism's on 6K to 8K). Choose dan, MSD, both or none in the settings: with none, nothing is rated.
+  - **Key converter**: from any key count to 1K to 10K, 12K, 14K, 16K or 18K, with the playstyles of the osu! wiki for 12K and up. On 10K2S and 7K+1 the scratches follow the music: they go where the song has its hard hits.
+
+Torosu is in English, Spanish and French: choose the language in the settings, under General.
 
 Torosu is made for **osu! stable**. osu!lazer is not supported: the tools read and write osu! stable's files.
 
@@ -71,11 +79,11 @@ Torosu is the new name of osu-tools, and 1.0.0 installs as a new app: uninstall 
 
 ## First start
 
-Torosu looks for your osu! folder: the one of the running osu!, or the usual install folders. If it can't find it, it asks for it: choose the folder that has `osu!.db`. You can change it later in the settings (the gear in the header), where you can also turn tools off, set up the downloader and the packs, and save the osu! session cookie between sessions. The trainer's settings choose how the new diffs are named, the quality of the audio and video it makes, and whether each `.osz` opens in osu! once made.
+Torosu looks for your osu! folder: the one of the running osu!, or the usual install folders. If it can't find it, it asks for it: choose the folder that has `osu!.db`. You can change it later in the settings (the gear in the header), where you can also choose the language, turn tools off, set up the downloader and the packs, and save the osu! session cookie between sessions. The trainer's settings choose how the new diffs are named, the quality of the audio and video it makes, whether each `.osz` opens in osu! once made, what it shows of each map's difficulty (dan, MSD, both or none), and its keyboard shortcuts.
 
 ## Building from source
 
-You need [Rust](https://www.rust-lang.org/tools/install) 1.88 or newer, [Node.js](https://nodejs.org/) 22 or newer, [pnpm](https://pnpm.io/), and the [system dependencies of Tauri](https://tauri.app/start/prerequisites/) for your platform.
+You need [Rust](https://www.rust-lang.org/tools/install) 1.96 or newer, [Node.js](https://nodejs.org/) 22 or newer, [pnpm](https://pnpm.io/), and the [system dependencies of Tauri](https://tauri.app/start/prerequisites/) for your platform.
 
 ```sh
 pnpm install
@@ -93,6 +101,8 @@ These projects showed the way for some of Torosu's tools. Torosu's code is its o
 - [osuLNmaster](https://github.com/Yasha-jin/osuLNmaster) by Yasha-jin: the FLN converter.
 - [osu-mania-converter](https://github.com/kyarufan/osu-mania-converter) by kyarufan and [krr-s-osumania-anyKeys-converter](https://github.com/krrcream/krr-s-osumania-anyKeys-converter) by krrcream: ideas on how to build a key converter.
 - [tosu](https://github.com/tosuapp/tosu): reading osu!'s memory, through [osu-memory-reader](https://github.com/Manolo-dl/Osu-memory-reader) (see the license below).
+
+The dan and MSD come from [dan-calc](https://github.com/aleju03/mania-hub/tree/main/algorithms/dan-calc), the calculator of [Mania Tracker](https://mania-tracker.com) by aleju03, with LeoBlack's estimators ([osumania_map_analyser](https://github.com/LeoBlackMT/osumania_map_analyser)), MinaCalc from [Etterna](https://github.com/etternagame/etterna) and Prism. The dan badges are Mania Tracker's, used with its author's permission.
 
 ## License
 

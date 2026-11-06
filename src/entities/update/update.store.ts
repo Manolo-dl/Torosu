@@ -4,6 +4,8 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { NotifyService } from '@shared/services';
+import { LanguageService } from '@shared/i18n';
+import { TranslocoService } from '@jsverse/transloco';
 import { UpdateInfo, UpdateProgress } from "./update.model";
 
 /** Where the releases are, to update by hand when the app can't (e.g. the Arch package). */
@@ -38,13 +40,15 @@ export const UpdateStore = signalStore(
         }),
     })),
 
-    withMethods((store, notify = inject(NotifyService)) => ({
+    withMethods((store, notify = inject(NotifyService), transloco = inject(TranslocoService), language = inject(LanguageService)) => ({
         async check() {
             try {
                 const available = await invoke<UpdateInfo | null>('check_update');
                 patchState(store, { available });
                 if (available) {
-                    notify.info(`Torosu ${available.version} is available. Update it from the icon in the header.`);
+                    // Checked at startup, maybe before the language is known.
+                    await language.ready;
+                    notify.info(transloco.translate('update.available', { version: available.version }));
                 }
             } catch (e) {
                 console.warn('failed to check for updates', e);
@@ -63,7 +67,7 @@ export const UpdateStore = signalStore(
                 await invoke('install_update');
             } catch (e) {
                 console.error('install_update failed', e);
-                notify.error('Torosu could not update itself. Download the new version from the releases page.');
+                notify.error(transloco.translate('update.failed'));
                 patchState(store, { installing: false, progress: null, failed: true });
             } finally {
                 unlisten();

@@ -1,5 +1,5 @@
 @if (sets().length === 0) {
-  <div class="empty">{{ emptyText() }}</div>
+  <div class="empty">{{ emptyText() | transloco }}</div>
 } @else {
   <cdk-virtual-scroll-viewport
     itemSize="56"

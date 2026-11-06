@@ -1,8 +1,11 @@
+import { errorText } from '@shared/i18n';
+import { TranslocoService } from '@jsverse/transloco';
 import { inject } from "@angular/core";
+import { ConfigurationStore, TrainerShortcut } from "@entities/configuration";
 import { patchState, signalStore, withHooks, withMethods, withState } from "@ngrx/signals";
 import { NotifyService } from "@shared/services";
 import { invoke } from "@tauri-apps/api/core";
-import { TrainerPreset } from "../models/trainer.model";
+import { TrainerPreset, renamePlaystyles } from "../models/trainer.model";
 import { TrainerStore } from "./trainer.store";
 
 interface TrainerPresetsState {
@@ -20,18 +23,25 @@ export const TrainerPresetsStore = signalStore(
     { providedIn: 'root' },
     withState<TrainerPresetsState>({ custom: [] }),
 
-    withMethods((store, trainer = inject(TrainerStore), notify = inject(NotifyService)) => {
+    withMethods((store, trainer = inject(TrainerStore), notify = inject(NotifyService), config = inject(ConfigurationStore), transloco = inject(TranslocoService)) => {
         async function write(custom: TrainerPreset[]) {
             await invoke('write_trainer_presets', { presets: custom });
             patchState(store, { custom });
         }
 
+        /** Saves the shortcuts of the settings changed by `change`. */
+        async function writeShortcuts(change: (shortcuts: TrainerShortcut[]) => TrainerShortcut[]) {
+            const trainer = config.config()?.trainer;
+            if (!trainer) return;
+            await config.updateConfig({ trainer: { ...trainer, shortcuts: change(trainer.shortcuts ?? []) } });
+        }
+
         return {
             /** Replaces the converts with the preset's. */
             apply(preset: TrainerPreset) {
-                const dropped = trainer.setConverts(preset.converts);
-                if (dropped > 0) {
-                    notify.info(`${dropped} task(s) of "${preset.name}" don't work on this map's mode and were left out.`);
+                const skipped = trainer.setConverts(preset.converts);
+                if (skipped > 0) {
+                    notify.info(transloco.translate('trainer.presets.skipped', { count: skipped, name: preset.name }));
                 }
             },
 
@@ -42,18 +52,32 @@ export const TrainerPresetsStore = signalStore(
                 const custom = replaced ? store.custom().map(p => (p.name === name ? preset : p)) : [...store.custom(), preset];
                 try {
                     await write(custom);
-                    notify.success(replaced ? `Updated the preset "${name}"` : `Saved the preset "${name}"`);
+                    notify.success(transloco.translate(replaced ? 'trainer.presets.updated' : 'trainer.presets.saved', { name }));
                 } catch (e) {
-                    notify.error(`Could not save the preset: ${e}`);
+                    notify.error(transloco.translate('trainer.presets.saveFailed', { error: errorText(transloco, e) }));
                 }
             },
 
             async remove(name: string) {
                 try {
                     await write(store.custom().filter(p => p.name !== name));
+                    await writeShortcuts(shortcuts => shortcuts.filter(s => s.preset !== name));
                 } catch (e) {
-                    notify.error(`Could not delete the preset: ${e}`);
+                    notify.error(transloco.translate('trainer.presets.deleteFailed', { error: errorText(transloco, e) }));
                 }
+            },
+
+            /** The shortcut of the preset called `preset`; empty, none. */
+            shortcutOf(preset: string): string {
+                return config.config()?.trainer.shortcuts?.find(s => s.preset === preset)?.keys ?? '';
+            },
+
+            /** Sets the shortcut of the preset called `preset`; empty keys take it away. */
+            async setShortcut(preset: string, keys: string) {
+                await writeShortcuts(shortcuts => {
+                    const others = shortcuts.filter(s => s.preset !== preset);
+                    return keys ? [...others, { preset, keys }] : others;
+                });
             },
         };
     }),
@@ -61,7 +85,10 @@ export const TrainerPresetsStore = signalStore(
     withHooks({
         onInit(store) {
             invoke<unknown>('read_trainer_presets')
-                .then(presets => patchState(store, { custom: Array.isArray(presets) ? presets.filter(isPreset) : [] }))
+                .then(presets => {
+                    const custom = Array.isArray(presets) ? presets.filter(isPreset) : [];
+                    patchState(store, { custom: custom.map(p => ({ ...p, converts: p.converts.map(renamePlaystyles) })) });
+                })
                 .catch(e => console.error('read_trainer_presets failed', e));
         },
     }),

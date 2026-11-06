@@ -2,8 +2,8 @@
     <header>
         <h2 tuiHeader="body-l">
             <div tuiTitle>
-                Torosu Configuration
-                <div tuiSubtitle>Manage your Torosu settings</div>
+                {{ 'settings.title' | transloco }}
+                <div tuiSubtitle>{{ 'settings.subtitle' | transloco }}</div>
             </div>
 
             <div tuiAccesories>
@@ -15,7 +15,7 @@
                     type="button"
                     (click)="open.set(false)"
                 >
-                    Close
+                    {{ 'settings.close' | transloco }}
                 </button>
             </div>
         </h2>
@@ -25,25 +25,25 @@
                     tuiTab
                     type="button"
                 >
-                    General
+                    {{ 'settings.tabs.general' | transloco }}
                 </button>
                 <button
                     tuiTab
                     type="button"
                 >
-                    Downloader
+                    {{ 'settings.tabs.downloader' | transloco }}
                 </button>
                 <button
                     tuiTab
                     type="button"
                 >
-                    Packs
+                    {{ 'settings.tabs.packs' | transloco }}
                 </button>
                 <button
                     tuiTab
                     type="button"
                 >
-                    Trainer
+                    {{ 'settings.tabs.trainer' | transloco }}
                 </button>
             </tui-tabs>
         </nav>
@@ -53,11 +53,21 @@
         @switch (activeTab()) {
             @case (0) {
                 <section>
-                    <h3 tuiTitle="s">osu!</h3>
+                    <h3 tuiTitle="s">{{ 'settings.general.language' | transloco }}</h3>
+                    <app-option-group
+                        [active]="languageIndex()"
+                        [options]="languageOptions"
+                        (activeChange)="setLanguage($event)"
+                    />
+                    <span class="hint">{{ 'settings.general.languageHint' | transloco }}</span>
+                </section>
+
+                <section>
+                    <h3 tuiTitle="s">{{ 'settings.general.osu' | transloco }}</h3>
                     <tui-textfield>
-                        <label tuiLabel>osu! folder path</label>
+                        <label tuiLabel>{{ 'settings.general.osuPath' | transloco }}</label>
                         <input
-                            placeholder="C:\Users\you\AppData\Local\osu!"
+                            [placeholder]="'settings.general.osuPathPlaceholder' | transloco"
                             tuiInput
                             [ngModel]="draft().osu_path"
                             (ngModelChange)="draft().osu_path = $event || undefined"
@@ -70,13 +80,13 @@
                             type="button"
                             (click)="pickOsuPath()"
                         >
-                            Browse
+                            {{ 'settings.browse' | transloco }}
                         </button>
                     </tui-textfield>
                     <label tuiCell>
                         <span tuiTitle>
-                            Developer mode
-                            <span tuiSubtitle>Show the button for the developer pages: logs and osu! data</span>
+                            {{ 'settings.general.devMode' | transloco }}
+                            <span tuiSubtitle>{{ 'settings.general.devModeHint' | transloco }}</span>
                         </span>
                         <input
                             tuiSwitch
@@ -87,10 +97,10 @@
                 </section>
 
                 <section>
-                    <h3 tuiTitle="s">Tools</h3>
+                    <h3 tuiTitle="s">{{ 'settings.general.tools' | transloco }}</h3>
                     @for (tool of tools; track tool.route) {
                         <label tuiCell>
-                            <span tuiTitle>{{ tool.label }}</span>
+                            <span tuiTitle>{{ tool.label | transloco }}</span>
                             <input
                                 tuiSwitch
                                 type="checkbox"
@@ -104,11 +114,11 @@
 
             @case (1) {
                 <section>
-                    <h3 tuiTitle="s">Account</h3>
+                    <h3 tuiTitle="s">{{ 'settings.downloader.account' | transloco }}</h3>
                     <label tuiCell>
                         <span tuiTitle>
-                            Save cookie
-                            <span tuiSubtitle>Keep the osu_session cookie when Torosu closes. Off, it lasts only for this session</span>
+                            {{ 'settings.downloader.saveCookie' | transloco }}
+                            <span tuiSubtitle>{{ 'settings.downloader.saveCookieHint' | transloco }}</span>
                         </span>
                         <input
                             tuiSwitch
@@ -119,11 +129,11 @@
                 </section>
 
                 <section>
-                    <h3 tuiTitle="s">Output</h3>
+                    <h3 tuiTitle="s">{{ 'settings.output' | transloco }}</h3>
                     <tui-textfield>
-                        <label tuiLabel>Output path</label>
+                        <label tuiLabel>{{ 'settings.downloader.outputPath' | transloco }}</label>
                         <input
-                            placeholder="Defaults to the osu! Songs folder"
+                            [placeholder]="'settings.downloader.outputPathPlaceholder' | transloco"
                             tuiInput
                             [ngModel]="draft().downloader.output_path"
                             (ngModelChange)="draft().downloader.output_path = $event || undefined"
@@ -136,11 +146,11 @@
                             type="button"
                             (click)="pickOutputPath()"
                         >
-                            Browse
+                            {{ 'settings.browse' | transloco }}
                         </button>
                     </tui-textfield>
                     <tui-textfield>
-                        <label tuiLabel>Max concurrent downloads</label>
+                        <label tuiLabel>{{ 'settings.downloader.maxConcurrent' | transloco }}</label>
                         <input
                             tuiInputNumber
                             [min]="1"
@@ -151,11 +161,11 @@
                 </section>
 
                 <section>
-                    <h3 tuiTitle="s">Behaviour</h3>
+                    <h3 tuiTitle="s">{{ 'settings.downloader.behaviour' | transloco }}</h3>
                     <label tuiCell>
                         <span tuiTitle>
-                            Skip video
-                            <span tuiSubtitle>Download beatmaps without video</span>
+                            {{ 'settings.downloader.skipVideo' | transloco }}
+                            <span tuiSubtitle>{{ 'settings.downloader.skipVideoHint' | transloco }}</span>
                         </span>
                         <input
                             tuiSwitch
@@ -165,8 +175,8 @@
                     </label>
                     <label tuiCell>
                         <span tuiTitle>
-                            Open file
-                            <span tuiSubtitle>Open each beatmap after downloading it</span>
+                            {{ 'settings.downloader.openFile' | transloco }}
+                            <span tuiSubtitle>{{ 'settings.downloader.openFileHint' | transloco }}</span>
                         </span>
                         <input
                             tuiSwitch
@@ -176,8 +186,8 @@
                     </label>
                     <label tuiCell>
                         <span tuiTitle>
-                            Load library
-                            <span tuiSubtitle>Load the osu! library when opening the downloader, to skip maps you have</span>
+                            {{ 'settings.downloader.loadLibrary' | transloco }}
+                            <span tuiSubtitle>{{ 'settings.downloader.loadLibraryHint' | transloco }}</span>
                         </span>
                         <input
                             tuiSwitch
@@ -187,8 +197,8 @@
                     </label>
                     <label tuiCell>
                         <span tuiTitle>
-                            Notify
-                            <span tuiSubtitle>Show a notification when downloads finish</span>
+                            {{ 'settings.downloader.notify' | transloco }}
+                            <span tuiSubtitle>{{ 'settings.downloader.notifyHint' | transloco }}</span>
                         </span>
                         <input
                             tuiSwitch
@@ -198,8 +208,8 @@
                     </label>
                     <label tuiCell>
                         <span tuiTitle>
-                            Error file
-                            <span tuiSubtitle>Write failed IDs to failed_downloads.txt</span>
+                            {{ 'settings.downloader.errorFile' | transloco }}
+                            <span tuiSubtitle>{{ 'settings.downloader.errorFileHint' | transloco }}</span>
                         </span>
                         <input
                             tuiSwitch
@@ -212,11 +222,11 @@
 
             @case (2) {
                 <section>
-                    <h3 tuiTitle="s">Create Packs</h3>
+                    <h3 tuiTitle="s">{{ 'settings.packs.createPacks' | transloco }}</h3>
                     <label tuiCell>
                         <span tuiTitle>
-                            Keep backgrounds
-                            <span tuiSubtitle>Copy each diff's background into the pack</span>
+                            {{ 'settings.packs.keepBackgrounds' | transloco }}
+                            <span tuiSubtitle>{{ 'settings.packs.keepBackgroundsHint' | transloco }}</span>
                         </span>
                         <input
                             tuiSwitch
@@ -225,7 +235,7 @@
                         />
                     </label>
                     <tui-textfield>
-                        <label tuiLabel>Max sets per pack (0 never splits)</label>
+                        <label tuiLabel>{{ 'settings.packs.maxSets' | transloco }}</label>
                         <input
                             tuiInputNumber
                             [min]="0"
@@ -236,7 +246,7 @@
                 </section>
 
                 <section>
-                    <h3 tuiTitle="s">Difficulty name</h3>
+                    <h3 tuiTitle="s">{{ 'settings.difficultyName' | transloco }}</h3>
                     <app-name-format-field
                         exampleCommand="pack_name_example"
                         [fields]="packNameFields"
@@ -248,11 +258,11 @@
 
             @case (3) {
                 <section>
-                    <h3 tuiTitle="s">Quality</h3>
+                    <h3 tuiTitle="s">{{ 'settings.trainer.quality' | transloco }}</h3>
                     <label tuiCell>
                         <span tuiTitle>
-                            High quality audio
-                            <span tuiSubtitle>Encode the new audio at ~192 kbit/s instead of ~128 kbit/s, half as big again</span>
+                            {{ 'settings.trainer.hqAudio' | transloco }}
+                            <span tuiSubtitle>{{ 'settings.trainer.hqAudioHint' | transloco }}</span>
                         </span>
                         <input
                             tuiSwitch
@@ -262,8 +272,8 @@
                     </label>
                     <label tuiCell>
                         <span tuiTitle>
-                            High quality video
-                            <span tuiSubtitle>Re-encode a scaled video at a better quality, nearly twice as big</span>
+                            {{ 'settings.trainer.hqVideo' | transloco }}
+                            <span tuiSubtitle>{{ 'settings.trainer.hqVideoHint' | transloco }}</span>
                         </span>
                         <input
                             tuiSwitch
@@ -274,11 +284,21 @@
                 </section>
 
                 <section>
-                    <h3 tuiTitle="s">Rate change</h3>
+                    <h3 tuiTitle="s">{{ 'settings.trainer.skill' | transloco }}</h3>
+                    <app-option-group
+                        [active]="skillDisplayIndex()"
+                        [options]="skillDisplayOptions"
+                        (activeChange)="setSkillDisplay($event)"
+                    />
+                    <span class="hint">{{ 'settings.trainer.skillHint' | transloco }}</span>
+                </section>
+
+                <section>
+                    <h3 tuiTitle="s">{{ 'settings.trainer.rateChange' | transloco }}</h3>
                     <label tuiCell>
                         <span tuiTitle>
-                            Automatic pitch
-                            <span tuiSubtitle>Keep the pitch below 1.0x and let it rise with the speed above, instead of choosing it in each rate change</span>
+                            {{ 'settings.trainer.autoPitch' | transloco }}
+                            <span tuiSubtitle>{{ 'settings.trainer.autoPitchHint' | transloco }}</span>
                         </span>
                         <input
                             tuiSwitch
@@ -289,11 +309,11 @@
                 </section>
 
                 <section>
-                    <h3 tuiTitle="s">Output</h3>
+                    <h3 tuiTitle="s">{{ 'settings.output' | transloco }}</h3>
                     <label tuiCell>
                         <span tuiTitle>
-                            Open the .osz
-                            <span tuiSubtitle>Open each new .osz with osu!, so it is imported right away</span>
+                            {{ 'settings.trainer.openOsz' | transloco }}
+                            <span tuiSubtitle>{{ 'settings.trainer.openOszHint' | transloco }}</span>
                         </span>
                         <input
                             tuiSwitch
@@ -304,7 +324,27 @@
                 </section>
 
                 <section>
-                    <h3 tuiTitle="s">Difficulty name</h3>
+                    <h3 tuiTitle="s">{{ 'settings.trainer.shortcuts' | transloco }}</h3>
+                    <label tuiCell>
+                        <span tuiTitle>
+                            {{ 'settings.trainer.runShortcuts' | transloco }}
+                            @if (platform.wayland()) {
+                                <span tuiSubtitle>{{ 'settings.trainer.shortcutsWayland' | transloco }}</span>
+                            } @else {
+                                <span tuiSubtitle>{{ 'settings.trainer.shortcutsHint' | transloco }}</span>
+                            }
+                        </span>
+                        <input
+                            tuiSwitch
+                            type="checkbox"
+                            [disabled]="platform.wayland() === true"
+                            [(ngModel)]="draft().trainer.shortcuts_enabled"
+                        />
+                    </label>
+                </section>
+
+                <section>
+                    <h3 tuiTitle="s">{{ 'settings.difficultyName' | transloco }}</h3>
                     <app-name-format-field
                         exampleCommand="trainer_name_example"
                         [fields]="trainerNameFields"
@@ -324,7 +364,7 @@
             type="button"
             (click)="open.set(false)"
         >
-            Cancel
+            {{ 'settings.cancel' | transloco }}
         </button>
         <button
             size="m"
@@ -332,7 +372,7 @@
             type="button"
             (click)="save()"
         >
-            Save
+            {{ 'settings.save' | transloco }}
         </button>
     </footer>
 </tui-drawer>

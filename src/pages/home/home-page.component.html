@@ -6,37 +6,37 @@
         <span appearance="neutral" size="m" tuiBadge>v{{ version }}</span>
       }
     </span>
-    <span tuiSubtitle>All the tools you would need for osu! in the same place.</span>
+    <span tuiSubtitle>{{ 'home.subtitle' | transloco }}</span>
   </div>
 
   <div class="facts">
-    <span appearance="info" size="m" tuiBadge>Made for osu! stable</span>
-    <span class="fact">Lazer is not supported: the tools read and write osu! stable's files.</span>
+    <span appearance="info" size="m" tuiBadge>{{ 'home.madeFor' | transloco }}</span>
+    <span class="fact">{{ 'home.noLazer' | transloco }}</span>
   </div>
 
   @if (osuPath.path(); as path) {
     <div class="folder">
       <tui-icon icon="@tui.folder" />
       <span class="path" [title]="path">{{ path }}</span>
-      <span class="hint">Change it in the settings</span>
+      <span class="hint">{{ 'home.changeFolder' | transloco }}</span>
     </div>
   }
 </header>
 
 <section>
-  <h2 tuiTitle="m">Tools</h2>
+  <h2 tuiTitle="m">{{ 'home.tools' | transloco }}</h2>
   <div class="tools">
     @for (tool of tools(); track tool.route) {
       <a appearance="floating" tuiCardLarge="compact" class="tool" [routerLink]="tool.route">
         <span class="icon"><tui-icon [icon]="tool.icon" /></span>
         <span tuiTitle>
-          {{ tool.label }}
-          <span tuiSubtitle>{{ tool.description }}</span>
+          {{ tool.label | transloco }}
+          <span tuiSubtitle>{{ tool.description ?? '' | transloco }}</span>
         </span>
         <tui-icon icon="@tui.arrow-right" class="arrow" />
       </a>
     } @empty {
-      <p class="empty">Every tool is turned off. Turn them on in the settings, under General.</p>
+      <p class="empty">{{ 'home.noTools' | transloco }}</p>
     }
   </div>
 </section>

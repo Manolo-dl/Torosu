@@ -1,12 +1,7 @@
-<span class="title">{{ label() }}</span>
+<span class="title">{{ label() | transloco }}</span>
 
 <div class="controls">
-  <tui-segmented size="s" [activeItemIndex]="activeIndex()" (activeItemIndexChange)="onSegment($event)">
-    @for (divisor of divisors; track divisor) {
-      <button type="button">1/{{ divisor }}</button>
-    }
-    <button type="button">ms</button>
-  </tui-segmented>
+  <app-option-group [active]="activeIndex()" [options]="options" (activeChange)="onSegment($event)" />
 
   @if (value().unit === 'ms') {
     <tui-textfield tuiTextfieldSize="s" [tuiTextfieldCleaner]="false" class="ms">
@@ -16,8 +11,8 @@
 </div>
 
 <span class="hint">
-  {{ hint() }}
+  {{ hint() | transloco }}
   @if (approxMs() !== null) {
-    (1/{{ value().value }} beat ≈ {{ approxMs() }} ms at {{ bpm() }} BPM)
+    {{ 'trainer.noteLength.approx' | transloco: { divisor: value().value, ms: approxMs(), bpm: bpm() } }}
   }
 </span>

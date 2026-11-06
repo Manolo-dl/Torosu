@@ -5,7 +5,7 @@ the following third-party software, under its own license.
 
 ## osu-memory-reader
 
-- Version: 0.1.0 (<https://crates.io/crates/osu-memory-reader>)
+- Version: 0.2.1 (<https://crates.io/crates/osu-memory-reader>)
 - Source: <https://github.com/Manolo-dl/Osu-memory-reader>
 - Copyright (C) 2026 Manolo-dl
 - License: GNU Lesser General Public License version 3 (LGPL-3.0-only)
@@ -41,3 +41,48 @@ copy of osu-memory-reader:
    ```
 
 4. Build Torosu with `pnpm install` and `pnpm tauri build`.
+
+## dan-calc
+
+- Version: commit `0d4353b` of <https://github.com/aleju03/mania-hub> (`algorithms/dan-calc`)
+- Copyright (c) 2026 aleju03
+- License: MIT
+
+Torosu uses it to estimate the dan and the MSD of mania maps, the one selected in
+osu! and the converts of the trainer. It is statically linked into the Torosu
+executable, and includes:
+
+- Estimators ported from
+  [LeoBlackMT/osumania_map_analyser](https://github.com/LeoBlackMT/osumania_map_analyser),
+  Copyright (c) 2026 Leo_Black, MIT License.
+- MinaCalc compiled to WebAssembly, from [Etterna](https://github.com/etternagame/etterna),
+  Copyright (c) 2016-2023 Etterna, MIT License.
+
+### Dan badges
+
+The dan badges in `src/assets/images/dans/` (and `assets/images/dans/` in the
+installed app) are Mania Tracker's, from `public/images/dans/` in
+<https://github.com/aleju03/mania-hub> (commit `3628364`), and are used with
+the permission of its author, aleju03. They are drawn after the marks of the
+dan courses they stand for: the 4K reform and LN dans, JinJin's 7K dans, and
+Arkman's and sunnyxxy's 6K dans. They are not covered by Torosu's MIT License.
+
+The MIT License of each of them reads:
+
+> Permission is hereby granted, free of charge, to any person obtaining a copy
+> of this software and associated documentation files (the "Software"), to deal
+> in the Software without restriction, including without limitation the rights
+> to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+> copies of the Software, and to permit persons to whom the Software is
+> furnished to do so, subject to the following conditions:
+>
+> The above copyright notice and this permission notice shall be included in all
+> copies or substantial portions of the Software.
+>
+> THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+> IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+> FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+> AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+> LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+> OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+> SOFTWARE.

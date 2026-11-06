@@ -1,0 +1,31 @@
+@if (showDan()) {
+  @for (dan of dans(); track dan.family) {
+    <div class="item" [attr.title]="danHint(dan)">
+      <app-dan-emblem [dan]="dan" [size]="emblemSize()" [keyCount]="keyCount()" />
+      <div class="text">
+        <span class="caption">{{ (dan.family === 'ln' ? 'trainer.skill.lnDan' : 'trainer.skill.dan') | transloco }}</span>
+        <span class="value">{{ dan.name }}</span>
+      </div>
+      @if (danDelta(dan); as change) {
+        <span class="delta" [class.up]="change.up" [attr.title]="deltaHint(change)">
+          {{ change.up ? '▲' : '▼' }} {{ change.text }}
+        </span>
+      }
+    </div>
+  }
+}
+
+@if (showMsd() && msd(); as msd) {
+  <div class="item" [attr.title]="msdHint()">
+    <span class="msd-value" [style.background]="msdBg()" [style.color]="msdFg()">{{ msd.overall | number: '1.2-2' }}</span>
+    <div class="text">
+      <span class="caption">MSD · {{ calculator() }}</span>
+      <span class="value">{{ topSkillset() }}</span>
+    </div>
+    @if (msdDelta(); as change) {
+      <span class="delta" [class.up]="change.up" [attr.title]="deltaHint(change)">
+        {{ change.up ? '▲' : '▼' }} {{ change.text }}
+      </span>
+    }
+  </div>
+}

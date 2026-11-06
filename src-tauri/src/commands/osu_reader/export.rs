@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use crate::{error::Result, osz::{self, OszWriter}, state::OsuReaderState};
+use crate::{error::{Error, Result}, osz::{self, OszWriter}, state::OsuReaderState};
 
 /// Packs the whole set folder of the beatmap selected in osu! into an .osz at
 /// `path`, as osu! itself exports it: every file, subfolders included.
@@ -13,7 +13,7 @@ pub async fn export_selected_osz(state: tauri::State<'_, OsuReaderState>, path: 
             .as_ref()
             .and_then(|beatmap| beatmap.paths.as_ref())
             .map(|paths| paths.folder.clone())
-            .ok_or("no beatmap selected in osu!, or its folder could not be found")?
+            .ok_or(Error::NoBeatmapSelected)?
     };
 
     let output = PathBuf::from(path);
