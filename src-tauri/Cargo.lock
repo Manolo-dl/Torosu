@@ -3251,10 +3251,11 @@ dependencies = [
 
 [[package]]
 name = "osu-memory-reader"
-version = "0.2.0"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "656a77825ed483b63427ea985b02d3053835adb150fdd0de030c0adecf6112c7"
+checksum = "1f2c34ede12d3a3fe332392fe5cb9171b4c2ae1ef2b168d10294ff302ca581a0"
 dependencies = [
+ "memchr",
  "rosu-pp",
  "serde",
  "windows-sys 0.61.2",
