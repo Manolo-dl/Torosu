@@ -9,7 +9,11 @@ use crate::commands::trainer::{
 
 /// Applies `tasks` to the map in order. `accents` gives the accents of its
 /// audio, for the tasks that follow the music; only those call it.
-pub fn run<'a>(beatmap: &mut Beatmap, tasks: &[TrainerTask], accents: impl Fn() -> Option<&'a Accents>) -> Result<()> {
+pub fn run<'a, 't>(
+    beatmap: &mut Beatmap,
+    tasks: impl IntoIterator<Item = &'t TrainerTask>,
+    accents: impl Fn() -> Option<&'a Accents>,
+) -> Result<()> {
     // The map's times are the audio's divided by this: the rate changes so far.
     let mut rate = 1.0;
 

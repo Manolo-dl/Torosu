@@ -7,7 +7,7 @@ export interface AppConfig {
     open_file: boolean;
     /** Shows the developer pages (logs, osu! data). */
     dev_mode: boolean;
-    /** The language of the interface (`en`, `es`); none is English. */
+    /** The language of the interface (`en`, `es`, `fr`); none is English. */
     language?: string | null;
 }
 
@@ -22,6 +22,8 @@ export interface TrainerConfig {
     open_osz: boolean;
     /** Template of the difficulty name, with placeholders like `{diff}` and `{rate}` (see `naming.rs`). */
     name_format: string;
+    /** What the trainer shows of how hard the selected map and each convert are; `dan` by default. */
+    skill_display: 'dan' | 'msd' | 'both' | 'none';
     /** Run the presets with keyboard shortcuts while osu! has the focus; off by default. */
     shortcuts_enabled: boolean;
     /** The shortcut of each preset that has one; none by default, so none of the game's is taken. */

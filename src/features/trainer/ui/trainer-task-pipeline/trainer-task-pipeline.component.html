@@ -48,6 +48,17 @@
     </ng-template>
   </header>
 
+  @if (convert().tasks.length > 0 && preview(); as skill) {
+    <div class="result" [class.stale]="stale()" [attr.aria-busy]="stale()">
+      <span class="result-label">{{ 'trainer.skill.result' | transloco }}</span>
+      <app-skill-summary
+        [skill]="skill"
+        [display]="skillDisplay()"
+        [compareTo]="reader.skill()"
+      />
+    </div>
+  }
+
   <div class="list" cdkDropList (cdkDropListDropped)="onDrop($event)">
     @for (entry of convert().tasks; track entry.id) {
       <div class="task" cdkDrag [class.skipped]="isSkipped(entry.task.type)">

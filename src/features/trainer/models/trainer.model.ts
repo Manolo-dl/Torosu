@@ -40,6 +40,18 @@ export interface KeyConverterParams {
     playstyle: string | null;
 }
 
+/** Playstyles renamed, as old name to new one (see `RENAMED` in `analysis/layout.rs`). */
+const RENAMED_PLAYSTYLES: Record<string, string> = { '1+7': '7K+1' };
+
+/** `tasks` with the key converter's playstyle under its current name: presets saved before keep theirs. */
+export function renamePlaystyles(tasks: TrainerTaskParams[]): TrainerTaskParams[] {
+    return tasks.map(task => {
+        if (task.type !== 'KeyConverter') return task;
+        const renamed = task.params.playstyle ? RENAMED_PLAYSTYLES[task.params.playstyle] : undefined;
+        return renamed ? { ...task, params: { ...task.params, playstyle: renamed } } : task;
+    });
+}
+
 /**
  * The playstyles of each key count, the usual one first (see `analysis/layout.rs`).
  * The name is sent to the backend and goes in the diff name as it is; the hint
@@ -57,7 +69,7 @@ export const PLAYSTYLES: Record<number, { name: string; hint: string }[]> = {
     8: [
         { name: '4+4', hint: 'trainer.playstyles.8_4+4' },
         { name: '3+2+3', hint: 'trainer.playstyles.8_3+2+3' },
-        { name: '1+7', hint: 'trainer.playstyles.8_1+7' },
+        { name: '7K+1', hint: 'trainer.playstyles.8_7K+1' },
     ],
     // 12K to 18K: the playstyles of the osu! wiki (osu!mania 10K+ playstyles).
     12: [

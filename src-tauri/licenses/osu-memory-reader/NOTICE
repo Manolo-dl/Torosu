@@ -21,6 +21,8 @@ Modifications (October-November 2026):
 - The beatmap is discarded when it was read while the game was moving it in
   memory.
 - Added translation of Windows paths through Wine drive mappings on Linux.
+- Memory signatures are searched for by their longest run of fixed bytes
+  (with memchr), then checked in full where it appears.
 
 Origin of each file:
   src/stable.rs           packages/tosu/src/memory/stable.ts

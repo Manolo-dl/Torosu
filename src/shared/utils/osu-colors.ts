@@ -24,12 +24,21 @@ const hex = (rgb: number[]) => '#' + rgb.map(c => Math.round(c).toString(16).pad
 /** Background colour osu! uses for a star rating. */
 export function starBg(stars: number): string {
   if (stars < STAR_SPECTRUM[0][0]) return '#aaaaaa';
-  const next = STAR_SPECTRUM.findIndex(([at]) => at > stars);
-  if (next === -1) return hex(STAR_SPECTRUM[STAR_SPECTRUM.length - 1][1]);
+  return blendSpectrum(STAR_SPECTRUM, stars);
+}
 
-  const [fromAt, from] = STAR_SPECTRUM[next - 1];
-  const [toAt, to] = STAR_SPECTRUM[next];
-  const t = (stars - fromAt) / (toAt - fromAt);
+/**
+ * The colour of `value` on `spectrum` (stops in ascending order), blended as osu! blends
+ * its star colours; the end colours outside it.
+ */
+export function blendSpectrum(spectrum: [number, [number, number, number]][], value: number): string {
+  if (value <= spectrum[0][0]) return hex(spectrum[0][1]);
+  const next = spectrum.findIndex(([at]) => at > value);
+  if (next === -1) return hex(spectrum[spectrum.length - 1][1]);
+
+  const [fromAt, from] = spectrum[next - 1];
+  const [toAt, to] = spectrum[next];
+  const t = (value - fromAt) / (toAt - fromAt);
   return hex(from.map((a, i) => {
     const [ga, gb] = [a ** GAMMA, to[i] ** GAMMA];
     return (ga + t * (gb - ga)) ** (1 / GAMMA);

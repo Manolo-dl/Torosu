@@ -1,5 +1,5 @@
 import { errorText } from '@shared/i18n';
-import { effect, inject, Injectable, signal, untracked } from '@angular/core';
+import { computed, effect, inject, Injectable, signal, untracked } from '@angular/core';
 import { invoke } from '@tauri-apps/api/core';
 import { register, ShortcutEvent, unregister, unregisterAll } from '@tauri-apps/plugin-global-shortcut';
 import { ConfigurationStore, TrainerShortcut } from '@entities/configuration';
@@ -47,12 +47,28 @@ export class TrainerShortcutsService {
      */
     private readonly ever = new Set<string>();
 
-    constructor() {
-        effect(() => {
+    /**
+     * What the shortcuts depend on, compared by value: they are taken again
+     * when it changes, not on every save of the settings (the language, the
+     * dan display...).
+     */
+    private readonly wanted = computed(
+        () => {
             const trainer = this.config.config()?.trainer;
             const on = !!trainer?.shortcuts_enabled && this.platform.wayland() === false;
             const paused = this.paused();
             const shortcuts = on && !paused ? (trainer?.shortcuts ?? []).filter(s => s.keys) : [];
+            return { on, paused, shortcuts };
+        },
+        {
+            equal: (a, b) =>
+                a.on === b.on && a.paused === b.paused && JSON.stringify(a.shortcuts) === JSON.stringify(b.shortcuts),
+        },
+    );
+
+    constructor() {
+        effect(() => {
+            const { on, paused, shortcuts } = this.wanted();
             untracked(() => {
                 // The map to convert is the one osu! has selected.
                 if (on) this.reader.connect();

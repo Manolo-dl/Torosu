@@ -2,10 +2,10 @@
 //!
 //! Every key count has its usual ways to be played, and the patterns of a map
 //! only make sense against one of them: on 8K a `3+2+3` player hits the two
-//! middle keys with the thumbs, a `1+7` player has a scratch on the left.
+//! middle keys with the thumbs, a `7K+1` player has a scratch on the left.
 //! osu! 7K is always `3+1+3`.
 //!
-//! A mirrored playstyle (`2+3` for `3+2`, `7+1` for `1+7`) is not listed:
+//! A mirrored playstyle (`2+3` for `3+2`, 7K+1 with the scratch on the right) is not listed:
 //! players get it with osu!'s Mirror mod. The analysis groups
 //! the keys by hand (and by player in co-op), so each group gets its own
 //! patterns.
@@ -97,7 +97,7 @@ impl Layout {
     /// 7K+1 is a 7K map and a scratch), rather than keys the patterns run into
     /// (12K).
     pub fn inner_keys(&self) -> Option<usize> {
-        (self.name == "10K2S").then(|| self.keys() - self.digit_mask(Digit::Scratch).count_ones() as usize)
+        matches!(self.name, "10K2S" | "7K+1").then(|| self.keys() - self.digit_mask(Digit::Scratch).count_ones() as usize)
     }
 
     pub fn digit_mask(&self, digit: Digit) -> u32 {
@@ -210,7 +210,7 @@ pub fn layouts(keys: usize) -> Vec<Layout> {
         8 => &[
             ("4+4", "Four fingers per hand", "L5 L4 L3 L2 R2 R3 R4 R5"),
             ("3+2+3", "Both thumbs on the middle keys", "L4 L3 L2 L1 R1 R2 R3 R4"),
-            ("1+7", "7K with a scratch on the left (IIDX)", "LS L4 L3 L2 T R2 R3 R4"),
+            ("7K+1", "7K with a scratch on the left (IIDX)", "LS L4 L3 L2 T R2 R3 R4"),
         ],
         9 => &[("4+1+4", "Thumb on the middle key (pop'n)", "L5 L4 L3 L2 T R2 R3 R4 R5")],
         10 => &[("5+5", "Every finger, thumbs in the middle", "L5 L4 L3 L2 L1 R1 R2 R3 R4 R5")],
@@ -262,9 +262,14 @@ pub fn layouts(keys: usize) -> Vec<Layout> {
     vec![Layout { name: "Split", description: "Half the keys per hand", fingers: parse(&spec) }]
 }
 
-/// The layout called `name`, or the usual one of the key count.
+/// Playstyles renamed, as (old name, new one): presets saved before keep theirs.
+const RENAMED: [(&str, &str); 1] = [("1+7", "7K+1")];
+
+/// The layout called `name` (or what it was called, see [`RENAMED`]), or the
+/// usual one of the key count.
 pub fn layout(keys: usize, name: Option<&str>) -> Layout {
     let all = layouts(keys);
+    let name = name.map(|n| RENAMED.iter().find(|r| r.0 == n).map_or(n, |r| r.1));
     name.and_then(|n| all.iter().find(|l| l.name == n).cloned()).unwrap_or_else(|| all[0].clone())
 }
 
@@ -293,7 +298,9 @@ mod tests {
         assert_eq!(names(18, "9K9K"), ["Left", "Right"]);
         assert!(layout(7, None).symmetric());
         assert!(!layout(5, Some("3+2")).symmetric());
-        assert!(!layout(8, Some("1+7")).symmetric());
+        assert!(!layout(8, Some("7K+1")).symmetric());
+        // Saved under its old name.
+        assert_eq!(layout(8, Some("1+7")).name, "7K+1");
         for keys in [12, 14, 16, 18] {
             assert!(layouts(keys).iter().all(|l| l.symmetric()), "{}K", keys);
         }

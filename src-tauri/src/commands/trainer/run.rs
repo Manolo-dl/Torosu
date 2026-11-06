@@ -81,24 +81,24 @@ pub async fn run_trainer(app: AppHandle, request: RunTrainerRequest) -> Result<V
 }
 
 /// The map the converts start from.
-struct Source {
+pub(super) struct Source {
     folder: PathBuf,
     /// The map with the shared difficulty settings applied.
-    beatmap: Beatmap,
+    pub(super) beatmap: Beatmap,
     /// Its `[Events]`, read raw: rosu-map drops the storyboard and the video.
     events: Vec<String>,
     /// What it had before, to name the converts after what changed.
     version: String,
     audio: String,
-    original: DifficultySettings,
+    pub(super) original: DifficultySettings,
     difficulty: DifficultySettings,
     /// The accents of its audio, read the first time a convert asks for
     /// them (see [`Source::accents`]).
-    accents: OnceLock<Option<Accents>>,
+    accents: OnceLock<Arc<Option<Accents>>>,
 }
 
 impl Source {
-    fn read(path: &Path, mut difficulty: DifficultySettings) -> Result<Self> {
+    pub(super) fn read(path: &Path, mut difficulty: DifficultySettings) -> Result<Self> {
         let folder = path
             .parent()
             .ok_or_else(|| {
@@ -147,18 +147,16 @@ impl Source {
         })
     }
 
+    pub(super) fn audio_path(&self) -> PathBuf {
+        self.folder.join(&self.audio)
+    }
+
     /// The accents of the map's audio, for the converts that follow the
-    /// music (10K2S): read once, the first time one asks, and shared by the
-    /// others. Without them those converts go by the map alone.
-    fn accents(&self) -> Option<&Accents> {
-        self.accents
-            .get_or_init(|| {
-                let path = self.folder.join(&self.audio);
-                Accents::read(&path)
-                    .inspect_err(|e| log::warn!("could not read the audio {:?}, the converts go by the map alone: {}", path, e))
-                    .ok()
-            })
-            .as_ref()
+    /// music (10K2S): read the first time one asks, or kept from the preview
+    /// (see [`Accents::cached`]), and shared by the others. Without them those
+    /// converts go by the map alone.
+    pub(super) fn accents(&self) -> Option<&Accents> {
+        self.accents.get_or_init(|| Accents::cached(&self.audio_path())).as_ref().as_ref()
     }
 }
 
@@ -190,18 +188,7 @@ struct VideoJob {
 /// Applies the tasks of convert `number` to a copy of the map and makes its
 /// .osu.
 fn build_convert(source: &Source, number: usize, mut tasks: Vec<TrainerTask>, config: &TrainerConfig) -> Result<Convert> {
-    for task in tasks.iter_mut() {
-        match &mut task.task {
-            // Extra notes only apply when converting to more keys; dropped
-            // here so the name does not claim them either.
-            TrainerTaskParams::KeyConverter(params) if params.target_keys as f64 <= source.original.cs.round() => {
-                params.density = Density::None;
-            }
-            // Kept below 1.0x, raised with the speed above.
-            TrainerTaskParams::RateChange(params) if config.auto_pitch => params.adjust_pitch = params.rate < 1.0,
-            _ => {}
-        }
-    }
+    adjust_tasks(source, &mut tasks, config);
 
     let mut beatmap = source.beatmap.clone();
     pipeline::run(&mut beatmap, &tasks, || source.accents()).map_err(|e| {
@@ -316,6 +303,22 @@ fn build_convert(source: &Source, number: usize, mut tasks: Vec<TrainerTask>, co
         audio,
         video,
     })
+}
+
+/// What the settings change in the tasks of a convert, before they run.
+pub(super) fn adjust_tasks(source: &Source, tasks: &mut [TrainerTask], config: &TrainerConfig) {
+    for task in tasks.iter_mut() {
+        match &mut task.task {
+            // Extra notes only apply when converting to more keys; dropped
+            // here so the name does not claim them either.
+            TrainerTaskParams::KeyConverter(params) if params.target_keys as f64 <= source.original.cs.round() => {
+                params.density = Density::None;
+            }
+            // Kept below 1.0x, raised with the speed above.
+            TrainerTaskParams::RateChange(params) if config.auto_pitch => params.adjust_pitch = params.rate < 1.0,
+            _ => {}
+        }
+    }
 }
 
 /// Two converts with the same name in the same .osz would be the same .osu

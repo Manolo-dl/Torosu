@@ -16,7 +16,7 @@ import {
 } from '../../models/trainer.model';
 import { TrainerStore } from '../../stores/trainer.store';
 import { ConfigurationStore } from '@entities/configuration';
-import { OsuReaderStore } from '@entities/osu-reader';
+import { OsuReaderStore, SkillSummaryComponent } from '@entities/osu-reader';
 import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDropList } from '@angular/cdk/drag-drop';
 import { TuiButton, TuiCheckbox, TuiDataList, TuiDropdown, TuiIcon, TuiInput, TuiNotificationDirective, TuiTitle } from '@taiga-ui/core';
 import { TuiCardLarge } from '@taiga-ui/layout';
@@ -32,7 +32,7 @@ interface DensityOption {
 /** The tasks of one convert. */
 @Component({
   selector: 'app-trainer-task-pipeline',
-  imports: [CdkDrag, CdkDropList, CdkDragHandle, FormsModule, TuiButton, TuiCardLarge, TuiCheckbox, TuiDataList, TuiDropdown, TuiIcon, TuiInput, TuiNotificationDirective, TuiTitle, TrainerNoteLengthComponent, OptionGroupComponent, TranslocoPipe],
+  imports: [CdkDrag, CdkDropList, CdkDragHandle, FormsModule, TuiButton, TuiCardLarge, TuiCheckbox, TuiDataList, TuiDropdown, TuiIcon, TuiInput, TuiNotificationDirective, TuiTitle, TrainerNoteLengthComponent, OptionGroupComponent, SkillSummaryComponent, TranslocoPipe],
   templateUrl: './trainer-task-pipeline.component.html',
   styleUrl: './trainer-task-pipeline.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -50,6 +50,24 @@ export class TrainerTaskPipelineComponent {
 
   /** The rate change sets the pitch itself (see the settings): no option to show. */
   readonly autoPitch = computed(() => this.config.config()?.trainer.auto_pitch ?? false);
+
+  readonly skillDisplay = computed(() => this.config.config()?.trainer.skill_display ?? 'dan');
+  /** The key count the convert ends with. */
+  readonly targetKeys = computed(() => {
+    const keys = this.convert().tasks.find(t => t.task.type === 'KeyConverter');
+    return keys?.task.type === 'KeyConverter' ? keys.task.params.targetKeys : this.sourceKeys();
+  });
+  /**
+   * The dan and MSD this convert would have; nothing until they are estimated.
+   * One for another key count, from before the key converter changed, goes
+   * at once: it would show a 7K dan on a 9K convert until the new one came.
+   */
+  /** Whether the preview shown is the previous one, while this convert's is estimated again. */
+  readonly stale = computed(() => this.trainer.previewing().includes(this.convert().id));
+  readonly preview = computed(() => {
+    const skill = this.trainer.previews()[this.convert().id] ?? null;
+    return skill && skill.keyCount === this.targetKeys() ? skill : null;
+  });
 
   taskLabels = TASK_LABELS;
   availableTasks: TrainerTaskType[] = ['RateChange', 'SVNormalizer', 'FlnConverter', 'KeyConverter'];

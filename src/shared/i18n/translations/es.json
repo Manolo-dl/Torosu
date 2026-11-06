@@ -65,7 +65,15 @@
       "shortcuts": "Atajos de teclado",
       "runShortcuts": "Ejecutar presets con atajos",
       "shortcutsWayland": "No disponible en Wayland: una aplicación no puede escuchar el teclado mientras osu! tiene el foco",
-      "shortcutsHint": "Convierte el mapa seleccionado en osu! con un preset mientras juegas. Las teclas de cada preset se ponen en el Trainer; al principio no hay ninguna"
+      "shortcutsHint": "Convierte el mapa seleccionado en osu! con un preset mientras juegas. Las teclas de cada preset se ponen en el Trainer; al principio no hay ninguna",
+      "skill": "Estimación de dificultad",
+      "skillHint": "Lo que muestra el trainer de lo difícil que es el mapa seleccionado y cada convert, con la calculadora de Mania Tracker. Los dans son para mapas 4K, 6K y 7K; el MSD sale de MinaCalc, o de Prism en 6K-8K",
+      "skillDisplay": {
+        "dan": "Dan",
+        "msd": "MSD",
+        "both": "Ambos",
+        "none": "Nada"
+      }
     },
     "nameFormat": {
       "label": "Formato del nombre",
@@ -171,6 +179,18 @@
     "addConvert": "Añadir convert",
     "mappedBy": "mapeado por {{ mapper }}",
     "exportOsz": "Exportar como .osz",
+    "dan": {
+      "hint": "Dan estimado por Mania Tracker, {{ confidence }}% de confianza"
+    },
+    "msd": {
+      "hint": "MSD general, de {{ calc }}"
+    },
+    "skill": {
+      "dan": "Dan",
+      "lnDan": "Dan LN",
+      "result": "Resultado",
+      "vsMap": "{{ delta }} respecto al mapa seleccionado"
+    },
     "difficulty": {
       "title": "Dificultad",
       "lock": "Bloquear",
@@ -290,7 +310,7 @@
       "5_3+2": "Tecla central con el índice izquierdo.",
       "8_4+4": "Cuatro dedos por mano.",
       "8_3+2+3": "Los dos pulgares en las teclas centrales.",
-      "8_1+7": "7K con un scratch a la izquierda, al estilo IIDX.",
+      "8_7K+1": "El mapa de 7K tal cual, con un scratch a la izquierda para los golpes fuertes de la música, al estilo IIDX. La densidad también decide cuántos.",
       "12_12K": "Cada tecla es un carril: los patrones llegan a las teclas exteriores.",
       "12_10K2S": "Un mapa de 10K con un scratch a cada lado para los golpes fuertes de la música, que se tocan moviendo un meñique hacia fuera. La densidad también decide cuántos.",
       "14_DP": "Double Play, al estilo IIDX: 7 teclas por mano en dos filas.",
