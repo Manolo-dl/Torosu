@@ -187,6 +187,14 @@ impl Default for DownloaderConfig {
     }
 }
 
+impl TrainerConfig {
+    /// Whether the trainer shows the dan or the MSD: otherwise nothing rates
+    /// the maps (see `skill`).
+    pub fn shows_skill(&self) -> bool {
+        self.skill_display != SkillDisplay::None
+    }
+}
+
 impl Default for TrainerConfig {
     fn default() -> Self {
         Self {

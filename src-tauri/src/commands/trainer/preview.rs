@@ -27,6 +27,10 @@ use crate::{
 #[tauri::command]
 pub async fn preview_converts(app: AppHandle, request: RunTrainerRequest) -> Result<Vec<Option<Skill>>> {
     let config = Arc::new(app.state::<AppConfigState>().config.lock().unwrap().trainer.clone());
+    // Not shown, not rated: the frontend doesn't ask then either.
+    if !config.shows_skill() {
+        return Ok(vec![None; request.converts.len()]);
+    }
     let path = PathBuf::from(&request.osu_file_path);
     let source = Arc::new(tauri::async_runtime::spawn_blocking(move || Source::read(&path, request.difficulty)).await??);
     if source.beatmap.mode != GameMode::Mania {

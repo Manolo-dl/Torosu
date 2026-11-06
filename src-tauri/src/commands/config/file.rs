@@ -58,6 +58,16 @@ mod tests {
     use crate::commands::config::model::{SkillDisplay, TrainerShortcut};
 
     #[test]
+    fn maps_are_rated_only_while_the_skill_is_shown() {
+        let mut config = AppConfig::default();
+        assert!(config.trainer.shows_skill());
+        for (display, shown) in [(SkillDisplay::Msd, true), (SkillDisplay::Both, true), (SkillDisplay::None, false)] {
+            config.trainer.skill_display = display;
+            assert_eq!(config.trainer.shows_skill(), shown);
+        }
+    }
+
+    #[test]
     fn skill_display_survives_the_file() {
         let mut config = AppConfig::default();
         assert_eq!(config.trainer.skill_display, SkillDisplay::Dan);

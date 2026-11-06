@@ -58,6 +58,10 @@ osu-memory-reader = { version = "0.2.1", features = ["serde", "difficulty"] }
 dan-calc = { git = "https://github.com/aleju03/mania-hub", rev = "0d4353b5037b4f8d85763751bea9e0f41f586c58", default-features = false, features = ["aot"] }
 
 
+[dev-dependencies]
+# The mock app of tauri::test, for the reader's tests.
+tauri = { version = "2", default-features = false, features = ["test"] }
+
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration
 [profile.release]
 codegen-units = 1
