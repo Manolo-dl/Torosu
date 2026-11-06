@@ -134,6 +134,14 @@ opt-level = 3
 [profile.release.package.jsmath]
 opt-level = 3
 
+# Build scripts and their dependencies are built unoptimized by default.
+# dan-calc's `aot` build script compiles MinaCalc's wasm with cranelift: built
+# that way, cranelift needs more than the 1 MB of stack of the main thread on
+# Windows (a stack overflow in the Windows release) and takes ~10 s; optimized,
+# it fits in 256 KB, takes 0.7 s, and its output is the same.
+[profile.release.build-override]
+opt-level = 3
+
 [profile.dev.package.chart-pipeline]
 opt-level = 3
 
