@@ -67,9 +67,13 @@
 //!   map, the fewer scratches come close together; the quiet parts are left
 //!   to the keys, but for the accent sounds of the map (a crash), whose notes
 //!   move out to the scratches.
+//!   7K+1 (8K) does the same with a 7K map and one scratch on the
+//!   left, but its scratch goes with the hand's notes, as in hand-made 7K+1
+//!   maps: the 7K map stays as it is, every note of it, and the scratch only
+//!   adds notes, far fewer than on 10K2S (see [`ScratchRules`]).
 //!
 //! The hands come from the playstyle of the target (`analysis::layout`): on
-//! 8K `3+2+3` the two middle keys are the thumbs', on `1+7` the first key is
+//! 8K `3+2+3` the two middle keys are the thumbs', on `7K+1` the first key is
 //! a scratch, on 14K `EZ2AC` the four middle keys go with either hand. 12K to
 //! 18K are played solo, two stages of one player; co-op is not converted to.
 //!
@@ -283,6 +287,11 @@ const SCRATCH_SPARSE_MOST: usize = 2;
 /// more scratches.
 const SCRATCH_RATE: f64 = 0.26;
 const SCRATCH_RATE_POWER: f64 = 0.63;
+/// The same for 7K+1, far fewer: hand-made 7K+1 maps (100 in a Songs folder)
+/// have 0.04 a bar times their notes a bar to the 0.87, give or take 70%:
+/// 0.45 at 16 notes a bar, 0.82 at 32 (see `corpus_scratch_7k1`).
+const SCRATCH_RATE_7K1: f64 = 0.04;
+const SCRATCH_RATE_POWER_7K1: f64 = 0.87;
 /// That times this per density (none, dense, more dense, full): what most
 /// mappers put, and up to half as many more. Twice as many made a 3 star map
 /// a scratch every beat for bars; and where the map is busy, the most a span
@@ -1503,6 +1512,30 @@ struct Around {
     after: f64,
 }
 
+/// How a layout's scratches are played, for [`add_scratch_lanes`].
+#[derive(Clone, Copy)]
+struct ScratchRules {
+    /// 10K2S: the pinky moves out to the scratch, so its hand is free around
+    /// it, and the scratch may take the hand's note in the row. On 7K+1 the
+    /// scratch is a key of its own, played with the hand's notes: 79% of the
+    /// scratches of hand-made 7K+1 maps have a note of the left hand in their
+    /// row, 81% are on a chord, but 1% only while it holds a long note.
+    free_hand: bool,
+    /// How many: [`SCRATCH_RATE`] and [`SCRATCH_RATE_POWER`], or 7K+1's.
+    rate: f64,
+    rate_power: f64,
+}
+
+impl ScratchRules {
+    fn of(layout: &Layout) -> Self {
+        if layout.name == "7K+1" {
+            ScratchRules { free_hand: false, rate: SCRATCH_RATE_7K1, rate_power: SCRATCH_RATE_POWER_7K1 }
+        } else {
+            ScratchRules { free_hand: true, rate: SCRATCH_RATE, rate_power: SCRATCH_RATE_POWER }
+        }
+    }
+}
+
 /// Scratches as lanes of their own (see [`Layout::inner_keys`]): moves a map of
 /// `inner_keys` keys onto the layout's other keys as it is, and gives the
 /// scratches notes of their own on top, on the accents of the music, as
@@ -1529,6 +1562,10 @@ struct Around {
 /// in the row, moving it out ([`SCRATCH_MOVE`]). The density's extra notes in
 /// its way make room for it. Without the scratches, the map stands as it was
 /// but for the notes they took.
+///
+/// 7K+1 (see [`ScratchRules`]) has the same places but its own count, and its
+/// scratch goes with its hand's notes: the 7K map stands as it was, every note
+/// of it, the scratch only adding notes.
 fn add_scratch_lanes(
     beatmap: &mut Beatmap,
     layout: &Layout,
@@ -1536,6 +1573,7 @@ fn add_scratch_lanes(
     extras: &[bool],
     density: Density,
     accents: Option<MapAccents>,
+    rules: ScratchRules,
 ) {
     let keys = layout.keys();
     let scratches = layout.digit_mask(Digit::Scratch);
@@ -1655,6 +1693,9 @@ fn add_scratch_lanes(
     // (see [`SCRATCH_MOVE`]).
     let side = |s: usize, time: f64, beat_len: f64| -> (f64, u32) {
         let mine = around(hand(s), time);
+        if !rules.free_hand {
+            return (if mine.held { 0.0 } else { 1.0 }, 0);
+        }
         // A long note of the hand there: a muri, and none to take.
         if mine.long != 0 || mine.held {
             return (0.0, 0);
@@ -1677,6 +1718,9 @@ fn add_scratch_lanes(
     // take every note its hand has in the row, a long one too, the hand free
     // while it holds.
     let strong_side = |s: usize, time: f64, beat_len: f64| -> (f64, u32) {
+        if !rules.free_hand {
+            return (0.0, 0);
+        }
         let mine = around(hand(s), time);
         let taken = mine.row | mine.long;
         let n = taken.count_ones();
@@ -1845,7 +1889,7 @@ fn add_scratch_lanes(
             Density::MoreDense => SCRATCH_DENSITY[2],
             Density::Full => SCRATCH_DENSITY[3],
         };
-        let base = SCRATCH_RATE * notes_per_bar.powf(SCRATCH_RATE_POWER) * bars;
+        let base = rules.rate * notes_per_bar.powf(rules.rate_power) * bars;
         ((base * density).round() as usize, base.round() as usize)
     } else {
         (0, 0)
@@ -1941,6 +1985,9 @@ fn add_scratch_lanes(
     // around it or across it, its pinky's key's 3/8 beat around.
     let room = free_ms * SCRATCH_FREE_EXTRAS;
     let in_way = |key: usize, start: f64, end: f64| {
+        if !rules.free_hand {
+            return false;
+        }
         added.iter().any(|&(time, s, beat_len, takes)| {
             // A long note the scratch takes: its hand free while it holds.
             let until = if takes != 0 { around(takes, time).long_end } else { time };
@@ -2265,8 +2312,8 @@ fn convert_marked(beatmap: &mut Beatmap, params: &KeyConverterParams, accents: O
         return Err(Error::OnePlayer { layout: dst_layout.name.to_string() }.into());
     }
 
-    // 10K2S: the map converted to 10K on the inner keys, and the scratches'
-    // own notes on top.
+    // 10K2S and 7K+1: the map converted to 10K or 7K on the inner keys, and
+    // the scratches' own notes on top.
     if let Some(inner_keys) = dst_layout.inner_keys() {
         let extras = if src_keys != inner_keys {
             let inner = KeyConverterParams { target_keys: inner_keys as u8, playstyle: None, ..params.clone() };
@@ -2274,7 +2321,7 @@ fn convert_marked(beatmap: &mut Beatmap, params: &KeyConverterParams, accents: O
         } else {
             vec![false; beatmap.hit_objects.len()]
         };
-        add_scratch_lanes(beatmap, &dst_layout, inner_keys, &extras, params.density, accents);
+        add_scratch_lanes(beatmap, &dst_layout, inner_keys, &extras, params.density, accents, ScratchRules::of(&dst_layout));
         return Ok(vec![false; beatmap.hit_objects.len()]);
     }
     let source = Some(patterns::label(beatmap, &src_layout));
@@ -2740,10 +2787,10 @@ mod tests {
     #[test]
     fn every_8k_playstyle_stays_playable() {
         // Every 8K playstyle moves the hands (3+2+3: the middle keys are the
-        // thumbs'; 1+7: the first key is a scratch), and all stay playable.
+        // thumbs'; 7K+1: the first key is a scratch), and all stay playable.
         let mut params = KeyConverterParams { target_keys: 8, density: Density::None, keep_jacks: true, playstyle: None };
         let original = rosu_map::from_str::<Beatmap>(&map(4)).unwrap();
-        for playstyle in [None, Some("3+2+3".to_string()), Some("1+7".to_string())] {
+        for playstyle in [None, Some("3+2+3".to_string()), Some("7K+1".to_string())] {
             params.playstyle = playstyle;
             let mut beatmap = original.clone();
             apply(&mut beatmap, &params).unwrap();
@@ -3526,5 +3573,52 @@ mod tests {
             assert_eq!(rank(mask), next[size], "{:b}", mask);
             next[size] += 1;
         }
+    }
+
+    #[test]
+    fn seven_k_plus_one_is_the_7k_map_and_a_scratch() {
+        // From 7K: every note of the map as it was, a key to the right, and
+        // the scratch's own notes on the first key: plain, on rows of the map,
+        // never while the left hand (the next three keys) holds a long note,
+        // and about as few as hand-made 7K+1 maps have (3% of their notes).
+        let original = rosu_map::from_str::<Beatmap>(&map(7)).unwrap();
+        let beatmap = convert_to(&map(7), "7K+1", 8, Density::None);
+        let seven = notes_of(&original, 7);
+        let notes = notes_of(&beatmap, 8);
+        let mut inner: Vec<(f64, f64, usize)> = notes.iter().filter(|n| n.2 != 0).map(|&(s, e, k)| (s, e, k - 1)).collect();
+        let mut expected = seven.clone();
+        inner.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        expected.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        assert_eq!(inner, expected);
+
+        let scratches: Vec<(f64, f64, usize)> = notes.iter().copied().filter(|n| n.2 == 0).collect();
+        assert!(!scratches.is_empty());
+        assert!(scratches.len() * 10 < seven.len(), "{} scratches for {} notes", scratches.len(), seven.len());
+        for &(start, end, _) in &scratches {
+            assert!(end - start < 1.0, "a long scratch at {}", start);
+            assert!(seven.iter().any(|n| (n.0 - start).abs() < 1.0), "a scratch at {} off the map's rows", start);
+            assert!(
+                !seven.iter().any(|n| n.2 <= 2 && n.0 < start - 1.0 && n.1 > start + 1.0),
+                "a scratch at {} while the left hand holds a note",
+                start
+            );
+        }
+        for obj in beatmap.hit_objects.iter().filter(|o| column(o, 8) == 0) {
+            assert!(obj.samples.iter().all(|s| s.name == HitSampleInfo::HIT_NORMAL), "{:?}", obj.samples);
+        }
+    }
+
+    #[test]
+    fn seven_k_plus_one_from_4k_converts_to_7k_first() {
+        // The inner keys hold the 4K map converted to 7K, as it would be alone.
+        let (_, seven) = convert(&map(4), 7, Density::None);
+        let beatmap = convert_to(&map(4), "7K+1", 8, Density::None);
+        let mut inner: Vec<(f64, f64, usize)> =
+            notes_of(&beatmap, 8).into_iter().filter(|n| n.2 != 0).map(|(s, e, k)| (s, e, k - 1)).collect();
+        let mut expected = notes_of(&seven, 7);
+        inner.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        expected.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        assert_eq!(inner, expected);
+        assert!(notes_of(&beatmap, 8).iter().any(|n| n.2 == 0), "no scratch");
     }
 }

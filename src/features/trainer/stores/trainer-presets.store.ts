@@ -5,7 +5,7 @@ import { ConfigurationStore, TrainerShortcut } from "@entities/configuration";
 import { patchState, signalStore, withHooks, withMethods, withState } from "@ngrx/signals";
 import { NotifyService } from "@shared/services";
 import { invoke } from "@tauri-apps/api/core";
-import { TrainerPreset } from "../models/trainer.model";
+import { TrainerPreset, renamePlaystyles } from "../models/trainer.model";
 import { TrainerStore } from "./trainer.store";
 
 interface TrainerPresetsState {
@@ -85,7 +85,10 @@ export const TrainerPresetsStore = signalStore(
     withHooks({
         onInit(store) {
             invoke<unknown>('read_trainer_presets')
-                .then(presets => patchState(store, { custom: Array.isArray(presets) ? presets.filter(isPreset) : [] }))
+                .then(presets => {
+                    const custom = Array.isArray(presets) ? presets.filter(isPreset) : [];
+                    patchState(store, { custom: custom.map(p => ({ ...p, converts: p.converts.map(renamePlaystyles) })) });
+                })
                 .catch(e => console.error('read_trainer_presets failed', e));
         },
     }),
