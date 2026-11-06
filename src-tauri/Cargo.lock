@@ -562,7 +562,7 @@ dependencies = [
 [[package]]
 name = "chart-parser"
 version = "0.1.0"
-source = "git+https://github.com/aleju03/mania-hub?rev=1edb4c3cc7664c9cb660b6d028fce92317f0c891#1edb4c3cc7664c9cb660b6d028fce92317f0c891"
+source = "git+https://github.com/aleju03/mania-hub?rev=0d4353b5037b4f8d85763751bea9e0f41f586c58#0d4353b5037b4f8d85763751bea9e0f41f586c58"
 dependencies = [
  "jsmath",
 ]
@@ -570,7 +570,7 @@ dependencies = [
 [[package]]
 name = "chart-pipeline"
 version = "0.1.0"
-source = "git+https://github.com/aleju03/mania-hub?rev=1edb4c3cc7664c9cb660b6d028fce92317f0c891#1edb4c3cc7664c9cb660b6d028fce92317f0c891"
+source = "git+https://github.com/aleju03/mania-hub?rev=0d4353b5037b4f8d85763751bea9e0f41f586c58#0d4353b5037b4f8d85763751bea9e0f41f586c58"
 dependencies = [
  "chart-parser",
  "dan-core",
@@ -959,7 +959,7 @@ checksum = "914a755b7c2d4af2bdcff7ce1739e2db9a1b81a9b07123d8015786ae03c0980d"
 [[package]]
 name = "dan-calc"
 version = "0.1.0"
-source = "git+https://github.com/aleju03/mania-hub?rev=1edb4c3cc7664c9cb660b6d028fce92317f0c891#1edb4c3cc7664c9cb660b6d028fce92317f0c891"
+source = "git+https://github.com/aleju03/mania-hub?rev=0d4353b5037b4f8d85763751bea9e0f41f586c58#0d4353b5037b4f8d85763751bea9e0f41f586c58"
 dependencies = [
  "chart-pipeline",
  "dan-core",
@@ -969,7 +969,7 @@ dependencies = [
 [[package]]
 name = "dan-core"
 version = "0.1.0"
-source = "git+https://github.com/aleju03/mania-hub?rev=1edb4c3cc7664c9cb660b6d028fce92317f0c891#1edb4c3cc7664c9cb660b6d028fce92317f0c891"
+source = "git+https://github.com/aleju03/mania-hub?rev=0d4353b5037b4f8d85763751bea9e0f41f586c58#0d4353b5037b4f8d85763751bea9e0f41f586c58"
 dependencies = [
  "chart-parser",
  "jsmath",
@@ -2454,7 +2454,7 @@ dependencies = [
 [[package]]
 name = "jsmath"
 version = "0.1.0"
-source = "git+https://github.com/aleju03/mania-hub?rev=1edb4c3cc7664c9cb660b6d028fce92317f0c891#1edb4c3cc7664c9cb660b6d028fce92317f0c891"
+source = "git+https://github.com/aleju03/mania-hub?rev=0d4353b5037b4f8d85763751bea9e0f41f586c58#0d4353b5037b4f8d85763751bea9e0f41f586c58"
 
 [[package]]
 name = "json-patch"
@@ -2514,7 +2514,7 @@ checksum = "09edd9e8b54e49e587e4f6295a7d29c3ea94d469cb40ab8ca70b288248a81db2"
 [[package]]
 name = "leoblack-estimators"
 version = "0.1.0"
-source = "git+https://github.com/aleju03/mania-hub?rev=1edb4c3cc7664c9cb660b6d028fce92317f0c891#1edb4c3cc7664c9cb660b6d028fce92317f0c891"
+source = "git+https://github.com/aleju03/mania-hub?rev=0d4353b5037b4f8d85763751bea9e0f41f586c58#0d4353b5037b4f8d85763751bea9e0f41f586c58"
 dependencies = [
  "jsmath",
  "leoblack-parser",
@@ -2524,7 +2524,7 @@ dependencies = [
 [[package]]
 name = "leoblack-ett"
 version = "0.1.0"
-source = "git+https://github.com/aleju03/mania-hub?rev=1edb4c3cc7664c9cb660b6d028fce92317f0c891#1edb4c3cc7664c9cb660b6d028fce92317f0c891"
+source = "git+https://github.com/aleju03/mania-hub?rev=0d4353b5037b4f8d85763751bea9e0f41f586c58#0d4353b5037b4f8d85763751bea9e0f41f586c58"
 dependencies = [
  "jsmath",
  "leoblack-parser",
@@ -2534,7 +2534,7 @@ dependencies = [
 [[package]]
 name = "leoblack-interlude"
 version = "0.1.0"
-source = "git+https://github.com/aleju03/mania-hub?rev=1edb4c3cc7664c9cb660b6d028fce92317f0c891#1edb4c3cc7664c9cb660b6d028fce92317f0c891"
+source = "git+https://github.com/aleju03/mania-hub?rev=0d4353b5037b4f8d85763751bea9e0f41f586c58#0d4353b5037b4f8d85763751bea9e0f41f586c58"
 dependencies = [
  "jsmath",
  "leoblack-parser",
@@ -2543,7 +2543,7 @@ dependencies = [
 [[package]]
 name = "leoblack-parser"
 version = "0.1.0"
-source = "git+https://github.com/aleju03/mania-hub?rev=1edb4c3cc7664c9cb660b6d028fce92317f0c891#1edb4c3cc7664c9cb660b6d028fce92317f0c891"
+source = "git+https://github.com/aleju03/mania-hub?rev=0d4353b5037b4f8d85763751bea9e0f41f586c58#0d4353b5037b4f8d85763751bea9e0f41f586c58"
 dependencies = [
  "jsmath",
 ]
@@ -2551,7 +2551,7 @@ dependencies = [
 [[package]]
 name = "leoblack-patterns"
 version = "0.1.0"
-source = "git+https://github.com/aleju03/mania-hub?rev=1edb4c3cc7664c9cb660b6d028fce92317f0c891#1edb4c3cc7664c9cb660b6d028fce92317f0c891"
+source = "git+https://github.com/aleju03/mania-hub?rev=0d4353b5037b4f8d85763751bea9e0f41f586c58#0d4353b5037b4f8d85763751bea9e0f41f586c58"
 dependencies = [
  "jsmath",
  "leoblack-parser",
@@ -2560,7 +2560,7 @@ dependencies = [
 [[package]]
 name = "leoblack-rework"
 version = "0.1.0"
-source = "git+https://github.com/aleju03/mania-hub?rev=1edb4c3cc7664c9cb660b6d028fce92317f0c891#1edb4c3cc7664c9cb660b6d028fce92317f0c891"
+source = "git+https://github.com/aleju03/mania-hub?rev=0d4353b5037b4f8d85763751bea9e0f41f586c58#0d4353b5037b4f8d85763751bea9e0f41f586c58"
 dependencies = [
  "jsmath",
  "leoblack-parser",
@@ -2666,7 +2666,7 @@ checksum = "47d9d19d1d6efa0109d2f65ff4c85cddd50bd572e5a00127ab10987290bcefae"
 [[package]]
 name = "ln-skill"
 version = "0.1.0"
-source = "git+https://github.com/aleju03/mania-hub?rev=1edb4c3cc7664c9cb660b6d028fce92317f0c891#1edb4c3cc7664c9cb660b6d028fce92317f0c891"
+source = "git+https://github.com/aleju03/mania-hub?rev=0d4353b5037b4f8d85763751bea9e0f41f586c58#0d4353b5037b4f8d85763751bea9e0f41f586c58"
 dependencies = [
  "chart-parser",
  "dan-core",
@@ -3510,7 +3510,7 @@ dependencies = [
 [[package]]
 name = "prism"
 version = "0.26.0"
-source = "git+https://github.com/aleju03/mania-hub?rev=1edb4c3cc7664c9cb660b6d028fce92317f0c891#1edb4c3cc7664c9cb660b6d028fce92317f0c891"
+source = "git+https://github.com/aleju03/mania-hub?rev=0d4353b5037b4f8d85763751bea9e0f41f586c58#0d4353b5037b4f8d85763751bea9e0f41f586c58"
 dependencies = [
  "chart-parser",
  "dan-core",

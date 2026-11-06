@@ -44,7 +44,7 @@ copy of osu-memory-reader:
 
 ## dan-calc
 
-- Version: commit `1edb4c3` of <https://github.com/aleju03/mania-hub> (`algorithms/dan-calc`)
+- Version: commit `0d4353b` of <https://github.com/aleju03/mania-hub> (`algorithms/dan-calc`)
 - Copyright (c) 2026 aleju03
 - License: MIT
 

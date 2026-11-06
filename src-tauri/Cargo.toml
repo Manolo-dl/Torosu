@@ -55,7 +55,7 @@ osu-memory-reader = { version = "0.2.1", features = ["serde", "difficulty"] }
 # Mania Tracker's dan calculator. Not on crates.io: pinned to a commit.
 # `aot`: MinaCalc's wasm is compiled when Torosu is built, so there is no
 # compiler (cranelift) in the binary and no wait on the first map rated.
-dan-calc = { git = "https://github.com/aleju03/mania-hub", rev = "1edb4c3cc7664c9cb660b6d028fce92317f0c891", default-features = false, features = ["aot"] }
+dan-calc = { git = "https://github.com/aleju03/mania-hub", rev = "0d4353b5037b4f8d85763751bea9e0f41f586c58", default-features = false, features = ["aot"] }
 
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration
