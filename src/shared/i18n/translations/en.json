@@ -180,7 +180,8 @@
     "mappedBy": "mapped by {{ mapper }}",
     "exportOsz": "Export as .osz",
     "dan": {
-      "hint": "Dan estimated by Mania Tracker, {{ confidence }}% confidence"
+      "hint": "Dan estimated by Mania Tracker, {{ confidence }}% confidence",
+      "hintTenk": "Level on CT's 10K Dan Course, estimated by tenk-calc (in testing)"
     },
     "msd": {
       "hint": "Overall MSD, from {{ calc }}"

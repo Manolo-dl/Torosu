@@ -5150,6 +5150,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "tenk-calc"
+version = "0.1.0"
+dependencies = [
+ "leoblack-rework",
+ "rosu-map",
+]
+
+[[package]]
 name = "termcolor"
 version = "1.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5429,6 +5437,7 @@ dependencies = [
  "tauri-plugin-opener",
  "tauri-plugin-os",
  "tauri-plugin-updater",
+ "tenk-calc",
  "thiserror 2.0.21",
  "tokio",
  "toml 1.1.8+spec-1.1.0",

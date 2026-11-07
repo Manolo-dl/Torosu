@@ -56,6 +56,9 @@ osu-memory-reader = { version = "0.2.1", features = ["serde", "difficulty"] }
 # `aot`: MinaCalc's wasm is compiled when Torosu is built, so there is no
 # compiler (cranelift) in the binary and no wait on the first map rated.
 dan-calc = { git = "https://github.com/aleju03/mania-hub", rev = "0d4353b5037b4f8d85763751bea9e0f41f586c58", default-features = false, features = ["aot"] }
+# 10K dans on CT's 10K Dan Course, which dan-calc has none of. In testing: a
+# local checkout for now (it is not on GitHub yet), to pin by git rev later.
+tenk-calc = { path = "../../tenk-calc/crates/calc" }
 
 
 [dev-dependencies]

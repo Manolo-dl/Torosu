@@ -51,23 +51,25 @@ export interface BeatmapAttributes {
     keyCount: number | null;
 }
 
-/** A dan from Mania Tracker's calculator, e.g. `6++` (6.37). */
+/** A dan from Mania Tracker's calculator, e.g. `6++` (6.37); on 10K from tenk-calc, e.g. `Virtuoso-` (11.67). */
 export interface Dan {
+    /** Mania Tracker's on 4K, 6K and 7K; tenk-calc's on 10K, on CT's 10K Dan Course. */
+    estimator: 'maniaTracker' | 'tenkCalc';
     /** Rice and LN dans use the same names (`1` ... `10`, `alpha` ... `zeta`). */
     family: 'rice' | 'ln';
-    /** `6++`, `zeta-`. */
+    /** `6++`, `zeta-`; on 10K `Level 7+`, `Virtuoso-`. */
     name: string;
-    /** The dan without its variant: `6`, `zeta`, `azimuth` (7K), `terra` (6K). */
+    /** The dan without its variant: `6`, `zeta`, `azimuth` (7K), `terra` (6K), `expecialist` (10K). */
     label: string;
     /** `++`, `+`, `-` or `--`; `null` for the dan itself. */
     variant: string | null;
-    /** The dan as a number, for comparing. */
+    /** The dan as a number, for comparing (on 10K the CT level: Expecialist 11, Virtuoso 12). */
     value: number;
-    /** How sure the estimator is, from 0 to 1. */
-    confidence: number;
+    /** How sure the estimator is, from 0 to 1; `null` from tenk-calc, which does not say. */
+    confidence: number | null;
 }
 
-/** The dans of a 4K, 6K or 7K mania map. */
+/** The dans of a 4K, 6K, 7K or 10K mania map. */
 export interface Dans {
     /** The one Mania Tracker shows first. */
     primary: Dan;

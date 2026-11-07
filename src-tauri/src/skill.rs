@@ -1,6 +1,7 @@
 //! How hard a mania map is, from Mania Tracker's calculator (`dan-calc`, in
 //! aleju03/mania-hub): its dan, and its MSD, from MinaCalc on 4K and from
-//! Prism on 6K-8K.
+//! Prism on 6K-8K. 10K maps get their dan from `tenk-calc` instead, on CT's
+//! 10K Dan Course.
 
 use std::path::Path;
 
@@ -14,24 +15,40 @@ pub enum Family {
     Ln,
 }
 
+/// What gave a dan.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub enum Estimator {
+    /// Mania Tracker's `dan-calc`: 4K, 6K and 7K.
+    ManiaTracker,
+    /// `tenk-calc`: 10K, on CT's 10K Dan Course (Level 0 to 10, Expecialist,
+    /// Virtuoso).
+    TenkCalc,
+}
+
 /// A dan, e.g. `6++` (6.37).
 #[derive(Clone, Debug, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Dan {
+    pub estimator: Estimator,
     pub family: Family,
-    /// As Mania Tracker writes it: `6++`, `zeta-`.
+    /// As Mania Tracker writes it: `6++`, `zeta-`; on 10K `Level 7+`,
+    /// `Virtuoso-`.
     pub name: String,
-    /// The dan without its variant: `6`, `zeta`, `azimuth` (7K), `terra` (6K).
+    /// The dan without its variant: `6`, `zeta`, `azimuth` (7K), `terra` (6K),
+    /// `expecialist` (10K).
     pub label: String,
     /// `++`, `+`, `-` or `--`; `None` for the dan itself.
     pub variant: Option<String>,
-    /// The dan as a number, for comparing.
+    /// The dan as a number, for comparing (on 10K the CT level: Expecialist
+    /// 11, Virtuoso 12).
     pub value: f64,
-    /// How sure the estimator is, from 0 to 1.
-    pub confidence: f64,
+    /// How sure the estimator is, from 0 to 1; `None` from `tenk-calc`,
+    /// which does not say.
+    pub confidence: Option<f64>,
 }
 
-/// The dans of a map. Only 4K, 6K and 7K maps have them.
+/// The dans of a map. Only 4K, 6K, 7K and 10K maps have them.
 #[derive(Clone, Debug, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Dans {
@@ -110,15 +127,49 @@ pub fn estimate_file(osu: &Path) -> Option<Skill> {
 pub fn estimate(osu: &str, rate: f64) -> Option<Skill> {
     let estimate = dan_calc::estimate(osu, &dan_calc::Options { rate, ..Default::default() })
         .map_err(|e| log::warn!("could not rate the map: {e}"))
-        .ok()?;
+        .ok();
 
-    let dan = estimate.primary.as_ref().map(|primary| Dans {
-        primary: dan(primary),
-        rice: estimate.rice.as_ref().map(dan),
-        ln: estimate.ln.as_ref().map(dan),
+    let mut dan = estimate.as_ref().and_then(|estimate| {
+        estimate.primary.as_ref().map(|primary| Dans {
+            primary: dan(primary),
+            rice: estimate.rice.as_ref().map(dan),
+            ln: estimate.ln.as_ref().map(dan),
+        })
     });
-    let msd = estimate.msd.as_deref().and_then(|values| msd(values, Calculator::of(estimate.key_count)));
-    (dan.is_some() || msd.is_some()).then_some(Skill { key_count: estimate.key_count, dan, msd })
+    let mut key_count = estimate.as_ref().map(|e| e.key_count);
+    // dan-calc has no 10K dans; if it could not read the map at all, it may
+    // still be a 10K one.
+    if dan.is_none() && key_count.is_none_or(|keys| keys == tenk_calc::KEYS as i32) {
+        dan = tenk_dans(osu, rate);
+        key_count = key_count.or(dan.is_some().then_some(tenk_calc::KEYS as i32));
+    }
+    let msd = estimate
+        .as_ref()
+        .and_then(|e| e.msd.as_deref().and_then(|values| msd(values, Calculator::of(e.key_count))));
+    (dan.is_some() || msd.is_some()).then_some(Skill { key_count: key_count?, dan, msd })
+}
+
+/// The CT level of a 10K map, as its only dan (CT's courses are hybrid: no
+/// rice and LN apart). `None` if it is not a 10K map.
+fn tenk_dans(osu: &str, rate: f64) -> Option<Dans> {
+    let estimate = match tenk_calc::estimate(osu, &tenk_calc::Options { rate, ..Default::default() }) {
+        Ok(estimate) => estimate,
+        Err(tenk_calc::Error::Keys(_) | tenk_calc::Error::NotMania) => return None,
+        Err(e) => {
+            log::warn!("could not rate the 10K map: {e}");
+            return None;
+        }
+    };
+    let primary = Dan {
+        estimator: Estimator::TenkCalc,
+        family: Family::Rice,
+        name: estimate.label,
+        label: estimate.dan.to_lowercase(),
+        variant: estimate.variant.map(str::to_string),
+        value: estimate.level,
+        confidence: None,
+    };
+    Some(Dans { rice: Some(primary.clone()), primary, ln: None })
 }
 
 fn dan(dan: &dan_calc::Dan) -> Dan {
@@ -127,12 +178,13 @@ fn dan(dan: &dan_calc::Dan) -> Dan {
         dan_calc::Family::Ln => Family::Ln,
     };
     Dan {
+        estimator: Estimator::ManiaTracker,
         family,
         name: dan.display_name.clone(),
         label: dan.label.clone(),
         variant: dan.variant.map(str::to_string),
         value: dan.raw_dan,
-        confidence: dan.confidence,
+        confidence: Some(dan.confidence),
     }
 }
 
@@ -212,6 +264,19 @@ pub mod tests {
         let fast = estimate(&osu, 1.3).unwrap();
         assert!(fast.msd.unwrap().overall > normal.msd.unwrap().overall);
         assert!(fast.dan.unwrap().primary.value > normal.dan.unwrap().primary.value);
+    }
+
+    #[test]
+    fn rates_10k_maps_on_ct() {
+        let skill = estimate(&stream_map(10), 1.0).expect("a 10K stream is rated");
+        assert_eq!(skill.key_count, 10);
+        let dan = skill.dan.expect("10K maps have a dan");
+        assert_eq!(dan.primary.estimator, Estimator::TenkCalc);
+        assert_eq!(dan.primary.family, Family::Rice);
+        assert_eq!(dan.rice.as_ref(), Some(&dan.primary));
+        assert!(dan.ln.is_none() && dan.primary.confidence.is_none());
+        let fast = estimate(&stream_map(10), 1.5).unwrap().dan.unwrap();
+        assert!(fast.primary.value > dan.primary.value);
     }
 
     #[test]

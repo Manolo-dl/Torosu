@@ -85,6 +85,7 @@ export class SkillSummaryComponent {
   });
 
   danHint(dan: Dan): string {
+    if (dan.estimator === 'tenkCalc' || dan.confidence === null) return this.transloco.translate('trainer.dan.hintTenk');
     return this.transloco.translate('trainer.dan.hint', { confidence: Math.round(dan.confidence * 100) });
   }
 

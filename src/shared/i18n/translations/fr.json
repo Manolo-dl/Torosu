@@ -180,7 +180,8 @@
     "mappedBy": "mappée par {{ mapper }}",
     "exportOsz": "Exporter en .osz",
     "dan": {
-      "hint": "Dan estimé par Mania Tracker, confiance de {{ confidence }} %"
+      "hint": "Dan estimé par Mania Tracker, confiance de {{ confidence }} %",
+      "hintTenk": "Niveau du CT's 10K Dan Course, estimé par tenk-calc (en test)"
     },
     "msd": {
       "hint": "MSD global, de {{ calc }}"
