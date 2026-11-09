@@ -60,6 +60,22 @@ fn stairs_keep_their_direction() {
 }
 
 #[test]
+fn anchors_of_the_source_are_shared_between_keys() {
+    // A 4K jumpstream anchored on column 1 for 16 chords: hand-made 7K maps
+    // seldom keep one key in all of them, and nor does Full.
+    let lone = [&[3][..], &[0], &[2], &[3]];
+    let chords = [&[0, 1][..], &[1, 2], &[1, 3], &[0, 1, 2]];
+    let rows: Vec<&[usize]> = (0..32).map(|i| if i % 2 == 0 { chords[i / 2 % 4] } else { lone[i / 2 % 4] }).collect();
+    let (_, beatmap) = convert(&rows_map(&rows), 7, Density::Full);
+    let chord_rows: Vec<Vec<usize>> = key_rows(&beatmap, 7).into_iter().step_by(2).collect();
+    let longest = (0..7)
+        .map(|k| chord_rows.iter().fold((0, 0), |(run, best), r| if r.contains(&k) { (run + 1, best.max(run + 1)) } else { (0, best) }).1)
+        .max()
+        .unwrap();
+    assert!(longest <= 6, "{} {:?}", longest, chord_rows);
+}
+
+#[test]
 fn jumptrills_keep_a_hand_per_phase() {
     // A long 4K jumptrill: on 7K each phase stays on its own hand, the
     // middle key with one of them at most, repeating the same two rows.

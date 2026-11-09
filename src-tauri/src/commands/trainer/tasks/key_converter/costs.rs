@@ -123,6 +123,8 @@ impl Ctx<'_> {
                 let own = state.last_src[col] == note.src;
                 if !keeps_jack {
                     cost += self.repeat_cost(state, row, src, col);
+                    cost += self.anchor_cost(state, row, col);
+                    cost += self.share_cost(row, col);
                     if state.last_src[col] != note.src && row.time - state.release[col] <= jack_gap {
                         cost += COST_NEW_JACK;
                     }
@@ -205,6 +207,29 @@ impl Ctx<'_> {
         cost
     }
 
+    /// Cost of a key going on with an anchor: there 2 and 4 rows back, within
+    /// a beat (see [`W_ANCHOR`]).
+    pub(super) fn anchor_cost(&self, state: &State, row: &Row, col: usize) -> f64 {
+        let (two, four) = (&state.history[1], &state.history[3]);
+        let anchored = two.dst & four.dst & 1 << col != 0;
+        if !self.anchors || !anchored || row.time - four.time > row.beat_len + ROUNDING_MS {
+            0.0
+        } else if self.thumbs & 1 << col != 0 {
+            W_THUMB_ANCHOR
+        } else {
+            W_ANCHOR
+        }
+    }
+
+    /// Cost of a note in `col` by the share of the notes its key has where the
+    /// row falls in hand-made maps (see [`KEY_SHARES`]).
+    pub(super) fn share_cost(&self, row: &Row, col: usize) -> f64 {
+        match KEY_SHARES.get(row.beat as usize) {
+            Some(shares) if self.key_shares => W_KEY_SHARE * (1.0 / 7.0 / shares[col]).ln(),
+            _ => 0.0,
+        }
+    }
+
     /// Cost of a note on the middle key in a row of `size` notes.
     pub(super) fn thumb_cost(&self, size: usize) -> f64 {
         W_THUMB_CHORD * size.saturating_sub(2) as f64
@@ -244,7 +269,8 @@ impl Ctx<'_> {
                 let hand = if hand_bit(self.dst_hands[col]) & busy != 0 || middle { W_HAND_TWICE } else { 0.0 };
                 let scratch = if self.scratches & 1 << col != 0 { self.scratch_cost(state, row, col, extra_ahead) } else { 0.0 };
                 let scratch = scratch + self.pinky_cost(state, row, col);
-                *cost = self.fresh(state, col, row) + jack + hand - reward + scratch;
+                let anchor = self.anchor_cost(state, row, col) + self.share_cost(row, col);
+                *cost = self.fresh(state, col, row) + jack + hand - reward + scratch + anchor;
             }
         }
         costs

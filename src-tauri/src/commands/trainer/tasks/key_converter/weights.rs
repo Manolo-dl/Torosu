@@ -55,7 +55,7 @@ pub(super) const ROUNDING_MS: f64 = 2.0;
 pub(super) const COST_BROKEN_TRILL: f64 = 10.0;
 
 /// Rows of history kept to spot back-and-forths and to copy patterns.
-pub(super) const HISTORY: usize = 3;
+pub(super) const HISTORY: usize = 4;
 
 /// Reward for copying a repeated pattern (see [`mark_patterns`]): it wins
 /// whenever it fits.
@@ -91,6 +91,23 @@ pub(super) const W_FRESH: f64 = 10.0;
 /// The same in chord rows, where a key coming back from 2 rows ago anchors a
 /// jumpstream instead of breaking a stream.
 pub(super) const W_FRESH_CHORDS: f64 = 4.0;
+/// 4K -> 7K with extra notes: a key going on with an anchor, there 2 and 4
+/// rows back within a beat. A key coming back 2 rows later is what holds a jumpstream together
+/// ([`W_FRESH_CHORDS`]), but hand-made 7K maps (DJ Sharpnel's songs, see
+/// [`FULL_GROWTH`]) seldom keep one for long: where the 4K has a column in 4
+/// chords or more every other row, they keep one key in all of them 33% of
+/// the time, and mostly share it between two. Without it, Full kept 55% and
+/// Dense 51%: in a dense row every key was used a moment ago, and staying
+/// cost least; with it, 35% and 33% (More Dense 84% and 77%, its rows grow
+/// next to the chord). Without extra notes the target keeps 16% already.
+/// It only settles near ties: at 0.75 Full kept 23%.
+pub(super) const W_ANCHOR: f64 = 0.3;
+/// 4K -> 7K with extra notes: [`W_ANCHOR`] for the middle key (the thumb's).
+/// Hand-made maps anchor the outer keys, not the thumb: in Enie's
+/// H.A.R.D.C.O.R.E. 3 notes of the middle key in 100 chords are in an anchor
+/// of 4 chords or more, against 14 to 24 for the other keys; in DJ Sharpnel's
+/// songs 10 against 14.
+pub(super) const W_THUMB_ANCHOR: f64 = 1.0;
 
 /// A column going to another key than its previous note.
 pub(super) const W_SWITCH: f64 = 0.3;
@@ -223,6 +240,23 @@ pub(super) const W_MIRROR: f64 = 2.0;
 /// 55%, the same from 1 to 3: it only settles near ties. On the notes of the
 /// map too, it took the thumb out of big chords and put it in single notes.
 pub(super) const W_THUMB_CHORD: f64 = 1.0;
+
+/// 4K -> 7K: the share of the notes each key has on the beat, on its 1/2s and
+/// on the 1/4s between, in hand-made 7K maps: Enie's H.A.R.D.C.O.R.E. and
+/// DJ Sharpnel's songs (see [`FULL_GROWTH`]) agree, made symmetric here. The
+/// chords on the beat open out to the pinkies, and the notes between them
+/// go to the middle: the thumb plays a 1/4 between two chords five times as
+/// often as a pinky does, and the chords on the beat less than any key.
+/// Converts had about 1/7 on every key everywhere.
+pub(super) const KEY_SHARES: [[f64; 7]; 3] = [
+    [0.184, 0.146, 0.119, 0.107, 0.119, 0.146, 0.184],
+    [0.134, 0.155, 0.148, 0.129, 0.148, 0.155, 0.134],
+    [0.060, 0.125, 0.207, 0.217, 0.207, 0.125, 0.060],
+];
+/// 4K -> 7K: a note's cost per unit of the log of how much less its key has
+/// in hand-made maps where its row falls than an even share ([`KEY_SHARES`]);
+/// a reward where it has more.
+pub(super) const W_KEY_SHARE: f64 = 0.6;
 
 // Wide hands (4 keys or more each: 8K 4+4, 9K, 10K and up), measured against
 // hand-made 10K maps (see `corpus_feel`). There each hand plays patterns of

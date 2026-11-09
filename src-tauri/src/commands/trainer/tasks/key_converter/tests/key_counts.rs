@@ -56,11 +56,38 @@ fn full_grows_the_beat_more_than_the_quarters() {
     assert!(beat >= 2.0, "{} {:?}", beat, rows);
     assert!(quarters <= 1.7, "{} {:?}", quarters, rows);
 
-    // 1/8s do not grow.
-    let osu = stair().replace("TimingPoints]\n0,500", "TimingPoints]\n0,1000");
+    // 1/8s between them (grace notes) do not grow.
+    let mut osu = stair();
+    for step in (0..64).step_by(8) {
+        osu.push_str(&format!("{},192,{},1,0,0:0:0:0:\n", (step % 4 + 2) % 4 * 128 + 64, step * 125 + 62));
+    }
     let (_, beatmap) = convert(&osu, 7, Density::Full);
-    let rows = key_rows(&beatmap, 7);
-    assert!(rows.iter().skip(1).step_by(2).all(|r| r.len() == 1), "{:?}", rows);
+    let graces = beatmap.hit_objects.iter().filter(|o| o.start_time as i64 % 125 == 62).count();
+    assert_eq!(graces, 8);
+}
+
+#[test]
+fn half_timed_maps_are_read_at_the_tempo_of_the_music() {
+    // The same 4K map timed at 120 BPM in 1/4s and at 60 BPM in 1/8s.
+    let osu = map(4);
+    let (_, normal) = convert(&osu, 7, Density::Full);
+    let (_, half) = convert(&osu.replace("TimingPoints]\n0,500", "TimingPoints]\n0,1000"), 7, Density::Full);
+    assert_eq!(key_rows(&normal, 7), key_rows(&half, 7));
+}
+
+#[test]
+fn the_thumb_plays_between_the_chords() {
+    // Hand-made 7K maps put the middle key on the 1/4s between the chords,
+    // and the chords on the beat out on the pinkies.
+    let (_, beatmap) = convert(&map(4), 7, Density::Full);
+    // Notes on the beat (phase 0), on the 1/4s after and before it (1, 3).
+    let share = |phase: i64, key: usize| {
+        let notes: Vec<usize> =
+            beatmap.hit_objects.iter().filter(|o| o.start_time as i64 / 125 % 4 == phase).map(|o| column(o, 7)).collect();
+        notes.iter().filter(|&&k| k == key).count() as f64 / notes.len() as f64
+    };
+    assert!(share(0, 3) < share(1, 3) && share(0, 3) < share(3, 3), "{} {} {}", share(0, 3), share(1, 3), share(3, 3));
+    assert!(share(0, 0) > share(1, 0), "{} {}", share(0, 0), share(1, 0));
 }
 
 #[test]

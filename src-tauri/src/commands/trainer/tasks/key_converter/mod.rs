@@ -185,16 +185,18 @@ fn convert_marked(beatmap: &mut Beatmap, params: &KeyConverterParams, accents: O
 
     // Rows: the notes that start at the same time, with the patterns and
     // density zones of the source there.
-    let (mut notes, mut rows) = read_rows(beatmap, src_keys, &src_layout, &grid);
+    // 4K -> 7K is tuned on hand-made maps of its own (see `FULL_GROWTH`,
+    // `W_THUMB_CHORD` and `W_ANCHOR`), and reads a map timed at half its
+    // tempo at the tempo of the music; the other key counts are not yet.
+    let measured = src_keys == 4 && dst_keys == 7;
+    let half = measured && half_timed(beatmap, &grid);
+    let (mut notes, mut rows) = read_rows(beatmap, src_keys, &src_layout, &grid, half);
     let spread = spread(src_keys, dst_keys);
     mark_patterns(&mut rows, &notes, params.keep_jacks);
     look_ahead(&rows, &mut notes, spread < 1.0);
 
     // Extra notes only make sense with more keys.
     let fill = fill_settings(params.density).filter(|_| dst_keys > src_keys);
-    // 4K -> 7K is tuned on hand-made maps of its own (see `FULL_GROWTH` and
-    // `W_THUMB_CHORD`); the other key counts are not yet.
-    let measured = src_keys == 4 && dst_keys == 7;
 
     // A row has a note per finger at most: on 10K2S, 12 keys but 10 fingers.
     let fingers = shared_fingers(&dst_layout);
@@ -229,6 +231,8 @@ fn convert_marked(beatmap: &mut Beatmap, params: &KeyConverterParams, accents: O
         thumbs: (0..dst_keys)
             .filter(|&k| measured && dst_layout.fingers[k].hand == Hand::Either && dst_layout.fingers[k].digit == Digit::Thumb)
             .fold(0u32, |m, k| m | 1 << k),
+        anchors: measured && fill.is_some(),
+        key_shares: measured,
     };
 
     // Where the target has few new keys, the extra notes go on top of the

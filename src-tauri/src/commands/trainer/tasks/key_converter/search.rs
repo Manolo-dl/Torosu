@@ -119,6 +119,12 @@ pub(super) struct Ctx<'a> {
     pub(super) spread: f64,
     /// The middle keys either thumb plays (see [`W_THUMB_CHORD`]).
     pub(super) thumbs: u32,
+    /// Whether keys going on with an anchor cost [`W_ANCHOR`]: 4K -> 7K with
+    /// extra notes.
+    pub(super) anchors: bool,
+    /// Whether each key costs by its share where the row falls
+    /// ([`KEY_SHARES`]): 4K -> 7K.
+    pub(super) key_shares: bool,
 }
 
 impl Ctx<'_> {

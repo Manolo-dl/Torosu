@@ -161,10 +161,37 @@ pub(super) fn beat_strength(time: f64, tp_time: f64, beat_len: f64) -> f64 {
     }
 }
 
+/// Whether the map is timed at half its tempo, as some hardcore maps are
+/// (DannyPX's H.A.R.D.C.O.R.E., 110 BPM for 220): most of its rows are 1/8
+/// of its beat apart rather than 1/4. Its 1/8s are then the music's 1/4s,
+/// and its beat two beats of the music. Of 42 4K maps in a Songs folder,
+/// that one had 87% of its rows 1/8 apart (11% 1/4); the others 14% at most,
+/// always fewer than 1/4 apart (speedcore at 300 BPM included).
+pub(super) fn half_timed(beatmap: &Beatmap, grid: &BeatGrid) -> bool {
+    let mut times: Vec<f64> = beatmap.hit_objects.iter().filter(|o| mania::note(o).is_some()).map(|o| o.start_time).collect();
+    times.dedup_by(|b, a| (*b - *a).abs() < 1.0);
+    let (mut eighths, mut quarters) = (0usize, 0usize);
+    for w in times.windows(2) {
+        let beat_len = grid.at(w[0]).1;
+        let gap = w[1] - w[0];
+        let near = |part: f64| (gap - beat_len * part).abs() <= ROUNDING_MS + 1.0;
+        eighths += near(0.125) as usize;
+        quarters += near(0.25) as usize;
+    }
+    eighths > quarters && eighths * 4 > times.len()
+}
+
 /// The rows of the map: the notes that start at the same time, sorted by
 /// column, each with where it falls in the beat and the pattern and density
-/// zone of the source there.
-pub(super) fn read_rows(beatmap: &Beatmap, src_keys: usize, src_layout: &Layout, grid: &BeatGrid) -> (Vec<Note>, Vec<Row>) {
+/// zone of the source there. A map `half_timed` is read at the tempo of the
+/// music: its beats halved.
+pub(super) fn read_rows(
+    beatmap: &Beatmap,
+    src_keys: usize,
+    src_layout: &Layout,
+    grid: &BeatGrid,
+    half_timed: bool,
+) -> (Vec<Note>, Vec<Row>) {
     let source = patterns::label(beatmap, src_layout);
     let source_at = |time: f64| -> (Pattern, Zone, u8) {
         let i = source.rows.partition_point(|r| r.time < time - 0.5);
@@ -186,6 +213,11 @@ pub(super) fn read_rows(beatmap: &Beatmap, src_keys: usize, src_layout: &Layout,
             _ => {
                 let (tp_time, beat_len) = grid.at(time);
                 let (pattern, zone, beat) = source_at(time);
+                let (beat_len, beat) = if half_timed {
+                    (beat_len / 2.0, patterns::beat_position(time, tp_time, beat_len / 2.0))
+                } else {
+                    (beat_len, beat)
+                };
                 rows.push(Row {
                     time,
                     notes: notes.len()..notes.len() + 1,
