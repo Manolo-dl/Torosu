@@ -13,6 +13,8 @@ export class TranslationLoader implements TranslocoLoader {
                 return (await import('./translations/es.json')).default;
             case 'fr':
                 return (await import('./translations/fr.json')).default;
+            case 'zh':
+                return (await import('./translations/zh.json')).default;
             default:
                 return (await import('./translations/en.json')).default;
         }

@@ -23,7 +23,7 @@
   - **Dan and MSD**: for 4K, 6K and 7K maps the Trainer shows the dan of the selected map, and the dan each version would have before you make it, with [Mania Tracker](https://mania-tracker.com)'s calculator. It also shows the MSD (MinaCalc's, or Prism's on 6K to 8K). Choose dan, MSD, both or none in the settings: with none, nothing is rated.
   - **Key converter**: from any key count to 1K to 10K, 12K, 14K, 16K or 18K, with the playstyles of the osu! wiki for 12K and up. On 10K2S and 7K+1 the scratches follow the music: they go where the song has its hard hits.
 
-Torosu is in English, Spanish and French: choose the language in the settings, under General.
+Torosu is in English, Spanish, French and Chinese: choose the language in the settings, under General.
 
 Torosu is made for **osu! stable**. osu!lazer is not supported: the tools read and write osu! stable's files.
 

@@ -41,6 +41,8 @@ async function taigaLanguage(language: Language): Promise<TuiLanguage> {
             return (await import('@taiga-ui/i18n/languages/spanish')).TUI_SPANISH_LANGUAGE;
         case 'fr':
             return (await import('@taiga-ui/i18n/languages/french')).TUI_FRENCH_LANGUAGE;
+        case 'zh':
+            return (await import('@taiga-ui/i18n/languages/chinese')).TUI_CHINESE_LANGUAGE;
         default:
             return TUI_ENGLISH_LANGUAGE;
     }
