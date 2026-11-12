@@ -186,13 +186,15 @@ const W_REPEAT3: f64 = 6.0;
 const W_CROSS: f64 = 6.0;
 /// New keys per source key from which a column coming back to its key is
 /// spread over the others ([`W_FRESH`], [`W_REPEAT2`]) in full, and up to
-/// which it is not at all: 4K -> 7K (0.75) and 7K -> 10K (0.43) roll the
-/// back-and-forths of the source over the new keys, 10K -> 12K (0.2) keeps
-/// them, as its mapper meant them with 10 keys to choose from. With half the
-/// cost, a 10K map's columns coming back two notes later kept their key 40%
-/// of the time; with none, 80%.
+/// which it is not at all: 4K -> 7K (0.75), 7K -> 10K (0.43) and 7K -> 9K
+/// (0.29) roll the back-and-forths of the source over the new keys, 10K ->
+/// 12K (0.2) keeps them, as its mapper meant them with 10 keys to choose
+/// from. With half the cost, a 10K map's columns coming back two notes later
+/// kept their key 40% of the time; with none, 80%. 7K -> 9K spread by 0.43
+/// left each column on the key it took first: two keys of nine (the left
+/// index, the right pinky) got a tenth of the notes of the others.
 const SPREAD_FROM: f64 = 0.2;
-const SPREAD_FULL: f64 = 0.4;
+const SPREAD_FULL: f64 = 0.28;
 /// Where the target has few new keys, a column moving to another key while
 /// it played within the last beat costs this, times how little it spreads
 /// ([`SPREAD_FULL`]): the scratch's reward or the pinky's balance do not pull
@@ -462,7 +464,11 @@ const W_MIRROR: f64 = 2.0;
 /// Wide hands: reward for a hand going on with its stair, to the next key the
 /// way it went last.
 const W_HAND_ROLL: f64 = 0.7;
-/// Wide hands: reward for a hand staying on three next keys for three rows.
+/// Wide hands: reward for a hand staying on three next keys for three rows,
+/// a single note in each. With chords too, a chordjack map pinned each hand
+/// to the three keys it took first: on 9K the left index and right pinky got
+/// a third of the notes of the others, on 10K the thumbs and pinkies two
+/// thirds.
 const W_HAND_GROUP: f64 = 1.0;
 /// Wide hands: the most a note can take off what its hand plays costs (a
 /// little more, for rounding).
@@ -870,8 +876,11 @@ impl Ctx<'_> {
             if (0.5..=1.5).contains(&step.abs()) && past.dir != 0 && step.signum() as i8 == past.dir {
                 cost -= W_HAND_ROLL;
             }
+            // A run of single notes: a chord of the hand on three keys is
+            // the same row again, which would pin the hand to them.
+            let single = [m, past.mask, past.prev].iter().all(|r| r.count_ones() == 1);
             let used = m | past.mask | past.prev;
-            if past.prev != 0 && 32 - used.leading_zeros() - used.trailing_zeros() <= 3 {
+            if single && 32 - used.leading_zeros() - used.trailing_zeros() <= 3 {
                 cost -= W_HAND_GROUP;
             }
         }
@@ -2710,14 +2719,44 @@ mod tests {
     }
 
     #[test]
-    fn expanding_uses_every_key_evenly() {
-        let (_, beatmap) = convert(&map(4), 7, Density::None);
-        let mut used = [0usize; 7];
-        for obj in &beatmap.hit_objects {
-            used[column(obj, 7)] += 1;
+    fn chordjacks_use_every_key_evenly() {
+        // A 7K chordjack, big chords every 1/2 beat, a column or two left out
+        // of each: on wide hands no hand stays pinned to three of its keys.
+        let mut osu = String::from(
+            "osu file format v14\n\n[General]\nMode: 3\n\n[Difficulty]\nCircleSize:7\n\n[TimingPoints]\n0,500,4,1,0,60,1,0\n\n[HitObjects]\n",
+        );
+        let mut seed = 11u64;
+        for step in 0..256 {
+            seed = seed.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+            let out = [(seed >> 33) as usize % 7, (seed >> 45) as usize % 7];
+            for col in (0..7).filter(|c| !out.contains(c)) {
+                osu.push_str(&format!("{},192,{},1,0,0:0:0:0:\n", mania::column_x(col, 7) as i32, step * 250));
+            }
         }
-        let even = beatmap.hit_objects.len() / 7;
-        assert!(used.iter().all(|&n| n > even / 2), "{:?}", used);
+        for dst in [9, 10] {
+            let (_, beatmap) = convert(&osu, dst, Density::None);
+            let mut used = vec![0usize; dst];
+            for obj in &beatmap.hit_objects {
+                used[column(obj, dst)] += 1;
+            }
+            let even = beatmap.hit_objects.len() / dst;
+            assert!(used.iter().all(|&n| n * 4 > even * 3), "7K -> {}K: {:?}", dst, used);
+        }
+    }
+
+    #[test]
+    fn expanding_uses_every_key_evenly() {
+        // 7K -> 9K too: with two new keys its columns once kept to the key
+        // they took first, and the left index and right pinky went unused.
+        for (src, dst) in [(4, 7), (7, 9)] {
+            let (_, beatmap) = convert(&map(src), dst, Density::None);
+            let mut used = vec![0usize; dst];
+            for obj in &beatmap.hit_objects {
+                used[column(obj, dst)] += 1;
+            }
+            let even = beatmap.hit_objects.len() / dst;
+            assert!(used.iter().all(|&n| n * 3 > even * 2), "{}K -> {}K: {:?}", src, dst, used);
+        }
     }
 
     #[test]
@@ -3622,3 +3661,4 @@ mod tests {
         assert!(notes_of(&beatmap, 8).iter().any(|n| n.2 == 0), "no scratch");
     }
 }
+
