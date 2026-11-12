@@ -22,10 +22,10 @@
 //! - **Consistency**: each column keeps loosely to the keys around its natural
 //!   place.
 //! - **Spread**: a key that was just used costs more, decaying over a beat. The
-//!   notes spread over every key, without anchors or minijacks. Where the
-//!   target has few new keys (14K -> 16K, 7K -> 8K), a column coming back to
-//!   its key is not spread, and one that just played keeps to its key: the
-//!   source's jacks, trills and back-and-forths stay as they are.
+//!   notes spread over every key, without anchors or minijacks. Where a
+//!   target of two stages has few new keys (14K -> 16K), a column coming
+//!   back to its key is not spread, and one that just played keeps to its
+//!   key: the source's jacks, trills and back-and-forths stay as they are.
 //! - **Jacks**: no new jacks; the map's own jacks (the same column in
 //!   consecutive rows, up to 1/2 beat apart) stay on a single key. Where a
 //!   finger has two keys (10K8K, DP, 9K9K, a scratch and its pinky), going
@@ -184,18 +184,21 @@ const W_REPEAT2: f64 = 12.0;
 const W_REPEAT3: f64 = 6.0;
 /// A note going to the other hand.
 const W_CROSS: f64 = 6.0;
-/// New keys per source key from which a column coming back to its key is
-/// spread over the others ([`W_FRESH`], [`W_REPEAT2`]) in full, and up to
-/// which it is not at all: 4K -> 7K (0.75), 7K -> 10K (0.43) and 7K -> 9K
-/// (0.29) roll the back-and-forths of the source over the new keys, 14K ->
-/// 16K (0.14) keeps them, as its mapper meant them with 14 keys to choose
-/// from. With half the cost, a 10K map's columns going to 12K every key a
-/// lane (as 14K EZ2AC to 16K, the middle keys aside) coming back two notes
-/// later kept their key 40% of the time; with none, 80%. 7K -> 9K spread by 0.43
-/// left each column on the key it took first: two keys of nine (the left
-/// index, the right pinky) got a tenth of the notes of the others.
+/// On two stages, new keys per source key from which a column coming back to
+/// its key is spread over the others ([`W_FRESH`], [`W_REPEAT2`]) in full,
+/// and up to which it is not at all: 10K -> 14K (0.4) rolls the
+/// back-and-forths of the source over the new keys, 14K -> 16K (0.14) keeps
+/// them, as its mapper meant them with 14 keys to choose from. With half the
+/// cost, a 10K map's columns going to 12K every key a lane (as 14K EZ2AC to
+/// 16K, the middle keys aside) coming back two notes later kept their key
+/// 40% of the time; with none, 80%.
+///
+/// Up to 10K a column is always spread, as 7K -> 10K is: with few new keys
+/// (7K -> 8K, 7K -> 9K) each column kept to the key it took first, and the
+/// keys left over (a thumb on 3+2+3, the left index and right pinky on 9K)
+/// got a tenth to a half of the notes of the others.
 const SPREAD_FROM: f64 = 0.2;
-const SPREAD_FULL: f64 = 0.28;
+const SPREAD_FULL: f64 = 0.4;
 /// Where the target has few new keys, a column moving to another key while
 /// it played within the last beat costs this, times how little it spreads
 /// ([`SPREAD_FULL`]): the scratch's reward or the pinky's balance do not pull
@@ -2394,8 +2397,8 @@ fn convert_marked(beatmap: &mut Beatmap, params: &KeyConverterParams, accents: O
 
     // How much a column coming back to its key is spread over the others
     // (see `SPREAD_FULL`); going down in keys, as before: the target has no
-    // room to keep them.
-    let spread = if dst_keys < src_keys {
+    // room to keep them. Up to 10K, always.
+    let spread = if dst_keys < src_keys || dst_keys <= mania::STAGE_MAX_KEYS {
         1.0
     } else {
         let room = (dst_keys - src_keys) as f64 / src_keys as f64;
@@ -2734,7 +2737,7 @@ mod tests {
                 osu.push_str(&format!("{},192,{},1,0,0:0:0:0:\n", mania::column_x(col, 7) as i32, step * 250));
             }
         }
-        for dst in [9, 10] {
+        for dst in [8, 9, 10] {
             let (_, beatmap) = convert(&osu, dst, Density::None);
             let mut used = vec![0usize; dst];
             for obj in &beatmap.hit_objects {
@@ -2747,9 +2750,9 @@ mod tests {
 
     #[test]
     fn expanding_uses_every_key_evenly() {
-        // 7K -> 9K too: with two new keys its columns once kept to the key
-        // they took first, and the left index and right pinky went unused.
-        for (src, dst) in [(4, 7), (7, 9)] {
+        // 7K -> 8K and 9K too: with one or two new keys its columns once kept
+        // to the key they took first, and the keys left over went unused.
+        for (src, dst) in [(4, 7), (7, 8), (7, 9)] {
             let (_, beatmap) = convert(&map(src), dst, Density::None);
             let mut used = vec![0usize; dst];
             for obj in &beatmap.hit_objects {
