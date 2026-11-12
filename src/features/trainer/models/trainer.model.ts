@@ -43,12 +43,17 @@ export interface KeyConverterParams {
 /** Playstyles renamed, as old name to new one (see `RENAMED` in `analysis/layout.rs`). */
 const RENAMED_PLAYSTYLES: Record<string, string> = { '1+7': '7K+1' };
 
-/** `tasks` with the key converter's playstyle under its current name: presets saved before keep theirs. */
+/**
+ * `tasks` with the key converter's playstyle under its current name: presets saved before keep theirs.
+ * One no longer offered (8K `4+4`, 12K `12K`), or now the usual one of its key count, becomes `null`.
+ */
 export function renamePlaystyles(tasks: TrainerTaskParams[]): TrainerTaskParams[] {
     return tasks.map(task => {
-        if (task.type !== 'KeyConverter') return task;
-        const renamed = task.params.playstyle ? RENAMED_PLAYSTYLES[task.params.playstyle] : undefined;
-        return renamed ? { ...task, params: { ...task.params, playstyle: renamed } } : task;
+        if (task.type !== 'KeyConverter' || !task.params.playstyle) return task;
+        const name = RENAMED_PLAYSTYLES[task.params.playstyle] ?? task.params.playstyle;
+        const index = (PLAYSTYLES[task.params.targetKeys] ?? []).findIndex(p => p.name === name);
+        const playstyle = index > 0 ? name : null;
+        return playstyle === task.params.playstyle ? task : { ...task, params: { ...task.params, playstyle } };
     });
 }
 
@@ -67,15 +72,11 @@ export const PLAYSTYLES: Record<number, { name: string; hint: string }[]> = {
         { name: '3+2', hint: 'trainer.playstyles.5_3+2' },
     ],
     8: [
-        { name: '4+4', hint: 'trainer.playstyles.8_4+4' },
         { name: '3+2+3', hint: 'trainer.playstyles.8_3+2+3' },
         { name: '7K+1', hint: 'trainer.playstyles.8_7K+1' },
     ],
     // 12K to 18K: the playstyles of the osu! wiki (osu!mania 10K+ playstyles).
-    12: [
-        { name: '12K', hint: 'trainer.playstyles.12_12K' },
-        { name: '10K2S', hint: 'trainer.playstyles.12_10K2S' },
-    ],
+    12: [{ name: '10K2S', hint: 'trainer.playstyles.12_10K2S' }],
     14: [
         { name: 'DP', hint: 'trainer.playstyles.14_DP' },
         { name: 'EZ2AC', hint: 'trainer.playstyles.14_EZ2AC' },

@@ -23,7 +23,7 @@
 //!   place.
 //! - **Spread**: a key that was just used costs more, decaying over a beat. The
 //!   notes spread over every key, without anchors or minijacks. Where the
-//!   target has few new keys (10K -> 12K, 7K -> 8K), a column coming back to
+//!   target has few new keys (14K -> 16K, 7K -> 8K), a column coming back to
 //!   its key is not spread, and one that just played keeps to its key: the
 //!   source's jacks, trills and back-and-forths stay as they are.
 //! - **Jacks**: no new jacks; the map's own jacks (the same column in
@@ -50,13 +50,13 @@
 //!   none: open chords stay open. Extra notes go on any key that suits what
 //!   its hand plays rather than next to the chord, mostly in the denser parts
 //!   of the source.
-//! - **Scratches** (10K2S, 14K2S DP): the pinky plays the scratch and the key
+//! - **Scratches** (16K DP and EZ2AC): the pinky plays the scratch and the key
 //!   next to it, so they never have notes at once. The scratch is an accent,
 //!   on the beat, in short groups with rests in between: a note only goes
 //!   there if its column does not have to follow it (jacks, chordjacks,
 //!   short notes right after it), so it never takes a column for bars. The
 //!   pinky shares its notes about evenly between the scratch and that key.
-//!   That is 12K, every key a lane. 10K2S keeps the scratches out of the
+//!   There every key is a lane. 10K2S (12K) keeps the scratches out of the
 //!   patterns, as 7K+1 does: the map is converted to 10K on the inner keys,
 //!   and the scratches get notes of their own on top, on the accents of the
 //!   music: the map's big chords and the sounds of its audio that stand out,
@@ -187,10 +187,11 @@ const W_CROSS: f64 = 6.0;
 /// New keys per source key from which a column coming back to its key is
 /// spread over the others ([`W_FRESH`], [`W_REPEAT2`]) in full, and up to
 /// which it is not at all: 4K -> 7K (0.75), 7K -> 10K (0.43) and 7K -> 9K
-/// (0.29) roll the back-and-forths of the source over the new keys, 10K ->
-/// 12K (0.2) keeps them, as its mapper meant them with 10 keys to choose
-/// from. With half the cost, a 10K map's columns coming back two notes later
-/// kept their key 40% of the time; with none, 80%. 7K -> 9K spread by 0.43
+/// (0.29) roll the back-and-forths of the source over the new keys, 14K ->
+/// 16K (0.14) keeps them, as its mapper meant them with 14 keys to choose
+/// from. With half the cost, a 10K map's columns going to 12K every key a
+/// lane (as 14K EZ2AC to 16K, the middle keys aside) coming back two notes
+/// later kept their key 40% of the time; with none, 80%. 7K -> 9K spread by 0.43
 /// left each column on the key it took first: two keys of nine (the left
 /// index, the right pinky) got a tenth of the notes of the others.
 const SPREAD_FROM: f64 = 0.2;
@@ -198,10 +199,10 @@ const SPREAD_FULL: f64 = 0.28;
 /// Where the target has few new keys, a column moving to another key while
 /// it played within the last beat costs this, times how little it spreads
 /// ([`SPREAD_FULL`]): the scratch's reward or the pinky's balance do not pull
-/// a column away mid-pattern. On a 10K map going to 12K, with 4 the columns
-/// coming back two notes later kept their key 96 to 98% of the time (85 to
-/// 89% without); with 8, 98 to 100%, but the scratch kept columns for runs of
-/// 10.
+/// a column away mid-pattern. On a 10K map going to 12K every key a lane,
+/// with 4 the columns coming back two notes later kept their key 96 to 98%
+/// of the time (85 to 89% without); with 8, 98 to 100%, but the scratch kept
+/// columns for runs of 10.
 const W_STICK: f64 = 4.0;
 
 // Scratches as lanes of their own (10K2S, see [`add_scratch_lanes`]): where
@@ -455,7 +456,7 @@ const W_HAND_TWICE: f64 = 30.0;
 /// jumptrills do.
 const W_MIRROR: f64 = 2.0;
 
-// Wide hands (4 keys or more each: 8K 4+4, 9K, 10K and up), measured against
+// Wide hands (4 keys or more each: 8K 3+2+3, 9K, 10K and up), measured against
 // hand-made 10K maps (see `corpus_feel`). There each hand plays patterns of
 // its own: stairs, runs on three of its keys (pinky-ring-middle, ...), open
 // chords rather than pills. With 7K's three keys a hand, rows grow into the
@@ -1060,7 +1061,7 @@ impl Ctx<'_> {
         // Full spreads the extras over any key, except in repeated patterns,
         // where they stay next to the chord so each phase of a jumptrill sits
         // on one hand. Where the target has few new keys and wide hands
-        // (10K -> 12K), they go anywhere on the chord's hand instead, as
+        // (14K -> 16K), they go anywhere on the chord's hand instead, as
         // elsewhere: a 10K trill of single notes does not turn into a
         // jumptrill of pills.
         let near = self.spread < 1.0;
@@ -2437,9 +2438,9 @@ fn convert_marked(beatmap: &mut Beatmap, params: &KeyConverterParams, accents: O
             // repeated pattern (a trill, a chordjack) is copied from its first
             // rows, so it takes their size all along. Where the target has few
             // new keys it gets the size its rows should have, not a draw: a
-            // 10K trill on 12K (1 note x 1.08) turned into a jumptrill 8% of
-            // the time. With more room the draw stays, or 4K -> 7K (x1.575)
-            // would double every jack.
+            // 10K trill on 12K every key a lane (1 note x 1.08) turned into a
+            // jumptrill 8% of the time. With more room the draw stays, or
+            // 4K -> 7K (x1.575) would double every jack.
             let dither = tie_break(i, u32::MAX as usize) / TIE_BREAK;
             let size = if row.grouped && spread < 1.0 {
                 target.round() as usize
@@ -2873,6 +2874,27 @@ mod tests {
         beatmap
     }
 
+    /// A 10K map on the 10K keys of 14K EZ2AC, the 4 middle keys left out.
+    fn on_ez2ac(osu10: &str) -> String {
+        let (head, objects) = osu10.split_once("[HitObjects]\n").unwrap();
+        let mut osu = head.replace("CircleSize:10", "CircleSize:14") + "[HitObjects]\n";
+        for line in objects.lines() {
+            let (x, rest) = line.split_once(',').unwrap();
+            let col = mania::column(x.parse().unwrap(), 10);
+            let col = if col < 5 { col } else { col + 4 };
+            osu.push_str(&format!("{},{}\n", mania::column_x(col, 14) as i32, rest));
+        }
+        osu
+    }
+
+    /// Converts a 10K map to 16K EZ2AC (10K2S and 4 middle keys) through
+    /// 14K EZ2AC: 10K -> 12K with every key a lane, its scratches as keys the
+    /// patterns run into, and the middle keys aside.
+    fn ez2ac(osu10: &str, density: Density) -> (Beatmap, Beatmap) {
+        let original = rosu_map::from_str::<Beatmap>(osu10).unwrap();
+        (original, convert_to(&on_ez2ac(osu10), "EZ2AC", 16, density))
+    }
+
     #[test]
     fn two_stages_stay_playable() {
         // 12K to 18K in every playstyle of the osu! wiki: every note kept and
@@ -2973,16 +2995,16 @@ mod tests {
         osu
     }
 
-    /// How many notes each scratch of a 12K map and the key next to it get
-    /// against an even key, and the scratch's longest run of notes a beat
-    /// apart or closer (at 120 BPM).
-    fn scratch_use(beatmap: &Beatmap) -> (f64, f64, usize) {
-        let cols = columns(beatmap, 12);
-        let share = |a, b| cols.iter().filter(|&&c| c == a || c == b).count() as f64 / 2.0 / cols.len() as f64 * 12.0;
-        let (scratch, pinky) = (share(0, 11), share(1, 10));
+    /// How many notes each scratch of a map with a scratch on each side and
+    /// the key next to it get against an even key, and the scratch's longest
+    /// run of notes a beat apart or closer (at 120 BPM).
+    fn scratch_use(beatmap: &Beatmap, keys: usize) -> (f64, f64, usize) {
+        let cols = columns(beatmap, keys);
+        let share = |a, b| cols.iter().filter(|&&c| c == a || c == b).count() as f64 / 2.0 / cols.len() as f64 * keys as f64;
+        let (scratch, pinky) = (share(0, keys - 1), share(1, keys - 2));
         let mut longest = 0;
-        for s in [0, 11] {
-            let times: Vec<f64> = beatmap.hit_objects.iter().filter(|o| column(o, 12) == s).map(|o| o.start_time).collect();
+        for s in [0, keys - 1] {
+            let times: Vec<f64> = beatmap.hit_objects.iter().filter(|o| column(o, keys) == s).map(|o| o.start_time).collect();
             let mut run = 0;
             for (i, t) in times.iter().enumerate() {
                 run = if i > 0 && t - times[i - 1] <= 505.0 { run + 1 } else { 1 };
@@ -2994,27 +3016,31 @@ mod tests {
 
     #[test]
     fn scratches_are_accents() {
-        // 10K2S from 4K, 7K, 10K and 7K FLN: the scratches get about as many
-        // notes as a key, and the pinky shares its notes with the key next to
-        // them, but never for bars on end. With FLN a column can leave the
-        // scratch when its long note ends.
+        // 16K DP and EZ2AC from 4K, 7K, 10K and 7K FLN: the scratches, keys
+        // the patterns run into, get about as many notes as a key, and the
+        // pinky shares its notes with the key next to them, but never for
+        // bars on end. With FLN a column can leave the scratch when its long
+        // note ends.
         let sources = [("4K", map(4)), ("7K", map(7)), ("10K", map(10)), ("7K FLN", fln_map())];
-        for (src, osu) in &sources {
-            for (name, density) in [("None", Density::None), ("MoreDense", Density::MoreDense), ("Full", Density::Full)] {
-                let beatmap = convert_to(osu, "12K", 12, density);
-                let (share, pinky, longest) = scratch_use(&beatmap);
-                assert!(share >= 0.35, "{} -> 12K {}: {:.2}x a key", src, name, share);
-                assert!((0.6..=1.6).contains(&(share / pinky)), "{} -> 12K {}: {:.2}x a key, the key next to it {:.2}x", src, name, share, pinky);
-                assert!(longest <= 8, "{} -> 12K {}: a run of {}", src, name, longest);
+        for playstyle in ["DP", "EZ2AC"] {
+            for (src, osu) in &sources {
+                for (name, density) in [("None", Density::None), ("MoreDense", Density::MoreDense), ("Full", Density::Full)] {
+                    let beatmap = convert_to(osu, playstyle, 16, density);
+                    let (share, pinky, longest) = scratch_use(&beatmap, 16);
+                    let what = format!("{} -> {} {}", src, playstyle, name);
+                    assert!(share >= 0.35, "{}: {:.2}x a key", what, share);
+                    assert!((0.6..=1.6).contains(&(share / pinky)), "{}: {:.2}x a key, the key next to it {:.2}x", what, share, pinky);
+                    assert!(longest <= 8, "{}: a run of {}", what, longest);
+                }
             }
         }
     }
 
     #[test]
     fn near_key_counts_keep_the_source_patterns() {
-        // 10K -> 12K has 2 new keys: a 10K column coming back two notes later
-        // stays on its key, as its mapper meant it, instead of rolling over
-        // the keys next to it. Two columns take turns in 1/2s at 174 BPM
+        // 10K -> 12K (on 14K -> 16K EZ2AC) has 2 new keys: a 10K column
+        // coming back two notes later stays on its key, as its mapper meant
+        // it, instead of rolling over the keys next to it. Two columns take turns in 1/2s at 174 BPM
         // (osu! rounds them to 172 or 173 ms), with a chord on every beat
         // pair, so they are no trill to copy.
         let beat = 60000.0 / 174.0;
@@ -3038,11 +3064,11 @@ mod tests {
             }
         }
         for density in [Density::None, Density::Full] {
-            let (_, beatmap) = convert(&osu, 12, density);
+            let (_, beatmap) = ez2ac(&osu, density);
             // The keys column 4 went to: mostly one.
-            let mut keys = [0usize; 12];
+            let mut keys = [0usize; 16];
             for obj in beatmap.hit_objects.iter().filter(|o| odd.contains(&o.start_time)) {
-                keys[column(obj, 12)] += 1;
+                keys[column(obj, 16)] += 1;
             }
             let most = keys.iter().max().copied().unwrap_or(0);
             assert!(most * 10 >= odd.len() * 8, "{:?}", keys);
@@ -3051,7 +3077,8 @@ mod tests {
 
     #[test]
     fn near_key_counts_keep_columns_by_the_scratch() {
-        // 10K -> 12K: a column by the edge comes back every beat, taking turns
+        // 10K -> 12K (on 14K -> 16K EZ2AC): a column by the edge comes back
+        // every beat, taking turns
         // with another, with a chord now and then. Its notes stay on one key
         // rather than going to the scratch for a few and then to the keys
         // around it as the scratch's costs and the pinky's balance change.
@@ -3076,12 +3103,12 @@ mod tests {
             }
         }
         for density in [Density::None, Density::Full] {
-            let (_, beatmap) = convert(&osu, 12, density);
-            let mut keys = [0usize; 12];
+            let (_, beatmap) = ez2ac(&osu, density);
+            let mut keys = [0usize; 16];
             for obj in beatmap.hit_objects.iter().filter(|o| edge.contains(&o.start_time)) {
-                let key = column(obj, 12);
+                let key = column(obj, 16);
                 // The chords' other note goes to the left; this is the right.
-                if key >= 6 {
+                if key >= 8 {
                     keys[key] += 1;
                 }
             }
@@ -3474,29 +3501,30 @@ mod tests {
 
     #[test]
     fn near_key_counts_add_notes_around_the_map() {
-        // 10K -> 12K: the denser fills place the map's notes where the plain
+        // 10K -> 12K (on 14K -> 16K EZ2AC): the denser fills place the map's
+        // notes where the plain
         // conversion does, so its streams keep their direction, and add their
         // notes around them, still playable, not next to a note of their row
         // where the source has none next to each other, and not within a
         // jack of the map's (1/2 beat) of a note on their key: no jack of two
         // turns into three, no long note gets a shield.
-        let (original, plain) = convert(&map(10), 12, Density::None);
+        let (original, plain) = ez2ac(&map(10), Density::None);
         let adjacent = |r: &[usize]| r.windows(2).any(|w| w[1] == w[0] + 1);
         let source = key_rows(&original, 10);
-        let rows = key_rows(&plain, 12);
+        let rows = key_rows(&plain, 16);
         let times: Vec<f64> = {
             let mut t: Vec<f64> = plain.hit_objects.iter().map(|o| o.start_time).collect();
             t.dedup();
             t
         };
         for density in [Density::Dense, Density::MoreDense, Density::Full] {
-            let (_, beatmap) = convert(&map(10), 12, density);
+            let (_, beatmap) = ez2ac(&map(10), density);
             assert!(beatmap.hit_objects.len() > plain.hit_objects.len());
-            check(&beatmap, 12);
-            check_fingers(&beatmap, &layout::layout(12, None), "10K -> 12K");
+            check(&beatmap, 16);
+            check_fingers(&beatmap, &layout::layout(16, Some("EZ2AC")), "14K -> 16K EZ2AC");
             for ((time, row), src) in times.iter().zip(&rows).zip(&source) {
                 let mut keys: Vec<usize> =
-                    beatmap.hit_objects.iter().filter(|o| o.start_time == *time).map(|o| column(o, 12)).collect();
+                    beatmap.hit_objects.iter().filter(|o| o.start_time == *time).map(|o| column(o, 16)).collect();
                 keys.sort();
                 assert!(row.iter().all(|k| keys.contains(k)), "at {}: {:?} then {:?}", time, row, keys);
                 if keys.len() > row.len() && !adjacent(src) && !adjacent(row) {
@@ -3506,11 +3534,11 @@ mod tests {
             let placed: Vec<(f64, f64, usize)> = plain
                 .hit_objects
                 .iter()
-                .map(|o| (o.start_time, mania::note(o).unwrap().1, column(o, 12)))
+                .map(|o| (o.start_time, mania::note(o).unwrap().1, column(o, 16)))
                 .collect();
             let gap = 500.0 * SOURCE_JACK_BEATS;
             for obj in &beatmap.hit_objects {
-                let (start, end, key) = (obj.start_time, mania::note(obj).unwrap().1, column(obj, 12));
+                let (start, end, key) = (obj.start_time, mania::note(obj).unwrap().1, column(obj, 16));
                 if placed.contains(&(start, end, key)) {
                     continue;
                 }
@@ -3522,7 +3550,8 @@ mod tests {
 
     #[test]
     fn near_key_counts_keep_trills_of_single_notes() {
-        // A 10K trill of single notes on 12K: Full (x1.08) keeps it single
+        // A 10K trill of single notes on 12K (on 14K -> 16K EZ2AC): Full
+        // (x1.03) keeps it single
         // notes instead of drawing a jumptrill for the whole of it, and the
         // denser fills add their notes open, not as pills next to the trill.
         let beat = 60000.0 / 174.0;
@@ -3536,13 +3565,13 @@ mod tests {
                 osu.push_str(&format!("{},192,{},1,0,0:0:0:0:\n", mania::column_x(cols[step % 2], 10) as i32, time));
             }
         }
-        let (_, beatmap) = convert(&osu, 12, Density::Full);
-        let rows = key_rows(&beatmap, 12);
+        let (_, beatmap) = ez2ac(&osu, Density::Full);
+        let rows = key_rows(&beatmap, 16);
         assert!(rows.iter().all(|r| r.len() == 1), "{:?}", rows);
         for density in [Density::Dense, Density::MoreDense] {
-            let (_, beatmap) = convert(&osu, 12, density);
-            let rows = key_rows(&beatmap, 12);
-            let pills = rows.iter().filter(|r| r.windows(2).any(|w| w[1] == w[0] + 1 && (w[0] < 6) == (w[1] < 6))).count();
+            let (_, beatmap) = ez2ac(&osu, density);
+            let rows = key_rows(&beatmap, 16);
+            let pills = rows.iter().filter(|r| r.windows(2).any(|w| w[1] == w[0] + 1 && (w[0] < 8) == (w[1] < 8))).count();
             assert!(pills * 10 <= rows.len(), "{} pills: {:?}", pills, rows);
         }
     }
