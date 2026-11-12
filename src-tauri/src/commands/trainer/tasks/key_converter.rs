@@ -15,9 +15,10 @@
 //!   a chordjack (the same row again, up to 1/2 beat later) repeats its whole
 //!   target row, extra notes included, and a jumptrill or trill (two rows
 //!   alternating) alternates between two fixed target rows, one per hand,
-//!   like tyrcs' 7K Lolit speed does. Single-note trills need a few more notes
-//!   to count: the short back-and-forths a 4K stream is full of, just because
-//!   it has 4 keys, are not copied. A key coming back 2 or 3 notes later
+//!   like tyrcs' 7K Lolit speed does. A motif (three rows going round, a
+//!   hand's roll) goes round the same three target rows. Single-note trills
+//!   need a few more notes to count: the short back-and-forths a 4K stream is
+//!   full of, just because it has 4 keys, are not copied. A key coming back 2 or 3 notes later
 //!   within a beat costs more there, so streams roll over the extra keys.
 //! - **Consistency**: each column keeps loosely to the keys around its natural
 //!   place.
@@ -141,6 +142,12 @@ const FREE_DEVIATION: f64 = 0.75;
 const TRILL_MIN_NOTES: usize = 6;
 const TRILL_MIN_CHORDS: usize = 4;
 const TRILL_MAX_GAP_BEATS: f64 = 0.5;
+/// A source motif: three rows going round (a hand's roll, 645 645 645), as
+/// far apart as a trill's, for at least this many rows: twice round. Without
+/// it, where a column may leave its key (7K -> 8K and up), a key coming back
+/// 3 notes later costs more, and each time round came out another way, or
+/// on the other hand.
+const MOTIF_MIN_ROWS: usize = 6;
 /// Leeway for gaps measured in beats: osu! rounds the notes to the ms, so a
 /// 1/2 at 174 BPM (172.4 ms) comes out as 172 or 173.
 const ROUNDING_MS: f64 = 2.0;
@@ -659,8 +666,8 @@ struct Row {
     strength: f64,
     /// Part of a trill or jumptrill of the source: keys coming back are fine.
     trill: bool,
-    /// Repeats the row this many rows back (1: chordjack, 2: trill), so its
-    /// target row is copied too. 0 when it does not.
+    /// Repeats the row this many rows back (1: chordjack, 2: trill, 3:
+    /// motif), so its target row is copied too. 0 when it does not.
     copy: u8,
     /// Part of a repeated pattern: its extra notes stay on the same hand as
     /// the chord, so each row of a jumptrill sits on one hand.
@@ -2193,6 +2200,8 @@ fn set_x(obj: &mut HitObject, x: f32) {
 ///   for [`TRILL_MIN_CHORDS`] rows when they are chords or
 ///   [`TRILL_MIN_NOTES`] when they are single notes. Shorter back-and-forths
 ///   are just what streams look like on few keys.
+/// - Motifs: three rows with nothing in common going round, fast, for
+///   [`MOTIF_MIN_ROWS`] rows.
 fn mark_patterns(rows: &mut [Row], notes: &[Note], keep_jacks: bool) {
     let cols: Vec<u32> = rows.iter().map(|row| notes[row.notes.clone()].iter().fold(0u32, |m, n| m | 1 << n.src)).collect();
 
@@ -2231,6 +2240,36 @@ fn mark_patterns(rows: &mut [Row], notes: &[Note], keep_jacks: bool) {
                 row.grouped = true;
                 if j >= 2 {
                     row.copy = 2;
+                }
+            }
+        }
+        i = start;
+    }
+
+    // Motifs: three rows with nothing in common going round, fast (a roll
+    // of a hand, 645 645 645), for [`MOTIF_MIN_ROWS`] rows. Length of the
+    // one ending at each row.
+    let mut run = vec![0usize; rows.len()];
+    for i in 3..rows.len() {
+        let max_gap = rows[i].beat_len * TRILL_MAX_GAP_BEATS + ROUNDING_MS;
+        let fast = (i - 2..=i).all(|j| rows[j].time - rows[j - 1].time <= max_gap);
+        let apart = cols[i] & cols[i - 1] == 0 && cols[i] & cols[i - 2] == 0 && cols[i - 1] & cols[i - 2] == 0;
+        if fast && apart && cols[i] == cols[i - 3] {
+            run[i] = if run[i - 1] > 0 { run[i - 1] + 1 } else { 4 };
+        }
+    }
+    let mut i = rows.len();
+    while i > 0 {
+        i -= 1;
+        if run[i] == 0 {
+            continue;
+        }
+        let start = i + 1 - run[i];
+        if run[i] >= MOTIF_MIN_ROWS {
+            for (j, row) in rows[start..=i].iter_mut().enumerate() {
+                row.grouped = true;
+                if j >= 3 {
+                    row.copy = 3;
                 }
             }
         }
@@ -2719,6 +2758,38 @@ mod tests {
             assert_eq!(beatmap.circle_size, dst as f32);
             assert_eq!(beatmap.hit_objects.len(), original.hit_objects.len(), "{}K -> {}K", src, dst);
             assert!(check(&beatmap, dst) <= check(&original, src), "{}K -> {}K", src, dst);
+        }
+    }
+
+    #[test]
+    fn motifs_keep_going_round() {
+        // A 7K roll of each hand, 645 four times then 021 four times, in 1/4s
+        // at 160 BPM (New York Back Raise): each time round goes to the same
+        // three keys, on the same hand.
+        let beat = 375.0;
+        let mut osu = format!(
+            "osu file format v14\n\n[General]\nMode: 3\n\n[Difficulty]\nCircleSize:7\n\n[TimingPoints]\n0,{},4,1,0,60,1,0\n\n[HitObjects]\n",
+            beat
+        );
+        for (part, motif) in [[6, 4, 5], [0, 2, 1]].iter().enumerate() {
+            for round in 0..4 {
+                let start = (part * 4 + round) as f64 * beat / 4.0;
+                for (&col, offset) in motif.iter().zip([0.0, 23.0, 31.0]) {
+                    osu.push_str(&format!("{},192,{},1,0,0:0:0:0:\n", mania::column_x(col, 7) as i32, (start + offset).round()));
+                }
+            }
+        }
+        for dst in [8, 9, 10] {
+            for density in [Density::None, Density::Full] {
+                let (_, beatmap) = convert(&osu, dst, density);
+                let rows = key_rows(&beatmap, dst);
+                for part in rows.chunks(12) {
+                    assert!(part.windows(4).all(|w| w[0] == w[3]), "{}K: {:?}", dst, rows);
+                }
+                // The left hand's keys, and on 9K the thumb's in the middle.
+                let left = |r: &Vec<usize>| r.iter().all(|&k| k < (dst + 1) / 2);
+                assert!(rows[12..].iter().all(left), "{}K: {:?}", dst, rows);
+            }
         }
     }
 
@@ -3693,4 +3764,5 @@ mod tests {
         assert!(notes_of(&beatmap, 8).iter().any(|n| n.2 == 0), "no scratch");
     }
 }
+
 
