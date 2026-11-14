@@ -167,6 +167,19 @@ const TIE_BREAK: f64 = 0.3;
 
 /// Moving the other way than the source.
 const W_DIRECTION: f64 = 3.0;
+/// More, between single notes, where the source steps to the key next to it
+/// (a stair): there going back stands out. On a 7K stair of a stream
+/// (Propose), 5 4 3 came out 4 5 2 on 8K, where the key down from the right
+/// thumb is the left one's. Of the 1175 such steps of Propose, 8K went back
+/// on 31, 9K on 33 and 10K on 10; with this, 11, 34 and 1, most of the others
+/// from a note on the edge key with nowhere further, or where the map's
+/// 84 BPM makes every key near a jack (see [`JACK_BEATS`]).
+const W_STAIR_BACK: f64 = 8.0;
+/// The same for the first note out of a chord, from the chord's note next to
+/// it in the source: a stair down from its right note went out first. Less,
+/// as there the keys of the chord are often the ones left: with 8 for these
+/// too, 8K went back on 37 steps of Propose.
+const W_STAIR_BACK_CHORD: f64 = 2.0;
 /// Per key of difference between how far the source and the target move
 /// (relative to the key count).
 const W_SHAPE: f64 = 0.5;
@@ -191,6 +204,22 @@ const W_REPEAT2: f64 = 12.0;
 const W_REPEAT3: f64 = 6.0;
 /// A note going to the other hand.
 const W_CROSS: f64 = 6.0;
+/// A note of the source's middle key (a thumb's) going to a key that is not
+/// the target's middle (its thumbs; on 9K the thumb and the keys next to
+/// it): a 7K anchor on its middle key went to the left middle finger on 8K
+/// 3+2+3, the left hand then playing it and the jumps of its own keys. With
+/// 6 ([`W_CROSS`]), 8K had no key left for stairs at 84 BPM (Propose, see
+/// [`JACK_BEATS`]) and 9K's single thumb took 40% more notes than a key.
+const W_THUMB_KEY: f64 = 1.5;
+/// Source key counts from which a back-and-forth (545, the same column again
+/// two rows later, within a beat, a single note each time) is kept: it goes
+/// back to the same key, free of [`W_FRESH`] and [`W_REPEAT2`]. With chords
+/// between it is an anchor (3 56 3 01 3, Propose): without this, 8K to 10K
+/// moved 81 to 88 of its 90 to another key. A 4K stream is
+/// full of them just because it has 4 keys, and those roll over the new
+/// keys; a 7K mapper meant them (Propose: 545 565 654 came out 645 675 764
+/// on 8K).
+const KEEP_RETURNS_FROM: usize = 7;
 /// On two stages, new keys per source key from which a column coming back to
 /// its key is spread over the others ([`W_FRESH`], [`W_REPEAT2`]) in full,
 /// and up to which it is not at all: 10K -> 14K (0.4) rolls the
@@ -701,10 +730,8 @@ struct State {
     /// Time and average position (0..1) of the previous row, in source and
     /// target.
     prev: Option<(f64, f64, f64)>,
-    /// The previous row when it was a single note: its source and target
-    /// columns, the step that led to it when it was part of a connected run
-    /// (±1, else 0), and how many notes that run has.
-    single: Option<(u8, u8, i8, u8)>,
+    /// The previous row when it was a single note.
+    single: Option<Single>,
     /// The way the last connected run of three or more went (±1).
     last_roll: i8,
     /// The last rows, newest first.
@@ -742,6 +769,29 @@ impl State {
     }
 }
 
+/// A single note row: its source and target columns, and in each the
+/// connected run (next keys, the same way) it ends: the step that led to it
+/// (±1, else 0) and how many notes the run has.
+#[derive(Clone, Copy)]
+struct Single {
+    src: u8,
+    dst: u8,
+    src_step: i8,
+    src_run: u8,
+    step: i8,
+    run: u8,
+}
+
+/// The connected run a note `step` keys after the last one ends: its step
+/// (±1, else 0) and length, going on with the last one's (`prev_step`, `run`).
+fn run_after(step: i32, prev_step: i8, run: u8) -> (i8, u8) {
+    match step {
+        -1 | 1 if step == prev_step as i32 => (step as i8, run.saturating_add(1)),
+        -1 | 1 => (step as i8, 2),
+        _ => (0, 1),
+    }
+}
+
 /// What was done with a row: the keys of the notes kept (as many of them,
 /// picked by [`kept`], as there are keys) and the keys of the extra notes.
 #[derive(Clone, Copy)]
@@ -761,13 +811,15 @@ impl Decision {
 }
 
 /// The last row a hand played (its keys, as a mask of the target), the one
-/// before it if linked, and which way the hand went to get there (±1, else 0).
+/// before it if linked, which way the hand went to get there (±1, else 0),
+/// and the middle of the source columns of its notes (NaN with none).
 #[derive(Clone, Copy, Default)]
 struct HandPast {
     time: f64,
     mask: u32,
     prev: u32,
     dir: i8,
+    src: f64,
 }
 
 /// The middle of the keys of a mask.
@@ -794,6 +846,10 @@ struct Ctx<'a> {
     fill: Option<Fill>,
     src_hands: [Hand; MAX_KEYS],
     dst_hands: [Hand; MAX_KEYS],
+    /// The keys of the target's thumbs, and the middle keys either hand
+    /// moves to, where the notes of the source's middle key go (see
+    /// [`W_THUMB_KEY`]).
+    thumbs: u32,
     /// The keys of the left and right hand of the target, the middle keys
     /// aside, and whether both have 4 keys or more (see [`W_HAND_ROLL`]).
     dst_groups: [u32; 2],
@@ -863,10 +919,29 @@ impl Ctx<'_> {
         }
     }
 
-    /// Wide hands: the cost of what each hand plays in a row of `mask`. A pill
-    /// costs where the source has none; going on with the hand's stair, or
-    /// staying on three of its keys, is rewarded.
-    fn hand_cost(&self, state: &State, row: &Row, mask: u32) -> f64 {
+    /// Wide hands: the middle of the source columns of the notes each hand
+    /// (left, right) plays in a row placed in `combo`, NaN for one with none.
+    fn hand_sources(&self, row: &Row, combo: &[u8]) -> [f64; 2] {
+        if !self.wide {
+            return [f64::NAN; 2];
+        }
+        let notes = &self.notes[row.notes.clone()];
+        let mut sums = [(0.0, 0); 2];
+        for (&i, &col) in kept(notes.len(), combo.len()).iter().zip(combo) {
+            for (sum, &group) in sums.iter_mut().zip(&self.dst_groups) {
+                if group & 1 << col != 0 {
+                    *sum = (sum.0 + notes[i].src as f64, sum.1 + 1);
+                }
+            }
+        }
+        sums.map(|(sum, n)| if n > 0 { sum / n as f64 } else { f64::NAN })
+    }
+
+    /// Wide hands: the cost of what each hand plays in a row of `mask`, its
+    /// notes from the source columns `src` (see [`Ctx::hand_sources`]). A
+    /// pill costs where the source has none; going on with the hand's stair,
+    /// or staying on three of its keys, is rewarded.
+    fn hand_cost(&self, state: &State, row: &Row, mask: u32, src: [f64; 2]) -> f64 {
         if !self.wide {
             return 0.0;
         }
@@ -875,7 +950,7 @@ impl Ctx<'_> {
         // Where the source has a pill it may stay one; hand-made 10K maps have
         // fewer pills than 7K ones, so it is not pushed to.
         let mut cost = if row.pill { 0.0 } else { W_PILL * pills as f64 };
-        for (past, &group) in state.hands.iter().zip(&self.dst_groups) {
+        for ((past, &group), src) in state.hands.iter().zip(&self.dst_groups).zip(src) {
             let m = mask & group;
             if m == 0 {
                 continue;
@@ -884,7 +959,12 @@ impl Ctx<'_> {
                 continue;
             }
             let step = center(m) - center(past.mask);
-            if (0.5..=1.5).contains(&step.abs()) && past.dir != 0 && step.signum() as i8 == past.dir {
+            // Not where the hand's notes go the other way in the source: a
+            // 7K stair starting from a chord's left note went back a key on
+            // 9K first, the hand's last two notes making a stair the other way.
+            let src_step = src - past.src;
+            let against = src_step.abs() > 1e-9 && src_step.signum() != step.signum();
+            if (0.5..=1.5).contains(&step.abs()) && past.dir != 0 && step.signum() as i8 == past.dir && !against {
                 cost -= W_HAND_ROLL;
             }
             // A run of single notes: a chord of the hand on three keys is
@@ -896,6 +976,26 @@ impl Ctx<'_> {
             }
         }
         cost
+    }
+
+    /// Where a single note row goes back and forth in the source (545: its
+    /// column two rows back, a single note, and a row without it between,
+    /// within a beat; with a chord between, an anchor: 3 56 3 01 3) and the
+    /// source keeps those ([`KEEP_RETURNS_FROM`]): the key of that note,
+    /// which it goes back to as a free return.
+    fn back_and_forth(&self, state: &State, row: &Row) -> Option<usize> {
+        let (last, before) = (&state.history[0], &state.history[1]);
+        // The notes of the map, whatever extra notes came with them.
+        let single = |p: &Past| p.src.count_ones() == 1 && p.decision.keys.count_ones() == 1;
+        let src = self.notes[row.notes.start].src;
+        (self.src_keys >= KEEP_RETURNS_FROM
+            && row.notes.len() == 1
+            && before.src == 1 << src
+            && single(before)
+            && last.src != 0
+            && last.src & before.src == 0
+            && row.time - before.time <= row.beat_len)
+            .then(|| before.decision.keys.trailing_zeros() as usize)
     }
 
     /// Cost of each source note of the row in each target key, `INFINITY`
@@ -915,6 +1015,7 @@ impl Ctx<'_> {
             let source_jack = state.src_target[src] != NONE
                 && state.history[0].src & (1 << src) != 0
                 && row.time - state.src_release[src] <= row.beat_len * SOURCE_JACK_BEATS;
+            let back = self.back_and_forth(state, row);
 
             for col in 0..self.dst_keys {
                 if !self.free(state, col, row, note.src) {
@@ -925,6 +1026,10 @@ impl Ctx<'_> {
                 if !same_hand(self.src_hands[src], self.dst_hands[col]) {
                     cost += W_CROSS;
                 }
+                // The source's middle key (a thumb's) stays in the middle.
+                if self.src_hands[src] == Hand::Either && self.thumbs != 0 && self.thumbs & 1 << col == 0 {
+                    cost += W_THUMB_KEY;
+                }
                 if hand_bit(self.dst_hands[col]) & busy != 0 || (accent_only && self.dst_hands[col] == Hand::Either) {
                     cost += W_HAND_TWICE;
                 }
@@ -934,7 +1039,10 @@ impl Ctx<'_> {
                     cost += COST_BROKEN_JACK;
                 }
                 let own = state.last_src[col] == note.src;
-                if !keeps_jack {
+                if back.is_some_and(|b| b != col) {
+                    cost += COST_BROKEN_TRILL;
+                }
+                if !keeps_jack && back != Some(col) {
                     cost += self.repeat_cost(state, row, src, col);
                     if state.last_src[col] != note.src && row.time - state.release[col] <= jack_gap {
                         cost += COST_NEW_JACK;
@@ -1097,7 +1205,8 @@ impl Ctx<'_> {
             let held = placed.fold(0u32, |m, &c| m | self.fingers[c as usize]);
             if anywhere {
                 // Wide hands: an extra note goes on with what its hand plays.
-                let hand_now = self.hand_cost(state, row, taken);
+                let src = self.hand_sources(row, combo);
+                let hand_now = self.hand_cost(state, row, taken, src);
                 for next in 0..self.dst_keys as u8 {
                     let mut added = extra_costs[next as usize];
                     if !added.is_finite() || held & 1 << next != 0 {
@@ -1117,7 +1226,7 @@ impl Ctx<'_> {
                     if self.wide && added - HAND_REWARD_MAX >= best.map_or(0.0, |(b, _, _)| b) {
                         continue;
                     }
-                    let hand = if self.wide { self.hand_cost(state, row, taken | 1 << next) - hand_now } else { 0.0 };
+                    let hand = if self.wide { self.hand_cost(state, row, taken | 1 << next, src) - hand_now } else { 0.0 };
                     let cost = added + hand;
                     if cost < 0.0 && best.is_none_or(|(b, _, _)| cost < b) {
                         best = Some((cost, next, added));
@@ -1154,6 +1263,11 @@ impl Ctx<'_> {
         if row.time - prev_time > row.beat_len * FLOW_BEATS {
             return 0.0;
         }
+        // A back-and-forth going back to its key copies the note before,
+        // whichever way the one between went.
+        if single.is_some_and(|(_, dst)| self.back_and_forth(state, row) == Some(dst as usize)) {
+            return 0.0;
+        }
 
         let ds = src_pos - prev_src;
         let dt = dst_pos - prev_dst;
@@ -1164,11 +1278,36 @@ impl Ctx<'_> {
 
         cost += W_SHAPE * (ds - dt).abs() * self.dst_keys as f64;
 
-        if let (Some((src, dst)), Some((prev_src, prev_dst, prev_step, run))) = (single, state.single) {
-            let ds = src as i32 - prev_src as i32;
-            let dt = dst as i32 - prev_dst as i32;
-            if dt.abs() == 1 && dt == prev_step as i32 {
-                match run {
+        // A stair of the source going back: from the last note, or out of a
+        // chord from the note of it next to this one.
+        if let Some((src, dst)) = single {
+            let past = &state.history[0];
+            let from = match state.single {
+                Some(prev) => Some((prev.src, prev.dst)),
+                None if past.decision.size() == past.src.count_ones() as usize => {
+                    let mut next = keys_of(past.src).zip(keys_of(past.decision.keys)).filter(|&(s, _)| s.abs_diff(src) == 1);
+                    next.next().filter(|_| next.next().is_none())
+                }
+                None => None,
+            };
+            if let Some((from_src, from_dst)) = from {
+                let ds = src as i32 - from_src as i32;
+                let dt = dst as i32 - from_dst as i32;
+                if ds.abs() == 1 && dt != 0 && dt.signum() != ds {
+                    cost += if state.single.is_some() { W_STAIR_BACK } else { W_STAIR_BACK_CHORD };
+                }
+            }
+        }
+
+        if let (Some((src, dst)), Some(prev)) = (single, state.single) {
+            let ds = src as i32 - prev.src as i32;
+            let dt = dst as i32 - prev.dst as i32;
+            if dt.abs() == 1 && dt == prev.step as i32 {
+                // The source's own stair, as long as this one or longer, is
+                // followed: a 7K stair over every key stays one on 8K.
+                let (src_step, src_run) = run_after(ds, prev.src_step, prev.src_run);
+                match prev.run {
+                    _ if src_step as i32 == dt && src_run > prev.run => cost -= W_ROLL,
                     2 if ds.signum() == dt.signum() && dt != state.last_roll as i32 => cost -= W_ROLL,
                     2 => cost += W_SAME_ROLL,
                     _ => cost += W_LONG_ROLL,
@@ -1234,7 +1373,7 @@ impl Ctx<'_> {
                 let keys = combo.iter().fold(0u32, |m, &c| m | 1 << c);
                 let decision = Decision { keys, extras, n_extras };
                 let mask = self.mask_of(&decision);
-                let shaped = self.mirror_cost(state, row, mask) + self.hand_cost(state, row, mask);
+                let shaped = self.mirror_cost(state, row, mask) + self.hand_cost(state, row, mask, self.hand_sources(row, combo));
 
                 out.push((cost + extra_cost + shaped + tie_break(row_idx, rank(keys)), decision));
             });
@@ -1288,16 +1427,13 @@ impl Ctx<'_> {
             state.prev = Some((row.time, self.source_pos(row, &keep), dst_pos));
 
             state.single = self.single(row, &keep, &combo).map(|(src, dst)| {
-                let Some((_, prev_dst, prev_step, run)) = state.single else { return (src, dst, 0, 1) };
-                let step = dst as i32 - prev_dst as i32;
-                if step.abs() != 1 {
-                    return (src, dst, 0, 1);
-                }
-                let run = if step == prev_step as i32 { run + 1 } else { 2 };
+                let Some(prev) = state.single else { return Single { src, dst, src_step: 0, src_run: 1, step: 0, run: 1 } };
+                let (src_step, src_run) = run_after(src as i32 - prev.src as i32, prev.src_step, prev.src_run);
+                let (step, run) = run_after(dst as i32 - prev.dst as i32, prev.step, prev.run);
                 if run == 3 {
-                    state.last_roll = step as i8;
+                    state.last_roll = step;
                 }
-                (src, dst, step as i8, run)
+                Single { src, dst, src_step, src_run, step, run }
             });
         } else {
             state.single = None;
@@ -1310,7 +1446,9 @@ impl Ctx<'_> {
 
         if self.wide {
             let link = patterns::link_ms(row.beat_len);
-            for (past, &group) in state.hands.iter_mut().zip(&self.dst_groups) {
+            let combo: Vec<u8> = keys_of(decision.keys).collect();
+            let sources = self.hand_sources(row, &combo);
+            for ((past, &group), src) in state.hands.iter_mut().zip(&self.dst_groups).zip(sources) {
                 let m = dst_mask & group;
                 if m == 0 {
                     continue;
@@ -1318,7 +1456,7 @@ impl Ctx<'_> {
                 let linked = past.mask != 0 && row.time - past.time <= link;
                 let step = if linked { center(m) - center(past.mask) } else { 0.0 };
                 let dir = if step.abs() > 0.25 { step.signum() as i8 } else { 0 };
-                *past = HandPast { time: row.time, mask: m, prev: if linked { past.mask } else { 0 }, dir };
+                *past = HandPast { time: row.time, mask: m, prev: if linked { past.mask } else { 0 }, dir, src };
             }
         }
 
@@ -2506,6 +2644,11 @@ fn convert_marked(beatmap: &mut Beatmap, params: &KeyConverterParams, accents: O
     let dst_groups = [hand_mask(Hand::Left), hand_mask(Hand::Right)];
     let wide = dst_groups.iter().all(|g| g.count_ones() >= 4);
 
+    // The keys of the target's thumbs, and the middle keys either hand moves
+    // to; a single one (9K) with the keys next to it.
+    let thumbs = dst_layout.digit_mask(Digit::Thumb)
+        | (0..dst_keys).filter(|&c| dst_hands[c] == Hand::Either).fold(0u32, |m, c| m | 1 << c);
+    let thumbs = if thumbs.count_ones() == 1 { thumbs | thumbs << 1 | thumbs >> 1 } else { thumbs };
     let ctx = Ctx {
         notes: &notes,
         src_keys,
@@ -2514,6 +2657,7 @@ fn convert_marked(beatmap: &mut Beatmap, params: &KeyConverterParams, accents: O
         fill,
         src_hands,
         dst_hands,
+        thumbs,
         dst_groups,
         wide,
         scratches,
@@ -2758,6 +2902,98 @@ mod tests {
             assert_eq!(beatmap.circle_size, dst as f32);
             assert_eq!(beatmap.hit_objects.len(), original.hit_objects.len(), "{}K -> {}K", src, dst);
             assert!(check(&beatmap, dst) <= check(&original, src), "{}K -> {}K", src, dst);
+        }
+    }
+
+    #[test]
+    fn stairs_over_every_key_keep_going() {
+        // 7K stairs from a chord over every key, up from its left note and
+        // down from its right one, in 1/8s at 252 BPM (Propose): on 8K to 10K
+        // each goes one way all along, though the new keys leave it a step
+        // short or long, and starts inside the chord, as the source does.
+        let beat = 60000.0 / 252.0;
+        let mut osu = format!(
+            "osu file format v14\n\n[General]\nMode: 3\n\n[Difficulty]\nCircleSize:7\n\n[TimingPoints]\n0,{},4,1,0,60,1,0\n\n[HitObjects]\n",
+            beat
+        );
+        let up: [&[usize]; 9] = [&[1], &[3], &[0, 6], &[1], &[2], &[3], &[4], &[5], &[6]];
+        let down: [&[usize]; 7] = [&[4], &[5], &[1, 6], &[5], &[4], &[3], &[2]];
+        for (step, cols) in up.iter().chain(&[&[][..]; 3]).chain(&down).enumerate() {
+            for &col in cols.iter() {
+                let time = (1000.0 + step as f64 * beat / 8.0).round();
+                osu.push_str(&format!("{},192,{},1,0,0:0:0:0:\n", mania::column_x(col, 7) as i32, time));
+            }
+        }
+        for dst in [8, 9, 10] {
+            for density in [Density::None, Density::Full] {
+                let (_, beatmap) = convert(&osu, dst, density);
+                let rows = key_rows(&beatmap, dst);
+                let (up, down) = rows.split_at(up.len());
+                let rising: Vec<usize> = up[3..].iter().map(|r| r[0]).collect();
+                let falling: Vec<usize> = down[3..].iter().map(|r| r[r.len() - 1]).collect();
+                let chord = (up[2][0], down[2][down[2].len() - 1]);
+                assert!(rising.windows(2).all(|w| w[0] < w[1]) && rising[0] > chord.0, "{}K: {:?}", dst, up);
+                assert!(falling.windows(2).all(|w| w[0] > w[1]) && falling[0] < chord.1, "{}K: {:?}", dst, down);
+            }
+        }
+    }
+
+    #[test]
+    fn back_and_forths_of_7k_stay() {
+        // A 7K hand going back and forth between chords of the other, 545
+        // 565 654, in 1/4s at 252 BPM (Propose): on 8K to 10K each goes back
+        // to its first key. 4K streams roll theirs over the new keys instead
+        // (see `rolls_short_back_and_forths`).
+        let beat = 60000.0 / 252.0;
+        let mut osu = format!(
+            "osu file format v14\n\n[General]\nMode: 3\n\n[Difficulty]\nCircleSize:7\n\n[TimingPoints]\n0,{},4,1,0,60,1,0\n\n[HitObjects]\n",
+            beat
+        );
+        let chord: &[usize] = &[0, 1, 2];
+        let rows: [&[usize]; 12] = [chord, &[5], &[4], &[5], chord, &[5], &[6], &[5], chord, &[6], &[5], &[4]];
+        for (step, cols) in rows.iter().enumerate() {
+            for &col in cols.iter() {
+                let time = (1000.0 + step as f64 * beat / 4.0).round();
+                osu.push_str(&format!("{},192,{},1,0,0:0:0:0:\n", mania::column_x(col, 7) as i32, time));
+            }
+        }
+        for dst in [8, 9, 10] {
+            for density in [Density::None, Density::Full] {
+                let (_, beatmap) = convert(&osu, dst, density);
+                let rows = key_rows(&beatmap, dst);
+                // With extra notes, the return is among the keys it went from.
+                for part in rows[..8].chunks(4) {
+                    assert!(part[3].iter().all(|k| part[1].contains(k)) && part[1] != part[2], "{}K: {:?}", dst, rows);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn anchors_of_7k_stay() {
+        // A 7K anchor on the middle key between jumps of each hand, 3 56 3 01
+        // 3..., in 1/4s at 252 BPM (Propose): on 8K to 10K it stays on one key.
+        let beat = 60000.0 / 252.0;
+        let mut osu = format!(
+            "osu file format v14\n\n[General]\nMode: 3\n\n[Difficulty]\nCircleSize:7\n\n[TimingPoints]\n0,{},4,1,0,60,1,0\n\n[HitObjects]\n",
+            beat
+        );
+        for step in 0..24 {
+            let cols: &[usize] = match step % 4 {
+                1 => &[5, 6],
+                3 => &[0, 1],
+                _ => &[3],
+            };
+            for &col in cols {
+                let time = (1000.0 + step as f64 * beat / 4.0).round();
+                osu.push_str(&format!("{},192,{},1,0,0:0:0:0:\n", mania::column_x(col, 7) as i32, time));
+            }
+        }
+        for dst in [8, 9, 10] {
+            let (_, beatmap) = convert(&osu, dst, Density::None);
+            let rows = key_rows(&beatmap, dst);
+            let anchors: Vec<&Vec<usize>> = rows.iter().step_by(2).collect();
+            assert!(anchors.windows(2).all(|w| w[0] == w[1]), "{}K: {:?}", dst, rows);
         }
     }
 
@@ -3764,5 +4000,9 @@ mod tests {
         assert!(notes_of(&beatmap, 8).iter().any(|n| n.2 == 0), "no scratch");
     }
 }
+
+
+
+
 
 
