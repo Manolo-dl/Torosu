@@ -3,7 +3,7 @@ import { TranslocoService } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
 import { TUI_ENGLISH_LANGUAGE } from '@taiga-ui/i18n/languages/english';
 import type { TuiLanguage } from '@taiga-ui/i18n/types';
-import { DEFAULT_LANGUAGE, Language } from './languages';
+import { DEFAULT_LANGUAGE, Language, languageTag } from './languages';
 
 /** The language of the interface: the app's texts (Transloco) and Taiga's own. */
 @Injectable({ providedIn: 'root' })
@@ -29,7 +29,7 @@ export class LanguageService {
         // `load` shares the request `setActiveLang` started.
         await firstValueFrom(this.transloco.load(language)).catch(() => undefined);
         this.chosen();
-        this.document.documentElement.lang = language;
+        this.document.documentElement.lang = languageTag(language);
         this.taiga.set(await taigaLanguage(language));
     }
 }
@@ -41,6 +41,12 @@ async function taigaLanguage(language: Language): Promise<TuiLanguage> {
             return (await import('@taiga-ui/i18n/languages/spanish')).TUI_SPANISH_LANGUAGE;
         case 'fr':
             return (await import('@taiga-ui/i18n/languages/french')).TUI_FRENCH_LANGUAGE;
+        case 'ja':
+            return (await import('@taiga-ui/i18n/languages/japanese')).TUI_JAPANESE_LANGUAGE;
+        case 'ko':
+            return (await import('@taiga-ui/i18n/languages/korean')).TUI_KOREAN_LANGUAGE;
+        case 'zh':
+            return (await import('@taiga-ui/i18n/languages/chinese')).TUI_CHINESE_LANGUAGE;
         default:
             return TUI_ENGLISH_LANGUAGE;
     }
