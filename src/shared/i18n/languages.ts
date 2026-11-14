@@ -3,6 +3,8 @@ export const LANGUAGES = [
     { code: 'en', name: 'English' },
     { code: 'es', name: 'Español' },
     { code: 'fr', name: 'Français' },
+    { code: 'ja', name: '日本語' },
+    { code: 'zh', name: '简体中文' },
 ] as const;
 
 export type Language = (typeof LANGUAGES)[number]['code'];
@@ -12,4 +14,12 @@ export const DEFAULT_LANGUAGE: Language = 'en';
 
 export function isLanguage(code: string | null | undefined): code is Language {
     return LANGUAGES.some(language => language.code === code);
+}
+
+/**
+ * The tag of `language` for the document (`lang`): Chinese is the simplified
+ * one, so the system picks its fonts and not Japanese or traditional glyphs.
+ */
+export function languageTag(language: Language): string {
+    return language === 'zh' ? 'zh-Hans' : language;
 }
