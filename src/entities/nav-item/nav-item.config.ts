@@ -15,8 +15,8 @@ export const USER_ITEMS: NavItem[] = [
         description: 'nav.importCollectionsDescription',
     },
     {
-        label: 'nav.exportSongFolder', route: '/user/export-song-folder', icon: '@tui.folder-output',
-        description: 'nav.exportSongFolderDescription',
+        label: 'nav.exportLibrary', route: '/user/export-song-folder', icon: '@tui.folder-output',
+        description: 'nav.exportLibraryDescription',
     },
     {
         label: 'nav.createPacks', route: '/user/create-packs', icon: '@tui.package',

@@ -17,13 +17,13 @@
 - **Downloader**: download beatmap sets from a list of links straight into your Songs folder, skipping the ones you already have.
 - **Export Collections**: save your collections as beatmap links, or as a list to import on another install.
 - **Import Collections**: bring collections from a file into osu!, merged with the ones you already have.
-- **Export Song Folder**: filter your library by mode, status, stars, length and more, and export it as beatmap links.
+- **Export Library**: filter your library by mode, status, stars, length and more, and export it as beatmap links.
 - **Create Packs**: put diffs from any sets, rates and unsubmitted maps too, into a pack of your own, with the diffs named the way you choose.
 - **Trainer**: change the rate, the stats, the long notes or the key count of the map selected in osu!. It reads the map straight from the game, so there is nothing to open by hand. Make several versions in one go, each with its own changes (1.1x, 1.2x, 1.3x and 1.4x, say), and keep the ones you use as presets, which can also run with a keyboard shortcut while you play (not on Wayland).
   - **Dan and MSD**: for 4K, 6K and 7K maps the Trainer shows the dan of the selected map, and the dan each version would have before you make it, with [Mania Tracker](https://mania-tracker.com)'s calculator. It also shows the MSD (MinaCalc's, or Prism's on 6K to 8K). Choose dan, MSD, both or none in the settings: with none, nothing is rated.
   - **Key converter**: from any key count to 1K to 10K, 12K, 14K, 16K or 18K, with the playstyles of the osu! wiki for 12K and up. On 10K2S and 7K+1 the scratches follow the music: they go where the song has its hard hits.
 
-Torosu is in English, Spanish and French: choose the language in the settings, under General.
+Torosu is in English, Spanish, French, Japanese, Korean and Simplified Chinese: choose the language in the settings, under General.
 
 Torosu is made for **osu! stable**. osu!lazer is not supported: the tools read and write osu! stable's files.
 
