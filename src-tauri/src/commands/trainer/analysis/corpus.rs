@@ -1821,7 +1821,7 @@ impl ScratchAgg {
 /// Hand-made 10K2S maps next to 4K, 7K and 10K converts to 12K (`LIMIT`
 /// source maps of each key count, 100 by default, up to `MAX_NPS` notes per
 /// second, 15 by default: hand-made 10K2S maps are easy), in the playstyle
-/// `PLAYSTYLE` (12K by default, or 10K2S, which follows the audio). `MAPS`
+/// `PLAYSTYLE` (10K2S, which follows the audio). `MAPS`
 /// (parts of diff file names, split by `;`) converts those diffs instead,
 /// each on its own.
 #[test]
