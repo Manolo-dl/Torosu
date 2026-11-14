@@ -43,6 +43,8 @@ async function taigaLanguage(language: Language): Promise<TuiLanguage> {
             return (await import('@taiga-ui/i18n/languages/french')).TUI_FRENCH_LANGUAGE;
         case 'ja':
             return (await import('@taiga-ui/i18n/languages/japanese')).TUI_JAPANESE_LANGUAGE;
+        case 'ko':
+            return (await import('@taiga-ui/i18n/languages/korean')).TUI_KOREAN_LANGUAGE;
         case 'zh':
             return (await import('@taiga-ui/i18n/languages/chinese')).TUI_CHINESE_LANGUAGE;
         default:

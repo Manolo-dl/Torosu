@@ -15,6 +15,8 @@ export class TranslationLoader implements TranslocoLoader {
                 return (await import('./translations/fr.json')).default;
             case 'ja':
                 return (await import('./translations/ja.json')).default;
+            case 'ko':
+                return (await import('./translations/ko.json')).default;
             case 'zh':
                 return (await import('./translations/zh.json')).default;
             default:

@@ -26,7 +26,7 @@ pub struct AppConfig {
     #[serde(default = "default_false")]
     pub dev_mode: bool,
 
-    /// The language of the interface (`en`, `es`, `fr`, `ja`, `zh`); `None` is English.
+    /// The language of the interface (`en`, `es`, `fr`, `ja`, `ko`, `zh`); `None` is English.
     #[serde(default)]
     pub language: Option<String>,
 }
