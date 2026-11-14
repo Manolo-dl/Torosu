@@ -128,9 +128,25 @@ const SOURCE_JACK_BEATS: f64 = 0.55;
 const FLOW_BEATS: f64 = 2.0;
 
 const COST_DROP: f64 = 150.0;
+/// Going down in keys, two notes of a row on next keys where the source row
+/// has none on next columns: the chords stay open. A 7K jumpstream of open
+/// rows of 3 (EXILE[EX]) has one way on 6K with no jack and no next keys,
+/// 024 135 024...: rows taking the keys natural to their columns ([0,4,5]
+/// for 146) left it, and the keys left free after them were next ones
+/// (123), so it turned into pills for good. With 2, 286 of its 957 open
+/// rows came out with next keys on 6K; with 4, 102 (417 without).
+const W_OPEN_REDUCING: f64 = 4.0;
 /// Going down in keys, dropping one more note than the row's share: cheaper
-/// than a new jack, so the map thins out instead of jacking.
+/// than a new jack, so the map thins out instead of jacking. A single note
+/// costs this, as dropping it leaves a hole in a stream.
 const COST_DROP_REDUCING: f64 = 60.0;
+/// The same for a note of a chord, so a row can lose one to follow the way
+/// the source goes rather than keep its size on keys going the other way.
+/// On a 7K jumpstream (EXILE[EX]) on 6K, with 60 the rows went against the
+/// source's 42% of the time and 86% of them were the row two before (21% in
+/// the source); with this, 9% and 55%, keeping 94% of the notes. On other
+/// maps it keeps 97 to 99% of what 60 keeps.
+const COST_DROP_CHORD_REDUCING: f64 = 10.0;
 const COST_NEW_JACK: f64 = 100.0;
 const COST_BROKEN_JACK: f64 = 40.0;
 /// Reward for an extra note on a downbeat or a chord; less elsewhere.
@@ -998,6 +1014,16 @@ impl Ctx<'_> {
             .then(|| before.decision.keys.trailing_zeros() as usize)
     }
 
+    /// Going down in keys, where the source row has no notes on next
+    /// columns: what each two next keys of the row cost (see
+    /// [`W_OPEN_REDUCING`]).
+    fn open_cost(&self, row: &Row, mask: u32) -> f64 {
+        if self.dst_keys >= self.src_keys || row.adjacent {
+            return 0.0;
+        }
+        W_OPEN_REDUCING * (mask & mask >> 1).count_ones() as f64
+    }
+
     /// Cost of each source note of the row in each target key, `INFINITY`
     /// where it cannot go.
     fn note_costs(&self, state: &State, row: &Row) -> [[f64; MAX_KEYS]; MAX_KEYS] {
@@ -1349,7 +1375,11 @@ impl Ctx<'_> {
         // dropped to avoid a jack.
         let reducing = self.dst_keys < self.src_keys;
         let share = (row.share as usize).min(self.dst_keys);
-        let drop_cost = if reducing { COST_DROP_REDUCING } else { COST_DROP };
+        let drop_cost = match (reducing, k) {
+            (false, _) => COST_DROP,
+            (true, 1) => COST_DROP_REDUCING,
+            (true, _) => COST_DROP_CHORD_REDUCING,
+        };
         let choices = choices(&costs[..k], self.dst_keys);
         let mut combo = [0u8; MAX_KEYS];
 
@@ -1373,7 +1403,9 @@ impl Ctx<'_> {
                 let keys = combo.iter().fold(0u32, |m, &c| m | 1 << c);
                 let decision = Decision { keys, extras, n_extras };
                 let mask = self.mask_of(&decision);
-                let shaped = self.mirror_cost(state, row, mask) + self.hand_cost(state, row, mask, self.hand_sources(row, combo));
+                let shaped = self.mirror_cost(state, row, mask)
+                    + self.hand_cost(state, row, mask, self.hand_sources(row, combo))
+                    + self.open_cost(row, mask);
 
                 out.push((cost + extra_cost + shaped + tie_break(row_idx, rank(keys)), decision));
             });
@@ -1384,7 +1416,8 @@ impl Ctx<'_> {
         }
 
         // Every key is held: the whole row is dropped.
-        out.push((share as f64 * drop_cost, Decision::DROPPED));
+        // A whole row costs a single note's drop per note.
+        out.push((share as f64 * drop_cost.max(if reducing { COST_DROP_REDUCING } else { 0.0 }), Decision::DROPPED));
     }
 
     /// The target keys of a decision.
@@ -2596,11 +2629,26 @@ fn convert_marked(beatmap: &mut Beatmap, params: &KeyConverterParams, accents: O
         .fold(0u32, |m, k| m | 1 << k);
 
     // Going down, each row keeps its size times the key ratio, rounded, at
-    // least one note: hand-made maps do it that consistently.
-    for row in rows.iter_mut() {
+    // least one note: hand-made maps do it that consistently. In a stream of
+    // chords (a chord right before and after, within a jack), a row of 3 or
+    // more taking half the keys or more loses one more: rows taking every
+    // key the last one left free can only go back and forth between two
+    // ways, whatever the source does (024 135 024... on 6K). Not in repeated
+    // patterns (a jumptrill), which go back and forth anyway.
+    let chord_stream: Vec<bool> = (0..rows.len())
+        .map(|i| {
+            let gap = rows[i].beat_len * JACK_BEATS;
+            let near = |j: usize| rows[j].notes.len() > 1 && (rows[j].time - rows[i].time).abs() <= gap;
+            i > 0 && i + 1 < rows.len() && near(i - 1) && near(i + 1)
+        })
+        .collect();
+    for (row, &in_stream) in rows.iter_mut().zip(&chord_stream) {
         let k = row.notes.len();
         row.share = if dst_keys < src_keys {
-            let size = (k as f64 * dst_keys as f64 / src_keys as f64).round() as usize;
+            let mut size = (k as f64 * dst_keys as f64 / src_keys as f64).round() as usize;
+            if in_stream && !row.grouped && size >= 3 && 2 * size >= dst_keys {
+                size -= 1;
+            }
             size.clamp(1, k.min(max_chord)) as u8
         } else {
             k.min(max_chord) as u8
@@ -3166,6 +3214,37 @@ mod tests {
             let rate = pill_rate(&beatmap);
             assert!(rate < 0.4, "{}: {:.2}", name, rate);
         }
+    }
+
+    #[test]
+    fn reducing_keeps_open_rows_open() {
+        // A 7K jumpstream of open rows, mostly 3 notes, in 1/4s at 157 BPM
+        // (EXILE[EX]): on 6K its rows stay open, with no next keys, and go
+        // the source's ways rather than back and forth between two of them,
+        // which is all rows of 3 can do there without a jack.
+        let beat = 382.165605;
+        let mut osu = format!(
+            "osu file format v14\n\n[General]\nMode: 3\n\n[Difficulty]\nCircleSize:7\n\n[TimingPoints]\n0,{},4,1,0,60,1,0\n\n[HitObjects]\n",
+            beat
+        );
+        let rows: [&[usize]; 34] = [
+            &[0, 3, 5], &[1, 4, 6], &[0, 2, 5], &[1, 4, 6], &[0, 2, 5], &[1, 3, 6], &[0, 2, 4], &[1, 3, 5],
+            &[2, 4, 6], &[1, 3, 5], &[0, 2, 4], &[1, 3, 6], &[0, 2, 5], &[1, 4, 6], &[0, 3, 5], &[1, 4, 6],
+            &[0, 2, 5], &[1, 3, 6], &[0, 2, 4], &[1, 3, 5], &[2, 4, 6], &[0, 3, 5], &[1, 4, 6], &[2, 5],
+            &[1, 4, 6], &[0, 2, 5], &[1, 3, 6], &[0, 2, 4], &[1, 3, 5], &[2, 4, 6], &[1, 3, 5], &[0, 2, 4],
+            &[1, 3, 6], &[0, 2, 5],
+        ];
+        for (step, cols) in rows.iter().enumerate() {
+            for &col in cols.iter() {
+                let time = (1000.0 + step as f64 * beat / 4.0).round();
+                osu.push_str(&format!("{},192,{},1,0,0:0:0:0:\n", mania::column_x(col, 7) as i32, time));
+            }
+        }
+        let (_, beatmap) = convert(&osu, 6, Density::None);
+        let rows = key_rows(&beatmap, 6);
+        assert!(rows.iter().all(|r| r.windows(2).all(|w| w[1] > w[0] + 1)), "{:?}", rows);
+        let repeated = rows.windows(3).filter(|w| w[0] == w[2]).count();
+        assert!(repeated * 2 < rows.len(), "{} rows are the one two before: {:?}", repeated, rows);
     }
 
     #[test]
@@ -4000,6 +4079,7 @@ mod tests {
         assert!(notes_of(&beatmap, 8).iter().any(|n| n.2 == 0), "no scratch");
     }
 }
+
 
 
 
