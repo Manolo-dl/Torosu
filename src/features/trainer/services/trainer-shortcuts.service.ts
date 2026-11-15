@@ -136,11 +136,12 @@ export class TrainerShortcutsService {
                     converts: converts.map(tasks => ({ tasks: tasks.map(task => ({ task })) })),
                 },
             });
-            this.tell(
+            // Only in Torosu: over osu!, the notification of the start (and
+            // its sound) already says the convert is on its way.
+            this.notify.success(
                 names.length === 1
                     ? this.t('trainer.created', { name: names[0] })
                     : this.t('trainer.createdMany', { count: names.length }),
-                'success',
             );
         } catch (e) {
             this.tell(this.t('trainer.shortcuts.convertFailed', { error: errorText(this.transloco, e) }), 'error');
@@ -154,7 +155,7 @@ export class TrainerShortcutsService {
         return this.transloco.translate(key, params);
     }
 
-    private tell(message: string, kind: 'info' | 'success' | 'error') {
+    private tell(message: string, kind: 'info' | 'error') {
         invoke('show_notification', { title: this.t('trainer.shortcuts.notificationTitle'), body: message })
             .catch(e => console.error('show_notification failed', e));
         this.notify[kind](message);

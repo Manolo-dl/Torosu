@@ -144,7 +144,7 @@ const COST_DROP_REDUCING: f64 = 60.0;
 /// the source goes rather than keep its size on keys going the other way.
 /// On a 7K jumpstream (EXILE[EX]) on 6K, with 60 the rows went against the
 /// source's 42% of the time and 86% of them were the row two before (21% in
-/// the source); with 10, 9% and 55%, keeping 94% of the notes. On other
+/// the source); with this, 9% and 55%, keeping 94% of the notes. On other
 /// maps it keeps 97 to 99% of what 60 keeps.
 const COST_DROP_CHORD_REDUCING: f64 = 10.0;
 const COST_NEW_JACK: f64 = 100.0;
@@ -218,7 +218,6 @@ const W_FRESH: f64 = 10.0;
 /// The same in chord rows, where a key coming back from 2 rows ago anchors a
 /// jumpstream instead of breaking a stream.
 const W_FRESH_CHORDS: f64 = 4.0;
-const W_FRESH_MERGED: f64 = 4.0;
 /// A column going to another key than its previous note.
 const W_SWITCH: f64 = 0.3;
 /// Per squared key a column strays from its natural place.
@@ -894,18 +893,8 @@ fn pos(col: usize, keys: usize) -> f64 {
 }
 
 impl Ctx<'_> {
-    /// [`W_FRESH`] or [`W_FRESH_CHORDS`] for a note of the source column
-    /// `src` in `col` (`NONE` for an extra note), decaying from the key's
-    /// last note. Going down in keys, two source columns share a key: in
-    /// chord rows, one coming back to a key the other just played anchors it
-    /// where the source does not, so it costs as in a stream. On Enie's 7K
-    /// H.A.R.D.C.O.R.E. on 6K, columns 0 and 1 taking turns put 7 chord rows
-    /// in a row on the left pinky, and 40% of the anchors of its chord rows
-    /// were of two columns.
-    fn fresh(&self, state: &State, col: usize, row: &Row, src: u8) -> f64 {
-        let chords = row.notes.len() > 1 || (row.quota > 0 && self.fill.is_some());
-        let merged = self.dst_keys < self.src_keys && state.last_src[col] != src;
-        let weight = if chords && !merged { W_FRESH_CHORDS } else if chords { W_FRESH_MERGED } else { W_FRESH };
+    fn fresh(&self, state: &State, col: usize, row: &Row) -> f64 {
+        let weight = if row.notes.len() > 1 || (row.quota > 0 && self.fill.is_some()) { W_FRESH_CHORDS } else { W_FRESH };
         weight * (-(row.time - state.release[col]) / row.beat_len).exp()
     }
 
@@ -1105,7 +1094,7 @@ impl Ctx<'_> {
                     }
                     // A column coming back to its key is spread only where
                     // the target has room for it (see `spread`).
-                    cost += self.fresh(state, col, row, note.src) * if own { self.spread } else { 1.0 };
+                    cost += self.fresh(state, col, row) * if own { self.spread } else { 1.0 };
                 }
 
                 if state.src_target[src] != NONE && state.src_target[src] as usize != col {
@@ -1216,7 +1205,7 @@ impl Ctx<'_> {
                 let hand = if hand_bit(self.dst_hands[col]) & busy != 0 || middle { W_HAND_TWICE } else { 0.0 };
                 let scratch = if self.scratches & 1 << col != 0 { self.scratch_cost(state, row, col, extra_ahead) } else { 0.0 };
                 let scratch = scratch + self.pinky_cost(state, row, col);
-                *cost = self.fresh(state, col, row, NONE) + jack + hand - reward + scratch;
+                *cost = self.fresh(state, col, row) + jack + hand - reward + scratch;
             }
         }
         costs
@@ -4269,107 +4258,6 @@ mod tests {
         expected.sort_by(|a, b| a.partial_cmp(b).unwrap());
         assert_eq!(inner, expected);
         assert!(notes_of(&beatmap, 8).iter().any(|n| n.2 == 0), "no scratch");
-    }
-
-    #[test]
-    #[ignore]
-    fn tmp_dump() {
-        let osu = std::fs::read_to_string(std::env::var("OSU").unwrap()).unwrap();
-        let dst_keys: usize = std::env::var("DST").unwrap().parse().unwrap();
-        let (original, beatmap) = convert(&osu, dst_keys, Density::None);
-        let src_keys = mania::key_count(&original);
-        let by_time = |b: &Beatmap, keys: usize| {
-            let mut m: std::collections::BTreeMap<i64, Vec<usize>> = Default::default();
-            for o in &b.hit_objects {
-                m.entry(o.start_time as i64).or_default().push(column(o, keys));
-            }
-            m.values_mut().for_each(|v| v.sort());
-            m
-        };
-        let src = by_time(&original, src_keys);
-        let dst = by_time(&beatmap, dst_keys);
-        let f = |v: &[usize], k: usize| (0..k).map(|c| if v.contains(&c) { 'O' } else { '.' }).collect::<String>();
-        let lo: i64 = std::env::var("LO").map_or(0, |v| v.parse().unwrap());
-        let hi: i64 = std::env::var("HI").map_or(-1, |v| v.parse().unwrap());
-        let mut hist = std::collections::BTreeMap::<(usize, usize), usize>::new();
-        for (t, s) in &src {
-            let d = dst.get(t).cloned().unwrap_or_default();
-            *hist.entry((s.len(), d.len())).or_default() += 1;
-            if (lo..=hi).contains(t) {
-                println!("{} {} {}", t, f(s, src_keys), f(&d, dst_keys));
-            }
-        }
-        let gap: i64 = std::env::var("GAP").map_or(96, |v| v.parse().unwrap());
-        let jacks = |m: &std::collections::BTreeMap<i64, Vec<usize>>| {
-            let v: Vec<_> = m.iter().collect();
-            v.windows(2).filter(|w| w[1].0 - w[0].0 <= gap && w[1].1.iter().any(|c| w[0].1.contains(c))).map(|w| *w[1].0).collect::<Vec<_>>()
-        };
-        let (js, jd) = (jacks(&src), jacks(&dst));
-        println!("hist {:?}", hist);
-        println!("jacks: src {} dst {}", js.len(), jd.len());
-        println!("new jacks at {:?}", jd.iter().filter(|t| !js.contains(t)).take(40).collect::<Vec<_>>());
-        let share = |m: &std::collections::BTreeMap<i64, Vec<usize>>, k: usize| {
-            let mut c = vec![0usize; k];
-            m.values().flatten().for_each(|&x| c[x] += 1);
-            c
-        };
-        println!("per key: src {:?} dst {:?}", share(&src, src_keys), share(&dst, dst_keys));
-        let anchors = |m: &std::collections::BTreeMap<i64, Vec<usize>>| {
-            let v: Vec<_> = m.iter().collect();
-            let mut runs = 0usize;
-            let mut longest = (0usize, 0i64);
-            let k = v.iter().flat_map(|r| r.1.iter()).max().map_or(0, |&x| x + 1);
-            for key in 0..k {
-                let mut run = 0usize;
-                for i in 2..v.len() {
-                    let a = v[i - 2].1.contains(&key) && v[i].1.contains(&key) && !v[i - 1].1.contains(&key) && v[i].0 - v[i - 2].0 <= gap * 2;
-                    if a { runs += 1; run += 1; if run > longest.0 { longest = (run, *v[i].0); } } else if !v[i - 1].1.contains(&key) || !v[i].1.contains(&key) { if !(v[i].1.contains(&key)) && !(v[i-1].1.contains(&key)) { run = 0; } }
-                }
-            }
-            (runs, longest)
-        };
-        println!("anchors: src {:?} dst {:?}", anchors(&src), anchors(&dst));
-        // Source column of each key of each row (see `kept`).
-        let rows: Vec<(i64, Vec<(usize, usize)>)> = src.iter().map(|(t, s)| {
-            let d = dst.get(t).cloned().unwrap_or_default();
-            let keep = kept(s.len(), d.len());
-            (*t, keep.iter().zip(&d).map(|(&i, &k)| (k, s[i])).collect())
-        }).collect();
-        let (mut merged, mut own, mut runs4) = (0usize, 0usize, 0usize);
-        let mut at = Vec::new();
-        let mut run = vec![0usize; dst_keys];
-        for i in 2..rows.len() {
-            for key in 0..dst_keys {
-                let get = |r: &Vec<(usize, usize)>| r.iter().find(|p| p.0 == key).map(|p| p.1);
-                match (get(&rows[i - 2].1), get(&rows[i - 1].1), get(&rows[i].1)) {
-                    (Some(a), None, Some(b)) if rows[i].0 - rows[i - 2].0 <= gap * 2 && rows[i].1.len() > 1 => {
-                        if a == b { own += 1 } else { merged += 1; if at.len() < 30 { at.push(rows[i].0) } }
-                        run[key] += 1;
-                        if run[key] == 3 { runs4 += 1 }
-                    }
-                    (_, None, None) => run[key] = 0,
-                    _ => {}
-                }
-            }
-        }
-        println!("chord anchors: own column {} merged columns {} runs of 4+ {}", own, merged, runs4);
-        println!("merged at {:?}", at);
-        let center = |v: &[usize], k: usize| (v.iter().sum::<usize>() as f64 / v.len() as f64 + 0.5) / k as f64;
-        let (mut moves, mut against) = (0usize, 0usize);
-        let pairs: Vec<_> = src.iter().collect();
-        for w in pairs.windows(2) {
-            let (d0, d1) = (dst.get(w[0].0), dst.get(w[1].0));
-            let (Some(d0), Some(d1)) = (d0, d1) else { continue };
-            if w[1].0 - w[0].0 > gap * 4 || w[0].1.len() < 2 || w[1].1.len() < 2 { continue }
-            let ds = center(w[1].1, src_keys) - center(w[0].1, src_keys);
-            let dt = center(d1, dst_keys) - center(d0, dst_keys);
-            if ds.abs() > 1e-9 {
-                moves += 1;
-                if dt.abs() < 1e-9 || dt.signum() != ds.signum() { against += 1 }
-            }
-        }
-        println!("chord rows against the source: {:.1}%", 100.0 * against as f64 / moves.max(1) as f64);
-        println!("{} -> {} notes", original.hit_objects.len(), beatmap.hit_objects.len());
     }
 
 }
