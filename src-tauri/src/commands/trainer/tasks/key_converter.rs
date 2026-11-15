@@ -924,6 +924,8 @@ impl Ctx<'_> {
     /// from `...O.OO` (Lolit speed) put the thumb's note on the left index,
     /// both hands were busy, and every note of the next row cost
     /// [`W_HAND_TWICE`], more than dropping it: `OOO....` came out as one note.
+    /// Only going down: going up, the thumbs of the target (8K 3+2+3, 10K)
+    /// are a hand's, and that hand did play.
     fn busy_hands(&self, state: &State, row: &Row) -> u8 {
         if !self.alternating(state, row) {
             return 0;
@@ -935,7 +937,7 @@ impl Ctx<'_> {
             .zip(keys_of(past.decision.keys))
             .filter(|&(i, _)| srcs.get(i).is_some_and(|&s| self.src_hands[s as usize] == Hand::Either))
             .fold(0u32, |m, (_, col)| m | 1 << col);
-        let prev = past.dst & !thumbs;
+        let prev = if self.dst_keys < self.src_keys { past.dst & !thumbs } else { past.dst };
         (0..self.dst_keys).filter(|&c| prev & 1 << c != 0).fold(0, |m, c| m | hand_bit(self.dst_hands[c]))
     }
 
@@ -1377,15 +1379,17 @@ impl Ctx<'_> {
     fn candidates(&self, state: &State, row: &Row, row_idx: usize, out: &mut Vec<(f64, Decision)>) {
         let k = row.notes.len();
         let share = (row.share as usize).min(self.dst_keys);
+        let reducing = self.dst_keys < self.src_keys;
 
-        // A repeated pattern copies the row it repeats, whenever it fits and
-        // keeps the row's share: a row that lost notes to what came before
-        // the pattern (a jack, a busy hand) would lose them all along it. On
-        // Lolit speed's 7K jumptrills to 6K, the first row of the left hand
-        // came out as one note of three, and so did its 90 copies.
+        // A repeated pattern copies the row it repeats, whenever it fits and,
+        // going down, keeps the row's share: a row that lost notes to what
+        // came before the pattern (a jack, a busy hand) would lose them all
+        // along it. On Lolit speed's 7K jumptrills to 6K, the first row of
+        // the left hand came out as one note of three, and so did its 90
+        // copies.
         if row.copy > 0 {
             let past = state.history[row.copy as usize - 1].decision;
-            if past.size() >= share && self.fits(state, row, &past) {
+            if (!reducing || past.size() >= share) && self.fits(state, row, &past) {
                 out.push((-W_COPY, past));
                 return;
             }
@@ -1397,7 +1401,6 @@ impl Ctx<'_> {
         // Going up, fewer notes are only tried when they do not all fit. Going
         // down, every size up to the row's share competes, so a note can be
         // dropped to avoid a jack.
-        let reducing = self.dst_keys < self.src_keys;
         let drop_cost = match (reducing, k) {
             (false, _) => COST_DROP,
             (true, 1) => COST_DROP_REDUCING,
@@ -2630,9 +2633,10 @@ fn convert_marked(beatmap: &mut Beatmap, params: &KeyConverterParams, accents: O
         }
     };
 
-    // Rows: the notes that start at the same time, sorted by column. A map
-    // timed at half its tempo is read at the tempo of the music.
-    let half = half_timed(beatmap, &grid);
+    // Rows: the notes that start at the same time, sorted by column. Going
+    // down, a map timed at half its tempo is read at the tempo of the music;
+    // going up, as it is timed, as converts to more keys were tuned.
+    let half = dst_keys < src_keys && half_timed(beatmap, &grid);
     let mut notes: Vec<Note> = Vec::new();
     let mut rows: Vec<Row> = Vec::new();
 
@@ -3334,8 +3338,9 @@ mod tests {
     #[test]
     fn half_timed_maps_are_read_at_the_tempo_of_the_music() {
         // The same map timed at 120 BPM in 1/4s and at 60 BPM in 1/8s, as
-        // H.A.R.D.C.O.R.E. is (110 BPM for 220), converts the same.
-        for (src, dst) in [(7, 6), (7, 4), (4, 7)] {
+        // H.A.R.D.C.O.R.E. is (110 BPM for 220), converts the same going
+        // down (going up, as it is timed).
+        for (src, dst) in [(7, 6), (7, 4), (10, 7)] {
             let osu = map(src);
             let half = osu.replace("TimingPoints]\n0,500", "TimingPoints]\n0,1000");
             let (_, normal) = convert(&osu, dst, Density::None);
