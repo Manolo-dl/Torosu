@@ -911,12 +911,24 @@ impl Ctx<'_> {
     }
 
     /// Where the source alternates hands: the hands the previous target row
-    /// used, which this row should leave alone. 0 elsewhere.
+    /// used, which this row should leave alone. 0 elsewhere. A note of the
+    /// source's middle key (a thumb's) does not count, wherever it went: it
+    /// is no hand's in the source. Going down to 6K, a 7K jumptrill entered
+    /// from `...O.OO` (Lolit speed) put the thumb's note on the left index,
+    /// both hands were busy, and every note of the next row cost
+    /// [`W_HAND_TWICE`], more than dropping it: `OOO....` came out as one note.
     fn busy_hands(&self, state: &State, row: &Row) -> u8 {
         if !self.alternating(state, row) {
             return 0;
         }
-        let prev = state.history[0].dst;
+        let past = &state.history[0];
+        let srcs: Vec<u8> = keys_of(past.src).collect();
+        let thumbs = kept(srcs.len(), past.decision.size())
+            .into_iter()
+            .zip(keys_of(past.decision.keys))
+            .filter(|&(i, _)| srcs.get(i).is_some_and(|&s| self.src_hands[s as usize] == Hand::Either))
+            .fold(0u32, |m, (_, col)| m | 1 << col);
+        let prev = past.dst & !thumbs;
         (0..self.dst_keys).filter(|&c| prev & 1 << c != 0).fold(0, |m, c| m | hand_bit(self.dst_hands[c]))
     }
 
@@ -1357,11 +1369,16 @@ impl Ctx<'_> {
     /// when they do not all fit.
     fn candidates(&self, state: &State, row: &Row, row_idx: usize, out: &mut Vec<(f64, Decision)>) {
         let k = row.notes.len();
+        let share = (row.share as usize).min(self.dst_keys);
 
-        // A repeated pattern copies the row it repeats, whenever it fits.
+        // A repeated pattern copies the row it repeats, whenever it fits and
+        // keeps the row's share: a row that lost notes to what came before
+        // the pattern (a jack, a busy hand) would lose them all along it. On
+        // Lolit speed's 7K jumptrills to 6K, the first row of the left hand
+        // came out as one note of three, and so did its 90 copies.
         if row.copy > 0 {
             let past = state.history[row.copy as usize - 1].decision;
-            if self.fits(state, row, &past) {
+            if past.size() >= share && self.fits(state, row, &past) {
                 out.push((-W_COPY, past));
                 return;
             }
@@ -1374,7 +1391,6 @@ impl Ctx<'_> {
         // down, every size up to the row's share competes, so a note can be
         // dropped to avoid a jack.
         let reducing = self.dst_keys < self.src_keys;
-        let share = (row.share as usize).min(self.dst_keys);
         let drop_cost = match (reducing, k) {
             (false, _) => COST_DROP,
             (true, 1) => COST_DROP_REDUCING,
@@ -3248,6 +3264,32 @@ mod tests {
     }
 
     #[test]
+    fn reducing_keeps_jumptrills_whole() {
+        // A 7K jumptrill of triples at 235 BPM entered from a row of the
+        // thumb and the right hand (Lolit speed, 4:46): on 6K its first left
+        // row may lose a note to a jack, but not the rest, which go on as
+        // `OOO...` `...OOO` as the jumptrills after a calmer row do.
+        let beat = 255.237690098905;
+        let mut osu = format!(
+            "osu file format v14\n\n[General]\nMode: 3\n\n[Difficulty]\nCircleSize:7\n\n[TimingPoints]\n0,{},4,1,0,60,1,0\n\n[HitObjects]\n",
+            beat
+        );
+        let lead: [&[usize]; 7] = [&[0, 1, 5], &[2, 6], &[0, 3, 4], &[1, 2, 5], &[0, 3, 6], &[1, 4], &[3, 5, 6]];
+        let trill = (0..24).map(|i| if i % 2 == 0 { &[0, 1, 2][..] } else { &[4, 5, 6][..] });
+        for (step, cols) in lead.into_iter().chain(trill).enumerate() {
+            for &col in cols {
+                let time = (1000.0 + step as f64 * beat / 4.0).round();
+                osu.push_str(&format!("{},192,{},1,0,0:0:0:0:\n", mania::column_x(col, 7) as i32, time));
+            }
+        }
+        let (_, beatmap) = convert(&osu, 6, Density::None);
+        let rows = key_rows(&beatmap, 6);
+        assert_eq!(rows.len(), lead.len() + 24, "{:?}", rows);
+        let trill = &rows[lead.len() + 1..];
+        assert!(trill.iter().all(|r| r.len() == 3), "{:?}", trill);
+    }
+
+    #[test]
     fn reducing_stays_playable() {
         for (src, dst) in [(7, 4), (10, 7), (4, 1), (18, 7), (14, 4), (12, 10), (16, 14)] {
             let (_, beatmap) = convert(&map(src), dst, Density::MoreDense);
@@ -4078,6 +4120,7 @@ mod tests {
         assert_eq!(inner, expected);
         assert!(notes_of(&beatmap, 8).iter().any(|n| n.2 == 0), "no scratch");
     }
+
 }
 
 
