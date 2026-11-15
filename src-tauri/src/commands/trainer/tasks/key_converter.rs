@@ -144,7 +144,7 @@ const COST_DROP_REDUCING: f64 = 60.0;
 /// the source goes rather than keep its size on keys going the other way.
 /// On a 7K jumpstream (EXILE[EX]) on 6K, with 60 the rows went against the
 /// source's 42% of the time and 86% of them were the row two before (21% in
-/// the source); with this, 9% and 55%, keeping 94% of the notes. On other
+/// the source); with 10, 9% and 55%, keeping 94% of the notes. On other
 /// maps it keeps 97 to 99% of what 60 keeps.
 const COST_DROP_CHORD_REDUCING: f64 = 10.0;
 const COST_NEW_JACK: f64 = 100.0;
@@ -158,6 +158,13 @@ const FREE_DEVIATION: f64 = 0.75;
 const TRILL_MIN_NOTES: usize = 6;
 const TRILL_MIN_CHORDS: usize = 4;
 const TRILL_MAX_GAP_BEATS: f64 = 0.5;
+/// A source going back and forth between two halves of the keys (see
+/// [`halves`]): one of its rows this many times. EXILE[EX]'s at 0:39 has it
+/// 8 times; the stretch of its jumpstream that went `024 135` on 6K (see
+/// [`W_OPEN_REDUCING`] and `reducing_keeps_open_rows_open`) twice at most.
+/// On EXILE[EX] it keeps 83 notes more on 6K, the rows going against the
+/// source as often (19.1% of its chord rows, 19.5% with it).
+const HALVES_MIN_ROWS: usize = 4;
 /// A source motif: three rows going round (a hand's roll, 645 645 645), as
 /// far apart as a trill's, for at least this many rows: twice round. Without
 /// it, where a column may leave its key (7K -> 8K and up), a key coming back
@@ -211,6 +218,7 @@ const W_FRESH: f64 = 10.0;
 /// The same in chord rows, where a key coming back from 2 rows ago anchors a
 /// jumpstream instead of breaking a stream.
 const W_FRESH_CHORDS: f64 = 4.0;
+const W_FRESH_MERGED: f64 = 4.0;
 /// A column going to another key than its previous note.
 const W_SWITCH: f64 = 0.3;
 /// Per squared key a column strays from its natural place.
@@ -886,8 +894,18 @@ fn pos(col: usize, keys: usize) -> f64 {
 }
 
 impl Ctx<'_> {
-    fn fresh(&self, state: &State, col: usize, row: &Row) -> f64 {
-        let weight = if row.notes.len() > 1 || (row.quota > 0 && self.fill.is_some()) { W_FRESH_CHORDS } else { W_FRESH };
+    /// [`W_FRESH`] or [`W_FRESH_CHORDS`] for a note of the source column
+    /// `src` in `col` (`NONE` for an extra note), decaying from the key's
+    /// last note. Going down in keys, two source columns share a key: in
+    /// chord rows, one coming back to a key the other just played anchors it
+    /// where the source does not, so it costs as in a stream. On Enie's 7K
+    /// H.A.R.D.C.O.R.E. on 6K, columns 0 and 1 taking turns put 7 chord rows
+    /// in a row on the left pinky, and 40% of the anchors of its chord rows
+    /// were of two columns.
+    fn fresh(&self, state: &State, col: usize, row: &Row, src: u8) -> f64 {
+        let chords = row.notes.len() > 1 || (row.quota > 0 && self.fill.is_some());
+        let merged = self.dst_keys < self.src_keys && state.last_src[col] != src;
+        let weight = if chords && !merged { W_FRESH_CHORDS } else if chords { W_FRESH_MERGED } else { W_FRESH };
         weight * (-(row.time - state.release[col]) / row.beat_len).exp()
     }
 
@@ -1087,7 +1105,7 @@ impl Ctx<'_> {
                     }
                     // A column coming back to its key is spread only where
                     // the target has room for it (see `spread`).
-                    cost += self.fresh(state, col, row) * if own { self.spread } else { 1.0 };
+                    cost += self.fresh(state, col, row, note.src) * if own { self.spread } else { 1.0 };
                 }
 
                 if state.src_target[src] != NONE && state.src_target[src] as usize != col {
@@ -1198,7 +1216,7 @@ impl Ctx<'_> {
                 let hand = if hand_bit(self.dst_hands[col]) & busy != 0 || middle { W_HAND_TWICE } else { 0.0 };
                 let scratch = if self.scratches & 1 << col != 0 { self.scratch_cost(state, row, col, extra_ahead) } else { 0.0 };
                 let scratch = scratch + self.pinky_cost(state, row, col);
-                *cost = self.fresh(state, col, row) + jack + hand - reward + scratch;
+                *cost = self.fresh(state, col, row, NONE) + jack + hand - reward + scratch;
             }
         }
         costs
@@ -2464,6 +2482,33 @@ fn mark_patterns(rows: &mut [Row], notes: &[Note], keep_jacks: bool) {
     }
 }
 
+/// The rows where the source goes back and forth between two halves of the
+/// keys, one of them the same row every other row at least
+/// [`HALVES_MIN_ROWS`] times, each row sharing no column with the one before,
+/// as fast as a trill's ([`TRILL_MAX_GAP_BEATS`]): a jumptrill whose other
+/// phase changes (EXILE[EX] at 0:39, `O.O..O.` `.O..O.O` `O.O..O.`
+/// `.O.O..O`), not a trill for [`mark_patterns`]. On 6K its rows of 3 fit as
+/// `O.O.O.` `.O.O.O`, which follow it, and lost a note each to the rule for
+/// streams of chords, as the plain jumptrills around it did not.
+fn halves(rows: &[Row], notes: &[Note]) -> Vec<bool> {
+    let cols: Vec<u32> = rows.iter().map(|row| notes[row.notes.clone()].iter().fold(0u32, |m, n| m | 1 << n.src)).collect();
+    let fast = |i: usize| rows[i].time - rows[i - 1].time <= rows[i].beat_len * TRILL_MAX_GAP_BEATS + ROUNDING_MS;
+    // How many times running the row has come back every other row.
+    let mut times = vec![1usize; rows.len()];
+    let mut halves = vec![false; rows.len()];
+    for i in 2..rows.len() {
+        let back = cols[i] == cols[i - 2] && cols[i] & cols[i - 1] == 0 && cols[i - 1] & cols[i - 2] == 0;
+        if back && fast(i) && fast(i - 1) {
+            times[i] = times[i - 2] + 1;
+            if times[i] >= HALVES_MIN_ROWS {
+                let start = i - 2 * (times[i] - 1);
+                halves[start..=i].iter_mut().for_each(|h| *h = true);
+            }
+        }
+    }
+    halves
+}
+
 /// Sets [`Note::ahead`]: for each note, the notes of its source column that
 /// would have to follow it onto its key, each weighted by how soon it comes:
 /// one starting within a jack of a short note (going to the other key of the
@@ -2503,6 +2548,29 @@ fn beat_strength(time: f64, tp_time: f64, beat_len: f64) -> f64 {
         2 => 0.45,
         _ => 0.25,
     }
+}
+
+/// Whether the map is timed at half its tempo, as some hardcore maps are
+/// (DannyPX's and Enie's H.A.R.D.C.O.R.E., 110 BPM for 220): most of its rows
+/// are 1/8 of its beat apart rather than 1/4. Its 1/8s are then the music's
+/// 1/4s, and its beat two beats of the music: read as it is timed, every key
+/// used within 3 rows was a jack ([`JACK_BEATS`], 204 ms there), all of them
+/// cost the same, and Enie's 7K map on 6K got minijacks 1/8 apart and rows
+/// of 5 notes down to 1. Of 42 4K maps in a Songs folder, DannyPX's had 87%
+/// of its rows 1/8 apart (11% 1/4); the others 14% at most, always fewer
+/// than 1/4 apart (speedcore at 300 BPM included).
+fn half_timed(beatmap: &Beatmap, grid: &BeatGrid) -> bool {
+    let mut times: Vec<f64> = beatmap.hit_objects.iter().filter(|o| mania::note(o).is_some()).map(|o| o.start_time).collect();
+    times.dedup_by(|b, a| (*b - *a).abs() < 1.0);
+    let (mut eighths, mut quarters) = (0usize, 0usize);
+    for w in times.windows(2) {
+        let beat_len = grid.at(w[0]).1;
+        let gap = w[1] - w[0];
+        let near = |part: f64| (gap - beat_len * part).abs() <= ROUNDING_MS + 1.0;
+        eighths += near(0.125) as usize;
+        quarters += near(0.25) as usize;
+    }
+    eighths > quarters && eighths * 4 > times.len()
 }
 
 /// [`apply_with`] without the audio, as the tests convert.
@@ -2573,7 +2641,9 @@ fn convert_marked(beatmap: &mut Beatmap, params: &KeyConverterParams, accents: O
         }
     };
 
-    // Rows: the notes that start at the same time, sorted by column.
+    // Rows: the notes that start at the same time, sorted by column. A map
+    // timed at half its tempo is read at the tempo of the music.
+    let half = half_timed(beatmap, &grid);
     let mut notes: Vec<Note> = Vec::new();
     let mut rows: Vec<Row> = Vec::new();
 
@@ -2587,6 +2657,8 @@ fn convert_marked(beatmap: &mut Beatmap, params: &KeyConverterParams, accents: O
             _ => {
                 let (tp_time, beat_len) = grid.at(time);
                 let (pattern, zone, beat) = source_at(time);
+                let (beat_len, beat) =
+                    if half { (beat_len / 2.0, patterns::beat_position(time, tp_time, beat_len / 2.0)) } else { (beat_len, beat) };
                 rows.push(Row {
                     time,
                     notes: notes.len()..notes.len() + 1,
@@ -2647,10 +2719,15 @@ fn convert_marked(beatmap: &mut Beatmap, params: &KeyConverterParams, accents: O
     // Going down, each row keeps its size times the key ratio, rounded, at
     // least one note: hand-made maps do it that consistently. In a stream of
     // chords (a chord right before and after, within a jack), a row of 3 or
-    // more taking half the keys or more loses one more: rows taking every
-    // key the last one left free can only go back and forth between two
-    // ways, whatever the source does (024 135 024... on 6K). Not in repeated
-    // patterns (a jumptrill), which go back and forth anyway.
+    // more taking half the keys or more is rounded down instead: rows taking
+    // every key the last one left free can only go back and forth between
+    // two ways, whatever the source does (024 135 024... on 6K). Not one
+    // note fewer than that: a 7K jumpstream of big rows and pairs (Lolit
+    // speed, `OOOOO..` `.....OO`) kept half the notes of its rows of 4 on
+    // 6K (637 of 856 came out as 2), where 3 of 4 and 4 of 5 still mark its
+    // pattern well (feedback on its convert). Not in repeated patterns (a
+    // jumptrill) nor where the source goes back and forth between two
+    // halves of the keys (see [`halves`]), which go back and forth anyway.
     let chord_stream: Vec<bool> = (0..rows.len())
         .map(|i| {
             let gap = rows[i].beat_len * JACK_BEATS;
@@ -2658,12 +2735,14 @@ fn convert_marked(beatmap: &mut Beatmap, params: &KeyConverterParams, accents: O
             i > 0 && i + 1 < rows.len() && near(i - 1) && near(i + 1)
         })
         .collect();
-    for (row, &in_stream) in rows.iter_mut().zip(&chord_stream) {
+    let halves = halves(&rows, &notes);
+    for ((row, &in_stream), &half) in rows.iter_mut().zip(&chord_stream).zip(&halves) {
         let k = row.notes.len();
         row.share = if dst_keys < src_keys {
-            let mut size = (k as f64 * dst_keys as f64 / src_keys as f64).round() as usize;
-            if in_stream && !row.grouped && size >= 3 && 2 * size >= dst_keys {
-                size -= 1;
+            let scaled = k as f64 * dst_keys as f64 / src_keys as f64;
+            let mut size = scaled.round() as usize;
+            if in_stream && !row.grouped && !half && size >= 3 && 2 * size >= dst_keys {
+                size = scaled.floor() as usize;
             }
             size.clamp(1, k.min(max_chord)) as u8
         } else {
@@ -3261,6 +3340,77 @@ mod tests {
         assert!(rows.iter().all(|r| r.windows(2).all(|w| w[1] > w[0] + 1)), "{:?}", rows);
         let repeated = rows.windows(3).filter(|w| w[0] == w[2]).count();
         assert!(repeated * 2 < rows.len(), "{} rows are the one two before: {:?}", repeated, rows);
+    }
+
+    #[test]
+    fn half_timed_maps_are_read_at_the_tempo_of_the_music() {
+        // The same map timed at 120 BPM in 1/4s and at 60 BPM in 1/8s, as
+        // H.A.R.D.C.O.R.E. is (110 BPM for 220), converts the same.
+        for (src, dst) in [(7, 6), (7, 4), (4, 7)] {
+            let osu = map(src);
+            let half = osu.replace("TimingPoints]\n0,500", "TimingPoints]\n0,1000");
+            let (_, normal) = convert(&osu, dst, Density::None);
+            let (_, halved) = convert(&half, dst, Density::None);
+            assert_eq!(key_rows(&normal, dst), key_rows(&halved, dst), "{}K -> {}K", src, dst);
+        }
+    }
+
+    #[test]
+    fn reducing_keeps_rows_going_back_and_forth_between_halves() {
+        // A 7K jumpstream of rows of 3, one side the same row every other
+        // row and the other changing, at 157 BPM (EXILE[EX], 0:39): on 6K its
+        // rows keep 3 notes, `O.O.O.` `.O.O.O`, as the source goes back and
+        // forth between two halves of the keys.
+        let beat = 382.165605;
+        let mut osu = format!(
+            "osu file format v14\n\n[General]\nMode: 3\n\n[Difficulty]\nCircleSize:7\n\n[TimingPoints]\n0,{},4,1,0,60,1,0\n\n[HitObjects]\n",
+            beat
+        );
+        let a: &[usize] = &[0, 2, 5];
+        let others: [&[usize]; 2] = [&[1, 4, 6], &[1, 3, 6]];
+        let rows: Vec<&[usize]> = (0..16).map(|i| if i % 2 == 0 { a } else { others[i / 2 % 2] }).collect();
+        for (step, cols) in rows.iter().enumerate() {
+            for &col in cols.iter() {
+                let time = (1000.0 + step as f64 * beat / 4.0).round();
+                osu.push_str(&format!("{},192,{},1,0,0:0:0:0:\n", mania::column_x(col, 7) as i32, time));
+            }
+        }
+        let (_, beatmap) = convert(&osu, 6, Density::None);
+        let out = key_rows(&beatmap, 6);
+        assert_eq!(out.len(), rows.len(), "{:?}", out);
+        assert!(out[1..out.len() - 1].iter().all(|r| r.len() == 3), "{:?}", out);
+        assert!(out.windows(2).all(|w| w[1].iter().all(|c| !w[0].contains(c))), "jack: {:?}", out);
+    }
+
+    #[test]
+    fn reducing_keeps_big_rows_of_jumpstreams() {
+        // A 7K jumpstream of big rows and pairs at 235 BPM (Lolit speed,
+        // 1:28): on 6K its rows of 4 keep 3 notes and its rows of 5 keep 4,
+        // as the key ratio says, rather than one fewer.
+        let beat = 255.237690098905;
+        let mut osu = format!(
+            "osu file format v14\n\n[General]\nMode: 3\n\n[Difficulty]\nCircleSize:7\n\n[TimingPoints]\n0,{},4,1,0,60,1,0\n\n[HitObjects]\n",
+            beat
+        );
+        let rows: [&[usize]; 20] = [
+            &[2, 3, 6], &[1, 5], &[0, 2, 3, 4, 6], &[1, 5], &[0, 2, 3, 4], &[5, 6], &[0, 1, 2, 3, 4], &[5, 6],
+            &[0, 1, 3, 4], &[2, 5], &[0, 1, 3, 6], &[4, 5], &[1, 2, 3, 6], &[0, 4], &[1, 2, 3, 5, 6], &[0, 4],
+            &[2, 3, 5, 6], &[0, 1], &[2, 3, 4, 5, 6], &[0, 1],
+        ];
+        for (step, cols) in rows.iter().enumerate() {
+            for &col in cols.iter() {
+                let time = (1000.0 + step as f64 * beat / 4.0).round();
+                osu.push_str(&format!("{},192,{},1,0,0:0:0:0:\n", mania::column_x(col, 7) as i32, time));
+            }
+        }
+        let (_, beatmap) = convert(&osu, 6, Density::None);
+        let out = key_rows(&beatmap, 6);
+        assert_eq!(out.len(), rows.len(), "{:?}", out);
+        for (src, dst) in rows.iter().zip(&out).skip(1).take(rows.len() - 2) {
+            let expected = match src.len() { 4 => 3, 5 => 4, n => n };
+            assert_eq!(dst.len(), expected, "{:?} -> {:?}: {:?}", src, dst, out);
+        }
+        assert!(out.windows(2).all(|w| w[1].iter().all(|c| !w[0].contains(c))), "jack: {:?}", out);
     }
 
     #[test]
@@ -4119,6 +4269,107 @@ mod tests {
         expected.sort_by(|a, b| a.partial_cmp(b).unwrap());
         assert_eq!(inner, expected);
         assert!(notes_of(&beatmap, 8).iter().any(|n| n.2 == 0), "no scratch");
+    }
+
+    #[test]
+    #[ignore]
+    fn tmp_dump() {
+        let osu = std::fs::read_to_string(std::env::var("OSU").unwrap()).unwrap();
+        let dst_keys: usize = std::env::var("DST").unwrap().parse().unwrap();
+        let (original, beatmap) = convert(&osu, dst_keys, Density::None);
+        let src_keys = mania::key_count(&original);
+        let by_time = |b: &Beatmap, keys: usize| {
+            let mut m: std::collections::BTreeMap<i64, Vec<usize>> = Default::default();
+            for o in &b.hit_objects {
+                m.entry(o.start_time as i64).or_default().push(column(o, keys));
+            }
+            m.values_mut().for_each(|v| v.sort());
+            m
+        };
+        let src = by_time(&original, src_keys);
+        let dst = by_time(&beatmap, dst_keys);
+        let f = |v: &[usize], k: usize| (0..k).map(|c| if v.contains(&c) { 'O' } else { '.' }).collect::<String>();
+        let lo: i64 = std::env::var("LO").map_or(0, |v| v.parse().unwrap());
+        let hi: i64 = std::env::var("HI").map_or(-1, |v| v.parse().unwrap());
+        let mut hist = std::collections::BTreeMap::<(usize, usize), usize>::new();
+        for (t, s) in &src {
+            let d = dst.get(t).cloned().unwrap_or_default();
+            *hist.entry((s.len(), d.len())).or_default() += 1;
+            if (lo..=hi).contains(t) {
+                println!("{} {} {}", t, f(s, src_keys), f(&d, dst_keys));
+            }
+        }
+        let gap: i64 = std::env::var("GAP").map_or(96, |v| v.parse().unwrap());
+        let jacks = |m: &std::collections::BTreeMap<i64, Vec<usize>>| {
+            let v: Vec<_> = m.iter().collect();
+            v.windows(2).filter(|w| w[1].0 - w[0].0 <= gap && w[1].1.iter().any(|c| w[0].1.contains(c))).map(|w| *w[1].0).collect::<Vec<_>>()
+        };
+        let (js, jd) = (jacks(&src), jacks(&dst));
+        println!("hist {:?}", hist);
+        println!("jacks: src {} dst {}", js.len(), jd.len());
+        println!("new jacks at {:?}", jd.iter().filter(|t| !js.contains(t)).take(40).collect::<Vec<_>>());
+        let share = |m: &std::collections::BTreeMap<i64, Vec<usize>>, k: usize| {
+            let mut c = vec![0usize; k];
+            m.values().flatten().for_each(|&x| c[x] += 1);
+            c
+        };
+        println!("per key: src {:?} dst {:?}", share(&src, src_keys), share(&dst, dst_keys));
+        let anchors = |m: &std::collections::BTreeMap<i64, Vec<usize>>| {
+            let v: Vec<_> = m.iter().collect();
+            let mut runs = 0usize;
+            let mut longest = (0usize, 0i64);
+            let k = v.iter().flat_map(|r| r.1.iter()).max().map_or(0, |&x| x + 1);
+            for key in 0..k {
+                let mut run = 0usize;
+                for i in 2..v.len() {
+                    let a = v[i - 2].1.contains(&key) && v[i].1.contains(&key) && !v[i - 1].1.contains(&key) && v[i].0 - v[i - 2].0 <= gap * 2;
+                    if a { runs += 1; run += 1; if run > longest.0 { longest = (run, *v[i].0); } } else if !v[i - 1].1.contains(&key) || !v[i].1.contains(&key) { if !(v[i].1.contains(&key)) && !(v[i-1].1.contains(&key)) { run = 0; } }
+                }
+            }
+            (runs, longest)
+        };
+        println!("anchors: src {:?} dst {:?}", anchors(&src), anchors(&dst));
+        // Source column of each key of each row (see `kept`).
+        let rows: Vec<(i64, Vec<(usize, usize)>)> = src.iter().map(|(t, s)| {
+            let d = dst.get(t).cloned().unwrap_or_default();
+            let keep = kept(s.len(), d.len());
+            (*t, keep.iter().zip(&d).map(|(&i, &k)| (k, s[i])).collect())
+        }).collect();
+        let (mut merged, mut own, mut runs4) = (0usize, 0usize, 0usize);
+        let mut at = Vec::new();
+        let mut run = vec![0usize; dst_keys];
+        for i in 2..rows.len() {
+            for key in 0..dst_keys {
+                let get = |r: &Vec<(usize, usize)>| r.iter().find(|p| p.0 == key).map(|p| p.1);
+                match (get(&rows[i - 2].1), get(&rows[i - 1].1), get(&rows[i].1)) {
+                    (Some(a), None, Some(b)) if rows[i].0 - rows[i - 2].0 <= gap * 2 && rows[i].1.len() > 1 => {
+                        if a == b { own += 1 } else { merged += 1; if at.len() < 30 { at.push(rows[i].0) } }
+                        run[key] += 1;
+                        if run[key] == 3 { runs4 += 1 }
+                    }
+                    (_, None, None) => run[key] = 0,
+                    _ => {}
+                }
+            }
+        }
+        println!("chord anchors: own column {} merged columns {} runs of 4+ {}", own, merged, runs4);
+        println!("merged at {:?}", at);
+        let center = |v: &[usize], k: usize| (v.iter().sum::<usize>() as f64 / v.len() as f64 + 0.5) / k as f64;
+        let (mut moves, mut against) = (0usize, 0usize);
+        let pairs: Vec<_> = src.iter().collect();
+        for w in pairs.windows(2) {
+            let (d0, d1) = (dst.get(w[0].0), dst.get(w[1].0));
+            let (Some(d0), Some(d1)) = (d0, d1) else { continue };
+            if w[1].0 - w[0].0 > gap * 4 || w[0].1.len() < 2 || w[1].1.len() < 2 { continue }
+            let ds = center(w[1].1, src_keys) - center(w[0].1, src_keys);
+            let dt = center(d1, dst_keys) - center(d0, dst_keys);
+            if ds.abs() > 1e-9 {
+                moves += 1;
+                if dt.abs() < 1e-9 || dt.signum() != ds.signum() { against += 1 }
+            }
+        }
+        println!("chord rows against the source: {:.1}%", 100.0 * against as f64 / moves.max(1) as f64);
+        println!("{} -> {} notes", original.hit_objects.len(), beatmap.hit_objects.len());
     }
 
 }
