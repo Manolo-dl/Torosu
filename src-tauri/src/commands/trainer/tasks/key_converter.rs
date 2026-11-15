@@ -128,9 +128,25 @@ const SOURCE_JACK_BEATS: f64 = 0.55;
 const FLOW_BEATS: f64 = 2.0;
 
 const COST_DROP: f64 = 150.0;
+/// Going down in keys, two notes of a row on next keys where the source row
+/// has none on next columns: the chords stay open. A 7K jumpstream of open
+/// rows of 3 (EXILE[EX]) has one way on 6K with no jack and no next keys,
+/// 024 135 024...: rows taking the keys natural to their columns ([0,4,5]
+/// for 146) left it, and the keys left free after them were next ones
+/// (123), so it turned into pills for good. With 2, 286 of its 957 open
+/// rows came out with next keys on 6K; with 4, 102 (417 without).
+const W_OPEN_REDUCING: f64 = 4.0;
 /// Going down in keys, dropping one more note than the row's share: cheaper
-/// than a new jack, so the map thins out instead of jacking.
+/// than a new jack, so the map thins out instead of jacking. A single note
+/// costs this, as dropping it leaves a hole in a stream.
 const COST_DROP_REDUCING: f64 = 60.0;
+/// The same for a note of a chord, so a row can lose one to follow the way
+/// the source goes rather than keep its size on keys going the other way.
+/// On a 7K jumpstream (EXILE[EX]) on 6K, with 60 the rows went against the
+/// source's 42% of the time and 86% of them were the row two before (21% in
+/// the source); with this, 9% and 55%, keeping 94% of the notes. On other
+/// maps it keeps 97 to 99% of what 60 keeps.
+const COST_DROP_CHORD_REDUCING: f64 = 10.0;
 const COST_NEW_JACK: f64 = 100.0;
 const COST_BROKEN_JACK: f64 = 40.0;
 /// Reward for an extra note on a downbeat or a chord; less elsewhere.
@@ -142,6 +158,13 @@ const FREE_DEVIATION: f64 = 0.75;
 const TRILL_MIN_NOTES: usize = 6;
 const TRILL_MIN_CHORDS: usize = 4;
 const TRILL_MAX_GAP_BEATS: f64 = 0.5;
+/// A source going back and forth between two halves of the keys (see
+/// [`halves`]): one of its rows this many times. EXILE[EX]'s at 0:39 has it
+/// 8 times; the stretch of its jumpstream that went `024 135` on 6K (see
+/// [`W_OPEN_REDUCING`] and `reducing_keeps_open_rows_open`) twice at most.
+/// On EXILE[EX] it keeps 83 notes more on 6K, the rows going against the
+/// source as often (19.1% of its chord rows, 19.5% with it).
+const HALVES_MIN_ROWS: usize = 4;
 /// A source motif: three rows going round (a hand's roll, 645 645 645), as
 /// far apart as a trill's, for at least this many rows: twice round. Without
 /// it, where a column may leave its key (7K -> 8K and up), a key coming back
@@ -895,12 +918,26 @@ impl Ctx<'_> {
     }
 
     /// Where the source alternates hands: the hands the previous target row
-    /// used, which this row should leave alone. 0 elsewhere.
+    /// used, which this row should leave alone. 0 elsewhere. A note of the
+    /// source's middle key (a thumb's) does not count, wherever it went: it
+    /// is no hand's in the source. Going down to 6K, a 7K jumptrill entered
+    /// from `...O.OO` (Lolit speed) put the thumb's note on the left index,
+    /// both hands were busy, and every note of the next row cost
+    /// [`W_HAND_TWICE`], more than dropping it: `OOO....` came out as one note.
+    /// Only going down: going up, the thumbs of the target (8K 3+2+3, 10K)
+    /// are a hand's, and that hand did play.
     fn busy_hands(&self, state: &State, row: &Row) -> u8 {
         if !self.alternating(state, row) {
             return 0;
         }
-        let prev = state.history[0].dst;
+        let past = &state.history[0];
+        let srcs: Vec<u8> = keys_of(past.src).collect();
+        let thumbs = kept(srcs.len(), past.decision.size())
+            .into_iter()
+            .zip(keys_of(past.decision.keys))
+            .filter(|&(i, _)| srcs.get(i).is_some_and(|&s| self.src_hands[s as usize] == Hand::Either))
+            .fold(0u32, |m, (_, col)| m | 1 << col);
+        let prev = if self.dst_keys < self.src_keys { past.dst & !thumbs } else { past.dst };
         (0..self.dst_keys).filter(|&c| prev & 1 << c != 0).fold(0, |m, c| m | hand_bit(self.dst_hands[c]))
     }
 
@@ -996,6 +1033,16 @@ impl Ctx<'_> {
             && last.src & before.src == 0
             && row.time - before.time <= row.beat_len)
             .then(|| before.decision.keys.trailing_zeros() as usize)
+    }
+
+    /// Going down in keys, where the source row has no notes on next
+    /// columns: what each two next keys of the row cost (see
+    /// [`W_OPEN_REDUCING`]).
+    fn open_cost(&self, row: &Row, mask: u32) -> f64 {
+        if self.dst_keys >= self.src_keys || row.adjacent {
+            return 0.0;
+        }
+        W_OPEN_REDUCING * (mask & mask >> 1).count_ones() as f64
     }
 
     /// Cost of each source note of the row in each target key, `INFINITY`
@@ -1331,11 +1378,18 @@ impl Ctx<'_> {
     /// when they do not all fit.
     fn candidates(&self, state: &State, row: &Row, row_idx: usize, out: &mut Vec<(f64, Decision)>) {
         let k = row.notes.len();
+        let share = (row.share as usize).min(self.dst_keys);
+        let reducing = self.dst_keys < self.src_keys;
 
-        // A repeated pattern copies the row it repeats, whenever it fits.
+        // A repeated pattern copies the row it repeats, whenever it fits and,
+        // going down, keeps the row's share: a row that lost notes to what
+        // came before the pattern (a jack, a busy hand) would lose them all
+        // along it. On Lolit speed's 7K jumptrills to 6K, the first row of
+        // the left hand came out as one note of three, and so did its 90
+        // copies.
         if row.copy > 0 {
             let past = state.history[row.copy as usize - 1].decision;
-            if self.fits(state, row, &past) {
+            if (!reducing || past.size() >= share) && self.fits(state, row, &past) {
                 out.push((-W_COPY, past));
                 return;
             }
@@ -1347,9 +1401,11 @@ impl Ctx<'_> {
         // Going up, fewer notes are only tried when they do not all fit. Going
         // down, every size up to the row's share competes, so a note can be
         // dropped to avoid a jack.
-        let reducing = self.dst_keys < self.src_keys;
-        let share = (row.share as usize).min(self.dst_keys);
-        let drop_cost = if reducing { COST_DROP_REDUCING } else { COST_DROP };
+        let drop_cost = match (reducing, k) {
+            (false, _) => COST_DROP,
+            (true, 1) => COST_DROP_REDUCING,
+            (true, _) => COST_DROP_CHORD_REDUCING,
+        };
         let choices = choices(&costs[..k], self.dst_keys);
         let mut combo = [0u8; MAX_KEYS];
 
@@ -1373,7 +1429,9 @@ impl Ctx<'_> {
                 let keys = combo.iter().fold(0u32, |m, &c| m | 1 << c);
                 let decision = Decision { keys, extras, n_extras };
                 let mask = self.mask_of(&decision);
-                let shaped = self.mirror_cost(state, row, mask) + self.hand_cost(state, row, mask, self.hand_sources(row, combo));
+                let shaped = self.mirror_cost(state, row, mask)
+                    + self.hand_cost(state, row, mask, self.hand_sources(row, combo))
+                    + self.open_cost(row, mask);
 
                 out.push((cost + extra_cost + shaped + tie_break(row_idx, rank(keys)), decision));
             });
@@ -1384,7 +1442,8 @@ impl Ctx<'_> {
         }
 
         // Every key is held: the whole row is dropped.
-        out.push((share as f64 * drop_cost, Decision::DROPPED));
+        // A whole row costs a single note's drop per note.
+        out.push((share as f64 * drop_cost.max(if reducing { COST_DROP_REDUCING } else { 0.0 }), Decision::DROPPED));
     }
 
     /// The target keys of a decision.
@@ -2415,6 +2474,33 @@ fn mark_patterns(rows: &mut [Row], notes: &[Note], keep_jacks: bool) {
     }
 }
 
+/// The rows where the source goes back and forth between two halves of the
+/// keys, one of them the same row every other row at least
+/// [`HALVES_MIN_ROWS`] times, each row sharing no column with the one before,
+/// as fast as a trill's ([`TRILL_MAX_GAP_BEATS`]): a jumptrill whose other
+/// phase changes (EXILE[EX] at 0:39, `O.O..O.` `.O..O.O` `O.O..O.`
+/// `.O.O..O`), not a trill for [`mark_patterns`]. On 6K its rows of 3 fit as
+/// `O.O.O.` `.O.O.O`, which follow it, and lost a note each to the rule for
+/// streams of chords, as the plain jumptrills around it did not.
+fn halves(rows: &[Row], notes: &[Note]) -> Vec<bool> {
+    let cols: Vec<u32> = rows.iter().map(|row| notes[row.notes.clone()].iter().fold(0u32, |m, n| m | 1 << n.src)).collect();
+    let fast = |i: usize| rows[i].time - rows[i - 1].time <= rows[i].beat_len * TRILL_MAX_GAP_BEATS + ROUNDING_MS;
+    // How many times running the row has come back every other row.
+    let mut times = vec![1usize; rows.len()];
+    let mut halves = vec![false; rows.len()];
+    for i in 2..rows.len() {
+        let back = cols[i] == cols[i - 2] && cols[i] & cols[i - 1] == 0 && cols[i - 1] & cols[i - 2] == 0;
+        if back && fast(i) && fast(i - 1) {
+            times[i] = times[i - 2] + 1;
+            if times[i] >= HALVES_MIN_ROWS {
+                let start = i - 2 * (times[i] - 1);
+                halves[start..=i].iter_mut().for_each(|h| *h = true);
+            }
+        }
+    }
+    halves
+}
+
 /// Sets [`Note::ahead`]: for each note, the notes of its source column that
 /// would have to follow it onto its key, each weighted by how soon it comes:
 /// one starting within a jack of a short note (going to the other key of the
@@ -2454,6 +2540,29 @@ fn beat_strength(time: f64, tp_time: f64, beat_len: f64) -> f64 {
         2 => 0.45,
         _ => 0.25,
     }
+}
+
+/// Whether the map is timed at half its tempo, as some hardcore maps are
+/// (DannyPX's and Enie's H.A.R.D.C.O.R.E., 110 BPM for 220): most of its rows
+/// are 1/8 of its beat apart rather than 1/4. Its 1/8s are then the music's
+/// 1/4s, and its beat two beats of the music: read as it is timed, every key
+/// used within 3 rows was a jack ([`JACK_BEATS`], 204 ms there), all of them
+/// cost the same, and Enie's 7K map on 6K got minijacks 1/8 apart and rows
+/// of 5 notes down to 1. Of 42 4K maps in a Songs folder, DannyPX's had 87%
+/// of its rows 1/8 apart (11% 1/4); the others 14% at most, always fewer
+/// than 1/4 apart (speedcore at 300 BPM included).
+fn half_timed(beatmap: &Beatmap, grid: &BeatGrid) -> bool {
+    let mut times: Vec<f64> = beatmap.hit_objects.iter().filter(|o| mania::note(o).is_some()).map(|o| o.start_time).collect();
+    times.dedup_by(|b, a| (*b - *a).abs() < 1.0);
+    let (mut eighths, mut quarters) = (0usize, 0usize);
+    for w in times.windows(2) {
+        let beat_len = grid.at(w[0]).1;
+        let gap = w[1] - w[0];
+        let near = |part: f64| (gap - beat_len * part).abs() <= ROUNDING_MS + 1.0;
+        eighths += near(0.125) as usize;
+        quarters += near(0.25) as usize;
+    }
+    eighths > quarters && eighths * 4 > times.len()
 }
 
 /// [`apply_with`] without the audio, as the tests convert.
@@ -2524,7 +2633,10 @@ fn convert_marked(beatmap: &mut Beatmap, params: &KeyConverterParams, accents: O
         }
     };
 
-    // Rows: the notes that start at the same time, sorted by column.
+    // Rows: the notes that start at the same time, sorted by column. Going
+    // down, a map timed at half its tempo is read at the tempo of the music;
+    // going up, as it is timed, as converts to more keys were tuned.
+    let half = dst_keys < src_keys && half_timed(beatmap, &grid);
     let mut notes: Vec<Note> = Vec::new();
     let mut rows: Vec<Row> = Vec::new();
 
@@ -2538,6 +2650,8 @@ fn convert_marked(beatmap: &mut Beatmap, params: &KeyConverterParams, accents: O
             _ => {
                 let (tp_time, beat_len) = grid.at(time);
                 let (pattern, zone, beat) = source_at(time);
+                let (beat_len, beat) =
+                    if half { (beat_len / 2.0, patterns::beat_position(time, tp_time, beat_len / 2.0)) } else { (beat_len, beat) };
                 rows.push(Row {
                     time,
                     notes: notes.len()..notes.len() + 1,
@@ -2596,11 +2710,33 @@ fn convert_marked(beatmap: &mut Beatmap, params: &KeyConverterParams, accents: O
         .fold(0u32, |m, k| m | 1 << k);
 
     // Going down, each row keeps its size times the key ratio, rounded, at
-    // least one note: hand-made maps do it that consistently.
-    for row in rows.iter_mut() {
+    // least one note: hand-made maps do it that consistently. In a stream of
+    // chords (a chord right before and after, within a jack), a row of 3 or
+    // more taking half the keys or more is rounded down instead: rows taking
+    // every key the last one left free can only go back and forth between
+    // two ways, whatever the source does (024 135 024... on 6K). Not one
+    // note fewer than that: a 7K jumpstream of big rows and pairs (Lolit
+    // speed, `OOOOO..` `.....OO`) kept half the notes of its rows of 4 on
+    // 6K (637 of 856 came out as 2), where 3 of 4 and 4 of 5 still mark its
+    // pattern well (feedback on its convert). Not in repeated patterns (a
+    // jumptrill) nor where the source goes back and forth between two
+    // halves of the keys (see [`halves`]), which go back and forth anyway.
+    let chord_stream: Vec<bool> = (0..rows.len())
+        .map(|i| {
+            let gap = rows[i].beat_len * JACK_BEATS;
+            let near = |j: usize| rows[j].notes.len() > 1 && (rows[j].time - rows[i].time).abs() <= gap;
+            i > 0 && i + 1 < rows.len() && near(i - 1) && near(i + 1)
+        })
+        .collect();
+    let halves = halves(&rows, &notes);
+    for ((row, &in_stream), &half) in rows.iter_mut().zip(&chord_stream).zip(&halves) {
         let k = row.notes.len();
         row.share = if dst_keys < src_keys {
-            let size = (k as f64 * dst_keys as f64 / src_keys as f64).round() as usize;
+            let scaled = k as f64 * dst_keys as f64 / src_keys as f64;
+            let mut size = scaled.round() as usize;
+            if in_stream && !row.grouped && !half && size >= 3 && 2 * size >= dst_keys {
+                size = scaled.floor() as usize;
+            }
             size.clamp(1, k.min(max_chord)) as u8
         } else {
             k.min(max_chord) as u8
@@ -3166,6 +3302,135 @@ mod tests {
             let rate = pill_rate(&beatmap);
             assert!(rate < 0.4, "{}: {:.2}", name, rate);
         }
+    }
+
+    #[test]
+    fn reducing_keeps_open_rows_open() {
+        // A 7K jumpstream of open rows, mostly 3 notes, in 1/4s at 157 BPM
+        // (EXILE[EX]): on 6K its rows stay open, with no next keys, and go
+        // the source's ways rather than back and forth between two of them,
+        // which is all rows of 3 can do there without a jack.
+        let beat = 382.165605;
+        let mut osu = format!(
+            "osu file format v14\n\n[General]\nMode: 3\n\n[Difficulty]\nCircleSize:7\n\n[TimingPoints]\n0,{},4,1,0,60,1,0\n\n[HitObjects]\n",
+            beat
+        );
+        let rows: [&[usize]; 34] = [
+            &[0, 3, 5], &[1, 4, 6], &[0, 2, 5], &[1, 4, 6], &[0, 2, 5], &[1, 3, 6], &[0, 2, 4], &[1, 3, 5],
+            &[2, 4, 6], &[1, 3, 5], &[0, 2, 4], &[1, 3, 6], &[0, 2, 5], &[1, 4, 6], &[0, 3, 5], &[1, 4, 6],
+            &[0, 2, 5], &[1, 3, 6], &[0, 2, 4], &[1, 3, 5], &[2, 4, 6], &[0, 3, 5], &[1, 4, 6], &[2, 5],
+            &[1, 4, 6], &[0, 2, 5], &[1, 3, 6], &[0, 2, 4], &[1, 3, 5], &[2, 4, 6], &[1, 3, 5], &[0, 2, 4],
+            &[1, 3, 6], &[0, 2, 5],
+        ];
+        for (step, cols) in rows.iter().enumerate() {
+            for &col in cols.iter() {
+                let time = (1000.0 + step as f64 * beat / 4.0).round();
+                osu.push_str(&format!("{},192,{},1,0,0:0:0:0:\n", mania::column_x(col, 7) as i32, time));
+            }
+        }
+        let (_, beatmap) = convert(&osu, 6, Density::None);
+        let rows = key_rows(&beatmap, 6);
+        assert!(rows.iter().all(|r| r.windows(2).all(|w| w[1] > w[0] + 1)), "{:?}", rows);
+        let repeated = rows.windows(3).filter(|w| w[0] == w[2]).count();
+        assert!(repeated * 2 < rows.len(), "{} rows are the one two before: {:?}", repeated, rows);
+    }
+
+    #[test]
+    fn half_timed_maps_are_read_at_the_tempo_of_the_music() {
+        // The same map timed at 120 BPM in 1/4s and at 60 BPM in 1/8s, as
+        // H.A.R.D.C.O.R.E. is (110 BPM for 220), converts the same going
+        // down (going up, as it is timed).
+        for (src, dst) in [(7, 6), (7, 4), (10, 7)] {
+            let osu = map(src);
+            let half = osu.replace("TimingPoints]\n0,500", "TimingPoints]\n0,1000");
+            let (_, normal) = convert(&osu, dst, Density::None);
+            let (_, halved) = convert(&half, dst, Density::None);
+            assert_eq!(key_rows(&normal, dst), key_rows(&halved, dst), "{}K -> {}K", src, dst);
+        }
+    }
+
+    #[test]
+    fn reducing_keeps_rows_going_back_and_forth_between_halves() {
+        // A 7K jumpstream of rows of 3, one side the same row every other
+        // row and the other changing, at 157 BPM (EXILE[EX], 0:39): on 6K its
+        // rows keep 3 notes, `O.O.O.` `.O.O.O`, as the source goes back and
+        // forth between two halves of the keys.
+        let beat = 382.165605;
+        let mut osu = format!(
+            "osu file format v14\n\n[General]\nMode: 3\n\n[Difficulty]\nCircleSize:7\n\n[TimingPoints]\n0,{},4,1,0,60,1,0\n\n[HitObjects]\n",
+            beat
+        );
+        let a: &[usize] = &[0, 2, 5];
+        let others: [&[usize]; 2] = [&[1, 4, 6], &[1, 3, 6]];
+        let rows: Vec<&[usize]> = (0..16).map(|i| if i % 2 == 0 { a } else { others[i / 2 % 2] }).collect();
+        for (step, cols) in rows.iter().enumerate() {
+            for &col in cols.iter() {
+                let time = (1000.0 + step as f64 * beat / 4.0).round();
+                osu.push_str(&format!("{},192,{},1,0,0:0:0:0:\n", mania::column_x(col, 7) as i32, time));
+            }
+        }
+        let (_, beatmap) = convert(&osu, 6, Density::None);
+        let out = key_rows(&beatmap, 6);
+        assert_eq!(out.len(), rows.len(), "{:?}", out);
+        assert!(out[1..out.len() - 1].iter().all(|r| r.len() == 3), "{:?}", out);
+        assert!(out.windows(2).all(|w| w[1].iter().all(|c| !w[0].contains(c))), "jack: {:?}", out);
+    }
+
+    #[test]
+    fn reducing_keeps_big_rows_of_jumpstreams() {
+        // A 7K jumpstream of big rows and pairs at 235 BPM (Lolit speed,
+        // 1:28): on 6K its rows of 4 keep 3 notes and its rows of 5 keep 4,
+        // as the key ratio says, rather than one fewer.
+        let beat = 255.237690098905;
+        let mut osu = format!(
+            "osu file format v14\n\n[General]\nMode: 3\n\n[Difficulty]\nCircleSize:7\n\n[TimingPoints]\n0,{},4,1,0,60,1,0\n\n[HitObjects]\n",
+            beat
+        );
+        let rows: [&[usize]; 20] = [
+            &[2, 3, 6], &[1, 5], &[0, 2, 3, 4, 6], &[1, 5], &[0, 2, 3, 4], &[5, 6], &[0, 1, 2, 3, 4], &[5, 6],
+            &[0, 1, 3, 4], &[2, 5], &[0, 1, 3, 6], &[4, 5], &[1, 2, 3, 6], &[0, 4], &[1, 2, 3, 5, 6], &[0, 4],
+            &[2, 3, 5, 6], &[0, 1], &[2, 3, 4, 5, 6], &[0, 1],
+        ];
+        for (step, cols) in rows.iter().enumerate() {
+            for &col in cols.iter() {
+                let time = (1000.0 + step as f64 * beat / 4.0).round();
+                osu.push_str(&format!("{},192,{},1,0,0:0:0:0:\n", mania::column_x(col, 7) as i32, time));
+            }
+        }
+        let (_, beatmap) = convert(&osu, 6, Density::None);
+        let out = key_rows(&beatmap, 6);
+        assert_eq!(out.len(), rows.len(), "{:?}", out);
+        for (src, dst) in rows.iter().zip(&out).skip(1).take(rows.len() - 2) {
+            let expected = match src.len() { 4 => 3, 5 => 4, n => n };
+            assert_eq!(dst.len(), expected, "{:?} -> {:?}: {:?}", src, dst, out);
+        }
+        assert!(out.windows(2).all(|w| w[1].iter().all(|c| !w[0].contains(c))), "jack: {:?}", out);
+    }
+
+    #[test]
+    fn reducing_keeps_jumptrills_whole() {
+        // A 7K jumptrill of triples at 235 BPM entered from a row of the
+        // thumb and the right hand (Lolit speed, 4:46): on 6K its first left
+        // row may lose a note to a jack, but not the rest, which go on as
+        // `OOO...` `...OOO` as the jumptrills after a calmer row do.
+        let beat = 255.237690098905;
+        let mut osu = format!(
+            "osu file format v14\n\n[General]\nMode: 3\n\n[Difficulty]\nCircleSize:7\n\n[TimingPoints]\n0,{},4,1,0,60,1,0\n\n[HitObjects]\n",
+            beat
+        );
+        let lead: [&[usize]; 7] = [&[0, 1, 5], &[2, 6], &[0, 3, 4], &[1, 2, 5], &[0, 3, 6], &[1, 4], &[3, 5, 6]];
+        let trill = (0..24).map(|i| if i % 2 == 0 { &[0, 1, 2][..] } else { &[4, 5, 6][..] });
+        for (step, cols) in lead.into_iter().chain(trill).enumerate() {
+            for &col in cols {
+                let time = (1000.0 + step as f64 * beat / 4.0).round();
+                osu.push_str(&format!("{},192,{},1,0,0:0:0:0:\n", mania::column_x(col, 7) as i32, time));
+            }
+        }
+        let (_, beatmap) = convert(&osu, 6, Density::None);
+        let rows = key_rows(&beatmap, 6);
+        assert_eq!(rows.len(), lead.len() + 24, "{:?}", rows);
+        let trill = &rows[lead.len() + 1..];
+        assert!(trill.iter().all(|r| r.len() == 3), "{:?}", trill);
     }
 
     #[test]
@@ -3999,7 +4264,9 @@ mod tests {
         assert_eq!(inner, expected);
         assert!(notes_of(&beatmap, 8).iter().any(|n| n.2 == 0), "no scratch");
     }
+
 }
+
 
 
 
