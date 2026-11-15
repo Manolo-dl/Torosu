@@ -127,7 +127,10 @@ export class TrainerShortcutsService {
 
         this.running = true;
         const { title, difficulty, hp, cs, od, ar } = data.beatmap;
-        this.tell(this.t('trainer.shortcuts.converting', { title, difficulty, name }), 'info');
+        // Over osu!, a sound says the convert is on its way, with no
+        // notification in the way of the game: they are for what went wrong.
+        this.chime();
+        this.notify.info(this.t('trainer.shortcuts.converting', { title, difficulty, name }));
         try {
             const names = await invoke<string[]>('run_trainer', {
                 request: {
@@ -136,8 +139,8 @@ export class TrainerShortcutsService {
                     converts: converts.map(tasks => ({ tasks: tasks.map(task => ({ task })) })),
                 },
             });
-            // Only in Torosu: over osu!, the notification of the start (and
-            // its sound) already says the convert is on its way.
+            // Only in Torosu: over osu!, the sound at the start already said
+            // the convert was on its way.
             this.notify.success(
                 names.length === 1
                     ? this.t('trainer.created', { name: names[0] })
@@ -159,6 +162,33 @@ export class TrainerShortcutsService {
         invoke('show_notification', { title: this.t('trainer.shortcuts.notificationTitle'), body: message })
             .catch(e => console.error('show_notification failed', e));
         this.notify[kind](message);
+    }
+
+    /** Made when the first convert starts, and kept: one per page is enough. */
+    private audio?: AudioContext;
+
+    /** A short rising two-note chime, made on the spot: no sound file to ship. */
+    private chime() {
+        try {
+            const audio = (this.audio ??= new AudioContext());
+            // It starts suspended when the page was not clicked lately.
+            void audio.resume();
+            const start = audio.currentTime + 0.02;
+            [880, 1318.5].forEach((frequency, i) => {
+                const at = start + i * 0.09;
+                const tone = audio.createOscillator();
+                const volume = audio.createGain();
+                tone.frequency.value = frequency;
+                volume.gain.setValueAtTime(0, at);
+                volume.gain.linearRampToValueAtTime(0.2, at + 0.01);
+                volume.gain.exponentialRampToValueAtTime(0.001, at + 0.25);
+                tone.connect(volume).connect(audio.destination);
+                tone.start(at);
+                tone.stop(at + 0.3);
+            });
+        } catch (e) {
+            log(`shortcuts: chime failed: ${e}`);
+        }
     }
 }
 
