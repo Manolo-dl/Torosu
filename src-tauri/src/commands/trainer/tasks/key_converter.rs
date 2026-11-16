@@ -567,13 +567,14 @@ const W_PILL: f64 = 1.0;
 /// 1% of their hands' chords, three next keys in none. A chord of both rows,
 /// and a single note going to the other row from the hand's last one (a
 /// stair of two colours) cost too: hand-made 9K9K maps keep 77 to 100% of
-/// their hands' chords on one row, mostly a key apart (next fingers), and 60
-/// to 80% of their single notes go on on the same row, two keys on.
+/// their hands' chords on one row, mostly a key apart (next fingers), and 76
+/// to 98% of their single notes go on on the same row (the thumb aside), two
+/// keys on.
 const W_TWO_ROW_PILL: f64 = 12.0;
 const W_TWO_ROW_TRIPLE: f64 = 6.0;
 const W_TWO_ROW_SPLIT: f64 = 6.0;
 const W_TWO_ROW_MIXED: f64 = 3.0;
-const W_TWO_ROW_STEP: f64 = 0.3;
+const W_TWO_ROW_STEP: f64 = 0.5;
 /// On DP those count less the denser the map, as hand-made DP maps allow
 /// more of them (1234 maps, mostly BMS DP): pills in 1% of the hands' chords
 /// below 4 notes a second, 6% at 10 to 14, 13% above; chords of one row 89%
@@ -583,6 +584,17 @@ const W_TWO_ROW_STEP: f64 = 0.3;
 const TWO_ROW_DP_FROM: f64 = 2.0;
 const TWO_ROW_DP_TO: f64 = 12.0;
 const TWO_ROW_DP_MIN: f64 = 0.15;
+/// Two rows of keys: each hand's notes lately (each decaying over
+/// [`ROW_BALANCE_BEATS`]) are this share on the upper row in hand-made maps,
+/// 9K9K as DP, however dense (40%, 32 to 53% for most maps, its keys 43 to
+/// 44% of a hand's). A note on a row that had more than its share costs this
+/// per share over. Keeping to one row, a hand stayed on the one it started
+/// on: a 10K map's columns go to their keys of the resting row, a finger
+/// each, and a 9K9K convert had 83% of its notes there, 92% in its busiest
+/// part.
+const ROW_UPPER_SHARE: f64 = 0.4;
+const ROW_BALANCE_BEATS: f64 = 16.0;
+const W_ROW_BALANCE: f64 = 6.0;
 /// Wide hands, Dense and More dense: the share of the reward for extra notes
 /// in each density zone of the source (Break, Calm, Normal, Dense, Peak). The
 /// calm parts stay calm and the dense ones get denser.
@@ -812,6 +824,11 @@ struct State {
     /// many notes it had lately (decaying over [`PINKY_BALANCE_BEATS`]).
     pinky_time: [f64; MAX_KEYS],
     pinky_level: [f64; MAX_KEYS],
+    /// Two rows of keys: per hand (left, right), when it last played and how
+    /// many notes it had lately on its resting and upper rows (see
+    /// [`ROW_UPPER_SHARE`]).
+    row_time: [f64; 2],
+    row_level: [[f64; 2]; 2],
 }
 
 impl State {
@@ -831,6 +848,8 @@ impl State {
             scratch_level: [0.0; MAX_KEYS],
             pinky_time: [f64::NEG_INFINITY; MAX_KEYS],
             pinky_level: [0.0; MAX_KEYS],
+            row_time: [f64::NEG_INFINITY; 2],
+            row_level: [[0.0; 2]; 2],
         }
     }
 }
@@ -1077,17 +1096,27 @@ impl Ctx<'_> {
     /// `mask` costs per pill, three next keys and two pills apart, for a
     /// chord of both rows, and for a single note on the other row than the
     /// hand's last one, times how much they weigh on the map (see
-    /// [`W_TWO_ROW_PILL`]).
+    /// [`W_TWO_ROW_PILL`]); and per note on a row the hand used more than its
+    /// share lately (see [`ROW_UPPER_SHARE`]).
     fn two_row_cost(&self, state: &State, row: &Row, mask: u32) -> f64 {
         if self.upper == 0 {
             return 0.0;
         }
         let link = patterns::link_ms(row.beat_len);
         let mut cost = 0.0;
-        for (past, &group) in state.hands.iter().zip(&self.dst_groups) {
+        let mut balance = 0.0;
+        for (h, (past, &group)) in state.hands.iter().zip(&self.dst_groups).enumerate() {
             let m = mask & group;
             if m == 0 {
                 continue;
+            }
+            // The row that had more than its share lately costs.
+            let decay = (-(row.time - state.row_time[h]) / (ROW_BALANCE_BEATS * row.beat_len)).exp();
+            let [lower, upper] = state.row_level[h].map(|l| l * decay);
+            if lower + upper > 0.0 {
+                let over = upper / (lower + upper) - ROW_UPPER_SHARE;
+                let (up, down) = ((m & self.upper).count_ones() as f64, (m & !self.upper).count_ones() as f64);
+                balance += W_ROW_BALANCE * (over.max(0.0) * up + (-over).max(0.0) * down);
             }
             let pairs = m & m >> 1;
             let runs = (pairs & !(pairs >> 1)).count_ones();
@@ -1104,7 +1133,7 @@ impl Ctx<'_> {
                 cost += W_TWO_ROW_STEP;
             }
         }
-        cost * self.two_rows
+        cost * self.two_rows + balance
     }
 
     /// Where a single note row goes back and forth in the source (545: its
@@ -1613,6 +1642,20 @@ impl Ctx<'_> {
                 let dir = if step.abs() > 0.25 { step.signum() as i8 } else { 0 };
                 *past = HandPast { time: row.time, mask: m, prev: if linked { past.mask } else { 0 }, dir, src };
             }
+            if self.upper != 0 {
+                for (h, &group) in self.dst_groups.iter().enumerate() {
+                    let m = dst_mask & group;
+                    if m == 0 {
+                        continue;
+                    }
+                    let decay = (-(row.time - state.row_time[h]) / (ROW_BALANCE_BEATS * row.beat_len)).exp();
+                    let [lower, upper] = state.row_level[h];
+                    let up = (m & self.upper).count_ones() as f64;
+                    let down = (m & !self.upper).count_ones() as f64;
+                    state.row_level[h] = [lower * decay + down, upper * decay + up];
+                    state.row_time[h] = row.time;
+                }
+            }
         }
 
         for &col in &decision.extras[..decision.n_extras as usize] {
@@ -2070,6 +2113,10 @@ fn add_scratch_lanes(
             return (0.0, 0);
         }
         let pinky = around(fingers[s] & !(1 << s), time);
+        // The pinky lets go of a long scratch before it plays its key again.
+        if mine.long != 0 && pinky.after <= mine.long_end - time + 1.0 {
+            return (0.0, 0);
+        }
         let free = near(&SCRATCH_FREE_AFTER, mine.after / free_ms)
             * near(&SCRATCH_FREE_BEFORE, mine.before / free_ms)
             * near(&SCRATCH_PINKY_NEAR, pinky.after.min(pinky.before) / beat_len);
