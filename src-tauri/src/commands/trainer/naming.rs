@@ -9,6 +9,8 @@ use rosu_map::Beatmap;
 
 use crate::name_format;
 
+use crate::commands::trainer::analysis::layout;
+use crate::commands::trainer::mania;
 use crate::commands::trainer::model::{
     Density, DifficultySettings, FlnConverterParams, KeyConverterParams, LengthUnit, NoteLength, RateChangeParams,
 };
@@ -132,8 +134,10 @@ pub fn trainer_name_example(format: String) -> String {
     })
 }
 
-/// `10K`, `10K More Dense`, `8K Full 7K+1`, `7K, split jacks`... Every setting
-/// that changes the notes is in the name.
+/// `10K`, `10K More Dense`, `8K Full 7K+1`, `16K 14K2S`, `7K, split jacks`...
+/// Every setting that changes the notes is in the name. On two stages (12K to
+/// 18K) the playstyle always is, the usual one too: how the map is played
+/// tells more than its key count there.
 fn key_tag(params: &KeyConverterParams) -> String {
     let mut tag = format!("{}K", params.target_keys);
     match params.density {
@@ -142,8 +146,9 @@ fn key_tag(params: &KeyConverterParams) -> String {
         Density::MoreDense => tag.push_str(" More Dense"),
         Density::Full => tag.push_str(" Full"),
     }
-    if let Some(playstyle) = &params.playstyle {
-        tag.push_str(&format!(" {}", playstyle));
+    let keys = params.target_keys as usize;
+    if params.playstyle.is_some() || keys > mania::STAGE_MAX_KEYS {
+        tag.push_str(&format!(" {}", layout::layout(keys, params.playstyle.as_deref()).tag()));
     }
     if !params.keep_jacks {
         tag.push_str(", split jacks");
@@ -274,6 +279,25 @@ mod tests {
         assert_eq!(name(f, None, 7.0, true, Some(&keys)), "Insane (SV normalized) (10K Dense)");
         assert_eq!(name(f, None, 8.0, false, None), "Insane OD8");
         assert_eq!(name(f, None, 7.0, false, None), "Insane (trainer)");
+    }
+
+    #[test]
+    fn two_stages_name_their_playstyle() {
+        let keys = |target_keys: u8, playstyle: Option<&str>| KeyConverterParams {
+            target_keys,
+            density: Density::None,
+            keep_jacks: true,
+            playstyle: playstyle.map(String::from),
+        };
+        let f = DEFAULT_NAME_FORMAT;
+        assert_eq!(name(f, None, 7.0, false, Some(&keys(16, None))), "Insane (16K 14K2S)");
+        assert_eq!(name(f, None, 7.0, false, Some(&keys(16, Some("DP")))), "Insane (16K 14K2S)");
+        assert_eq!(name(f, None, 7.0, false, Some(&keys(16, Some("EZ2AC")))), "Insane (16K EZ2AC)");
+        assert_eq!(name(f, None, 7.0, false, Some(&keys(14, None))), "Insane (14K DP)");
+        assert_eq!(name(f, None, 7.0, false, Some(&keys(12, None))), "Insane (12K 10K2S)");
+        assert_eq!(name(f, None, 7.0, false, Some(&keys(18, Some("9K9K")))), "Insane (18K 9K9K)");
+        assert_eq!(name(f, None, 7.0, false, Some(&keys(8, Some("1+7")))), "Insane (8K 7K+1)");
+        assert_eq!(name(f, None, 7.0, false, Some(&keys(7, None))), "Insane (7K)");
     }
 
     #[test]

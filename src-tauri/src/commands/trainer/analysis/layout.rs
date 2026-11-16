@@ -99,6 +99,16 @@ impl Layout {
         (scratches > 0 && matches!(self.name, "10K2S" | "7K+1" | "DP")).then(|| self.keys() - scratches)
     }
 
+    /// The name a converted diff gets for the playstyle: its own, but 16K DP
+    /// is `14K2S`, as its players call it (14K DP and a scratch on each side).
+    pub fn tag(&self) -> &'static str {
+        if self.name == "DP" && self.digit_mask(Digit::Scratch) != 0 {
+            "14K2S"
+        } else {
+            self.name
+        }
+    }
+
     /// The upper row of a layout played on two rows of keys (9K9K, DP): in
     /// each hand, every other key from its outer edge, the pink keys of 9K9K
     /// and the black ones of DP (IIDX keys 2, 4 and 6). The others, the
