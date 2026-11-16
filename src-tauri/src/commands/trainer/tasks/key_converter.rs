@@ -51,7 +51,13 @@
 //!   none: open chords stay open. Extra notes go on any key that suits what
 //!   its hand plays rather than next to the chord, mostly in the denser parts
 //!   of the source.
-//! - **Scratches** (16K DP and EZ2AC): the pinky plays the scratch and the key
+//! - **Two rows** (9K9K, DP): each hand has a row its fingers rest on (the
+//!   white keys and the thumb) and one above (the pink or black keys). A
+//!   hand's chords keep to one row, a finger apart, without pills, three next
+//!   keys or `110011`, which players find odd to hit, and its notes go on on
+//!   the same row, two keys on, more than to the other one. DP keeps to that
+//!   less the denser the map, as hand-made DP maps do; 9K9K all along.
+//! - **Scratches** (16K EZ2AC): the pinky plays the scratch and the key
 //!   next to it, so they never have notes at once. The scratch is an accent,
 //!   on the beat, in short groups with rests in between: a note only goes
 //!   there if its column does not have to follow it (jacks, chordjacks,
@@ -72,6 +78,8 @@
 //!   left, but its scratch goes with the hand's notes, as in hand-made 7K+1
 //!   maps: the 7K map stays as it is, every note of it, and the scratch only
 //!   adds notes, far fewer than on 10K2S (see [`ScratchRules`]).
+//!   16K DP (14K2S) is 10K2S's way with a 14K DP map, as hand-made DP maps
+//!   leave the scratch's hand free just as much, with fewer scratches.
 //!
 //! The hands come from the playstyle of the target (`analysis::layout`): on
 //! 8K `3+2+3` the two middle keys are the thumbs', on `7K+1` the first key is
@@ -357,6 +365,12 @@ const SCRATCH_RATE_POWER: f64 = 0.63;
 /// 0.45 at 16 notes a bar, 0.82 at 32 (see `corpus_scratch_7k1`).
 const SCRATCH_RATE_7K1: f64 = 0.04;
 const SCRATCH_RATE_POWER_7K1: f64 = 0.87;
+/// The same for 16K DP (14K2S), fewer still and about as many whatever the
+/// map plays: 1234 hand-made DP maps (the Delta table packs, mostly BMS DP)
+/// have 0.28 a bar at up to 8 notes a bar, 0.38 at 8 to 16, 0.40 at 16 to
+/// 32, half to twice that for most of them; 3 to 7% of their notes.
+const SCRATCH_RATE_DP: f64 = 0.2;
+const SCRATCH_RATE_POWER_DP: f64 = 0.2;
 /// That times this per density (none, dense, more dense, full): what most
 /// mappers put, and up to half as many more. Twice as many made a 3 star map
 /// a scratch every beat for bars; and where the map is busy, the most a span
@@ -433,6 +447,12 @@ const SCRATCH_RUN: usize = 4;
 /// next row for three scratches in four.
 const SCRATCH_FREE_MS: f64 = 855.0;
 const SCRATCH_FREE_POWER: f64 = 0.75;
+/// The same for 16K DP, from the same maps: 410 ms at 2 notes a second, 195
+/// at 8, 135 at 16. Their hand is as free as on 10K2S: half the maps never
+/// have a note of the scratch's hand in its row, and none holds one across
+/// it; a few mappers put the hand's keys with it, mostly on hard maps.
+const SCRATCH_FREE_MS_DP: f64 = 600.0;
+const SCRATCH_FREE_POWER_DP: f64 = 0.53;
 /// How likely a scratch is with the hand's next note starting this far after
 /// it, and with its last one released this far before it, as (up to how far,
 /// in [`SCRATCH_FREE_MS`] of the map, times what), against a hand free for
@@ -465,7 +485,7 @@ const SCRATCH_MOVE: f64 = 0.75;
 /// around it (in [`SCRATCH_FREE_MS`] of the map), the hand's room in
 /// hand-made maps; on its pinky's key, [`SCRATCH_PINKY_NEAR`]'s.
 const SCRATCH_FREE_EXTRAS: f64 = 1.0;
-/// Reward for a note on a scratch the pinky moves out to (10K2S, 14K2S DP),
+/// Reward for a note on a scratch the pinky moves out to (16K EZ2AC),
 /// on the beat; [`SCRATCH_BEAT`] of it elsewhere. Hand-made 10K2S maps use
 /// the scratch as an accent, 74% of its notes on the beat; without the
 /// reward, the scratch gets few notes and those in runs, from the source
@@ -540,6 +560,29 @@ const HAND_REWARD_MAX: f64 = W_HAND_ROLL + W_HAND_GROUP + 1e-9;
 /// Open chords stay open, as when mappers adapt a 7K pattern to 10K, and
 /// pills of the source may stay pills.
 const W_PILL: f64 = 1.0;
+/// Layouts on two rows of keys (9K9K, DP, see [`Layout::upper_row`]): in a
+/// hand's chord, per pill (two next keys, one of each row), per three next
+/// keys more, and for two pills apart (`110011`), whatever the source has:
+/// players find them odd to hit, and hand-made 9K9K maps have pills in 0 to
+/// 1% of their hands' chords, three next keys in none. A chord of both rows,
+/// and a single note going to the other row from the hand's last one (a
+/// stair of two colours) cost too: hand-made 9K9K maps keep 77 to 100% of
+/// their hands' chords on one row, mostly a key apart (next fingers), and 60
+/// to 80% of their single notes go on on the same row, two keys on.
+const W_TWO_ROW_PILL: f64 = 12.0;
+const W_TWO_ROW_TRIPLE: f64 = 6.0;
+const W_TWO_ROW_SPLIT: f64 = 6.0;
+const W_TWO_ROW_MIXED: f64 = 3.0;
+const W_TWO_ROW_STEP: f64 = 0.3;
+/// On DP those count less the denser the map, as hand-made DP maps allow
+/// more of them (1234 maps, mostly BMS DP): pills in 1% of the hands' chords
+/// below 4 notes a second, 6% at 10 to 14, 13% above; chords of one row 89%
+/// to 62%. 9K9K keeps them all along (Galaxy Collapse, 16 notes a second:
+/// 1% pills). The weight goes from 1 at [`TWO_ROW_DP_FROM`] notes a second
+/// to [`TWO_ROW_DP_MIN`] at [`TWO_ROW_DP_TO`].
+const TWO_ROW_DP_FROM: f64 = 2.0;
+const TWO_ROW_DP_TO: f64 = 12.0;
+const TWO_ROW_DP_MIN: f64 = 0.15;
 /// Wide hands, Dense and More dense: the share of the reward for extra notes
 /// in each density zone of the source (Break, Calm, Normal, Dense, Peak). The
 /// calm parts stay calm and the dense ones get denser.
@@ -877,7 +920,7 @@ struct Ctx<'a> {
     /// aside, and whether both have 4 keys or more (see [`W_HAND_ROLL`]).
     dst_groups: [u32; 2],
     wide: bool,
-    /// The scratches the pinky moves out to (10K2S, 14K2S DP), see [`W_SCRATCH`],
+    /// The scratches the pinky moves out to (16K EZ2AC), see [`W_SCRATCH`],
     /// and with them the keys next to them (see [`W_PINKY_BALANCE`]).
     scratches: u32,
     pinkies: u32,
@@ -886,6 +929,10 @@ struct Ctx<'a> {
     /// How much a column coming back to its key is spread over the others,
     /// 0 to 1 (see [`SPREAD_FULL`]).
     spread: f64,
+    /// Two rows of keys: the upper row (see [`Layout::upper_row`]) and how
+    /// much its costs weigh (see [`W_TWO_ROW_PILL`]); 0 on other layouts.
+    upper: u32,
+    two_rows: f64,
 }
 
 fn pos(col: usize, keys: usize) -> f64 {
@@ -977,7 +1024,11 @@ impl Ctx<'_> {
     /// Wide hands: the cost of what each hand plays in a row of `mask`, its
     /// notes from the source columns `src` (see [`Ctx::hand_sources`]). A
     /// pill costs where the source has none; going on with the hand's stair,
-    /// or staying on three of its keys, is rewarded.
+    /// or staying on three of its keys, is rewarded. On two rows of keys
+    /// (9K9K, DP) a pill costs whatever the source has, with what else is odd
+    /// there (see [`Ctx::two_row_cost`]), and the hand's stairs and keys go a finger at
+    /// a time, every other key: hand-made 9K9K and DP maps step two keys on
+    /// more than one (37 to 49% of their single notes, against 3 to 24%).
     fn hand_cost(&self, state: &State, row: &Row, mask: u32, src: [f64; 2]) -> f64 {
         if !self.wide {
             return 0.0;
@@ -986,7 +1037,14 @@ impl Ctx<'_> {
         let pills = self.dst_groups.iter().map(|&g| (mask & g & ((mask & g) >> 1)).count_ones()).sum::<u32>();
         // Where the source has a pill it may stay one; hand-made 10K maps have
         // fewer pills than 7K ones, so it is not pushed to.
-        let mut cost = if row.pill { 0.0 } else { W_PILL * pills as f64 };
+        let mut cost = if self.upper != 0 {
+            self.two_row_cost(state, row, mask)
+        } else if row.pill {
+            0.0
+        } else {
+            W_PILL * pills as f64
+        };
+        let finger = if self.upper != 0 { 2.0 } else { 1.0 };
         for ((past, &group), src) in state.hands.iter().zip(&self.dst_groups).zip(src) {
             let m = mask & group;
             if m == 0 {
@@ -1001,18 +1059,52 @@ impl Ctx<'_> {
             // 9K first, the hand's last two notes making a stair the other way.
             let src_step = src - past.src;
             let against = src_step.abs() > 1e-9 && src_step.signum() != step.signum();
-            if (0.5..=1.5).contains(&step.abs()) && past.dir != 0 && step.signum() as i8 == past.dir && !against {
+            if (0.5 * finger..=1.5 * finger).contains(&step.abs()) && past.dir != 0 && step.signum() as i8 == past.dir && !against {
                 cost -= W_HAND_ROLL;
             }
             // A run of single notes: a chord of the hand on three keys is
             // the same row again, which would pin the hand to them.
             let single = [m, past.mask, past.prev].iter().all(|r| r.count_ones() == 1);
             let used = m | past.mask | past.prev;
-            if single && 32 - used.leading_zeros() - used.trailing_zeros() <= 3 {
+            if single && (32 - used.leading_zeros() - used.trailing_zeros()) as f64 <= 2.0 * finger + 1.0 {
                 cost -= W_HAND_GROUP;
             }
         }
         cost
+    }
+
+    /// On two rows of keys (9K9K, DP): what each hand plays in a row of
+    /// `mask` costs per pill, three next keys and two pills apart, for a
+    /// chord of both rows, and for a single note on the other row than the
+    /// hand's last one, times how much they weigh on the map (see
+    /// [`W_TWO_ROW_PILL`]).
+    fn two_row_cost(&self, state: &State, row: &Row, mask: u32) -> f64 {
+        if self.upper == 0 {
+            return 0.0;
+        }
+        let link = patterns::link_ms(row.beat_len);
+        let mut cost = 0.0;
+        for (past, &group) in state.hands.iter().zip(&self.dst_groups) {
+            let m = mask & group;
+            if m == 0 {
+                continue;
+            }
+            let pairs = m & m >> 1;
+            let runs = (pairs & !(pairs >> 1)).count_ones();
+            cost += W_TWO_ROW_PILL * pairs.count_ones() as f64 + W_TWO_ROW_TRIPLE * (pairs & pairs >> 1).count_ones() as f64;
+            if runs >= 2 {
+                cost += W_TWO_ROW_SPLIT;
+            }
+            if m.count_ones() > 1 && m & self.upper != 0 && m & !self.upper != 0 {
+                cost += W_TWO_ROW_MIXED;
+            }
+            let linked = past.mask != 0 && row.time - past.time <= link;
+            let single = m.count_ones() == 1 && past.mask.count_ones() == 1;
+            if linked && single && (m & self.upper == 0) != (past.mask & self.upper == 0) {
+                cost += W_TWO_ROW_STEP;
+            }
+        }
+        cost * self.two_rows
     }
 
     /// Where a single note row goes back and forth in the source (545: its
@@ -1280,8 +1372,12 @@ impl Ctx<'_> {
                     }
                 }
             }
+            // On two rows of keys (9K9K, DP) the key next to a note is its
+            // next finger's on the same row, two keys on: the one between
+            // makes a pill.
+            let step = if self.upper != 0 { 2 } else { 1 };
             for &col in combo.iter().chain(&extras[..n]).filter(|_| !anywhere) {
-                let neighbours = [col.checked_sub(1), Some(col + 1).filter(|&c| (c as usize) < self.dst_keys)];
+                let neighbours = [col.checked_sub(step), Some(col + step).filter(|&c| (c as usize) < self.dst_keys)];
                 for next in neighbours.into_iter().flatten() {
                     // Without Full, a second extra in the same row is worth
                     // half: rows mostly grow by one note, sometimes two.
@@ -1732,24 +1828,49 @@ struct Around {
 /// How a layout's scratches are played, for [`add_scratch_lanes`].
 #[derive(Clone, Copy)]
 struct ScratchRules {
-    /// 10K2S: the pinky moves out to the scratch, so its hand is free around
-    /// it, and the scratch may take the hand's note in the row. On 7K+1 the
-    /// scratch is a key of its own, played with the hand's notes: 79% of the
-    /// scratches of hand-made 7K+1 maps have a note of the left hand in their
-    /// row, 81% are on a chord, but 1% only while it holds a long note.
+    /// 10K2S and 16K DP: the pinky moves out to the scratch, so its hand is
+    /// free around it, and the scratch may take the hand's note in the row.
+    /// On 7K+1 the scratch is a key of its own, played with the hand's notes:
+    /// 79% of the scratches of hand-made 7K+1 maps have a note of the left
+    /// hand in their row, 81% are on a chord, but 1% only while it holds a
+    /// long note.
     free_hand: bool,
-    /// How many: [`SCRATCH_RATE`] and [`SCRATCH_RATE_POWER`], or 7K+1's.
+    /// How many: [`SCRATCH_RATE`] and [`SCRATCH_RATE_POWER`], or 7K+1's or
+    /// DP's.
     rate: f64,
     rate_power: f64,
+    /// How far the hand keeps away: [`SCRATCH_FREE_MS`] and
+    /// [`SCRATCH_FREE_POWER`], or DP's.
+    free_ms: f64,
+    free_power: f64,
 }
 
 impl ScratchRules {
     fn of(layout: &Layout) -> Self {
-        if layout.name == "7K+1" {
-            ScratchRules { free_hand: false, rate: SCRATCH_RATE_7K1, rate_power: SCRATCH_RATE_POWER_7K1 }
-        } else {
-            ScratchRules { free_hand: true, rate: SCRATCH_RATE, rate_power: SCRATCH_RATE_POWER }
+        let ten_k_two_s = ScratchRules {
+            free_hand: true,
+            rate: SCRATCH_RATE,
+            rate_power: SCRATCH_RATE_POWER,
+            free_ms: SCRATCH_FREE_MS,
+            free_power: SCRATCH_FREE_POWER,
+        };
+        match layout.name {
+            "7K+1" => ScratchRules { free_hand: false, rate: SCRATCH_RATE_7K1, rate_power: SCRATCH_RATE_POWER_7K1, ..ten_k_two_s },
+            "DP" => ScratchRules {
+                rate: SCRATCH_RATE_DP,
+                rate_power: SCRATCH_RATE_POWER_DP,
+                free_ms: SCRATCH_FREE_MS_DP,
+                free_power: SCRATCH_FREE_POWER_DP,
+                ..ten_k_two_s
+            },
+            _ => ten_k_two_s,
         }
+    }
+
+    /// How far (in ms) the hand of a scratch keeps away from it in a map of
+    /// `nps` notes a second.
+    fn free_ms(&self, nps: f64) -> f64 {
+        self.free_ms * nps.max(0.1).powf(-self.free_power)
     }
 }
 
@@ -1782,7 +1903,8 @@ impl ScratchRules {
 ///
 /// 7K+1 (see [`ScratchRules`]) has the same places but its own count, and its
 /// scratch goes with its hand's notes: the 7K map stands as it was, every note
-/// of it, the scratch only adding notes.
+/// of it, the scratch only adding notes. 16K DP plays as 10K2S, on a 14K DP
+/// map, with its own count and room for the hand.
 fn add_scratch_lanes(
     beatmap: &mut Beatmap,
     layout: &Layout,
@@ -1866,7 +1988,7 @@ fn add_scratch_lanes(
         marked[marked.partition_point(|m| m.0 < time - 1.0)..].iter().take_while(|m| m.0 <= time + 1.0).fold(0u32, |k, m| k | 1 << m.1)
     };
     let (Some(&(first, _)), Some(&(last, _))) = (rows.first(), rows.last()) else { return };
-    let free_ms = scratch_free_ms(total as f64 / ((to - from) / 1000.0).max(1.0));
+    let free_ms = rules.free_ms(total as f64 / ((to - from) / 1000.0).max(1.0));
 
     // What the keys of `mask` play around `time`.
     let around = |mask: u32, time: f64| {
@@ -2294,10 +2416,11 @@ fn add_scratch_lanes(
     beatmap.hit_objects.sort_by(|a, b| a.start_time.total_cmp(&b.start_time));
 }
 
-/// How far (in ms) the hand of a scratch keeps away from it in a map of
-/// `nps` notes a second (see [`SCRATCH_FREE_MS`]).
+/// How far (in ms) the hand of a 10K2S scratch keeps away from it in a map
+/// of `nps` notes a second (see [`SCRATCH_FREE_MS`]).
+#[cfg(test)]
 pub(crate) fn scratch_free_ms(nps: f64) -> f64 {
-    SCRATCH_FREE_MS * nps.max(0.1).powf(-SCRATCH_FREE_POWER)
+    ScratchRules::of(&layout::layout(12, Some("10K2S"))).free_ms(nps)
 }
 
 /// The most scratches in a span of [`SCRATCH_SPANS`] `(_, a, b)` in a map of
@@ -2611,11 +2734,12 @@ fn convert_marked(beatmap: &mut Beatmap, params: &KeyConverterParams, accents: O
         return Err(Error::OnePlayer { layout: dst_layout.name.to_string() }.into());
     }
 
-    // 10K2S and 7K+1: the map converted to 10K or 7K on the inner keys, and
-    // the scratches' own notes on top.
+    // 10K2S, 7K+1 and 16K DP: the map converted to 10K, 7K or 14K DP on the
+    // inner keys, and the scratches' own notes on top.
     if let Some(inner_keys) = dst_layout.inner_keys() {
         let extras = if src_keys != inner_keys {
-            let inner = KeyConverterParams { target_keys: inner_keys as u8, playstyle: None, ..params.clone() };
+            let playstyle = (dst_layout.name == "DP").then(|| dst_layout.name.to_string());
+            let inner = KeyConverterParams { target_keys: inner_keys as u8, playstyle, ..params.clone() };
             convert_marked(beatmap, &inner, None)?
         } else {
             vec![false; beatmap.hit_objects.len()]
@@ -2785,6 +2909,19 @@ fn convert_marked(beatmap: &mut Beatmap, params: &KeyConverterParams, accents: O
     let thumbs = dst_layout.digit_mask(Digit::Thumb)
         | (0..dst_keys).filter(|&c| dst_hands[c] == Hand::Either).fold(0u32, |m, c| m | 1 << c);
     let thumbs = if thumbs.count_ones() == 1 { thumbs | thumbs << 1 | thumbs >> 1 } else { thumbs };
+    // How much the costs of two rows of keys weigh (see [`W_TWO_ROW_PILL`]):
+    // on DP, less the denser the source.
+    let two_rows = match dst_layout.name {
+        "9K9K" => 1.0,
+        "DP" => {
+            let first = rows.first().map_or(0.0, |r| r.time);
+            let last = rows.last().map_or(0.0, |r| r.time);
+            let nps = notes.len() as f64 / ((last - first) / 1000.0).max(1.0);
+            let t = ((nps - TWO_ROW_DP_FROM) / (TWO_ROW_DP_TO - TWO_ROW_DP_FROM)).clamp(0.0, 1.0);
+            1.0 - t * (1.0 - TWO_ROW_DP_MIN)
+        }
+        _ => 0.0,
+    };
     let ctx = Ctx {
         notes: &notes,
         src_keys,
@@ -2800,6 +2937,8 @@ fn convert_marked(beatmap: &mut Beatmap, params: &KeyConverterParams, accents: O
         pinkies: keys_of(scratches).fold(scratches, |m, s| m | fingers[s as usize]),
         spread,
         fingers,
+        upper: dst_layout.upper_row(),
+        two_rows,
     };
 
     // Where the target has few new keys, the extra notes go on top of the
@@ -3304,6 +3443,80 @@ mod tests {
         }
     }
 
+    /// Per hand of a two-row layout (see [`Layout::upper_row`]): the share of
+    /// its chords with a pill, with three next keys or two pills apart
+    /// (`110011`), and on one row; and the share of its single notes going
+    /// on on the row of the hand's last one, the thumb aside, within 1/2
+    /// beat (120 BPM).
+    fn two_row_shapes(beatmap: &Beatmap, layout: &Layout) -> (f64, f64, f64, f64) {
+        let keys = layout.keys();
+        let upper = layout.upper_row();
+        let groups: Vec<u32> = layout.groups().iter().map(|g| g.mask & !layout.digit_mask(Digit::Scratch)).collect();
+        let thumbs = layout.digit_mask(Digit::Thumb);
+        let rows = key_rows(beatmap, keys);
+        let times: Vec<f64> = {
+            let mut t: Vec<f64> = beatmap.hit_objects.iter().map(|o| o.start_time).collect();
+            t.dedup();
+            t
+        };
+        let (mut chords, mut pills, mut odd, mut one_row, mut steps, mut same) = (0, 0, 0, 0, 0, 0);
+        let mut last: Vec<Option<(f64, u32)>> = vec![None; groups.len()];
+        for (row, &time) in rows.iter().zip(&times) {
+            let mask = row.iter().fold(0u32, |m, &k| m | 1 << k);
+            for (g, &group) in groups.iter().enumerate() {
+                let m = mask & group;
+                if m == 0 {
+                    continue;
+                }
+                let pairs = m & m >> 1;
+                if m.count_ones() > 1 {
+                    chords += 1;
+                    pills += (pairs != 0) as usize;
+                    odd += (pairs & pairs >> 1 != 0 || (pairs & !(pairs >> 1)).count_ones() > 1) as usize;
+                    one_row += (m & upper == 0 || m & !upper == 0) as usize;
+                }
+                if let Some((t, prev)) = last[g] {
+                    if m.count_ones() == 1 && prev.count_ones() == 1 && time - t <= 251.0 && (m | prev) & thumbs == 0 {
+                        steps += 1;
+                        same += ((m & upper == 0) == (prev & upper == 0)) as usize;
+                    }
+                }
+                last[g] = Some((time, m));
+            }
+        }
+        let share = |a: usize, b: usize| a as f64 / b.max(1) as f64;
+        (share(pills, chords), share(odd, chords), share(one_row, chords), share(same, steps))
+    }
+
+    #[test]
+    fn two_rows_keep_to_a_row() {
+        // 9K9K and DP are played on two rows of keys a hand: hand-made 9K9K
+        // maps keep 77 to 100% of a hand's chords on one row, without pills
+        // (0 to 1%), three next keys or `110011` never, and 76 to 98% of their
+        // single notes go on on the row of the last one, the thumb aside. DP
+        // allows more of them the denser the map: at 10 notes a second (where
+        // Full makes chords three times as big out of 4K), pills in 6% of its
+        // hands' chords, three next keys or `110011` in up to 1%, 62 to 75% of
+        // them on one row, and 54 to 68% of its single notes on the last
+        // one's row, fewer where Full leaves few of them.
+        let layouts = [(18, "9K9K", 0.02, 0.0, 0.9, 0.7), (14, "DP", 0.1, 0.01, 0.6, 0.4)];
+        for (keys, name, most_pills, most_odd, on_a_row, rowed) in layouts {
+            let layout = layout::layout(keys, Some(name));
+            for src in [4, 7, 10] {
+                for (density_name, density) in [("None", Density::None), ("MoreDense", Density::MoreDense), ("Full", Density::Full)] {
+                    let what = format!("{}K -> {} {}", src, name, density_name);
+                    let beatmap = convert_to(&map(src), name, keys, density);
+                    check(&beatmap, keys);
+                    let (pills, odd, one_row, same) = two_row_shapes(&beatmap, &layout);
+                    assert!(pills <= most_pills, "{}: pills in {:.0}% of the hands' chords", what, pills * 100.0);
+                    assert!(odd <= most_odd, "{}: three next keys or 110011 in {:.1}% of them", what, odd * 100.0);
+                    assert!(one_row >= on_a_row, "{}: {:.0}% of them on one row", what, one_row * 100.0);
+                    assert!(same >= rowed, "{}: {:.0}% of the single notes on the last one's row", what, same * 100.0);
+                }
+            }
+        }
+    }
+
     #[test]
     fn reducing_keeps_open_rows_open() {
         // A 7K jumpstream of open rows, mostly 3 notes, in 1/4s at 157 BPM
@@ -3473,8 +3686,9 @@ mod tests {
     #[test]
     fn two_stages_stay_playable() {
         // 12K to 18K in every playstyle of the osu! wiki: every note kept and
-        // no new jacks, and with Full no overlaps either. 10K2S adds the
-        // scratches' own notes to them, or moves a pinky's out to its scratch.
+        // no new jacks, and with Full no overlaps either. 10K2S and 16K DP add
+        // the scratches' own notes to them, or move their hand's out to its
+        // scratch.
         for dst in [12, 14, 16, 18] {
             for layout in layout::layouts(dst).iter().filter(|l| l.fingers.iter().all(|f| f.player == 0)) {
                 let scratches = layout.inner_keys().map_or(0, |_| layout.digit_mask(Digit::Scratch));
@@ -3484,7 +3698,19 @@ mod tests {
                     let scratched = beatmap.hit_objects.iter().filter(|o| scratches & 1 << column(o, dst) != 0).count();
                     let kept = beatmap.hit_objects.len() - scratched;
                     let notes = original.hit_objects.len();
-                    assert!(kept <= notes && kept + scratched >= notes, "{}K -> {}K {}", src, dst, layout.name);
+                    // A scratch on a strong accent takes up to
+                    // `SCRATCH_STRONG_TAKES` notes of its hand, one moved out.
+                    let taken = scratched * SCRATCH_STRONG_TAKES as usize;
+                    assert!(
+                        kept <= notes && kept + taken >= notes,
+                        "{}K -> {}K {}: {} kept, {} scratched, of {}",
+                        src,
+                        dst,
+                        layout.name,
+                        kept,
+                        scratched,
+                        notes
+                    );
                     assert!(check(&beatmap, dst) <= check(&original, src), "{}K -> {}K {}", src, dst, layout.name);
                     check(&convert_to(&map(src), layout.name, dst, Density::Full), dst);
                 }
@@ -3591,13 +3817,13 @@ mod tests {
 
     #[test]
     fn scratches_are_accents() {
-        // 16K DP and EZ2AC from 4K, 7K, 10K and 7K FLN: the scratches, keys
-        // the patterns run into, get about as many notes as a key, and the
-        // pinky shares its notes with the key next to them, but never for
-        // bars on end. With FLN a column can leave the scratch when its long
-        // note ends.
+        // 16K EZ2AC from 4K, 7K, 10K and 7K FLN: the scratches, keys the
+        // patterns run into, get about as many notes as a key, and the pinky
+        // shares its notes with the key next to them, but never for bars on
+        // end. With FLN a column can leave the scratch when its long note
+        // ends.
         let sources = [("4K", map(4)), ("7K", map(7)), ("10K", map(10)), ("7K FLN", fln_map())];
-        for playstyle in ["DP", "EZ2AC"] {
+        for playstyle in ["EZ2AC"] {
             for (src, osu) in &sources {
                 for (name, density) in [("None", Density::None), ("MoreDense", Density::MoreDense), ("Full", Density::Full)] {
                     let beatmap = convert_to(osu, playstyle, 16, density);
@@ -3709,12 +3935,19 @@ mod tests {
     /// under the scratches. Returns how soon after a scratch its hand plays
     /// again at the soonest, in ms.
     fn check_scratch_hands(beatmap: &Beatmap, inner: &Beatmap, what: &str) -> f64 {
-        let free_ms = scratch_free_ms(notes_per_second(inner));
+        check_scratch_hands_on(beatmap, inner, &layout::layout(12, Some("10K2S")), what)
+    }
+
+    /// [`check_scratch_hands`] on any layout with a scratch on each side and
+    /// a hand between each and the middle (10K2S, 16K DP).
+    fn check_scratch_hands_on(beatmap: &Beatmap, inner: &Beatmap, layout: &Layout, what: &str) -> f64 {
+        let keys = layout.keys();
+        let free_ms = ScratchRules::of(layout).free_ms(notes_per_second(inner));
         let (after, before) = (free_ms * SCRATCH_FREE_AFTER[0].0, free_ms * SCRATCH_FREE_BEFORE[0].0);
-        let notes = notes_of(beatmap, 12);
+        let notes = notes_of(beatmap, keys);
         let mut soonest = f64::INFINITY;
-        for &(time, release, scratch) in notes.iter().filter(|n| matches!(n.2, 0 | 11)) {
-            let hand = if scratch == 0 { 1..=5 } else { 6..=10 };
+        for &(time, release, scratch) in notes.iter().filter(|n| n.2 == 0 || n.2 == keys - 1) {
+            let hand = if scratch == 0 { 1..=keys / 2 - 1 } else { keys / 2..=keys - 2 };
             for &(start, end, key) in notes.iter().filter(|n| hand.contains(&n.2)) {
                 assert!((start - time).abs() > 1.0, "{}: a muri, the scratch at {} with key {}", what, time, key);
                 assert!(!(start < time && end > time), "{}: a muri, the scratch at {} while key {} holds", what, time, key);
@@ -3728,6 +3961,44 @@ mod tests {
             }
         }
         soonest
+    }
+
+    #[test]
+    fn dp_is_a_14k_dp_map_and_scratches() {
+        // 16K DP (14K2S): the map converted to 14K DP on the inner keys, every
+        // note of it but those the scratches took, and the scratches as
+        // accents with their hand free, as on 10K2S, but fewer: hand-made DP
+        // maps have about 0.3 a bar however much they play.
+        let layout = layout::layout(16, Some("DP"));
+        for src in [7, 10] {
+            let fourteen = convert_to(&map(src), "DP", 14, Density::None);
+            let sorted = |mut notes: Vec<(f64, f64, usize)>| {
+                notes.sort_by(|a, b| a.0.total_cmp(&b.0).then(a.2.cmp(&b.2)));
+                notes
+            };
+            let inner_notes = sorted(notes_of(&fourteen, 14));
+            for (name, density) in [("None", Density::None), ("Full", Density::Full)] {
+                let what = format!("{}K -> 16K DP {}", src, name);
+                let beatmap = convert_to(&map(src), "DP", 16, density);
+                check(&beatmap, 16);
+                check_fingers(&beatmap, &layout, &what);
+                let fourteen = if density == Density::None { fourteen.clone() } else { convert_to(&map(src), "DP", 14, density) };
+                check_scratch_hands_on(&beatmap, &fourteen, &layout, &what);
+                let notes = notes_of(&beatmap, 16);
+                let scratches = notes.iter().filter(|n| n.2 == 0 || n.2 == 15).count();
+                if density == Density::None {
+                    let inner: Vec<(f64, f64, usize)> =
+                        notes.iter().filter(|n| n.2 != 0 && n.2 != 15).map(|&(s, e, k)| (s, e, k - 1)).collect();
+                    assert!(inner.iter().all(|n| inner_notes.contains(n)), "{}: a note off its 14K DP key", what);
+                    assert!(inner.len() + scratches * SCRATCH_STRONG_TAKES as usize >= inner_notes.len(), "{}", what);
+                }
+                // 25 bars: a scratch every bar or two.
+                assert!((4..=25).contains(&scratches), "{}: {} scratch notes", what, scratches);
+                let ten_k_two_s = convert_to(&map(src), "10K2S", 12, density);
+                let theirs = notes_of(&ten_k_two_s, 12).iter().filter(|n| n.2 == 0 || n.2 == 11).count();
+                assert!(scratches < theirs, "{}: {} scratches, 10K2S {}", what, scratches, theirs);
+            }
+        }
     }
 
     #[test]
