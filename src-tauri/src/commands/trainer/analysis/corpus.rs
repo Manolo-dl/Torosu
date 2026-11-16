@@ -3079,3 +3079,27 @@ fn corpus_scratch_7k1() {
         col(|x| x.3),
     );
 }
+
+/// Converts the maps `MAPS` (`;`-separated ends of .osu file names) to `KEYS`
+/// keys with `PLAYSTYLE`, at every density, and writes them to `OUT`, to
+/// look at or measure outside.
+#[test]
+#[ignore = "reads maps from a Songs folder; run by hand"]
+fn corpus_convert() {
+    let songs = songs_dir();
+    let keys: u8 = std::env::var("KEYS").ok().and_then(|s| s.parse().ok()).unwrap_or(18);
+    let playstyle = std::env::var("PLAYSTYLE").ok();
+    let out = out_dir();
+    for name in std::env::var("MAPS").expect("MAPS: ends of .osu file names, ; between").split(';') {
+        let path = find_diff(&songs, name).unwrap_or_else(|| panic!("{name} not found"));
+        let source = rosu_map::from_path::<Beatmap>(&path).unwrap();
+        for (mode, density) in [("None", Density::None), ("Dense", Density::Dense), ("MoreDense", Density::MoreDense), ("Full", Density::Full)] {
+            let mut b = source.clone();
+            let params = KeyConverterParams { target_keys: keys, density, keep_jacks: true, playstyle: playstyle.clone() };
+            key_converter::apply(&mut b, &params).unwrap();
+            let osu = crate::commands::trainer::osu_fixups::sanitize(b.encode_to_string().unwrap(), None);
+            let file = format!("{} [{}K {} {}].osu", path.file_stem().unwrap().to_string_lossy(), keys, playstyle.as_deref().unwrap_or("-"), mode);
+            std::fs::write(out.join(file), osu).unwrap();
+        }
+    }
+}

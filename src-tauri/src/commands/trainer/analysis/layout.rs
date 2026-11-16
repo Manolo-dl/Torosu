@@ -92,10 +92,42 @@ impl Layout {
     /// The key count of the map under the scratches when they are lanes of
     /// their own, notes for some sounds over a map of the other keys that
     /// stands without them (10K2S: a 10K map and a scratch on each side, as
-    /// 7K+1 is a 7K map and a scratch), rather than keys the patterns run into
-    /// (16K DP and EZ2AC).
+    /// 7K+1 is a 7K map and a scratch, and 16K DP a 14K DP map), rather than
+    /// keys the patterns run into (16K EZ2AC).
     pub fn inner_keys(&self) -> Option<usize> {
-        matches!(self.name, "10K2S" | "7K+1").then(|| self.keys() - self.digit_mask(Digit::Scratch).count_ones() as usize)
+        let scratches = self.digit_mask(Digit::Scratch).count_ones() as usize;
+        (scratches > 0 && matches!(self.name, "10K2S" | "7K+1" | "DP")).then(|| self.keys() - scratches)
+    }
+
+    /// The name a converted diff gets for the playstyle: its own, but 16K DP
+    /// is `14K2S`, as its players call it (14K DP and a scratch on each side).
+    pub fn tag(&self) -> &'static str {
+        if self.name == "DP" && self.digit_mask(Digit::Scratch) != 0 {
+            "14K2S"
+        } else {
+            self.name
+        }
+    }
+
+    /// The upper row of a layout played on two rows of keys (9K9K, DP): in
+    /// each hand, every other key from its outer edge, the pink keys of 9K9K
+    /// and the black ones of DP (IIDX keys 2, 4 and 6). The others, the
+    /// hand's resting row, are its white keys and its thumb. 0 on other
+    /// layouts.
+    pub fn upper_row(&self) -> u32 {
+        if !matches!(self.name, "9K9K" | "DP") {
+            return 0;
+        }
+        let mut upper = 0;
+        for hand in [Hand::Left, Hand::Right] {
+            let mut keys: Vec<usize> =
+                (0..self.keys()).filter(|&k| self.fingers[k].hand == hand && self.fingers[k].digit != Digit::Scratch).collect();
+            if hand == Hand::Right {
+                keys.reverse();
+            }
+            upper |= keys.iter().skip(1).step_by(2).fold(0u32, |m, &k| m | 1 << k);
+        }
+        upper
     }
 
     pub fn digit_mask(&self, digit: Digit) -> u32 {
@@ -305,6 +337,13 @@ mod tests {
         // 10K2S and 10K8K keep the hands on the 10K keys.
         assert_eq!(layout(12, Some("10K2S")).digit_mask(Digit::Scratch), 1 | 1 << 11);
         assert_eq!(layout(18, Some("10K8K")).digit_mask(Digit::Thumb), 1 << 8 | 1 << 9);
+        // 9K9K: the pink keys, every other one from the outer edge; DP: the
+        // black keys of each 7 key hand, its scratch aside.
+        let keys = |ks: &[u32]| ks.iter().fold(0u32, |m, k| m | 1 << k);
+        assert_eq!(layout(18, Some("9K9K")).upper_row(), keys(&[1, 3, 5, 7, 10, 12, 14, 16]));
+        assert_eq!(layout(14, Some("DP")).upper_row(), 0b0101010_0101010);
+        assert_eq!(layout(16, Some("DP")).upper_row(), 0b0101010_0101010 << 1);
+        assert_eq!(layout(10, None).upper_row(), 0);
         assert_eq!(layout(18, Some("10K8K")).fingers[4..14], ten.fingers[..]);
         // EZ2AC: the 10K keys around 4 middle keys for either hand.
         let ez2ac = layout(14, Some("EZ2AC"));
