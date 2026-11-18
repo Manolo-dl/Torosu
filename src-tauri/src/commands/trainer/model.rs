@@ -77,6 +77,16 @@ pub enum TrainerTaskParams {
     SVNormalizer(EmptyParams),
     FlnConverter(FlnConverterParams),
     KeyConverter(KeyConverterParams),
+    /// Every long note turned into a normal note.
+    NoLn(EmptyParams),
+}
+
+impl TrainerTaskParams {
+    /// Whether it decides which notes are long notes: FLN and No LN. A convert
+    /// has one of them at most.
+    pub fn shapes_lns(&self) -> bool {
+        matches!(self, Self::FlnConverter(_) | Self::NoLn(_))
+    }
 }
 
 #[derive(Deserialize)]

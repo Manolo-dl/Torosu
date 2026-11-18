@@ -13,6 +13,7 @@ use crate::commands::trainer::analysis::layout;
 use crate::commands::trainer::mania;
 use crate::commands::trainer::model::{
     Density, DifficultySettings, FlnConverterParams, KeyConverterParams, LengthUnit, NoteLength, RateChangeParams,
+    TrainerTaskParams,
 };
 
 /// Formats a number with at most `decimals` decimals, without trailing zeros:
@@ -54,7 +55,8 @@ pub struct NameInfo<'a> {
     /// The BPM after the tasks (see `timing::main_bpm`).
     pub bpm: Option<f64>,
     pub sv_normalized: bool,
-    pub fln: Option<&'a FlnConverterParams>,
+    /// The task deciding the long notes (see `TrainerTaskParams::shapes_lns`).
+    pub ln: Option<&'a TrainerTaskParams>,
     pub keys: Option<&'a KeyConverterParams>,
 }
 
@@ -62,7 +64,8 @@ pub struct NameInfo<'a> {
 ///
 /// - `{diff}`: the original name, `Insane`
 /// - `{rate}`: `1.3x`; `{bpm}`: `234`; `{pitch}`: `pitch raised` or `pitch lowered`
-/// - `{sv}`: `SV normalized`; `{keys}`: `10K Dense`; `{fln}`: `FLN BG4 ML4`
+/// - `{sv}`: `SV normalized`; `{keys}`: `10K Dense`; `{fln}`: the long note
+///   task, `FLN BG4 ML4` or `No LN`
 /// - `{tasks}`: those three in parentheses, `(SV normalized) (10K Dense)`
 /// - `{stats}`: the difficulty settings that changed, `AR9.5 OD8`
 ///
@@ -73,7 +76,7 @@ pub struct NameInfo<'a> {
 pub fn version(format: &str, info: &NameInfo) -> String {
     let sv = info.sv_normalized.then(|| "SV normalized".to_string());
     let keys = info.keys.map(key_tag);
-    let fln = info.fln.map(fln_tag);
+    let fln = info.ln.and_then(ln_tag);
 
     let value = |field: &str| -> Option<String> {
         match field {
@@ -129,7 +132,7 @@ pub fn trainer_name_example(format: String) -> String {
         rate: Some(&rate),
         bpm: Some(234.0),
         sv_normalized: true,
-        fln: None,
+        ln: None,
         keys: None,
     })
 }
@@ -154,6 +157,15 @@ fn key_tag(params: &KeyConverterParams) -> String {
         tag.push_str(", split jacks");
     }
     tag
+}
+
+/// The tag of the task deciding the long notes, `None` for any other task.
+fn ln_tag(task: &TrainerTaskParams) -> Option<String> {
+    match task {
+        TrainerTaskParams::FlnConverter(params) => Some(fln_tag(params)),
+        TrainerTaskParams::NoLn(_) => Some("No LN".to_string()),
+        _ => None,
+    }
 }
 
 /// `FLN` reworks the existing LNs too, `INV` keeps them. `BG` is the gap and
@@ -262,9 +274,33 @@ mod tests {
             rate,
             bpm: Some(234.0),
             sv_normalized,
-            fln: None,
+            ln: None,
             keys,
         })
+    }
+
+    #[test]
+    fn the_ln_task_goes_in_its_tag() {
+        let original = DifficultySettings { hp: 5.0, cs: 4.0, od: 7.0, ar: 9.0 };
+        let named = |ln: &TrainerTaskParams| {
+            version(DEFAULT_NAME_FORMAT, &NameInfo {
+                original_version: "Insane",
+                original: &original,
+                new: &original,
+                rate: None,
+                bpm: None,
+                sv_normalized: false,
+                ln: Some(ln),
+                keys: None,
+            })
+        };
+        assert_eq!(named(&TrainerTaskParams::NoLn(crate::commands::trainer::model::EmptyParams {})), "Insane (No LN)");
+        let fln = FlnConverterParams {
+            gap: NoteLength { unit: LengthUnit::Beat, value: 4.0 },
+            min_length: NoteLength { unit: LengthUnit::Beat, value: 4.0 },
+            rework_existing_ln: true,
+        };
+        assert_eq!(named(&TrainerTaskParams::FlnConverter(fln)), "Insane (FLN BG4 ML4)");
     }
 
     #[test]

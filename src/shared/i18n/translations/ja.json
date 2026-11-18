@@ -95,7 +95,7 @@
         "pitch": "ピッチの上げ下げ",
         "sv": "SV 正規化",
         "keys": "キー変換（例: 10K Dense）",
-        "fln": "FLN 変換（例: FLN BG4 ML4）",
+        "fln": "ロングノートのタスク（例: FLN BG4 ML4、No LN）",
         "tasks": "上の 3 つを、それぞれ括弧付きで",
         "stats": "変更した HP、CS、AR、OD"
       },
@@ -261,6 +261,7 @@
       "RateChange": "レート変更",
       "SVNormalizer": "SV 正規化",
       "FlnConverter": "FLN 変換",
+      "NoLn": "LN なし",
       "KeyConverter": "キー変換"
     },
     "rate": {
@@ -274,6 +275,9 @@
     },
     "sv": {
       "description": "元の SV 変化を取り除き、BPM が変わるたびに SV を設定して、スクロール速度をメイン BPM のものに保ちます。BPM 変化、キアイ、ヒットサウンドは残ります。"
+    },
+    "noLn": {
+      "description": "すべてのロングノートを、列とヒットサウンドはそのままに、始点の通常ノーツに変えます。"
     },
     "fln": {
       "description": "すべてのノーツを、同じ列の次のノーツの直前まで押し続けるロングノーツに変えます。",
@@ -543,6 +547,7 @@
     "sameDifficulty": "コンバート {{ first }} と {{ second }} が同じ難易度「{{ name }}」になります: どちらかを変更してください。",
     "convert": "コンバート {{ number }}: {{ cause }}",
     "maniaOnly": "{{ task }} は osu!mania のマップでのみ使えます",
+    "lnTasksTogether": "FLN 変換と LN なしは同じコンバートに入れられません",
     "unsupportedKeys": "キー変換が対応しているのは 1K〜10K と 12K、14K、16K、18K で、{{ keys }}K には対応していません",
     "onePlayer": "キー変換は 1 人用のマップを作ります。{{ layout }} には対応していません",
     "noAudio": "マップの音声に対応しているトラックがありません",

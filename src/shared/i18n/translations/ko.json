@@ -95,7 +95,7 @@
         "pitch": "피치를 올리거나 내림",
         "sv": "SV 정규화",
         "keys": "키 변환, 예: 10K Dense",
-        "fln": "FLN 변환, 예: FLN BG4 ML4",
+        "fln": "롱노트 작업, 예: FLN BG4 ML4 또는 No LN",
         "tasks": "위의 세 가지를 각각 괄호에 넣어",
         "stats": "바꾼 HP, CS, AR, OD"
       },
@@ -261,6 +261,7 @@
       "RateChange": "배속 변경",
       "SVNormalizer": "SV 정규화",
       "FlnConverter": "FLN 변환",
+      "NoLn": "LN 없음",
       "KeyConverter": "키 변환"
     },
     "rate": {
@@ -274,6 +275,9 @@
     },
     "sv": {
       "description": "원래의 SV 변화를 없애고 BPM이 바뀔 때마다 SV를 설정해, 스크롤 속도를 메인 BPM의 속도로 유지합니다. BPM 변화, 키아이, 히트사운드는 그대로 남습니다."
+    },
+    "noLn": {
+      "description": "모든 롱노트를 열과 히트사운드는 그대로 두고 시작 지점의 일반 노트로 바꿉니다."
     },
     "fln": {
       "description": "모든 노트를 같은 줄의 다음 노트 직전까지 누르는 롱노트로 바꿉니다.",
@@ -543,6 +547,7 @@
     "sameDifficulty": "변환 {{ first }}과(와) {{ second }}이(가) 같은 난이도 '{{ name }}'을(를) 만듭니다: 둘 중 하나를 바꾸세요.",
     "convert": "변환 {{ number }}: {{ cause }}",
     "maniaOnly": "{{ task }}은(는) osu!mania 맵에서만 작동합니다",
+    "lnTasksTogether": "FLN 변환과 LN 없음은 같은 변환에 함께 넣을 수 없습니다",
     "unsupportedKeys": "키 변환은 1K~10K와 12K, 14K, 16K, 18K를 지원하며, {{ keys }}K는 지원하지 않습니다",
     "onePlayer": "키 변환은 1인용 맵을 만듭니다. {{ layout }}은(는) 지원하지 않습니다",
     "noAudio": "맵의 오디오에 지원하는 트랙이 없습니다",

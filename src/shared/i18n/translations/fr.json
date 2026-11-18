@@ -95,7 +95,7 @@
         "pitch": "tonalité montée ou baissée",
         "sv": "SV normalisé",
         "keys": "le key converter, 10K Dense",
-        "fln": "le FLN converter, FLN BG4 ML4",
+        "fln": "la tâche des notes longues : FLN BG4 ML4 ou No LN",
         "tasks": "ces trois-là, chacun entre parenthèses",
         "stats": "les HP, CS, AR et OD modifiés"
       },
@@ -261,6 +261,7 @@
       "RateChange": "Changement de rate",
       "SVNormalizer": "Normaliseur de SV",
       "FlnConverter": "Convertisseur FLN",
+      "NoLn": "Sans LN",
       "KeyConverter": "Convertisseur de touches"
     },
     "rate": {
@@ -274,6 +275,9 @@
     },
     "sv": {
       "description": "Les changements de SV d’origine sont supprimés et un SV est placé à chaque changement de BPM, pour que la vitesse de défilement reste celle du BPM principal. Les changements de BPM, le kiai et les hitsounds sont conservés."
+    },
+    "noLn": {
+      "description": "Transforme chaque note longue en note normale là où elle commence, en gardant sa colonne et ses hitsounds."
     },
     "fln": {
       "description": "Transforme chaque note en note longue tenue jusqu’à juste avant la note suivante de sa colonne.",
@@ -543,6 +547,7 @@
     "sameDifficulty": "Les converts {{ first }} et {{ second }} créent la même difficulté, « {{ name }} » : modifiez l’un des deux.",
     "convert": "Convert {{ number }} : {{ cause }}",
     "maniaOnly": "{{ task }} ne fonctionne que sur les maps osu!mania",
+    "lnTasksTogether": "Le convertisseur FLN et Sans LN ne peuvent pas aller dans le même convert",
     "unsupportedKeys": "Le convertisseur de touches prend en charge de 1K à 10K et 12K, 14K, 16K et 18K, pas {{ keys }}K",
     "onePlayer": "Le convertisseur de touches mappe pour un seul joueur, pas {{ layout }}",
     "noAudio": "L’audio de la map n’a aucune piste prise en charge",

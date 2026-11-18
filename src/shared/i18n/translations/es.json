@@ -95,7 +95,7 @@
         "pitch": "tono subido o bajado",
         "sv": "SV normalizado",
         "keys": "el key converter, 10K Dense",
-        "fln": "el FLN converter, FLN BG4 ML4",
+        "fln": "la tarea de notas largas: FLN BG4 ML4 o No LN",
         "tasks": "esos tres, cada uno entre paréntesis",
         "stats": "el HP, CS, AR y OD cambiados"
       },
@@ -261,6 +261,7 @@
       "RateChange": "Cambio de rate",
       "SVNormalizer": "Normalizador de SV",
       "FlnConverter": "Conversor a FLN",
+      "NoLn": "Sin LN",
       "KeyConverter": "Conversor de teclas"
     },
     "rate": {
@@ -274,6 +275,9 @@
     },
     "sv": {
       "description": "Se quitan los cambios de SV originales y se pone un SV en cada cambio de BPM, para que la velocidad de scroll sea la del BPM principal. Se mantienen los cambios de BPM, el kiai y los hitsounds."
+    },
+    "noLn": {
+      "description": "Convierte cada nota larga en una nota normal donde empieza, manteniendo su columna y sus hitsounds."
     },
     "fln": {
       "description": "Convierte cada nota en una nota larga que se mantiene hasta justo antes de la siguiente nota de su columna.",
@@ -543,6 +547,7 @@
     "sameDifficulty": "Los converts {{ first }} y {{ second }} crean la misma dificultad, \"{{ name }}\": cambia uno de los dos.",
     "convert": "Convert {{ number }}: {{ cause }}",
     "maniaOnly": "{{ task }} solo funciona en mapas de osu!mania",
+    "lnTasksTogether": "El conversor a FLN y Sin LN no pueden ir en el mismo convert",
     "unsupportedKeys": "El conversor de teclas admite de 1K a 10K y 12K, 14K, 16K y 18K, no {{ keys }}K",
     "onePlayer": "El conversor de teclas mapea para un jugador, no {{ layout }}",
     "noAudio": "El audio del mapa no tiene ninguna pista compatible",

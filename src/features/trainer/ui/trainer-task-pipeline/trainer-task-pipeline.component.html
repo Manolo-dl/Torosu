@@ -164,6 +164,10 @@
             <div appearance="info" size="s" tuiNotification>{{ 'trainer.sv.description' | transloco }}</div>
           }
 
+          @if (entry.task.type === 'NoLn') {
+            <div appearance="info" size="s" tuiNotification>{{ 'trainer.noLn.description' | transloco }}</div>
+          }
+
           @if (entry.task.type === 'FlnConverter') {
             <p class="description">{{ 'trainer.fln.description' | transloco }}</p>
 

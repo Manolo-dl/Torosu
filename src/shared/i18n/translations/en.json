@@ -95,7 +95,7 @@
         "pitch": "pitch raised or lowered",
         "sv": "SV normalized",
         "keys": "the key converter, 10K Dense",
-        "fln": "the FLN converter, FLN BG4 ML4",
+        "fln": "the long note task: FLN BG4 ML4 or No LN",
         "tasks": "those three, each in parentheses",
         "stats": "the changed HP, CS, AR and OD"
       },
@@ -261,6 +261,7 @@
       "RateChange": "Rate Change",
       "SVNormalizer": "SV Normalizer",
       "FlnConverter": "FLN Converter",
+      "NoLn": "No LN",
       "KeyConverter": "Key Converter"
     },
     "rate": {
@@ -274,6 +275,9 @@
     },
     "sv": {
       "description": "The original SV changes are removed and an SV is set on every BPM change, so the scroll speed stays the one of the main BPM. BPM changes, kiai and hitsounds are kept."
+    },
+    "noLn": {
+      "description": "Turns every long note into a normal note where it starts, keeping its column and hitsounds."
     },
     "fln": {
       "description": "Turns every note into a long note held until just before the next note in its column.",
@@ -543,6 +547,7 @@
     "sameDifficulty": "Converts {{ first }} and {{ second }} make the same difficulty, \"{{ name }}\": change one of them.",
     "convert": "Convert {{ number }}: {{ cause }}",
     "maniaOnly": "{{ task }} only works on osu!mania maps",
+    "lnTasksTogether": "FLN Converter and No LN can't go in the same convert",
     "unsupportedKeys": "The key converter supports 1K to 10K and 12K, 14K, 16K and 18K, not {{ keys }}K",
     "onePlayer": "The key converter maps for one player, not {{ layout }}",
     "noAudio": "The map's audio has no supported track",

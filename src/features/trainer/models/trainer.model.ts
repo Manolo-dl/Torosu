@@ -2,7 +2,10 @@ import type { Ruleset } from '@entities/osu-reader';
 
 export type DifficultyKey = 'hp' | 'cs' | 'od' | 'ar';
 
-export type TrainerTaskType = 'RateChange' | 'SVNormalizer' | 'FlnConverter' | 'KeyConverter';
+export type TrainerTaskType = 'RateChange' | 'SVNormalizer' | 'FlnConverter' | 'NoLn' | 'KeyConverter';
+
+/** The tasks that decide which notes are long notes: a convert has one of them at most. */
+export const LN_TASKS: readonly TrainerTaskType[] = ['FlnConverter', 'NoLn'];
 
 export interface RateChangeParams {
     rate: number;
@@ -95,6 +98,7 @@ export type TrainerTaskParams =
     | { type: 'RateChange'; params: RateChangeParams }
     | { type: 'SVNormalizer'; params: {} }
     | { type: 'FlnConverter'; params: FlnConverterParams }
+    | { type: 'NoLn'; params: {} }
     | { type: 'KeyConverter'; params: KeyConverterParams };
 
 export interface TrainerTask {
@@ -129,6 +133,7 @@ export const TASK_LABELS: Record<TrainerTaskType, string> = {
     RateChange: 'trainer.tasks.RateChange',
     SVNormalizer: 'trainer.tasks.SVNormalizer',
     FlnConverter: 'trainer.tasks.FlnConverter',
+    NoLn: 'trainer.tasks.NoLn',
     KeyConverter: 'trainer.tasks.KeyConverter',
 };
 
@@ -137,6 +142,7 @@ export const TASK_MODES: Record<TrainerTaskType, readonly Ruleset[] | 'all'> = {
     RateChange: 'all',
     SVNormalizer: 'all',
     FlnConverter: ['mania'],
+    NoLn: ['mania'],
     KeyConverter: ['mania'],
 };
 
