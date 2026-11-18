@@ -16,7 +16,8 @@
 //! - `corpus_feel`: hand-made 7K and 10K maps next to 7K -> 10K converts, on
 //!   what players notice: pills, hands taking turns or playing their own
 //!   patterns, the outer keys. `CONVERTS_ONLY=1` skips the hand-made maps.
-//! - `corpus_compare`: a passage of `MAP` next to its 10K converts, as text.
+//! - `corpus_compare`: a passage of `MAP` next to its converts to `TARGET`
+//!   keys (10 by default), as text.
 //! - `corpus_columns`: how often hand-made 9K and 10K maps use each column,
 //!   the outer ones above all, next to 4K and 7K converts to them.
 //! - `corpus_scratch`, `corpus_scratch_truth`, `corpus_scratch_sources`: the
@@ -27,6 +28,10 @@
 //!   scratch is in hand-made 10K2S maps and in converts (a note of it in the
 //!   row is a muri), by how hard the map is; and how likely a scratch is with
 //!   how far the hand's notes are.
+//! - `corpus_jacks`: notes coming fast after the last one of their key (90
+//!   and 135 ms) and anchors, in 7K maps (`SOURCE`) and their converts to
+//!   `TARGET` keys, listing the maps whose converts get many more; `ONLY` a
+//!   file of .osu names to measure only those.
 
 use std::{
     collections::{BTreeMap, HashMap},
@@ -1477,8 +1482,9 @@ fn corpus_feel() {
     }
 }
 
-/// A passage of `MAP` (`FROM` ms, `ROWS` rows) next to its 10K converts and,
-/// with `OLD`, another 10K diff of the set (an earlier convert), as text, the
+/// A passage of `MAP` (`FROM` ms, `ROWS` rows) next to its converts to
+/// `TARGET` keys (10 by default) and,
+/// with `OLD`, another diff of the set (an earlier convert), as text, the
 /// first row at the bottom as in the editor.
 #[test]
 #[ignore = "reads a map from a Songs folder; run by hand"]
@@ -1487,6 +1493,7 @@ fn corpus_compare() {
     let name = std::env::var("MAP").expect("MAP: the end of the .osu file name");
     let from: f64 = std::env::var("FROM").ok().and_then(|s| s.parse().ok()).unwrap_or(0.0);
     let count: usize = std::env::var("ROWS").ok().and_then(|s| s.parse().ok()).unwrap_or(32);
+    let target: u8 = std::env::var("TARGET").ok().and_then(|s| s.parse().ok()).unwrap_or(10);
     let source = rosu_map::from_path::<Beatmap>(&find_diff(&songs, &name).expect("map not found")).unwrap();
     let keys = key_count(&source);
 
@@ -1496,7 +1503,7 @@ fn corpus_compare() {
     }
     for (mode, density) in [("None", Density::None), ("MoreDense", Density::MoreDense), ("Full", Density::Full)] {
         let mut b = source.clone();
-        let params = KeyConverterParams { target_keys: 10, density, keep_jacks: true, playstyle: None };
+        let params = KeyConverterParams { target_keys: target, density, keep_jacks: true, playstyle: None };
         key_converter::apply(&mut b, &params).unwrap();
         columns.push((mode.into(), b));
     }
@@ -3102,4 +3109,146 @@ fn corpus_convert() {
             std::fs::write(out.join(file), osu).unwrap();
         }
     }
+}
+
+/// Fast jacks of a map: per note, how soon after the previous one of its
+/// column it starts.
+#[derive(Default, Clone)]
+struct JackAgg {
+    maps: u64,
+    notes: u64,
+    /// Notes up to 90 ms and up to 135 ms after the last one of their column.
+    fast: u64,
+    near: u64,
+    /// Runs of 5 notes or more on a column, each up to 100 ms after the last.
+    anchors: u64,
+}
+
+impl JackAgg {
+    fn add(&mut self, beatmap: &Beatmap) {
+        let keys = key_count(beatmap);
+        let mut release = vec![f64::NEG_INFINITY; keys];
+        let mut run = vec![0u32; keys];
+        self.maps += 1;
+        for obj in &beatmap.hit_objects {
+            let Some((x, end)) = crate::commands::trainer::mania::note(obj) else { continue };
+            let col = crate::commands::trainer::mania::column(x, keys);
+            let gap = obj.start_time - release[col];
+            self.notes += 1;
+            self.fast += (gap <= 90.0) as u64;
+            self.near += (gap <= 135.0) as u64;
+            if gap <= 100.0 {
+                run[col] += 1;
+                self.anchors += (run[col] == 4) as u64;
+            } else {
+                run[col] = 0;
+            }
+            release[col] = end;
+        }
+    }
+
+    fn merge(&mut self, b: JackAgg) {
+        self.maps += b.maps;
+        self.notes += b.notes;
+        self.fast += b.fast;
+        self.near += b.near;
+        self.anchors += b.anchors;
+    }
+
+    fn print(&self, name: &str, source_notes: u64) {
+        println!(
+            "  {:<28} {:>4} maps | notes {:>8} ({:.1}%) | <=90 ms {:.2}% | <=135 ms {:.2}% | anchors of 5+ per 1000 notes {:.2}",
+            name,
+            self.maps,
+            self.notes,
+            self.notes as f64 * 100.0 / source_notes.max(1) as f64,
+            self.fast as f64 * 100.0 / self.notes.max(1) as f64,
+            self.near as f64 * 100.0 / self.notes.max(1) as f64,
+            self.anchors as f64 * 1000.0 / self.notes.max(1) as f64,
+        );
+    }
+}
+
+/// Fast jacks and anchors of 7K maps (`LIMIT`, 150 by default) against their
+/// converts to `TARGET` keys (6 by default), and of `MAP` on its own.
+#[test]
+#[ignore = "reads a whole Songs folder; run by hand"]
+fn corpus_jacks() {
+    let songs = songs_dir();
+    let limit: usize = std::env::var("LIMIT").ok().and_then(|s| s.parse().ok()).unwrap_or(150);
+    let target: u8 = std::env::var("TARGET").ok().and_then(|s| s.parse().ok()).unwrap_or(6);
+    let src_keys: usize = std::env::var("SOURCE").ok().and_then(|s| s.parse().ok()).unwrap_or(7);
+    let mut files: Vec<PathBuf> = mania_sets(&songs).into_iter().flatten().collect();
+    files.sort();
+    let maps: Vec<PathBuf> = files
+        .into_iter()
+        .filter(|p| {
+            std::env::var("ONLY").map_or(true, |list| {
+                let name = p.file_name().unwrap().to_string_lossy().to_string();
+                std::fs::read_to_string(list).unwrap().lines().any(|l| l == name)
+            })
+        })
+        .filter(|p| parse(p).is_some_and(|b| key_count(&b) == src_keys))
+        .take(limit)
+        .collect();
+    let convert = |b: &Beatmap| {
+        let mut b = b.clone();
+        let params = KeyConverterParams { target_keys: target, density: Density::None, keep_jacks: true, playstyle: None };
+        key_converter::apply(&mut b, &params).unwrap();
+        b
+    };
+    let (source, converted): (JackAgg, JackAgg) = parallel(
+        &maps,
+        |acc: &mut (JackAgg, JackAgg), p| {
+            if let Some(b) = parse(p) {
+                let (mut s, mut c) = (JackAgg::default(), JackAgg::default());
+                s.add(&b);
+                c.add(&convert(&b));
+                let share = |a: &JackAgg| a.fast as f64 / a.notes.max(1) as f64;
+                if share(&c) > share(&s) + 0.05 {
+                    println!("  worse: {} {} -> {}", p.file_name().unwrap().to_string_lossy(), pct(share(&s)), pct(share(&c)));
+                }
+                acc.0.merge(s);
+                acc.1.merge(c);
+            }
+        },
+        |t, p| {
+            t.0.merge(p.0);
+            t.1.merge(p.1);
+        },
+    );
+    source.print(&format!("{}K", src_keys), source.notes);
+    converted.print(&format!("{}K -> {}K", src_keys, target), source.notes);
+
+    if let Ok(name) = std::env::var("MAP") {
+        let b = rosu_map::from_path::<Beatmap>(&find_diff(&songs, &name).expect("map not found")).unwrap();
+        let (mut s, mut c) = (JackAgg::default(), JackAgg::default());
+        s.add(&b);
+        c.add(&convert(&b));
+        s.print(&name, s.notes);
+        c.print(&format!("-> {}K", target), s.notes);
+    }
+}
+
+/// Converts the sources of `PAIRS` (lines of `score<TAB>hand-made
+/// convert<TAB>source`, paths under the Songs folder) to `TARGET` keys (6
+/// by default), each to `OUT/<line>.osu`, to compare with the hand-made ones.
+#[test]
+#[ignore = "reads maps from a Songs folder; run by hand"]
+fn corpus_convert_pairs() {
+    let songs = songs_dir();
+    let target: u8 = std::env::var("TARGET").ok().and_then(|s| s.parse().ok()).unwrap_or(6);
+    let out = out_dir();
+    let pairs = std::fs::read_to_string(std::env::var("PAIRS").expect("PAIRS")).unwrap();
+    let lines: Vec<(usize, String)> = pairs.lines().enumerate().map(|(i, l)| (i, l.split('\t').nth(2).unwrap().to_string())).collect();
+    parallel(
+        &lines,
+        |_: &mut (), (i, src)| {
+            let mut b = rosu_map::from_path::<Beatmap>(songs.join(src)).unwrap();
+            let params = KeyConverterParams { target_keys: target, density: Density::None, keep_jacks: true, playstyle: None };
+            key_converter::apply(&mut b, &params).unwrap();
+            std::fs::write(out.join(format!("{i}.osu")), b.encode_to_string().unwrap()).unwrap();
+        },
+        |_, _| {},
+    );
 }

@@ -27,7 +27,8 @@
 //!   target of two stages has few new keys (14K -> 16K), a column coming
 //!   back to its key is not spread, and one that just played keeps to its
 //!   key: the source's jacks, trills and back-and-forths stay as they are.
-//! - **Jacks**: no new jacks; the map's own jacks (the same column in
+//! - **Jacks**: no new jacks, nor going down on fast maps minijacks under 125 ms
+//!   whatever their tempo; the map's own jacks (the same column in
 //!   consecutive rows, up to 1/2 beat apart) stay on a single key. Where a
 //!   finger has two keys (10K8K, DP, 9K9K, a scratch and its pinky), going
 //!   from one to the other is a jack too: hand-made maps hardly ever do it.
@@ -42,7 +43,10 @@
 //! - **Fewer keys**: chords shrink with the key count, as hand-made 4K maps
 //!   of the same songs do against their 7K versions (Delta Dan, Lolit speed,
 //!   H.A.R.D.C.O.R.E.): 2 notes -> 1, 3 or 4 -> 2, 5 or 6 -> 3. Notes are
-//!   dropped rather than turned into jacks.
+//!   dropped rather than turned into jacks. Each hand's columns keep to
+//!   that hand's keys, as hand-made 7K -> 6K converts keep them, and the
+//!   middle key's notes go between the hands where a key is free, or are
+//!   the first dropped.
 //!
 //! - **Wide hands** (4 keys or more each: 8K to 18K): each hand plays its
 //!   own patterns, as in hand-made 10K maps, instead of the hands taking
@@ -156,6 +160,27 @@ const COST_DROP_REDUCING: f64 = 60.0;
 /// maps it keeps 97 to 99% of what 60 keeps.
 const COST_DROP_CHORD_REDUCING: f64 = 10.0;
 const COST_NEW_JACK: f64 = 100.0;
+/// Going down in keys, a new jack faster than this (in ms) is a minijack
+/// whatever the tempo, even past [`JACK_BEATS`]: on fast maps, and those
+/// timed at half their tempo (see [`half_timed`]), a 1/4 jack starts below
+/// 0.375 beat. LV.4 Angel dust [Fragmentation 7K], 1/8 streams at 170 BPM
+/// read at 340, came out on 6K with 21% of its notes 90 ms or less after the
+/// last one of their key (7% in the source) and anchors of 5 to 8 notes, the
+/// middle key's notes going to the left index and its own ones to the middle
+/// finger. 7777's Friday Delay, 1/8 at 127 BPM with no column back within
+/// 3 rows (1% of its notes 135 ms or less after the last one of their key),
+/// had 9.3% so on 6K, 118 ms apart.
+const MINIJACK_MS: f64 = 125.0;
+/// Cost of such a minijack, times (`MINIJACK_MS` / its gap)²: more than
+/// dropping a note of a chord, so the chord thins out instead, and the
+/// faster the more. Of 6527 7K maps, the 64 whose 6K converts got 5 points
+/// more notes 90 ms or less after the last one of their key than the source
+/// went from 15% of the notes to 5.2% (6.4% in the source), and from 32% to
+/// 21% 135 ms or less (22%), keeping 89.5% of the notes instead of 94.1%;
+/// their 4K converts from 22.5% to 4.7%, keeping 62.5% instead of 67.5%.
+/// The others hardly change (87.4% of the notes kept on 6K, 86.8% now).
+/// Friday Delay on 6K has 2.4% (90.9% of the notes kept, 92.7% before).
+const W_MINIJACK: f64 = 20.0;
 const COST_BROKEN_JACK: f64 = 40.0;
 /// Reward for an extra note on a downbeat or a chord; less elsewhere.
 const EXTRA_REWARD: f64 = 10.0;
@@ -230,6 +255,30 @@ const W_FRESH_CHORDS: f64 = 4.0;
 const W_SWITCH: f64 = 0.3;
 /// Per squared key a column strays from its natural place.
 const W_DEVIATION: f64 = 1.0;
+/// The same going down where each hand keeps its keys (7K -> 6K, see
+/// `keep_hands`), from the first bit of a key: hand-made converts keep each
+/// hand's columns on its keys (7K -> 6K: 1-3 on 1-3, 5-7
+/// on 4-6), where with [`FREE_DEVIATION`] a column went to the key next to
+/// it for nothing (`O..|.|..O` on `.O.|..O`). Of 8 hand-made 7K -> 6K
+/// converts (_IceRain's, ccouy123's and God_lty's) the rows came out as
+/// theirs 26% of the time, 36% with this, [`W_DROP_HAND`] and every way to
+/// keep the notes of a row tried ([`KEEP_ANY_UP_TO`]); of God_lty's 28
+/// that drop the middle key, 39% and 67%.
+const W_DEVIATION_REDUCING: f64 = 4.0;
+/// Going down where the hands keep their keys, per note of a hand dropped
+/// from a row (rather than one of the source's middle key, a thumb's):
+/// hand-made 7K -> 6K converts drop the middle key's notes when a row loses
+/// some, or all of them (God_lty's).
+const W_DROP_HAND: f64 = 5.0;
+/// Going down where the hands keep their keys (see [`W_DEVIATION_REDUCING`]),
+/// rows of up to this many notes try every way to keep the notes they keep,
+/// not only spread evenly (see [`kept`]): a 7K row `OOO|O|...` kept as 3
+/// notes on 6K lost its third note and put the middle key's in its place, on
+/// a key just played; or, with minijacks costing, came out as one. On 4K,
+/// where the hands lose keys, it kept the notes of the source's own fast
+/// jacks: 8.6% of the notes 90 ms or less after the last one of their key
+/// instead of 6.4%.
+const KEEP_ANY_UP_TO: usize = 10;
 /// A key coming back 2 / 3 notes later within a beat, outside a trill.
 const W_REPEAT2: f64 = 12.0;
 const W_REPEAT3: f64 = 6.0;
@@ -877,21 +926,28 @@ fn run_after(step: i32, prev_step: i8, run: u8) -> (i8, u8) {
     }
 }
 
-/// What was done with a row: the keys of the notes kept (as many of them,
-/// picked by [`kept`], as there are keys) and the keys of the extra notes.
+/// What was done with a row: the notes kept (bits of their index in the
+/// row, in order of their source column), the keys they go to, in the same
+/// order, and the keys of the extra notes.
 #[derive(Clone, Copy)]
 struct Decision {
+    notes: u32,
     keys: u32,
     extras: [u8; MAX_EXTRAS],
     n_extras: u8,
 }
 
 impl Decision {
-    const DROPPED: Self = Self { keys: 0, extras: [0; MAX_EXTRAS], n_extras: 0 };
+    const DROPPED: Self = Self { notes: 0, keys: 0, extras: [0; MAX_EXTRAS], n_extras: 0 };
 
     /// How many notes of the row are kept.
     fn size(&self) -> usize {
         self.keys.count_ones() as usize
+    }
+
+    /// The indices in the row of the notes kept, each with its key.
+    fn placed(&self) -> impl Iterator<Item = (usize, u8)> {
+        keys_of(self.notes).map(usize::from).zip(keys_of(self.keys))
     }
 }
 
@@ -930,6 +986,11 @@ struct Ctx<'a> {
     keep_jacks: bool,
     fill: Option<Fill>,
     src_hands: [Hand; MAX_KEYS],
+    /// Where each source column naturally goes on the target (a key, as a
+    /// real number), and whether it keeps to it (see
+    /// [`W_DEVIATION_REDUCING`]).
+    natural: [f64; MAX_KEYS],
+    keep_hands: bool,
     dst_hands: [Hand; MAX_KEYS],
     /// The keys of the target's thumbs, and the middle keys either hand
     /// moves to, where the notes of the source's middle key go (see
@@ -998,9 +1059,9 @@ impl Ctx<'_> {
         }
         let past = &state.history[0];
         let srcs: Vec<u8> = keys_of(past.src).collect();
-        let thumbs = kept(srcs.len(), past.decision.size())
-            .into_iter()
-            .zip(keys_of(past.decision.keys))
+        let thumbs = past
+            .decision
+            .placed()
             .filter(|&(i, _)| srcs.get(i).is_some_and(|&s| self.src_hands[s as usize] == Hand::Either))
             .fold(0u32, |m, (_, col)| m | 1 << col);
         let prev = if self.dst_keys < self.src_keys { past.dst & !thumbs } else { past.dst };
@@ -1024,13 +1085,13 @@ impl Ctx<'_> {
 
     /// Wide hands: the middle of the source columns of the notes each hand
     /// (left, right) plays in a row placed in `combo`, NaN for one with none.
-    fn hand_sources(&self, row: &Row, combo: &[u8]) -> [f64; 2] {
+    fn hand_sources(&self, row: &Row, keep: &[usize], combo: &[u8]) -> [f64; 2] {
         if !self.wide {
             return [f64::NAN; 2];
         }
         let notes = &self.notes[row.notes.clone()];
         let mut sums = [(0.0, 0); 2];
-        for (&i, &col) in kept(notes.len(), combo.len()).iter().zip(combo) {
+        for (&i, &col) in keep.iter().zip(combo) {
             for (sum, &group) in sums.iter_mut().zip(&self.dst_groups) {
                 if group & 1 << col != 0 {
                     *sum = (sum.0 + notes[i].src as f64, sum.1 + 1);
@@ -1212,8 +1273,13 @@ impl Ctx<'_> {
                 }
                 if !keeps_jack && back != Some(col) {
                     cost += self.repeat_cost(state, row, src, col);
-                    if state.last_src[col] != note.src && row.time - state.release[col] <= jack_gap {
-                        cost += COST_NEW_JACK;
+                    if state.last_src[col] != note.src {
+                        let gap = row.time - state.release[col];
+                        if gap <= jack_gap {
+                            cost += COST_NEW_JACK;
+                        } else if gap <= MINIJACK_MS && self.dst_keys < self.src_keys && !row.trill {
+                            cost += W_MINIJACK * (MINIJACK_MS / gap).powi(2);
+                        }
                     }
                     // A column coming back to its key is spread only where
                     // the target has room for it (see `spread`).
@@ -1226,9 +1292,9 @@ impl Ctx<'_> {
                         cost += W_STICK * (1.0 - self.spread);
                     }
                 }
-                let natural = pos(src, self.src_keys) * self.dst_keys as f64 - 0.5;
-                let stray = ((col as f64 - natural).abs() - FREE_DEVIATION).max(0.0);
-                cost += W_DEVIATION * stray * stray;
+                let (free, weight) = if self.keep_hands { (0.0, W_DEVIATION_REDUCING) } else { (FREE_DEVIATION, W_DEVIATION) };
+                let stray = ((col as f64 - self.natural[src]).abs() - free).max(0.0);
+                cost += weight * stray * stray;
                 if self.scratches & 1 << col != 0 {
                     cost += self.scratch_cost(state, row, col, note.ahead);
                 }
@@ -1373,7 +1439,7 @@ impl Ctx<'_> {
             let held = placed.fold(0u32, |m, &c| m | self.fingers[c as usize]);
             if anywhere {
                 // Wide hands: an extra note goes on with what its hand plays.
-                let src = self.hand_sources(row, combo);
+                let src = self.hand_sources(row, &kept(row.notes.len(), combo.len()), combo);
                 let hand_now = self.hand_cost(state, row, taken, src);
                 for next in 0..self.dst_keys as u8 {
                     let mut added = extra_costs[next as usize];
@@ -1535,31 +1601,47 @@ impl Ctx<'_> {
         let mut combo = [0u8; MAX_KEYS];
 
         for size in (1..=share).rev() {
-            let keep = kept(k, size);
-            let src_pos = self.source_pos(row, &keep);
-            let dropped = (share - size) as f64 * drop_cost;
+            // Going down where the hands keep their keys, every way to keep
+            // `size` of the notes is tried (on rows of up to
+            // `KEEP_ANY_UP_TO` notes): which notes to drop is the cost's to
+            // decide, the middle key's first.
+            let ways: Vec<u32> = if self.keep_hands && size < k && k <= KEEP_ANY_UP_TO {
+                (0u32..1 << k).filter(|m| m.count_ones() as usize == size).collect()
+            } else {
+                vec![kept(k, size).iter().fold(0, |m, &i| m | 1 << i)]
+            };
             let before = out.len();
-            let options: Vec<&[u8]> = keep.iter().map(|&note| choices[note].as_slice()).collect();
+            for notes_mask in ways {
+                let keep: Vec<usize> = keys_of(notes_mask).map(usize::from).collect();
+                let keep = keep.as_slice();
+                let src_pos = self.source_pos(row, keep);
+                let hand_drops = (0..k)
+                    .filter(|&i| notes_mask & 1 << i == 0)
+                    .filter(|&i| self.src_hands[self.notes[row.notes.start + i].src as usize] != Hand::Either)
+                    .count();
+                let dropped = (share - size) as f64 * drop_cost + if self.keep_hands { hand_drops as f64 * W_DROP_HAND } else { 0.0 };
+                let options: Vec<&[u8]> = keep.iter().map(|&note| choices[note].as_slice()).collect();
 
-            each_combo(&options, &self.fingers, &mut combo[..size], &mut |combo| {
-                let mut cost = dropped;
-                for (&note, &col) in keep.iter().zip(combo) {
-                    cost += costs[note][col as usize];
-                }
+                each_combo(&options, &self.fingers, &mut combo[..size], &mut |combo| {
+                    let mut cost = dropped;
+                    for (&note, &col) in keep.iter().zip(combo) {
+                        cost += costs[note][col as usize];
+                    }
 
-                let dst_pos = combo.iter().map(|&c| pos(c as usize, self.dst_keys)).sum::<f64>() / size as f64;
-                cost += self.flow_cost(state, row, src_pos, dst_pos, self.single(row, &keep, combo));
+                    let dst_pos = combo.iter().map(|&c| pos(c as usize, self.dst_keys)).sum::<f64>() / size as f64;
+                    cost += self.flow_cost(state, row, src_pos, dst_pos, self.single(row, keep, combo));
 
-                let (extras, n_extras, extra_cost) = self.pick_extras(state, row, combo, &extra_costs);
-                let keys = combo.iter().fold(0u32, |m, &c| m | 1 << c);
-                let decision = Decision { keys, extras, n_extras };
-                let mask = self.mask_of(&decision);
-                let shaped = self.mirror_cost(state, row, mask)
-                    + self.hand_cost(state, row, mask, self.hand_sources(row, combo))
-                    + self.open_cost(row, mask);
+                    let (extras, n_extras, extra_cost) = self.pick_extras(state, row, combo, &extra_costs);
+                    let keys = combo.iter().fold(0u32, |m, &c| m | 1 << c);
+                    let decision = Decision { notes: notes_mask, keys, extras, n_extras };
+                    let mask = self.mask_of(&decision);
+                    let shaped = self.mirror_cost(state, row, mask)
+                        + self.hand_cost(state, row, mask, self.hand_sources(row, keep, combo))
+                        + self.open_cost(row, mask);
 
-                out.push((cost + extra_cost + shaped + tie_break(row_idx, rank(keys)), decision));
-            });
+                    out.push((cost + extra_cost + shaped + tie_break(row_idx, rank(keys)), decision));
+                });
+            }
 
             if out.len() > before && !reducing {
                 return;
@@ -1584,21 +1666,16 @@ impl Ctx<'_> {
             return false;
         }
         let notes = &self.notes[row.notes.clone()];
-        kept(notes.len(), size)
-            .iter()
-            .zip(keys_of(decision.keys))
-            .all(|(&i, col)| self.free(state, col as usize, row, notes[i].src))
+        decision.placed().all(|(i, col)| self.free(state, col as usize, row, notes[i].src))
             && decision.extras[..decision.n_extras as usize].iter().all(|&col| row.time > state.release[col as usize])
     }
 
     fn commit(&self, state: &mut State, row: &Row, decision: &Decision) {
         let notes = &self.notes[row.notes.clone()];
         let size = decision.size();
-        let keep = kept(notes.len(), size);
-
         if size > 0 {
-            let combo: Vec<u8> = keys_of(decision.keys).collect();
-            for (&i, &col) in keep.iter().zip(&combo) {
+            let (keep, combo): (Vec<usize>, Vec<u8>) = decision.placed().unzip();
+            for (i, col) in decision.placed() {
                 let (note, col) = (&notes[i], col as usize);
                 state.release[col] = note.end;
                 state.last_src[col] = note.src;
@@ -1630,8 +1707,8 @@ impl Ctx<'_> {
 
         if self.wide {
             let link = patterns::link_ms(row.beat_len);
-            let combo: Vec<u8> = keys_of(decision.keys).collect();
-            let sources = self.hand_sources(row, &combo);
+            let (keep, combo): (Vec<usize>, Vec<u8>) = decision.placed().unzip();
+            let sources = self.hand_sources(row, &keep, &combo);
             for ((past, &group), src) in state.hands.iter_mut().zip(&self.dst_groups).zip(sources) {
                 let m = dst_mask & group;
                 if m == 0 {
@@ -1697,15 +1774,7 @@ impl Ctx<'_> {
 
     /// The note an extra note in `col` copies: the kept note closest to it.
     fn template(&self, row: &Row, decision: &Decision, col: u8) -> Option<usize> {
-        let size = decision.size();
-        if size == 0 {
-            return None;
-        }
-        kept(row.notes.len(), size)
-            .iter()
-            .zip(keys_of(decision.keys))
-            .min_by_key(|(_, c)| c.abs_diff(col))
-            .map(|(&i, _)| row.notes.start + i)
+        decision.placed().min_by_key(|(_, c)| c.abs_diff(col)).map(|(i, _)| row.notes.start + i)
     }
 }
 
@@ -1815,7 +1884,7 @@ fn add_extras(ctx: &Ctx, rows: &[Row], path: &[Decision]) -> Vec<Decision> {
                 }
                 let combo: Vec<u8> = keys_of(placed.keys).collect();
                 let (extras, n_extras, _) = ctx.pick_extras(&state, row, &combo, &costs);
-                Decision { keys: placed.keys, extras, n_extras }
+                Decision { notes: placed.notes, keys: placed.keys, extras, n_extras }
             }
         };
         ctx.commit(&mut state, row, &decision);
@@ -2937,7 +3006,6 @@ fn convert_marked(beatmap: &mut Beatmap, params: &KeyConverterParams, accents: O
             row.quota = size.saturating_sub(k).min(max_chord - k.min(max_chord)).min(MAX_EXTRAS) as u8;
         }
     }
-    // The two rows a trill or jumptrill alternates get the same size, so
     // both hands play the same chords.
     for i in 1..rows.len() {
         if rows[i].trill && rows[i - 1].trill && rows[i].copy == 0 {
@@ -2969,6 +3037,32 @@ fn convert_marked(beatmap: &mut Beatmap, params: &KeyConverterParams, accents: O
         }
         _ => 0.0,
     };
+    // Where each source column naturally goes (see [`W_DEVIATION`]): its
+    // place on the keyboard, scaled. Going down where each hand keeps its
+    // keys (7K -> 6K, the middle key lost), its place on its hand, as
+    // hand-made converts keep it, the middle key between the hands. Where
+    // the hands lose keys too (7K -> 4K), a column keeping to its key
+    // anchors it: 7K maps on 4K got 8.8% of their notes 90 ms or less after
+    // the last one of their key instead of 6.4%.
+    let mut natural = [0.0; MAX_KEYS];
+    for (src, n) in natural.iter_mut().enumerate().take(src_keys) {
+        *n = pos(src, src_keys) * dst_keys as f64 - 0.5;
+    }
+    let group = |hands: &[Hand; MAX_KEYS], keys: usize, hand: Hand| -> Vec<usize> { (0..keys).filter(|&c| hands[c] == hand).collect() };
+    let keep_hands = dst_keys < src_keys
+        && [Hand::Left, Hand::Right].iter().all(|&h| group(&src_hands, src_keys, h).len() <= group(&dst_hands, dst_keys, h).len());
+    if keep_hands {
+        for hand in [Hand::Left, Hand::Right, Hand::Either] {
+            let (from, to) = (group(&src_hands, src_keys, hand), group(&dst_hands, dst_keys, hand));
+            for (i, &src) in from.iter().enumerate() {
+                natural[src] = match to.first() {
+                    Some(&first) => first as f64 + (i as f64 + 0.5) / from.len() as f64 * to.len() as f64 - 0.5,
+                    None => (dst_keys as f64 - 1.0) / 2.0,
+                };
+            }
+        }
+    }
+
     let ctx = Ctx {
         notes: &notes,
         src_keys,
@@ -2976,6 +3070,8 @@ fn convert_marked(beatmap: &mut Beatmap, params: &KeyConverterParams, accents: O
         keep_jacks: params.keep_jacks,
         fill,
         src_hands,
+        natural,
+        keep_hands,
         dst_hands,
         thumbs,
         dst_groups,
@@ -3003,7 +3099,7 @@ fn convert_marked(beatmap: &mut Beatmap, params: &KeyConverterParams, accents: O
     let mut extra: Vec<HitObject> = Vec::new();
 
     for (row, decision) in rows.iter().zip(&path) {
-        for (&i, col) in kept(row.notes.len(), decision.size()).iter().zip(keys_of(decision.keys)) {
+        for (i, col) in decision.placed() {
             targets[notes[row.notes.start + i].idx] = Some(col);
         }
         for &col in &decision.extras[..decision.n_extras as usize] {
