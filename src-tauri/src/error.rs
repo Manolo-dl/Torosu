@@ -93,7 +93,7 @@ pub enum Error {
     #[error("{task} only works on osu!mania maps")]
     ManiaOnly { task: &'static str },
 
-    #[error("FLN Converter and No LN can't go in the same convert")]
+    #[error("FLN Converter, No LN and Short LN can't go in the same convert")]
     LnTasksTogether,
 
     #[error("the key converter supports 1K to 10K and 12K, 14K, 16K and 18K, not {keys}K")]

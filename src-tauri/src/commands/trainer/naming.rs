@@ -13,7 +13,7 @@ use crate::commands::trainer::analysis::layout;
 use crate::commands::trainer::mania;
 use crate::commands::trainer::model::{
     Density, DifficultySettings, FlnConverterParams, KeyConverterParams, LengthUnit, NoteLength, RateChangeParams,
-    TrainerTaskParams,
+    ShortLnParams, TrainerTaskParams,
 };
 
 /// Formats a number with at most `decimals` decimals, without trailing zeros:
@@ -164,8 +164,23 @@ fn ln_tag(task: &TrainerTaskParams) -> Option<String> {
     match task {
         TrainerTaskParams::FlnConverter(params) => Some(fln_tag(params)),
         TrainerTaskParams::NoLn(_) => Some("No LN".to_string()),
+        TrainerTaskParams::ShortLn(params) => Some(short_ln_tag(params)),
         _ => None,
     }
+}
+
+/// `SLN 1/8-1/2`, `SLN 50-200ms`, `SLN 1/8-200ms`: the minimum and maximum
+/// lengths.
+fn short_ln_tag(params: &ShortLnParams) -> String {
+    let (min, max) = (params.min_length, params.max_length);
+    let length = |l: NoteLength, unit: bool| match l.unit {
+        LengthUnit::Beat => format!("1/{}", fmt_num(l.value, 2)),
+        LengthUnit::Ms if unit => format!("{}ms", fmt_num(l.value, 0)),
+        LengthUnit::Ms => fmt_num(l.value, 0),
+    };
+    // `50-200ms` rather than `50ms-200ms`.
+    let both_ms = min.unit == LengthUnit::Ms && max.unit == LengthUnit::Ms;
+    format!("SLN {}-{}", length(min, !both_ms), length(max, true))
 }
 
 /// `FLN` reworks the existing LNs too, `INV` keeps them. `BG` is the gap and
@@ -301,6 +316,12 @@ mod tests {
             rework_existing_ln: true,
         };
         assert_eq!(named(&TrainerTaskParams::FlnConverter(fln)), "Insane (FLN BG4 ML4)");
+        let beat = |value| NoteLength { unit: LengthUnit::Beat, value };
+        let ms = |value| NoteLength { unit: LengthUnit::Ms, value };
+        let sln = |min_length, max_length| TrainerTaskParams::ShortLn(ShortLnParams { min_length, max_length });
+        assert_eq!(named(&sln(beat(8.0), beat(2.0))), "Insane (SLN 1/8-1/2)");
+        assert_eq!(named(&sln(ms(50.0), ms(200.0))), "Insane (SLN 50-200ms)");
+        assert_eq!(named(&sln(beat(8.0), ms(200.0))), "Insane (SLN 1/8-200ms)");
     }
 
     #[test]

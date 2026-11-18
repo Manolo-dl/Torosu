@@ -95,7 +95,7 @@
         "pitch": "피치를 올리거나 내림",
         "sv": "SV 정규화",
         "keys": "키 변환, 예: 10K Dense",
-        "fln": "롱노트 작업, 예: FLN BG4 ML4 또는 No LN",
+        "fln": "롱노트 작업, 예: FLN BG4 ML4, No LN 또는 SLN 1/8-1/2",
         "tasks": "위의 세 가지를 각각 괄호에 넣어",
         "stats": "바꾼 HP, CS, AR, OD"
       },
@@ -262,6 +262,7 @@
       "SVNormalizer": "SV 정규화",
       "FlnConverter": "FLN 변환",
       "NoLn": "LN 없음",
+      "ShortLn": "짧은 LN",
       "KeyConverter": "키 변환"
     },
     "rate": {
@@ -278,6 +279,13 @@
     },
     "noLn": {
       "description": "모든 롱노트를 열과 히트사운드는 그대로 두고 시작 지점의 일반 노트로 바꿉니다."
+    },
+    "shortLn": {
+      "description": "일반 노트와 롱노트를 모두 짧은 롱노트로 바꿉니다. 같은 열의 다음 노트까지의 여유만큼, 최대 길이까지 늘리며 그 노트보다 최소 1/8박 먼저 뗍니다.",
+      "minLength": "최소 길이",
+      "minLengthHint": "같은 열의 다음 노트까지 이만큼의 여유가 없는 노트는 일반 노트로 남습니다.",
+      "maxLength": "최대 길이",
+      "maxLengthHint": "여유가 있을 때 롱노트가 될 수 있는 최대 길이입니다. 최소보다 짧으면 최소가 사용됩니다."
     },
     "fln": {
       "description": "모든 노트를 같은 줄의 다음 노트 직전까지 누르는 롱노트로 바꿉니다.",
@@ -547,7 +555,7 @@
     "sameDifficulty": "변환 {{ first }}과(와) {{ second }}이(가) 같은 난이도 '{{ name }}'을(를) 만듭니다: 둘 중 하나를 바꾸세요.",
     "convert": "변환 {{ number }}: {{ cause }}",
     "maniaOnly": "{{ task }}은(는) osu!mania 맵에서만 작동합니다",
-    "lnTasksTogether": "FLN 변환과 LN 없음은 같은 변환에 함께 넣을 수 없습니다",
+    "lnTasksTogether": "FLN 변환, LN 없음, 짧은 LN은 같은 변환에 함께 넣을 수 없습니다",
     "unsupportedKeys": "키 변환은 1K~10K와 12K, 14K, 16K, 18K를 지원하며, {{ keys }}K는 지원하지 않습니다",
     "onePlayer": "키 변환은 1인용 맵을 만듭니다. {{ layout }}은(는) 지원하지 않습니다",
     "noAudio": "맵의 오디오에 지원하는 트랙이 없습니다",

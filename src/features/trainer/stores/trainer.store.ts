@@ -9,6 +9,7 @@ import {
     DifficultyKey,
     DifficultyStat,
     FlnConverterParams,
+    ShortLnParams,
     KeyConverterParams,
     RateChangeParams,
     TrainerConvert,
@@ -128,7 +129,7 @@ export const TrainerStore = signalStore(
                 updateTasks(convertId, tasks => tasks.filter(t => t.id !== taskId));
             },
 
-            updateTaskParams(convertId: string, taskId: string, params: RateChangeParams | FlnConverterParams | KeyConverterParams | {}) {
+            updateTaskParams(convertId: string, taskId: string, params: RateChangeParams | FlnConverterParams | ShortLnParams | KeyConverterParams | {}) {
                 updateTasks(convertId, tasks => tasks.map(t =>
                     t.id === taskId ? { ...t, task: { ...t.task, params } as TrainerTaskParams } : t
                 ));

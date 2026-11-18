@@ -11,7 +11,7 @@ use rosu_map::{
 
 use crate::commands::trainer::{
     mania,
-    model::{FlnConverterParams, LengthUnit, NoteLength},
+    model::FlnConverterParams,
     timing,
 };
 
@@ -30,18 +30,7 @@ pub fn apply(beatmap: &mut Beatmap, params: &FlnConverterParams) -> Result<()> {
     }
 
     let keys = mania::key_count(beatmap);
-    let main_beat_len = timing::main_beat_len(beatmap);
-
-    // Gimmick maps use fake BPMs (0.001, 100000...) that would make a beat
-    // based gap absurd, so those fall back to the main BPM.
-    let beat_len_at = |time: f64| {
-        let beat_len = beatmap.control_points.timing_point_at(time).map(|tp| tp.beat_len);
-        match (beat_len, main_beat_len) {
-            (Some(b), Some(main)) if !timing::is_plausible_beat_len(b, main) => main,
-            (Some(b), _) if b.is_finite() && b > 0.0 => b,
-            (_, main) => main.unwrap_or(500.0),
-        }
-    };
+    let beat_len_at = timing::beat_len_at(beatmap);
 
     let mut columns: Vec<Vec<usize>> = vec![Vec::new(); keys];
     for (i, obj) in beatmap.hit_objects.iter().enumerate() {
@@ -71,8 +60,8 @@ pub fn apply(beatmap: &mut Beatmap, params: &FlnConverterParams) -> Result<()> {
                 continue;
             };
 
-            let gap = length_ms(params.gap, beat_len_at(next));
-            let min_length = length_ms(params.min_length, beat_len_at(start));
+            let gap = params.gap.ms(beat_len_at(next));
+            let min_length = params.min_length.ms(beat_len_at(start));
             let length = (next - gap).round() - start;
 
             if length < min_length.round() - MIN_LENGTH_LENIENCY || length <= 0.0 {
@@ -83,6 +72,8 @@ pub fn apply(beatmap: &mut Beatmap, params: &FlnConverterParams) -> Result<()> {
         }
     }
 
+    // It reads the map's timing, which the changes leave as it is.
+    drop(beat_len_at);
     let mut converted = 0;
 
     for (i, length) in changes {
@@ -107,17 +98,10 @@ pub fn apply(beatmap: &mut Beatmap, params: &FlnConverterParams) -> Result<()> {
     Ok(())
 }
 
-fn length_ms(length: NoteLength, beat_len: f64) -> f64 {
-    match length.unit {
-        LengthUnit::Beat if length.value > 0.0 => beat_len / length.value,
-        LengthUnit::Beat => 0.0,
-        LengthUnit::Ms => length.value.max(0.0),
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::commands::trainer::model::{LengthUnit, NoteLength};
 
     // 4K at 120 BPM (500 ms per beat). Column 0: notes at 0, 500, 625, 1000
     // (an LN) and 2000. Column 1: a single note at 0, second once sorted.

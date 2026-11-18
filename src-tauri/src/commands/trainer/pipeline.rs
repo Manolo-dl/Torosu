@@ -4,7 +4,7 @@ use rosu_map::Beatmap;
 use crate::commands::trainer::{
     accents::Accents,
     model::{TrainerTask, TrainerTaskParams},
-    tasks::{fln_converter, key_converter, no_ln, rate_change, sv_normalizer},
+    tasks::{fln_converter, key_converter, no_ln, rate_change, short_ln, sv_normalizer},
 };
 use crate::error::Error;
 
@@ -33,6 +33,7 @@ pub fn run<'a, 't>(
             TrainerTaskParams::SVNormalizer(_) => sv_normalizer::apply(beatmap)?,
             TrainerTaskParams::FlnConverter(params) => fln_converter::apply(beatmap, params)?,
             TrainerTaskParams::NoLn(_) => no_ln::apply(beatmap)?,
+            TrainerTaskParams::ShortLn(params) => short_ln::apply(beatmap, params)?,
             TrainerTaskParams::KeyConverter(params) => {
                 let audio = if key_converter::uses_audio(params) { accents().map(|a| a.at_rate(rate)) } else { None };
                 key_converter::apply_with(beatmap, params, audio)?

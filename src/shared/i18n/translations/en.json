@@ -95,7 +95,7 @@
         "pitch": "pitch raised or lowered",
         "sv": "SV normalized",
         "keys": "the key converter, 10K Dense",
-        "fln": "the long note task: FLN BG4 ML4 or No LN",
+        "fln": "the long note task: FLN BG4 ML4, No LN or SLN 1/8-1/2",
         "tasks": "those three, each in parentheses",
         "stats": "the changed HP, CS, AR and OD"
       },
@@ -262,6 +262,7 @@
       "SVNormalizer": "SV Normalizer",
       "FlnConverter": "FLN Converter",
       "NoLn": "No LN",
+      "ShortLn": "Short LN",
       "KeyConverter": "Key Converter"
     },
     "rate": {
@@ -278,6 +279,13 @@
     },
     "noLn": {
       "description": "Turns every long note into a normal note where it starts, keeping its column and hitsounds."
+    },
+    "shortLn": {
+      "description": "Turns every note, normal or long, into a short long note: as long as the room before the next note in its column allows, up to the maximum, released at least 1/8 beat before that note.",
+      "minLength": "Minimum length",
+      "minLengthHint": "Notes without room for this before the next note in their column stay normal notes.",
+      "maxLength": "Maximum length",
+      "maxLengthHint": "The longest a long note gets where there is room for it. Below the minimum, the minimum is used."
     },
     "fln": {
       "description": "Turns every note into a long note held until just before the next note in its column.",
@@ -547,7 +555,7 @@
     "sameDifficulty": "Converts {{ first }} and {{ second }} make the same difficulty, \"{{ name }}\": change one of them.",
     "convert": "Convert {{ number }}: {{ cause }}",
     "maniaOnly": "{{ task }} only works on osu!mania maps",
-    "lnTasksTogether": "FLN Converter and No LN can't go in the same convert",
+    "lnTasksTogether": "FLN Converter, No LN and Short LN can't go in the same convert",
     "unsupportedKeys": "The key converter supports 1K to 10K and 12K, 14K, 16K and 18K, not {{ keys }}K",
     "onePlayer": "The key converter maps for one player, not {{ layout }}",
     "noAudio": "The map's audio has no supported track",

@@ -95,7 +95,7 @@
         "pitch": "ピッチの上げ下げ",
         "sv": "SV 正規化",
         "keys": "キー変換（例: 10K Dense）",
-        "fln": "ロングノートのタスク（例: FLN BG4 ML4、No LN）",
+        "fln": "ロングノートのタスク（例: FLN BG4 ML4、No LN、SLN 1/8-1/2）",
         "tasks": "上の 3 つを、それぞれ括弧付きで",
         "stats": "変更した HP、CS、AR、OD"
       },
@@ -262,6 +262,7 @@
       "SVNormalizer": "SV 正規化",
       "FlnConverter": "FLN 変換",
       "NoLn": "LN なし",
+      "ShortLn": "短い LN",
       "KeyConverter": "キー変換"
     },
     "rate": {
@@ -278,6 +279,13 @@
     },
     "noLn": {
       "description": "すべてのロングノートを、列とヒットサウンドはそのままに、始点の通常ノーツに変えます。"
+    },
+    "shortLn": {
+      "description": "通常ノーツもロングノートもすべて短いロングノートに変えます。同じ列の次のノーツまでの空きに合わせて最大の長さまで伸ばし、そのノーツの少なくとも 1/8 拍前で離します。",
+      "minLength": "最小の長さ",
+      "minLengthHint": "同じ列の次のノーツまでにこの長さの空きがないノーツは、通常ノーツのままになります。",
+      "maxLength": "最大の長さ",
+      "maxLengthHint": "空きがあるときのロングノートの最大の長さです。最小より短い場合は最小が使われます。"
     },
     "fln": {
       "description": "すべてのノーツを、同じ列の次のノーツの直前まで押し続けるロングノーツに変えます。",
@@ -547,7 +555,7 @@
     "sameDifficulty": "コンバート {{ first }} と {{ second }} が同じ難易度「{{ name }}」になります: どちらかを変更してください。",
     "convert": "コンバート {{ number }}: {{ cause }}",
     "maniaOnly": "{{ task }} は osu!mania のマップでのみ使えます",
-    "lnTasksTogether": "FLN 変換と LN なしは同じコンバートに入れられません",
+    "lnTasksTogether": "FLN 変換、LN なし、短い LN は同じコンバートに入れられません",
     "unsupportedKeys": "キー変換が対応しているのは 1K〜10K と 12K、14K、16K、18K で、{{ keys }}K には対応していません",
     "onePlayer": "キー変換は 1 人用のマップを作ります。{{ layout }} には対応していません",
     "noAudio": "マップの音声に対応しているトラックがありません",

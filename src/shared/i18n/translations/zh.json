@@ -95,7 +95,7 @@
         "pitch": "音高升高或降低",
         "sv": "SV 标准化",
         "keys": "键数转换器，10K Dense",
-        "fln": "长条任务：FLN BG4 ML4 或 No LN",
+        "fln": "长条任务：FLN BG4 ML4、No LN 或 SLN 1/8-1/2",
         "tasks": "以上三项，各自带括号",
         "stats": "改动后的 HP、CS、AR 和 OD"
       },
@@ -262,6 +262,7 @@
       "SVNormalizer": "SV 标准化器",
       "FlnConverter": "FLN 转换器",
       "NoLn": "去除 LN",
+      "ShortLn": "短长条",
       "KeyConverter": "键数转换器"
     },
     "rate": {
@@ -278,6 +279,13 @@
     },
     "noLn": {
       "description": "把每个长条变成起点处的普通音符，保留其轨道和打击音效。"
+    },
+    "shortLn": {
+      "description": "把每个音符（普通音符或长条）变成短长条：在同一轨道下一个音符之前的空间允许的范围内尽量长，最长到最大长度，并至少在该音符前 1/8 拍松开。",
+      "minLength": "最小长度",
+      "minLengthHint": "在同一轨道下一个音符之前没有这么多空间的音符保持为普通音符。",
+      "maxLength": "最大长度",
+      "maxLengthHint": "有空间时长条的最大长度。小于最小长度时使用最小长度。"
     },
     "fln": {
       "description": "将每个音符变为长条，持续到同列下一个音符之前。",
@@ -547,7 +555,7 @@
     "sameDifficulty": "转换 {{ first }} 与 {{ second }} 生成的难度相同，均为“{{ name }}”：请修改其中一个。",
     "convert": "转换 {{ number }}：{{ cause }}",
     "maniaOnly": "{{ task }} 仅适用于 osu!mania 谱面",
-    "lnTasksTogether": "FLN 转换器和去除 LN 不能放在同一个转换中",
+    "lnTasksTogether": "FLN 转换器、去除 LN 和短长条不能放在同一个转换中",
     "unsupportedKeys": "键数转换器支持 1K 到 10K 以及 12K、14K、16K 和 18K，不支持 {{ keys }}K",
     "onePlayer": "键数转换器只面向单人，不支持 {{ layout }}",
     "noAudio": "谱面的音频没有受支持的音轨",

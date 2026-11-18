@@ -95,7 +95,7 @@
         "pitch": "tono subido o bajado",
         "sv": "SV normalizado",
         "keys": "el key converter, 10K Dense",
-        "fln": "la tarea de notas largas: FLN BG4 ML4 o No LN",
+        "fln": "la tarea de notas largas: FLN BG4 ML4, No LN o SLN 1/8-1/2",
         "tasks": "esos tres, cada uno entre paréntesis",
         "stats": "el HP, CS, AR y OD cambiados"
       },
@@ -262,6 +262,7 @@
       "SVNormalizer": "Normalizador de SV",
       "FlnConverter": "Conversor a FLN",
       "NoLn": "Sin LN",
+      "ShortLn": "LN cortas",
       "KeyConverter": "Conversor de teclas"
     },
     "rate": {
@@ -278,6 +279,13 @@
     },
     "noLn": {
       "description": "Convierte cada nota larga en una nota normal donde empieza, manteniendo su columna y sus hitsounds."
+    },
+    "shortLn": {
+      "description": "Convierte cada nota, normal o larga, en una nota larga corta: tan larga como deje el hueco hasta la siguiente nota de su columna, hasta la máxima, y soltándose al menos 1/8 de beat antes de esa nota.",
+      "minLength": "Longitud mínima",
+      "minLengthHint": "Las notas sin hueco para esto antes de la siguiente nota de su columna se quedan como notas normales.",
+      "maxLength": "Longitud máxima",
+      "maxLengthHint": "Lo más larga que llega a ser una nota larga cuando hay hueco. Si es menor que la mínima, se usa la mínima."
     },
     "fln": {
       "description": "Convierte cada nota en una nota larga que se mantiene hasta justo antes de la siguiente nota de su columna.",
@@ -547,7 +555,7 @@
     "sameDifficulty": "Los converts {{ first }} y {{ second }} crean la misma dificultad, \"{{ name }}\": cambia uno de los dos.",
     "convert": "Convert {{ number }}: {{ cause }}",
     "maniaOnly": "{{ task }} solo funciona en mapas de osu!mania",
-    "lnTasksTogether": "El conversor a FLN y Sin LN no pueden ir en el mismo convert",
+    "lnTasksTogether": "El conversor a FLN, Sin LN y LN cortas no pueden ir en el mismo convert",
     "unsupportedKeys": "El conversor de teclas admite de 1K a 10K y 12K, 14K, 16K y 18K, no {{ keys }}K",
     "onePlayer": "El conversor de teclas mapea para un jugador, no {{ layout }}",
     "noAudio": "El audio del mapa no tiene ninguna pista compatible",

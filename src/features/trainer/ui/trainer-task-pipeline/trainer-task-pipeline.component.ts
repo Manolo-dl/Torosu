@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import {
   FlnConverterParams,
+  ShortLnParams,
   KeyConverterParams,
   KeyDensity,
   PLAYSTYLES,
@@ -71,7 +72,7 @@ export class TrainerTaskPipelineComponent {
   });
 
   taskLabels = TASK_LABELS;
-  availableTasks: TrainerTaskType[] = ['RateChange', 'SVNormalizer', 'FlnConverter', 'NoLn', 'KeyConverter'];
+  availableTasks: TrainerTaskType[] = ['RateChange', 'SVNormalizer', 'FlnConverter', 'NoLn', 'ShortLn', 'KeyConverter'];
   readonly menuOpen = signal(false);
 
   availableTasksFiltered = computed(() => {
@@ -140,6 +141,12 @@ export class TrainerTaskPipelineComponent {
         break;
       case 'NoLn':
         this.trainer.addTask(this.convert().id, { type: 'NoLn', params: {} });
+        break;
+      case 'ShortLn':
+        this.trainer.addTask(this.convert().id, {
+          type: 'ShortLn',
+          params: { minLength: { unit: 'beat', value: 8 }, maxLength: { unit: 'beat', value: 2 } },
+        });
         break;
       case 'FlnConverter':
         this.trainer.addTask(this.convert().id, {
@@ -218,6 +225,10 @@ export class TrainerTaskPipelineComponent {
   }
 
   onFlnChange(id: string, params: FlnConverterParams, change: Partial<FlnConverterParams>) {
+    this.trainer.updateTaskParams(this.convert().id, id, { ...params, ...change });
+  }
+
+  onShortLnChange(id: string, params: ShortLnParams, change: Partial<ShortLnParams>) {
     this.trainer.updateTaskParams(this.convert().id, id, { ...params, ...change });
   }
 }

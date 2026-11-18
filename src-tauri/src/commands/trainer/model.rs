@@ -34,6 +34,17 @@ pub enum LengthUnit {
     Ms,
 }
 
+impl NoteLength {
+    /// In ms, where a beat lasts `beat_len`; never negative.
+    pub fn ms(self, beat_len: f64) -> f64 {
+        match self.unit {
+            LengthUnit::Beat if self.value > 0.0 => beat_len / self.value,
+            LengthUnit::Beat => 0.0,
+            LengthUnit::Ms => self.value.max(0.0),
+        }
+    }
+}
+
 #[derive(Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FlnConverterParams {
@@ -44,6 +55,16 @@ pub struct FlnConverterParams {
     /// Also reshapes the long notes the map already has (FLN); otherwise they
     /// are kept as they are (INV).
     pub rework_existing_ln: bool,
+}
+
+#[derive(Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ShortLnParams {
+    /// Notes with less room than this before the next of their column stay
+    /// normal notes.
+    pub min_length: NoteLength,
+    /// The longest a long note gets, with room for it.
+    pub max_length: NoteLength,
 }
 
 /// Extra notes the key converter adds to fill the new keys.
@@ -79,13 +100,16 @@ pub enum TrainerTaskParams {
     KeyConverter(KeyConverterParams),
     /// Every long note turned into a normal note.
     NoLn(EmptyParams),
+    /// Every note turned into a short long note.
+    ShortLn(ShortLnParams),
 }
 
 impl TrainerTaskParams {
-    /// Whether it decides which notes are long notes: FLN and No LN. A convert
+    /// Whether it decides which notes are long notes: FLN, No LN and Short
+    /// LN. A convert
     /// has one of them at most.
     pub fn shapes_lns(&self) -> bool {
-        matches!(self, Self::FlnConverter(_) | Self::NoLn(_))
+        matches!(self, Self::FlnConverter(_) | Self::NoLn(_) | Self::ShortLn(_))
     }
 }
 

@@ -168,6 +168,26 @@
             <div appearance="info" size="s" tuiNotification>{{ 'trainer.noLn.description' | transloco }}</div>
           }
 
+          @if (entry.task.type === 'ShortLn') {
+            <p class="description">{{ 'trainer.shortLn.description' | transloco }}</p>
+
+            <app-trainer-note-length
+              hint="trainer.shortLn.minLengthHint"
+              label="trainer.shortLn.minLength"
+              [bpm]="originalBpm()"
+              [value]="entry.task.params.minLength"
+              (valueChange)="onShortLnChange(entry.id, entry.task.params, { minLength: $event })"
+            />
+
+            <app-trainer-note-length
+              hint="trainer.shortLn.maxLengthHint"
+              label="trainer.shortLn.maxLength"
+              [bpm]="originalBpm()"
+              [value]="entry.task.params.maxLength"
+              (valueChange)="onShortLnChange(entry.id, entry.task.params, { maxLength: $event })"
+            />
+          }
+
           @if (entry.task.type === 'FlnConverter') {
             <p class="description">{{ 'trainer.fln.description' | transloco }}</p>
 
