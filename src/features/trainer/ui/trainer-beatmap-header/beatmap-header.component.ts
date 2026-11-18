@@ -18,6 +18,12 @@ export class TrainerBeatmapHeaderComponent {
   readonly reader = inject(OsuReaderStore);
   private readonly config = inject(ConfigurationStore);
   readonly skillDisplay = computed(() => this.config.config()?.trainer.skill_display ?? 'dan');
+  /**
+   * With `include_mods` on, the skill with the mods selected in osu! when
+   * they change it; the map's own otherwise. Only one is shown.
+   */
+  readonly played = computed(() => (this.config.config()?.trainer.include_mods ? this.reader.played() : null));
+  readonly shownSkill = computed(() => this.played()?.skill ?? this.reader.skill());
   readonly modeIcon = modeIcon;
   readonly modeColor = modeColor;
 

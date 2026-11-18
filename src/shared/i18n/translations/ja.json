@@ -68,6 +68,8 @@
       "shortcutsHint": "プレイ中に osu! で選択中のマップをプリセットで変換します。各プリセットのキーはトレーナーで設定してください（最初は未設定です）",
       "skill": "難易度の推定",
       "skillHint": "選択中のマップと各コンバートの難しさを、Mania Tracker の計算機で表示します。段位は 4K・6K・7K のマップ向けで、MSD は MinaCalc（6K〜8K は Prism）によるものです",
+      "includeMods": "osu! の MOD を含める",
+      "includeModsHint": "選択中のマップを、そのままではなく osu! で選択中の難しさを変える MOD（DT・NC・HT・HR・EZ）込みで評価します。変わるのは表示される推定だけで、コンバートやトレーナーの調整は元のマップで評価されます",
       "skillDisplay": {
         "dan": "段位",
         "msd": "MSD",
@@ -189,7 +191,8 @@
       "dan": "段位",
       "lnDan": "LN 段位",
       "result": "結果",
-      "vsMap": "選択中のマップと比べて {{ delta }}"
+      "vsMap": "選択中のマップと比べて {{ delta }}",
+      "withMods": "osu! で選択中の {{ mods }} で評価（{{ rate }}x）"
     },
     "difficulty": {
       "title": "難易度",

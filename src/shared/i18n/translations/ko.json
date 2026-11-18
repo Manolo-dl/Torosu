@@ -68,6 +68,8 @@
       "shortcutsHint": "플레이 중에 osu!에서 선택한 맵을 프리셋으로 변환합니다. 각 프리셋의 키는 트레이너에서 설정하며, 처음에는 설정되어 있지 않습니다",
       "skill": "난이도 추정",
       "skillHint": "선택한 맵과 각 변환의 난이도를 Mania Tracker의 계산기로 표시합니다. 단위는 4K, 6K, 7K 맵용이며, MSD는 MinaCalc(6K-8K는 Prism)에서 가져옵니다",
+      "includeMods": "osu! 모드 포함",
+      "includeModsHint": "선택한 맵을 그대로가 아니라 osu!에서 선택한, 난이도를 바꾸는 모드(DT, NC, HT, HR, EZ)를 적용해 평가합니다. 표시되는 추정치만 바뀌며, 변환과 트레이너 수정 사항은 원래 맵 기준으로 평가됩니다",
       "skillDisplay": {
         "dan": "단위",
         "msd": "MSD",
@@ -189,7 +191,8 @@
       "dan": "단위",
       "lnDan": "롱노트 단위",
       "result": "결과",
-      "vsMap": "선택한 맵 대비 {{ delta }}"
+      "vsMap": "선택한 맵 대비 {{ delta }}",
+      "withMods": "osu!에서 선택한 {{ mods }}로 평가 ({{ rate }}x)"
     },
     "difficulty": {
       "title": "난이도",

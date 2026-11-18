@@ -68,6 +68,8 @@
       "shortcutsHint": "游玩时用预设转换 osu! 里选中的谱面。在谱面生成器中为每个预设设置快捷键，默认都没有设置",
       "skill": "难度估计",
       "skillHint": "谱面生成器显示所选谱面与每个转换的难度，来自 Mania Tracker 的计算器。段位只用于 4K、6K 和 7K 谱面；MSD 来自 MinaCalc，6K–8K 时来自 Prism",
+      "includeMods": "包含 osu! 模组",
+      "includeModsHint": "用 osu! 中所选、会改变难度的模组（DT、NC、HT、HR、EZ）评估所选谱面，而不是按原样评估。只改变显示的估算：转换和生成器的修改仍按原谱面评估",
       "skillDisplay": {
         "dan": "段位",
         "msd": "MSD",
@@ -189,7 +191,8 @@
       "dan": "段位",
       "lnDan": "LN 段位",
       "result": "结果",
-      "vsMap": "与所选谱面相比 {{ delta }}"
+      "vsMap": "与所选谱面相比 {{ delta }}",
+      "withMods": "按 osu! 中所选的 {{ mods }} 评估（{{ rate }}x）"
     },
     "difficulty": {
       "title": "难度",

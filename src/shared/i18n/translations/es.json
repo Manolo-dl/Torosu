@@ -68,6 +68,8 @@
       "shortcutsHint": "Convierte el mapa seleccionado en osu! con un preset mientras juegas. Las teclas de cada preset se ponen en el Trainer; al principio no hay ninguna",
       "skill": "Estimación de dificultad",
       "skillHint": "Lo que muestra el trainer de lo difícil que es el mapa seleccionado y cada convert, con la calculadora de Mania Tracker. Los dans son para mapas 4K, 6K y 7K; el MSD sale de MinaCalc, o de Prism en 6K-8K",
+      "includeMods": "Incluir mods de osu!",
+      "includeModsHint": "Calcula el mapa seleccionado con los mods seleccionados en osu! que lo cambian (DT, NC, HT, HR, EZ) en vez de como es. Solo cambia la estimación que se muestra: los converts y los modificadores del trainer se siguen calculando sobre el mapa base",
       "skillDisplay": {
         "dan": "Dan",
         "msd": "MSD",
@@ -189,7 +191,8 @@
       "dan": "Dan",
       "lnDan": "Dan LN",
       "result": "Resultado",
-      "vsMap": "{{ delta }} respecto al mapa seleccionado"
+      "vsMap": "{{ delta }} respecto al mapa seleccionado",
+      "withMods": "Calculado con {{ mods }} seleccionado en osu! ({{ rate }}x)"
     },
     "difficulty": {
       "title": "Dificultad",

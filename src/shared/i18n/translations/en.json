@@ -68,6 +68,8 @@
       "shortcutsHint": "Convert the map selected in osu! with a preset while you play. Set each preset's keys in the Trainer, none are set at first",
       "skill": "Difficulty estimate",
       "skillHint": "What the trainer shows of how hard the selected map and each convert are, from Mania Tracker's calculator. Dans are for 4K, 6K and 7K maps; the MSD comes from MinaCalc, or from Prism on 6K-8K",
+      "includeMods": "Include osu! mods",
+      "includeModsHint": "Rate the selected map with the mods selected in osu! that change it (DT, NC, HT, HR, EZ) instead of as it is. Only the estimate shown changes: the converts and the trainer's modifiers are still rated on the map as it is",
       "skillDisplay": {
         "dan": "Dan",
         "msd": "MSD",
@@ -189,7 +191,8 @@
       "dan": "Dan",
       "lnDan": "LN dan",
       "result": "Result",
-      "vsMap": "{{ delta }} against the selected map"
+      "vsMap": "{{ delta }} against the selected map",
+      "withMods": "Rated with {{ mods }} selected in osu! ({{ rate }}x)"
     },
     "difficulty": {
       "title": "Difficulty",

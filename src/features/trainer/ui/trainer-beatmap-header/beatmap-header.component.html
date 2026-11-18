@@ -12,7 +12,14 @@
     </div>
 
     <div class="side">
-      <app-skill-summary size="l" onImage [skill]="reader.skill()" [display]="skillDisplay()" />
+      @if (played(); as played) {
+        @if (skillDisplay() !== 'none') {
+          <span class="mods" [title]="'trainer.skill.withMods' | transloco: { mods: played.mods.name, rate: played.mods.rate }">
+            {{ played.mods.name }}
+          </span>
+        }
+      }
+      <app-skill-summary size="l" onImage [skill]="shownSkill()" [display]="skillDisplay()" />
       @let current = mode();
       @if (current !== null) {
         <tui-icon
