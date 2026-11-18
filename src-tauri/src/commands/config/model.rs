@@ -105,6 +105,13 @@ pub struct TrainerConfig {
     #[serde(default)]
     pub skill_display: SkillDisplay,
 
+    /// Rates the selected map with the mods selected in osu! that change how
+    /// hard it is (DT, NC, HT, HR, EZ) instead of as it is. Only the
+    /// estimate shown changes: the converts' are still against the map as
+    /// it is, as are the maps the trainer makes.
+    #[serde(default = "default_false")]
+    pub include_mods: bool,
+
     /// Runs the presets with a shortcut while osu! has the focus. Off by
     /// default, and no shortcut is set: one of the game's would be taken.
     #[serde(default = "default_false")]
@@ -204,6 +211,7 @@ impl Default for TrainerConfig {
             open_osz: default_true(),
             name_format: default_name_format(),
             skill_display: SkillDisplay::default(),
+            include_mods: default_false(),
             shortcuts_enabled: default_false(),
             shortcuts: Vec::new(),
         }

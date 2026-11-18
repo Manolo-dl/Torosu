@@ -2,7 +2,10 @@ import type { Ruleset } from '@entities/osu-reader';
 
 export type DifficultyKey = 'hp' | 'cs' | 'od' | 'ar';
 
-export type TrainerTaskType = 'RateChange' | 'SVNormalizer' | 'FlnConverter' | 'KeyConverter';
+export type TrainerTaskType = 'RateChange' | 'SVNormalizer' | 'FlnConverter' | 'NoLn' | 'ShortLn' | 'KeyConverter';
+
+/** The tasks that decide which notes are long notes: a convert has one of them at most. */
+export const LN_TASKS: readonly TrainerTaskType[] = ['FlnConverter', 'NoLn', 'ShortLn'];
 
 export interface RateChangeParams {
     rate: number;
@@ -26,6 +29,13 @@ export interface FlnConverterParams {
     minLength: NoteLength;
     /** Also reshapes the long notes the map already has. */
     reworkExistingLn: boolean;
+}
+
+export interface ShortLnParams {
+    /** Notes with less room than this before the next of their column stay normal notes. */
+    minLength: NoteLength;
+    /** The longest a long note gets, with room for it. */
+    maxLength: NoteLength;
 }
 
 /** Extra notes added to fill the new keys when converting to more keys. */
@@ -95,6 +105,8 @@ export type TrainerTaskParams =
     | { type: 'RateChange'; params: RateChangeParams }
     | { type: 'SVNormalizer'; params: {} }
     | { type: 'FlnConverter'; params: FlnConverterParams }
+    | { type: 'NoLn'; params: {} }
+    | { type: 'ShortLn'; params: ShortLnParams }
     | { type: 'KeyConverter'; params: KeyConverterParams };
 
 export interface TrainerTask {
@@ -129,6 +141,8 @@ export const TASK_LABELS: Record<TrainerTaskType, string> = {
     RateChange: 'trainer.tasks.RateChange',
     SVNormalizer: 'trainer.tasks.SVNormalizer',
     FlnConverter: 'trainer.tasks.FlnConverter',
+    NoLn: 'trainer.tasks.NoLn',
+    ShortLn: 'trainer.tasks.ShortLn',
     KeyConverter: 'trainer.tasks.KeyConverter',
 };
 
@@ -137,6 +151,8 @@ export const TASK_MODES: Record<TrainerTaskType, readonly Ruleset[] | 'all'> = {
     RateChange: 'all',
     SVNormalizer: 'all',
     FlnConverter: ['mania'],
+    NoLn: ['mania'],
+    ShortLn: ['mania'],
     KeyConverter: ['mania'],
 };
 

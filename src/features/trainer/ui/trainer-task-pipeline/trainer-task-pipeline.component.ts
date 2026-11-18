@@ -3,10 +3,12 @@ import { FormsModule } from '@angular/forms';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import {
   FlnConverterParams,
+  ShortLnParams,
   KeyConverterParams,
   KeyDensity,
   PLAYSTYLES,
   RateChangeParams,
+  LN_TASKS,
   TASK_LABELS,
   TrainerConvert,
   rateChangeTask,
@@ -70,13 +72,17 @@ export class TrainerTaskPipelineComponent {
   });
 
   taskLabels = TASK_LABELS;
-  availableTasks: TrainerTaskType[] = ['RateChange', 'SVNormalizer', 'FlnConverter', 'KeyConverter'];
+  availableTasks: TrainerTaskType[] = ['RateChange', 'SVNormalizer', 'FlnConverter', 'NoLn', 'ShortLn', 'KeyConverter'];
   readonly menuOpen = signal(false);
 
   availableTasksFiltered = computed(() => {
     const existingTypes = new Set(this.convert().tasks.map(t => t.task.type));
+    // One task decides the long notes: with one of them, the others are not offered.
+    const shapesLns = this.convert().tasks.some(t => LN_TASKS.includes(t.task.type));
     const mode = this.reader.originalMode();
-    return this.availableTasks.filter(type => !existingTypes.has(type) && taskSupportsMode(type, mode));
+    return this.availableTasks.filter(
+      type => !existingTypes.has(type) && !(shapesLns && LN_TASKS.includes(type)) && taskSupportsMode(type, mode),
+    );
   });
 
   /** Whether a task of `type` doesn't work on the map's mode: it stays, but is not applied. */
@@ -132,6 +138,15 @@ export class TrainerTaskPipelineComponent {
         break;
       case 'SVNormalizer':
         this.trainer.addTask(this.convert().id, { type: 'SVNormalizer', params: {} });
+        break;
+      case 'NoLn':
+        this.trainer.addTask(this.convert().id, { type: 'NoLn', params: {} });
+        break;
+      case 'ShortLn':
+        this.trainer.addTask(this.convert().id, {
+          type: 'ShortLn',
+          params: { minLength: { unit: 'beat', value: 8 }, maxLength: { unit: 'beat', value: 2 } },
+        });
         break;
       case 'FlnConverter':
         this.trainer.addTask(this.convert().id, {
@@ -210,6 +225,10 @@ export class TrainerTaskPipelineComponent {
   }
 
   onFlnChange(id: string, params: FlnConverterParams, change: Partial<FlnConverterParams>) {
+    this.trainer.updateTaskParams(this.convert().id, id, { ...params, ...change });
+  }
+
+  onShortLnChange(id: string, params: ShortLnParams, change: Partial<ShortLnParams>) {
     this.trainer.updateTaskParams(this.convert().id, id, { ...params, ...change });
   }
 }

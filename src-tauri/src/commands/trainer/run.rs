@@ -241,10 +241,7 @@ fn build_convert(source: &Source, number: usize, mut tasks: Vec<TrainerTask>, co
         rate: rate.as_ref(),
         bpm: timing::main_bpm(&beatmap),
         sv_normalized: tasks.iter().any(|t| matches!(t.task, TrainerTaskParams::SVNormalizer(_))),
-        fln: tasks.iter().find_map(|t| match &t.task {
-            TrainerTaskParams::FlnConverter(params) => Some(params),
-            _ => None,
-        }),
+        ln: tasks.iter().map(|t| &t.task).find(|t| t.shapes_lns()),
         keys: tasks.iter().find_map(|t| match &t.task {
             TrainerTaskParams::KeyConverter(params) => Some(params),
             _ => None,

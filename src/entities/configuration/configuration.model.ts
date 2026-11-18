@@ -24,6 +24,8 @@ export interface TrainerConfig {
     name_format: string;
     /** What the trainer shows of how hard the selected map and each convert are; `dan` by default. */
     skill_display: 'dan' | 'msd' | 'both' | 'none';
+    /** Rate the selected map with the mods selected in osu! (DT, NC, HT, HR, EZ) instead of as it is; off by default. */
+    include_mods: boolean;
     /** Run the presets with keyboard shortcuts while osu! has the focus; off by default. */
     shortcuts_enabled: boolean;
     /** The shortcut of each preset that has one; none by default, so none of the game's is taken. */

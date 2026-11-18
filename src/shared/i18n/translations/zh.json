@@ -57,7 +57,7 @@
       "hqAudioHint": "以约 192 kbit/s 而非 128 kbit/s 编码新音频，文件大小约为 1.5 倍",
       "hqVideo": "高质量视频",
       "hqVideoHint": "以更高质量重新编码缩放后的视频，文件大小接近两倍",
-      "rateChange": "倍速调整",
+      "rateChange": "倍速调整器",
       "autoPitch": "自动音高",
       "autoPitchHint": "低于 1.0 倍时保持音高，高于时随速度升高音高，而不用在每个倍速里单独选择",
       "openOsz": "打开 .osz",
@@ -68,6 +68,8 @@
       "shortcutsHint": "游玩时用预设转换 osu! 里选中的谱面。在谱面生成器中为每个预设设置快捷键，默认都没有设置",
       "skill": "难度估计",
       "skillHint": "谱面生成器显示所选谱面与每个转换的难度，来自 Mania Tracker 的计算器。段位只用于 4K、6K 和 7K 谱面；MSD 来自 MinaCalc，6K–8K 时来自 Prism",
+      "includeMods": "包含 osu! 模组",
+      "includeModsHint": "用 osu! 中所选、会改变难度的模组（DT、NC、HT、HR、EZ）评估所选谱面，而不是按原样评估。只改变显示的估算：转换和生成器的修改仍按原谱面评估",
       "skillDisplay": {
         "dan": "段位",
         "msd": "MSD",
@@ -93,7 +95,7 @@
         "pitch": "音高升高或降低",
         "sv": "SV 标准化",
         "keys": "键数转换器，10K Dense",
-        "fln": "FLN 转换器，FLN BG4 ML4",
+        "fln": "长条任务：FLN BG4 ML4、No LN 或 SLN 1/8-1/2",
         "tasks": "以上三项，各自带括号",
         "stats": "改动后的 HP、CS、AR 和 OD"
       },
@@ -189,7 +191,8 @@
       "dan": "段位",
       "lnDan": "LN 段位",
       "result": "结果",
-      "vsMap": "与所选谱面相比 {{ delta }}"
+      "vsMap": "与所选谱面相比 {{ delta }}",
+      "withMods": "按 osu! 中所选的 {{ mods }} 评估（{{ rate }}x）"
     },
     "difficulty": {
       "title": "难度",
@@ -255,9 +258,11 @@
     "onlyFor": "仅适用于 {{ modes }} 谱面：在此谱面上跳过",
     "and": " 和 ",
     "tasks": {
-      "RateChange": "倍速调整",
+      "RateChange": "倍速调整器",
       "SVNormalizer": "SV 标准化器",
-      "FlnConverter": "FLN 转换器",
+      "FlnConverter": "Full LN",
+      "NoLn": "去除 LN",
+      "ShortLn": "短长条",
       "KeyConverter": "键数转换器"
     },
     "rate": {
@@ -271,6 +276,16 @@
     },
     "sv": {
       "description": "移除原有的 SV 变化，并在每个 BPM 变化处设置 SV，使滚动速度保持主 BPM 的速度。BPM 变化、Kiai 和打击音都会保留。"
+    },
+    "noLn": {
+      "description": "把每个长条变成起点处的普通音符，保留其轨道和打击音效。"
+    },
+    "shortLn": {
+      "description": "把每个音符（普通音符或长条）变成短长条：在同一轨道下一个音符之前的空间允许的范围内尽量长，最长到最大长度，并至少在该音符前 1/8 拍松开。",
+      "minLength": "最小长度",
+      "minLengthHint": "在同一轨道下一个音符之前没有这么多空间的音符保持为普通音符。",
+      "maxLength": "最大长度",
+      "maxLengthHint": "有空间时长条的最大长度。小于最小长度时使用最小长度。"
     },
     "fln": {
       "description": "将每个音符变为长条，持续到同列下一个音符之前。",
@@ -540,6 +555,7 @@
     "sameDifficulty": "转换 {{ first }} 与 {{ second }} 生成的难度相同，均为“{{ name }}”：请修改其中一个。",
     "convert": "转换 {{ number }}：{{ cause }}",
     "maniaOnly": "{{ task }} 仅适用于 osu!mania 谱面",
+    "lnTasksTogether": "Full LN、去除 LN 和短长条不能放在同一个转换中",
     "unsupportedKeys": "键数转换器支持 1K 到 10K 以及 12K、14K、16K 和 18K，不支持 {{ keys }}K",
     "onePlayer": "键数转换器只面向单人，不支持 {{ layout }}",
     "noAudio": "谱面的音频没有受支持的音轨",

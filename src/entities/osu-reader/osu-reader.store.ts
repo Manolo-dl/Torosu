@@ -1,6 +1,6 @@
 import { errorText } from '@shared/i18n';
 import { patchState, signalStore, withComputed, withMethods, withState } from "@ngrx/signals";
-import { OsuReaderSnapshot, OsuReaderStatus, SelectedBeatmap, SkillUpdate } from "./osu-reader.model";
+import { OsuReaderSnapshot, OsuReaderStatus, PlayedSkillUpdate, SelectedBeatmap, SkillUpdate } from "./osu-reader.model";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { computed, inject } from "@angular/core";
@@ -50,6 +50,8 @@ export const OsuReaderStore = signalStore(
         originalMode: computed(() => store.data()?.attributes?.originalMode ?? null),
         /** Dan and MSD at 1.0x; `null` while they are estimated. */
         skill: computed(() => store.data()?.skill ?? null),
+        /** Dan and MSD with the mods selected in osu!, while `include_mods` is on and they change them. */
+        played: computed(() => store.data()?.played ?? null),
     })),
 
     withMethods((store, notify = inject(NotifyService), transloco = inject(TranslocoService)) => {
@@ -94,6 +96,12 @@ export const OsuReaderStore = signalStore(
             // Late, for a beatmap that is no longer selected.
             if (data?.beatmap.checksum !== checksum) return;
             patchState(store, { data: { ...data, skill } });
+        }
+
+        function setPlayed({ checksum, played }: PlayedSkillUpdate) {
+            const data = store.data();
+            if (data?.beatmap.checksum !== checksum) return;
+            patchState(store, { data: { ...data, played } });
         }
 
         function setStatus(status: OsuReaderStatus) {
@@ -150,6 +158,7 @@ export const OsuReaderStore = signalStore(
                     await listen<OsuReaderStatus>('osu-reader-status', event => setStatus(event.payload));
                     await listen<SelectedBeatmap>('osu-beatmap', event => setBeatmap(event.payload));
                     await listen<SkillUpdate>('osu-beatmap-skill', event => setSkill(event.payload));
+                    await listen<PlayedSkillUpdate>('osu-beatmap-played-skill', event => setPlayed(event.payload));
 
                     // An event that arrived meanwhile is newer than the snapshot.
                     const snapshot = await invoke<OsuReaderSnapshot>('connect_osu_reader');

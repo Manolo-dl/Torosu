@@ -45,6 +45,7 @@ const DEFAULT_CONFIG: AppConfig = {
     open_osz: true,
     name_format: DEFAULT_NAME_FORMAT,
     skill_display: 'dan',
+    include_mods: false,
     shortcuts_enabled: false,
     shortcuts: [],
   },

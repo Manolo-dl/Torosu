@@ -57,7 +57,7 @@
       "hqAudioHint": "Codifica el audio nuevo a ~192 kbit/s en vez de ~128 kbit/s; ocupa la mitad más",
       "hqVideo": "Vídeo de alta calidad",
       "hqVideoHint": "Recodifica el vídeo escalado con más calidad; ocupa casi el doble",
-      "rateChange": "Cambio de rate",
+      "rateChange": "Cambiador de rate",
       "autoPitch": "Tono automático",
       "autoPitchHint": "Mantiene el tono por debajo de 1.0x y lo deja subir con la velocidad por encima, en vez de elegirlo en cada cambio de rate",
       "openOsz": "Abrir el .osz",
@@ -68,6 +68,8 @@
       "shortcutsHint": "Convierte el mapa seleccionado en osu! con un preset mientras juegas. Las teclas de cada preset se ponen en el Trainer; al principio no hay ninguna",
       "skill": "Estimación de dificultad",
       "skillHint": "Lo que muestra el trainer de lo difícil que es el mapa seleccionado y cada convert, con la calculadora de Mania Tracker. Los dans son para mapas 4K, 6K y 7K; el MSD sale de MinaCalc, o de Prism en 6K-8K",
+      "includeMods": "Incluir mods de osu!",
+      "includeModsHint": "Calcula el mapa seleccionado con los mods seleccionados en osu! que lo cambian (DT, NC, HT, HR, EZ) en vez de como es. Solo cambia la estimación que se muestra: los converts y los modificadores del trainer se siguen calculando sobre el mapa base",
       "skillDisplay": {
         "dan": "Dan",
         "msd": "MSD",
@@ -93,7 +95,7 @@
         "pitch": "tono subido o bajado",
         "sv": "SV normalizado",
         "keys": "el key converter, 10K Dense",
-        "fln": "el FLN converter, FLN BG4 ML4",
+        "fln": "la tarea de notas largas: FLN BG4 ML4, No LN o SLN 1/8-1/2",
         "tasks": "esos tres, cada uno entre paréntesis",
         "stats": "el HP, CS, AR y OD cambiados"
       },
@@ -189,7 +191,8 @@
       "dan": "Dan",
       "lnDan": "Dan LN",
       "result": "Resultado",
-      "vsMap": "{{ delta }} respecto al mapa seleccionado"
+      "vsMap": "{{ delta }} respecto al mapa seleccionado",
+      "withMods": "Calculado con {{ mods }} seleccionado en osu! ({{ rate }}x)"
     },
     "difficulty": {
       "title": "Dificultad",
@@ -255,9 +258,11 @@
     "onlyFor": "Solo para mapas de {{ modes }}: se salta en este",
     "and": " y ",
     "tasks": {
-      "RateChange": "Cambio de rate",
+      "RateChange": "Cambiador de rate",
       "SVNormalizer": "Normalizador de SV",
-      "FlnConverter": "Conversor a FLN",
+      "FlnConverter": "Full LN",
+      "NoLn": "Sin LN",
+      "ShortLn": "LN cortas",
       "KeyConverter": "Conversor de teclas"
     },
     "rate": {
@@ -271,6 +276,16 @@
     },
     "sv": {
       "description": "Se quitan los cambios de SV originales y se pone un SV en cada cambio de BPM, para que la velocidad de scroll sea la del BPM principal. Se mantienen los cambios de BPM, el kiai y los hitsounds."
+    },
+    "noLn": {
+      "description": "Convierte cada nota larga en una nota normal donde empieza, manteniendo su columna y sus hitsounds."
+    },
+    "shortLn": {
+      "description": "Convierte cada nota, normal o larga, en una nota larga corta: tan larga como deje el hueco hasta la siguiente nota de su columna, hasta la máxima, y soltándose al menos 1/8 de beat antes de esa nota.",
+      "minLength": "Longitud mínima",
+      "minLengthHint": "Las notas sin hueco para esto antes de la siguiente nota de su columna se quedan como notas normales.",
+      "maxLength": "Longitud máxima",
+      "maxLengthHint": "Lo más larga que llega a ser una nota larga cuando hay hueco. Si es menor que la mínima, se usa la mínima."
     },
     "fln": {
       "description": "Convierte cada nota en una nota larga que se mantiene hasta justo antes de la siguiente nota de su columna.",
@@ -540,6 +555,7 @@
     "sameDifficulty": "Los converts {{ first }} y {{ second }} crean la misma dificultad, \"{{ name }}\": cambia uno de los dos.",
     "convert": "Convert {{ number }}: {{ cause }}",
     "maniaOnly": "{{ task }} solo funciona en mapas de osu!mania",
+    "lnTasksTogether": "Full LN, Sin LN y LN cortas no pueden ir en el mismo convert",
     "unsupportedKeys": "El conversor de teclas admite de 1K a 10K y 12K, 14K, 16K y 18K, no {{ keys }}K",
     "onePlayer": "El conversor de teclas mapea para un jugador, no {{ layout }}",
     "noAudio": "El audio del mapa no tiene ninguna pista compatible",

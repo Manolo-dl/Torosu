@@ -67,13 +67,16 @@ fn rate(source: &Source, tasks: &[TrainerTask]) -> anyhow::Result<Option<Skill>>
             _ => None,
         })
         .product();
-    // The FLN gaps in ms and the key converter's accents depend on the times
+    // The FLN and Short LN lengths in ms and the key converter's accents
+    // depend on the times
     // a rate change before them gives: then the tasks run in their order and
     // the rate is taken back out after, which can move a note by a ms.
     // Otherwise the rate changes are left out, so the map is the original.
     let first_rate = tasks.iter().position(|t| matches!(t.task, TrainerTaskParams::RateChange(_)));
     let timed_after_rate = first_rate.is_some_and(|first| {
-        tasks[first..].iter().any(|t| matches!(t.task, TrainerTaskParams::FlnConverter(_) | TrainerTaskParams::KeyConverter(_)))
+        tasks[first..].iter().any(|t| {
+            matches!(t.task, TrainerTaskParams::FlnConverter(_) | TrainerTaskParams::ShortLn(_) | TrainerTaskParams::KeyConverter(_))
+        })
     });
     let tasks: Vec<&TrainerTask> =
         tasks.iter().filter(|t| timed_after_rate || !matches!(t.task, TrainerTaskParams::RateChange(_))).collect();

@@ -57,7 +57,7 @@
       "hqAudioHint": "新しい音声を ~128 kbit/s ではなく ~192 kbit/s でエンコードします（サイズは約 1.5 倍）",
       "hqVideo": "高画質動画",
       "hqVideoHint": "速度を変えた動画をより高い画質で再エンコードします（サイズはほぼ 2 倍）",
-      "rateChange": "レート変更",
+      "rateChange": "レートチェンジャー",
       "autoPitch": "ピッチを自動調整",
       "autoPitchHint": "レート変更ごとに選ぶ代わりに、1.0x 未満ではピッチを保ち、それ以上では速度に合わせて上げます",
       "openOsz": ".osz を開く",
@@ -68,6 +68,8 @@
       "shortcutsHint": "プレイ中に osu! で選択中のマップをプリセットで変換します。各プリセットのキーはトレーナーで設定してください（最初は未設定です）",
       "skill": "難易度の推定",
       "skillHint": "選択中のマップと各コンバートの難しさを、Mania Tracker の計算機で表示します。段位は 4K・6K・7K のマップ向けで、MSD は MinaCalc（6K〜8K は Prism）によるものです",
+      "includeMods": "osu! の MOD を含める",
+      "includeModsHint": "選択中のマップを、そのままではなく osu! で選択中の難しさを変える MOD（DT・NC・HT・HR・EZ）込みで評価します。変わるのは表示される推定だけで、コンバートやトレーナーの調整は元のマップで評価されます",
       "skillDisplay": {
         "dan": "段位",
         "msd": "MSD",
@@ -93,7 +95,7 @@
         "pitch": "ピッチの上げ下げ",
         "sv": "SV 正規化",
         "keys": "キー変換（例: 10K Dense）",
-        "fln": "FLN 変換（例: FLN BG4 ML4）",
+        "fln": "ロングノートのタスク（例: FLN BG4 ML4、No LN、SLN 1/8-1/2）",
         "tasks": "上の 3 つを、それぞれ括弧付きで",
         "stats": "変更した HP、CS、AR、OD"
       },
@@ -189,7 +191,8 @@
       "dan": "段位",
       "lnDan": "LN 段位",
       "result": "結果",
-      "vsMap": "選択中のマップと比べて {{ delta }}"
+      "vsMap": "選択中のマップと比べて {{ delta }}",
+      "withMods": "osu! で選択中の {{ mods }} で評価（{{ rate }}x）"
     },
     "difficulty": {
       "title": "難易度",
@@ -255,9 +258,11 @@
     "onlyFor": "{{ modes }} のマップ専用: このマップではスキップされます",
     "and": "、",
     "tasks": {
-      "RateChange": "レート変更",
+      "RateChange": "レートチェンジャー",
       "SVNormalizer": "SV 正規化",
-      "FlnConverter": "FLN 変換",
+      "FlnConverter": "Full LN",
+      "NoLn": "LN なし",
+      "ShortLn": "短い LN",
       "KeyConverter": "キー変換"
     },
     "rate": {
@@ -271,6 +276,16 @@
     },
     "sv": {
       "description": "元の SV 変化を取り除き、BPM が変わるたびに SV を設定して、スクロール速度をメイン BPM のものに保ちます。BPM 変化、キアイ、ヒットサウンドは残ります。"
+    },
+    "noLn": {
+      "description": "すべてのロングノートを、列とヒットサウンドはそのままに、始点の通常ノーツに変えます。"
+    },
+    "shortLn": {
+      "description": "通常ノーツもロングノートもすべて短いロングノートに変えます。同じ列の次のノーツまでの空きに合わせて最大の長さまで伸ばし、そのノーツの少なくとも 1/8 拍前で離します。",
+      "minLength": "最小の長さ",
+      "minLengthHint": "同じ列の次のノーツまでにこの長さの空きがないノーツは、通常ノーツのままになります。",
+      "maxLength": "最大の長さ",
+      "maxLengthHint": "空きがあるときのロングノートの最大の長さです。最小より短い場合は最小が使われます。"
     },
     "fln": {
       "description": "すべてのノーツを、同じ列の次のノーツの直前まで押し続けるロングノーツに変えます。",
@@ -540,6 +555,7 @@
     "sameDifficulty": "コンバート {{ first }} と {{ second }} が同じ難易度「{{ name }}」になります: どちらかを変更してください。",
     "convert": "コンバート {{ number }}: {{ cause }}",
     "maniaOnly": "{{ task }} は osu!mania のマップでのみ使えます",
+    "lnTasksTogether": "Full LN、LN なし、短い LN は同じコンバートに入れられません",
     "unsupportedKeys": "キー変換が対応しているのは 1K〜10K と 12K、14K、16K、18K で、{{ keys }}K には対応していません",
     "onePlayer": "キー変換は 1 人用のマップを作ります。{{ layout }} には対応していません",
     "noAudio": "マップの音声に対応しているトラックがありません",

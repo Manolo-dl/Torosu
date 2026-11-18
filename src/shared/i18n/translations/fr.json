@@ -57,7 +57,7 @@
       "hqAudioHint": "Encode le nouvel audio à ~192 kbit/s au lieu de ~128 kbit/s : il pèse moitié plus",
       "hqVideo": "Vidéo haute qualité",
       "hqVideoHint": "Réencode la vidéo adaptée avec une meilleure qualité : elle pèse presque le double",
-      "rateChange": "Changement de rate",
+      "rateChange": "Changeur de rate",
       "autoPitch": "Tonalité automatique",
       "autoPitchHint": "Garde la tonalité sous 1.0x et la laisse monter avec la vitesse au-dessus, au lieu de la choisir à chaque changement de rate",
       "openOsz": "Ouvrir le .osz",
@@ -68,6 +68,8 @@
       "shortcutsHint": "Convertit la map sélectionnée dans osu! avec un preset pendant que vous jouez. Les touches de chaque preset se règlent dans le Trainer ; au départ, aucune n’est définie",
       "skill": "Estimation de la difficulté",
       "skillHint": "Ce que le trainer affiche de la difficulté de la map sélectionnée et de chaque convert, avec le calculateur de Mania Tracker. Les dans concernent les maps 4K, 6K et 7K ; le MSD vient de MinaCalc, ou de Prism en 6K-8K",
+      "includeMods": "Inclure les mods d'osu!",
+      "includeModsHint": "Évalue la map sélectionnée avec les mods sélectionnés dans osu! qui la changent (DT, NC, HT, HR, EZ) au lieu de telle quelle. Seule l'estimation affichée change : les converts et les modificateurs du trainer sont toujours évalués sur la map telle quelle",
       "skillDisplay": {
         "dan": "Dan",
         "msd": "MSD",
@@ -93,7 +95,7 @@
         "pitch": "tonalité montée ou baissée",
         "sv": "SV normalisé",
         "keys": "le key converter, 10K Dense",
-        "fln": "le FLN converter, FLN BG4 ML4",
+        "fln": "la tâche des notes longues : FLN BG4 ML4, No LN ou SLN 1/8-1/2",
         "tasks": "ces trois-là, chacun entre parenthèses",
         "stats": "les HP, CS, AR et OD modifiés"
       },
@@ -189,7 +191,8 @@
       "dan": "Dan",
       "lnDan": "Dan LN",
       "result": "Résultat",
-      "vsMap": "{{ delta }} par rapport à la map sélectionnée"
+      "vsMap": "{{ delta }} par rapport à la map sélectionnée",
+      "withMods": "Évaluée avec {{ mods }} sélectionné dans osu! ({{ rate }}x)"
     },
     "difficulty": {
       "title": "Difficulté",
@@ -255,9 +258,11 @@
     "onlyFor": "Uniquement pour les maps {{ modes }} : ignorée sur celle-ci",
     "and": " et ",
     "tasks": {
-      "RateChange": "Changement de rate",
+      "RateChange": "Changeur de rate",
       "SVNormalizer": "Normaliseur de SV",
-      "FlnConverter": "Convertisseur FLN",
+      "FlnConverter": "Full LN",
+      "NoLn": "Sans LN",
+      "ShortLn": "LN courtes",
       "KeyConverter": "Convertisseur de touches"
     },
     "rate": {
@@ -271,6 +276,16 @@
     },
     "sv": {
       "description": "Les changements de SV d’origine sont supprimés et un SV est placé à chaque changement de BPM, pour que la vitesse de défilement reste celle du BPM principal. Les changements de BPM, le kiai et les hitsounds sont conservés."
+    },
+    "noLn": {
+      "description": "Transforme chaque note longue en note normale là où elle commence, en gardant sa colonne et ses hitsounds."
+    },
+    "shortLn": {
+      "description": "Transforme chaque note, normale ou longue, en note longue courte : aussi longue que la place avant la note suivante de sa colonne le permet, jusqu'au maximum, relâchée au moins 1/8 de temps avant cette note.",
+      "minLength": "Longueur minimale",
+      "minLengthHint": "Les notes sans la place pour ceci avant la note suivante de leur colonne restent des notes normales.",
+      "maxLength": "Longueur maximale",
+      "maxLengthHint": "La longueur maximale d'une note longue quand il y a la place. En dessous du minimum, le minimum est utilisé."
     },
     "fln": {
       "description": "Transforme chaque note en note longue tenue jusqu’à juste avant la note suivante de sa colonne.",
@@ -540,6 +555,7 @@
     "sameDifficulty": "Les converts {{ first }} et {{ second }} créent la même difficulté, « {{ name }} » : modifiez l’un des deux.",
     "convert": "Convert {{ number }} : {{ cause }}",
     "maniaOnly": "{{ task }} ne fonctionne que sur les maps osu!mania",
+    "lnTasksTogether": "Full LN, Sans LN et LN courtes ne peuvent pas aller dans le même convert",
     "unsupportedKeys": "Le convertisseur de touches prend en charge de 1K à 10K et 12K, 14K, 16K et 18K, pas {{ keys }}K",
     "onePlayer": "Le convertisseur de touches mappe pour un seul joueur, pas {{ layout }}",
     "noAudio": "L’audio de la map n’a aucune piste prise en charge",
