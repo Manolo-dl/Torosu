@@ -8,7 +8,7 @@ use rosu_map::{
     util::Pos,
 };
 
-use crate::{commands::trainer::mania, error::Error};
+use crate::error::Error;
 
 /// Turns every long note into a normal note where it starts, keeping its
 /// column and hitsounds: the map as a rice map.
@@ -31,6 +31,7 @@ pub fn apply(beatmap: &mut Beatmap) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::commands::trainer::mania;
 
     // 4K: a long note in column 0 with a whistle, a note in column 1, and a
     // long note in column 3.
