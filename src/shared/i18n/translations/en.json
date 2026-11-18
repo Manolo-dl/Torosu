@@ -57,7 +57,7 @@
       "hqAudioHint": "Encode the new audio at ~192 kbit/s instead of ~128 kbit/s, half as big again",
       "hqVideo": "High quality video",
       "hqVideoHint": "Re-encode a scaled video at a better quality, nearly twice as big",
-      "rateChange": "Rate change",
+      "rateChange": "Rate Changer",
       "autoPitch": "Automatic pitch",
       "autoPitchHint": "Keep the pitch below 1.0x and let it rise with the speed above, instead of choosing it in each rate change",
       "openOsz": "Open the .osz",
@@ -68,6 +68,8 @@
       "shortcutsHint": "Convert the map selected in osu! with a preset while you play. Set each preset's keys in the Trainer, none are set at first",
       "skill": "Difficulty estimate",
       "skillHint": "What the trainer shows of how hard the selected map and each convert are, from Mania Tracker's calculator. Dans are for 4K, 6K and 7K maps; the MSD comes from MinaCalc, or from Prism on 6K-8K",
+      "includeMods": "Include osu! mods",
+      "includeModsHint": "Rate the selected map with the mods selected in osu! that change it (DT, NC, HT, HR, EZ) instead of as it is. Only the estimate shown changes: the converts and the trainer's modifiers are still rated on the map as it is",
       "skillDisplay": {
         "dan": "Dan",
         "msd": "MSD",
@@ -93,7 +95,7 @@
         "pitch": "pitch raised or lowered",
         "sv": "SV normalized",
         "keys": "the key converter, 10K Dense",
-        "fln": "the FLN converter, FLN BG4 ML4",
+        "fln": "the long note task: FLN BG4 ML4, No LN or SLN 1/8-1/2",
         "tasks": "those three, each in parentheses",
         "stats": "the changed HP, CS, AR and OD"
       },
@@ -189,7 +191,8 @@
       "dan": "Dan",
       "lnDan": "LN dan",
       "result": "Result",
-      "vsMap": "{{ delta }} against the selected map"
+      "vsMap": "{{ delta }} against the selected map",
+      "withMods": "Rated with {{ mods }} selected in osu! ({{ rate }}x)"
     },
     "difficulty": {
       "title": "Difficulty",
@@ -255,9 +258,11 @@
     "onlyFor": "Only for {{ modes }} maps: skipped on this one",
     "and": " and ",
     "tasks": {
-      "RateChange": "Rate Change",
+      "RateChange": "Rate Changer",
       "SVNormalizer": "SV Normalizer",
-      "FlnConverter": "FLN Converter",
+      "FlnConverter": "Full LN",
+      "NoLn": "No LN",
+      "ShortLn": "Short LN",
       "KeyConverter": "Key Converter"
     },
     "rate": {
@@ -271,6 +276,16 @@
     },
     "sv": {
       "description": "The original SV changes are removed and an SV is set on every BPM change, so the scroll speed stays the one of the main BPM. BPM changes, kiai and hitsounds are kept."
+    },
+    "noLn": {
+      "description": "Turns every long note into a normal note where it starts, keeping its column and hitsounds."
+    },
+    "shortLn": {
+      "description": "Turns every note, normal or long, into a short long note: as long as the room before the next note in its column allows, up to the maximum, released at least 1/8 beat before that note.",
+      "minLength": "Minimum length",
+      "minLengthHint": "Notes without room for this before the next note in their column stay normal notes.",
+      "maxLength": "Maximum length",
+      "maxLengthHint": "The longest a long note gets where there is room for it. Below the minimum, the minimum is used."
     },
     "fln": {
       "description": "Turns every note into a long note held until just before the next note in its column.",
@@ -540,6 +555,7 @@
     "sameDifficulty": "Converts {{ first }} and {{ second }} make the same difficulty, \"{{ name }}\": change one of them.",
     "convert": "Convert {{ number }}: {{ cause }}",
     "maniaOnly": "{{ task }} only works on osu!mania maps",
+    "lnTasksTogether": "Full LN, No LN and Short LN can't go in the same convert",
     "unsupportedKeys": "The key converter supports 1K to 10K and 12K, 14K, 16K and 18K, not {{ keys }}K",
     "onePlayer": "The key converter maps for one player, not {{ layout }}",
     "noAudio": "The map's audio has no supported track",

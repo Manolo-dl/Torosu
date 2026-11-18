@@ -79,6 +79,21 @@ impl BeatGrid {
     }
 }
 
+/// The beat length at each time, for lengths given in beats. Gimmick maps
+/// use fake BPMs (0.001, 100000...) that would make those absurd, so there it
+/// is the main BPM's.
+pub fn beat_len_at(beatmap: &Beatmap) -> impl Fn(f64) -> f64 + '_ {
+    let main = main_beat_len(beatmap);
+    move |time: f64| {
+        let beat_len = beatmap.control_points.timing_point_at(time).map(|tp| tp.beat_len);
+        match (beat_len, main) {
+            (Some(b), Some(main)) if !is_plausible_beat_len(b, main) => main,
+            (Some(b), _) if b.is_finite() && b > 0.0 => b,
+            (_, main) => main.unwrap_or(500.0),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

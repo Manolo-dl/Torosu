@@ -6,7 +6,7 @@ use osu_memory_reader::{Beatmap, BeatmapAttributes, BeatmapPaths, Error, OsuRead
 use serde::Serialize;
 use tauri::{AppHandle, Emitter, Manager, Runtime};
 
-use crate::skill::{self, Skill};
+use crate::skill::{self, PlayedMods, Skill};
 use crate::state::{AppConfigState, OsuReaderState};
 
 /// How often the selected beatmap is read while osu! is open.
@@ -26,6 +26,9 @@ pub struct SelectedBeatmap {
     /// later as `osu-beatmap-skill`), and for maps that can't be rated, those
     /// of other modes.
     pub skill: Option<Skill>,
+    /// Its dan and MSD with the mods selected in osu!, while `include_mods`
+    /// is on and they change them (they arrive as `osu-beatmap-played-skill`).
+    pub played: Option<PlayedSkill>,
 }
 
 /// The skill of the beatmap `checksum`, sent to the frontend as
@@ -34,6 +37,22 @@ pub struct SelectedBeatmap {
 pub struct SkillUpdate {
     pub checksum: String,
     pub skill: Skill,
+}
+
+/// A map's skill with the mods selected in osu! (see [`PlayedMods`]).
+#[derive(Clone, Serialize)]
+pub struct PlayedSkill {
+    pub mods: PlayedMods,
+    pub skill: Skill,
+}
+
+/// The skill of the beatmap `checksum` with the mods selected in osu!, sent
+/// to the frontend as `osu-beatmap-played-skill` whenever they change: `None`
+/// with none that changes it, `include_mods` off or a map that can't be rated.
+#[derive(Clone, Serialize)]
+pub struct PlayedSkillUpdate {
+    pub checksum: String,
+    pub played: Option<PlayedSkill>,
 }
 
 /// State of the reader, sent to the frontend as `osu-reader-status`.
@@ -101,6 +120,8 @@ fn run<R: Runtime>(app: AppHandle<R>) {
         // The beatmap whose skill was estimated (or tried): only while the
         // trainer shows it, so the setting turned on rates the one selected then.
         let mut rated = String::new();
+        // The beatmap and mods its skill with mods was estimated for (or tried).
+        let mut played_for: Option<(String, Option<PlayedMods>)> = None;
         while reader.is_running() {
             // Isolated read errors are normal while osu! swaps beatmaps or screens
             // (`ReadMemory`, or `Inconsistent` for a beatmap read while it moved
@@ -119,6 +140,19 @@ fn run<R: Runtime>(app: AppHandle<R>) {
                     estimate_skill(&app, &selected);
                 }
             }
+            // Then with the mods, once the map's own skill is known; a failed
+            // read of the mods waits for the next poll.
+            let mods = if include_mods(&app) { reader.menu_mods().ok().map(PlayedMods::of) } else { Some(None) };
+            if let Some(mods) = mods.filter(|_| rated == last_checksum && shows_skill(&app)) {
+                let key = (last_checksum.clone(), mods);
+                if played_for.as_ref() != Some(&key) {
+                    let selected = app.state::<OsuReaderState>().snapshot.lock().unwrap().beatmap.clone();
+                    if let Some(selected) = selected {
+                        estimate_played(&app, &selected, key.1.clone());
+                    }
+                    played_for = Some(key);
+                }
+            }
             thread::sleep(POLL_INTERVAL);
         }
 
@@ -130,6 +164,11 @@ fn run<R: Runtime>(app: AppHandle<R>) {
 /// Whether the trainer shows the dan or the MSD (see `skill_display`).
 fn shows_skill<R: Runtime>(app: &AppHandle<R>) -> bool {
     app.state::<AppConfigState>().config.lock().unwrap().trainer.shows_skill()
+}
+
+/// Whether the skill shown counts the mods selected in osu! (see `include_mods`).
+fn include_mods<R: Runtime>(app: &AppHandle<R>) -> bool {
+    app.state::<AppConfigState>().config.lock().unwrap().trainer.include_mods
 }
 
 fn status_for(error: &Error) -> ReaderStatus {
@@ -152,7 +191,7 @@ fn read_selected(reader: &OsuReader, beatmap: Beatmap) -> SelectedBeatmap {
             .ok()
     });
 
-    SelectedBeatmap { beatmap, paths, attributes, skill: None }
+    SelectedBeatmap { beatmap, paths, attributes, skill: None, played: None }
 }
 
 /// Estimates the skill of `selected` and sends it, if it is still the
@@ -163,7 +202,7 @@ fn estimate_skill<R: Runtime>(app: &AppHandle<R>, selected: &SelectedBeatmap) {
     if !skill::supported(attributes) {
         return;
     }
-    let Some(skill) = skill::estimate_file(&paths.osu) else { return };
+    let Some(skill) = skill::estimate_file(&paths.osu, None) else { return };
 
     let checksum = &selected.beatmap.checksum;
     let state = app.state::<OsuReaderState>();
@@ -174,6 +213,28 @@ fn estimate_skill<R: Runtime>(app: &AppHandle<R>, selected: &SelectedBeatmap) {
     }
     drop(snapshot);
     let _ = app.emit("osu-beatmap-skill", SkillUpdate { checksum: checksum.clone(), skill });
+}
+
+/// Estimates the skill of `selected` with `mods` and sends it, if it is
+/// still the selected beatmap; with no `mods`, sends that there is none.
+fn estimate_played<R: Runtime>(app: &AppHandle<R>, selected: &SelectedBeatmap, mods: Option<PlayedMods>) {
+    let rateable = selected.attributes.as_ref().is_some_and(skill::supported);
+    let played = match (&selected.paths, mods) {
+        (Some(paths), Some(mods)) if rateable => {
+            skill::estimate_file(&paths.osu, Some(&mods)).map(|skill| PlayedSkill { mods, skill })
+        }
+        _ => None,
+    };
+
+    let checksum = &selected.beatmap.checksum;
+    let state = app.state::<OsuReaderState>();
+    let mut snapshot = state.snapshot.lock().unwrap();
+    match &mut snapshot.beatmap {
+        Some(current) if current.beatmap.checksum == *checksum => current.played = played.clone(),
+        _ => return,
+    }
+    drop(snapshot);
+    let _ = app.emit("osu-beatmap-played-skill", PlayedSkillUpdate { checksum: checksum.clone(), played });
 }
 
 fn set_status<R: Runtime>(app: &AppHandle<R>, status: ReaderStatus) {

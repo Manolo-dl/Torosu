@@ -57,7 +57,7 @@
       "hqAudioHint": "새 오디오를 약 128 kbit/s 대신 약 192 kbit/s로 인코딩합니다 (크기는 약 1.5배)",
       "hqVideo": "고화질 영상",
       "hqVideoHint": "속도를 바꾼 영상을 더 높은 화질로 다시 인코딩합니다 (크기는 거의 2배)",
-      "rateChange": "배속 변경",
+      "rateChange": "배속 변경기",
       "autoPitch": "자동 피치",
       "autoPitchHint": "배속 변경마다 고르는 대신, 1.0x 미만에서는 피치를 유지하고 그 이상에서는 속도에 맞춰 올립니다",
       "openOsz": ".osz 열기",
@@ -68,6 +68,8 @@
       "shortcutsHint": "플레이 중에 osu!에서 선택한 맵을 프리셋으로 변환합니다. 각 프리셋의 키는 트레이너에서 설정하며, 처음에는 설정되어 있지 않습니다",
       "skill": "난이도 추정",
       "skillHint": "선택한 맵과 각 변환의 난이도를 Mania Tracker의 계산기로 표시합니다. 단위는 4K, 6K, 7K 맵용이며, MSD는 MinaCalc(6K-8K는 Prism)에서 가져옵니다",
+      "includeMods": "osu! 모드 포함",
+      "includeModsHint": "선택한 맵을 그대로가 아니라 osu!에서 선택한, 난이도를 바꾸는 모드(DT, NC, HT, HR, EZ)를 적용해 평가합니다. 표시되는 추정치만 바뀌며, 변환과 트레이너 수정 사항은 원래 맵 기준으로 평가됩니다",
       "skillDisplay": {
         "dan": "단위",
         "msd": "MSD",
@@ -93,7 +95,7 @@
         "pitch": "피치를 올리거나 내림",
         "sv": "SV 정규화",
         "keys": "키 변환, 예: 10K Dense",
-        "fln": "FLN 변환, 예: FLN BG4 ML4",
+        "fln": "롱노트 작업, 예: FLN BG4 ML4, No LN 또는 SLN 1/8-1/2",
         "tasks": "위의 세 가지를 각각 괄호에 넣어",
         "stats": "바꾼 HP, CS, AR, OD"
       },
@@ -189,7 +191,8 @@
       "dan": "단위",
       "lnDan": "롱노트 단위",
       "result": "결과",
-      "vsMap": "선택한 맵 대비 {{ delta }}"
+      "vsMap": "선택한 맵 대비 {{ delta }}",
+      "withMods": "osu!에서 선택한 {{ mods }}로 평가 ({{ rate }}x)"
     },
     "difficulty": {
       "title": "난이도",
@@ -255,9 +258,11 @@
     "onlyFor": "{{ modes }} 맵 전용: 이 맵에서는 건너뜁니다",
     "and": ", ",
     "tasks": {
-      "RateChange": "배속 변경",
+      "RateChange": "배속 변경기",
       "SVNormalizer": "SV 정규화",
-      "FlnConverter": "FLN 변환",
+      "FlnConverter": "Full LN",
+      "NoLn": "LN 없음",
+      "ShortLn": "짧은 LN",
       "KeyConverter": "키 변환"
     },
     "rate": {
@@ -271,6 +276,16 @@
     },
     "sv": {
       "description": "원래의 SV 변화를 없애고 BPM이 바뀔 때마다 SV를 설정해, 스크롤 속도를 메인 BPM의 속도로 유지합니다. BPM 변화, 키아이, 히트사운드는 그대로 남습니다."
+    },
+    "noLn": {
+      "description": "모든 롱노트를 열과 히트사운드는 그대로 두고 시작 지점의 일반 노트로 바꿉니다."
+    },
+    "shortLn": {
+      "description": "일반 노트와 롱노트를 모두 짧은 롱노트로 바꿉니다. 같은 열의 다음 노트까지의 여유만큼, 최대 길이까지 늘리며 그 노트보다 최소 1/8박 먼저 뗍니다.",
+      "minLength": "최소 길이",
+      "minLengthHint": "같은 열의 다음 노트까지 이만큼의 여유가 없는 노트는 일반 노트로 남습니다.",
+      "maxLength": "최대 길이",
+      "maxLengthHint": "여유가 있을 때 롱노트가 될 수 있는 최대 길이입니다. 최소보다 짧으면 최소가 사용됩니다."
     },
     "fln": {
       "description": "모든 노트를 같은 줄의 다음 노트 직전까지 누르는 롱노트로 바꿉니다.",
@@ -540,6 +555,7 @@
     "sameDifficulty": "변환 {{ first }}과(와) {{ second }}이(가) 같은 난이도 '{{ name }}'을(를) 만듭니다: 둘 중 하나를 바꾸세요.",
     "convert": "변환 {{ number }}: {{ cause }}",
     "maniaOnly": "{{ task }}은(는) osu!mania 맵에서만 작동합니다",
+    "lnTasksTogether": "Full LN, LN 없음, 짧은 LN은 같은 변환에 함께 넣을 수 없습니다",
     "unsupportedKeys": "키 변환은 1K~10K와 12K, 14K, 16K, 18K를 지원하며, {{ keys }}K는 지원하지 않습니다",
     "onePlayer": "키 변환은 1인용 맵을 만듭니다. {{ layout }}은(는) 지원하지 않습니다",
     "noAudio": "맵의 오디오에 지원하는 트랙이 없습니다",

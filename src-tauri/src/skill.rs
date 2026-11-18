@@ -4,7 +4,7 @@
 
 use std::path::Path;
 
-use osu_memory_reader::{BeatmapAttributes, Ruleset};
+use osu_memory_reader::{BeatmapAttributes, Mods, Ruleset};
 use serde::Serialize;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
@@ -90,25 +90,77 @@ pub struct Skill {
     pub msd: Option<Msd>,
 }
 
+/// The mods selected in osu! that change how hard a map is: its speed
+/// (DT and NC 1.5x, HT 0.75x) and its OD (HR, EZ), which dan-calc rates the
+/// accuracy a dan needs at. The others (HD, FL, MR, the key mods...) leave
+/// the estimate as it is.
+#[derive(Clone, Debug, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PlayedMods {
+    /// Their acronyms, as osu! shows them: `DT`, `HTHR`, `NCEZ`.
+    pub name: String,
+    pub rate: f64,
+    #[serde(skip)]
+    pub od: Option<OdMod>,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum OdMod {
+    HardRock,
+    Easy,
+}
+
+impl PlayedMods {
+    /// The ones of `mods` that change the estimate; `None` if none does.
+    pub fn of(mods: Mods) -> Option<Self> {
+        let od = if mods.contains(Mods::HARD_ROCK) {
+            Some(OdMod::HardRock)
+        } else if mods.contains(Mods::EASY) {
+            Some(OdMod::Easy)
+        } else {
+            None
+        };
+        let rate = mods.clock_rate();
+        if rate == 1.0 && od.is_none() {
+            return None;
+        }
+        let name = mods.acronyms().into_iter().filter(|a| matches!(*a, "DT" | "NC" | "HT" | "HR" | "EZ")).collect();
+        Some(Self { name, rate, od })
+    }
+}
+
 /// Whether [`estimate_file`] can rate a map with these attributes: mania maps.
 pub fn supported(attributes: &BeatmapAttributes) -> bool {
     attributes.mode == Ruleset::Mania
 }
 
-/// Reads `osu` and rates it at 1.0x and its own OD. `None` if it can't be
-/// read or rated.
+/// Reads `osu` and rates it as played with `mods`: without them, at 1.0x and
+/// its own OD. `None` if it can't be read or rated.
 ///
 /// Takes ~0.5 s the first time (it compiles MinaCalc's wasm), tens of ms
 /// after, so call it once per selected beatmap, not on every poll.
-pub fn estimate_file(osu: &Path) -> Option<Skill> {
+pub fn estimate_file(osu: &Path, mods: Option<&PlayedMods>) -> Option<Skill> {
     let bytes = std::fs::read(osu).map_err(|e| log::warn!("could not read {} to rate it: {e}", osu.display())).ok()?;
-    estimate(&String::from_utf8_lossy(&bytes), 1.0)
+    let osu = String::from_utf8_lossy(&bytes);
+    match mods {
+        Some(mods) => estimate_with(&osu, mods.rate, mods.od),
+        None => estimate(&osu, 1.0),
+    }
 }
 
 /// Rates the `.osu` text `osu` at `rate`, at the OD in the file. `None` if it
 /// can't be rated.
 pub fn estimate(osu: &str, rate: f64) -> Option<Skill> {
-    let estimate = dan_calc::estimate(osu, &dan_calc::Options { rate, ..Default::default() })
+    estimate_with(osu, rate, None)
+}
+
+/// [`estimate`] at the OD `od` makes of the file's.
+fn estimate_with(osu: &str, rate: f64, od: Option<OdMod>) -> Option<Skill> {
+    let od = od.map(|od| match od {
+        OdMod::HardRock => dan_calc::PlayedOd::Hr,
+        OdMod::Easy => dan_calc::PlayedOd::Ez,
+    });
+    let estimate = dan_calc::estimate(osu, &dan_calc::Options { rate, od, ..Default::default() })
         .map_err(|e| log::warn!("could not rate the map: {e}"))
         .ok()?;
 
@@ -185,10 +237,10 @@ pub mod tests {
         assert!(supported(&osu_memory_reader::attributes_from_path(&osu, None).unwrap()));
 
         let start = Instant::now();
-        let skill = estimate_file(&osu).expect("a 4K stream is rated");
+        let skill = estimate_file(&osu, None).expect("a 4K stream is rated");
         let first = start.elapsed();
         let start = Instant::now();
-        assert_eq!(estimate_file(&osu).as_ref(), Some(&skill));
+        assert_eq!(estimate_file(&osu, None).as_ref(), Some(&skill));
         println!("{skill:?}\nfirst estimate {first:?}, second {:?}", start.elapsed());
 
         let dan = skill.dan.expect("4K maps have a dan");
@@ -230,6 +282,29 @@ pub mod tests {
 
     #[test]
     fn missing_file() {
-        assert!(estimate_file(Path::new("/nonexistent/map.osu")).is_none());
+        assert!(estimate_file(Path::new("/nonexistent/map.osu"), None).is_none());
+    }
+
+    #[test]
+    fn only_speed_and_od_mods_change_the_estimate() {
+        assert_eq!(PlayedMods::of(Mods::HIDDEN | Mods::MIRROR | Mods::KEY7), None);
+        let nc = PlayedMods::of(Mods::NIGHTCORE | Mods::DOUBLE_TIME | Mods::HIDDEN).unwrap();
+        assert_eq!((nc.name.as_str(), nc.rate, nc.od), ("NC", 1.5, None));
+        let ht = PlayedMods::of(Mods::HALF_TIME | Mods::HARD_ROCK).unwrap();
+        assert_eq!((ht.name.as_str(), ht.rate, ht.od), ("HTHR", 0.75, Some(OdMod::HardRock)));
+        let ez = PlayedMods::of(Mods::EASY).unwrap();
+        assert_eq!((ez.name.as_str(), ez.rate, ez.od), ("EZ", 1.0, Some(OdMod::Easy)));
+    }
+
+    #[test]
+    fn mods_change_the_estimate_of_the_file() {
+        let dir = TestDir::new("skill-mods");
+        let osu = write(&dir, 4);
+        let dan = |mods: Mods| estimate_file(&osu, PlayedMods::of(mods).as_ref()).unwrap().dan.unwrap().primary.value;
+        let base = dan(Mods::NONE);
+        assert!(dan(Mods::DOUBLE_TIME) > base);
+        assert!(dan(Mods::HALF_TIME) < base);
+        assert!(dan(Mods::HARD_ROCK) > base, "HR's tighter windows rate higher");
+        assert!(dan(Mods::EASY) < base, "EZ's wider windows rate lower");
     }
 }

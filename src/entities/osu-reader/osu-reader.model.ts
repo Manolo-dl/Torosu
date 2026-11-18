@@ -99,6 +99,26 @@ export interface SkillUpdate {
     skill: Skill;
 }
 
+/** The mods selected in osu! that change how hard a map is: DT/NC, HT, HR, EZ. */
+export interface PlayedMods {
+    /** Their acronyms as osu! shows them: `DT`, `HTHR`. */
+    name: string;
+    /** 1.5 with DT/NC, 0.75 with HT, else 1. */
+    rate: number;
+}
+
+/** A map's skill with the mods selected in osu!. */
+export interface PlayedSkill {
+    mods: PlayedMods;
+    skill: Skill;
+}
+
+/** Payload of `osu-beatmap-played-skill`: `null` with no mod that changes the skill, or the setting off. */
+export interface PlayedSkillUpdate {
+    checksum: string;
+    played: PlayedSkill | null;
+}
+
 export interface SelectedBeatmap {
     beatmap: OsuBeatmap;
     /** `null` if the osu! folder was not found. */
@@ -107,6 +127,8 @@ export interface SelectedBeatmap {
     attributes: BeatmapAttributes | null;
     /** At 1.0x: `null` until it arrives as `osu-beatmap-skill`, and for maps that can't be rated. */
     skill: Skill | null;
+    /** With the mods selected in osu!, while `include_mods` is on and they change it. */
+    played: PlayedSkill | null;
 }
 
 export type OsuReaderStatus =

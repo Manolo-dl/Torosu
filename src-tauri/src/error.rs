@@ -89,9 +89,12 @@ pub enum Error {
     #[error("convert {number}: {cause}")]
     Convert { number: usize, cause: Box<Error> },
 
-    /// `task` is the frontend's name of the task: `KeyConverter` or `FlnConverter`.
+    /// `task` is the frontend's name of the task: `KeyConverter`, `FlnConverter`...
     #[error("{task} only works on osu!mania maps")]
     ManiaOnly { task: &'static str },
+
+    #[error("Full LN, No LN and Short LN can't go in the same convert")]
+    LnTasksTogether,
 
     #[error("the key converter supports 1K to 10K and 12K, 14K, 16K and 18K, not {keys}K")]
     UnsupportedKeys { keys: usize },
@@ -118,7 +121,7 @@ impl Error {
         "io", "notFound", "permissionDenied", "zip", "osuDb", "config", "http", "offline", "timeout", "updater",
         "internal", "message", "osuFolderNotFound", "notOsuFolder", "osuDbCorrupted", "collectionDbRead",
         "collectionDbWrite", "noBeatmapSelected", "noSession", "outputFolderNotFound", "httpStatus", "setTooLarge",
-        "createFolder", "readDiff", "nothingToConvert", "sameDifficulty", "convert", "maniaOnly", "unsupportedKeys",
+        "createFolder", "readDiff", "nothingToConvert", "sameDifficulty", "convert", "maniaOnly", "lnTasksTogether", "unsupportedKeys",
         "onePlayer", "noAudio", "video", "noUpdate",
     ];
 }
@@ -162,6 +165,7 @@ impl Error {
             // The frontend translates the cause too.
             Error::Convert { number, cause } => ("convert", params(json!({ "number": number, "cause": cause }))),
             Error::ManiaOnly { task } => ("maniaOnly", params(json!({ "task": task }))),
+            Error::LnTasksTogether => ("lnTasksTogether", Map::new()),
             Error::UnsupportedKeys { keys } => ("unsupportedKeys", params(json!({ "keys": keys }))),
             Error::OnePlayer { layout } => ("onePlayer", params(json!({ "layout": layout }))),
             Error::NoAudio => ("noAudio", Map::new()),
@@ -266,6 +270,7 @@ mod tests {
             Error::SameDifficulty { first: 1, second: 2, name: String::new() },
             Error::Convert { number: 1, cause: Box::new(Error::NoAudio) },
             Error::ManiaOnly { task: "FlnConverter" },
+            Error::LnTasksTogether,
             Error::UnsupportedKeys { keys: 11 },
             Error::OnePlayer { layout: String::new() },
             Error::NoAudio,
