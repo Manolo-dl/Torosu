@@ -4,6 +4,7 @@
 pub mod frames;
 pub mod graph;
 pub mod judge;
+pub mod live;
 pub mod scores;
 pub mod stats;
 

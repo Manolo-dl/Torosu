@@ -117,7 +117,7 @@ fn dotnet_ticks(time: &DateTime<Utc>) -> i64 {
 }
 
 /// The `.osr` files of `dir`; empty if it doesn't exist.
-fn replay_files(dir: &Path) -> HashSet<String> {
+pub(crate) fn replay_files(dir: &Path) -> HashSet<String> {
     let Ok(entries) = std::fs::read_dir(dir) else { return HashSet::new() };
     entries
         .flatten()

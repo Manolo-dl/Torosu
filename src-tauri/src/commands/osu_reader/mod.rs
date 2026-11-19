@@ -1,11 +1,12 @@
 pub mod export;
 
-use std::{sync::atomic::Ordering, thread, time::Duration};
+use std::{sync::atomic::Ordering, thread, time::{Duration, Instant}};
 
-use osu_memory_reader::{Beatmap, BeatmapAttributes, BeatmapPaths, Error, OsuReader};
+use osu_memory_reader::{Beatmap, BeatmapAttributes, BeatmapPaths, Error, GameState, OsuReader};
 use serde::Serialize;
 use tauri::{AppHandle, Emitter, Manager, Runtime};
 
+use crate::commands::replays::{live::ReplayWatch, scores};
 use crate::skill::{self, PlayedMods, Skill};
 use crate::state::{AppConfigState, OsuReaderState};
 
@@ -122,6 +123,7 @@ fn run<R: Runtime>(app: AppHandle<R>) {
         let mut rated = String::new();
         // The beatmap and mods its skill with mods was estimated for (or tried).
         let mut played_for: Option<(String, Option<PlayedMods>)> = None;
+        let mut replays = replay_watch(&app);
         while reader.is_running() {
             // Isolated read errors are normal while osu! swaps beatmaps or screens
             // (`ReadMemory`, or `Inconsistent` for a beatmap read while it moved
@@ -153,11 +155,31 @@ fn run<R: Runtime>(app: AppHandle<R>) {
                     played_for = Some(key);
                 }
             }
+            if let (Some(watch), Ok(status)) = (replays.as_mut(), reader.status()) {
+                announce_new_replays(&app, watch, status == GameState::Play);
+            }
             thread::sleep(POLL_INTERVAL);
         }
 
         log::info!("osu! closed, waiting for it to start again");
         set_status(&app, ReaderStatus::Waiting);
+    }
+}
+
+/// Watches osu!'s `Data/r` for the replays of the plays to come; `None`
+/// while the osu! folder is not set.
+fn replay_watch<R: Runtime>(app: &AppHandle<R>) -> Option<ReplayWatch> {
+    let osu = app.state::<AppConfigState>().osu_path().ok()?;
+    Some(ReplayWatch::new(scores::replays_dir(&osu)))
+}
+
+/// Sends the mania replays osu! saved after a play as `local-score-added`.
+fn announce_new_replays<R: Runtime>(app: &AppHandle<R>, watch: &mut ReplayWatch, playing: bool) {
+    for name in watch.poll(playing, Instant::now()) {
+        if let Some(score) = scores::from_replay(watch.dir(), &name) {
+            log::info!("new local replay {name}");
+            let _ = app.emit("local-score-added", score);
+        }
     }
 }
 
