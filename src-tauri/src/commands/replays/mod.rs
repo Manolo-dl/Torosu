@@ -1,6 +1,7 @@
 //! Replay analysis: the plays osu! keeps on this computer and how they went,
 //! column by column.
 
+pub mod frames;
 pub mod scores;
 
 use crate::{error::Result, state::AppConfigState};
