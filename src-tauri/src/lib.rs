@@ -125,7 +125,8 @@ pub fn run() {
             commands::trainer::presets::read_trainer_presets,
             commands::trainer::presets::write_trainer_presets,
             commands::trainer::video::is_ffmpeg_available,
-            commands::replays::list_local_scores
+            commands::replays::list_local_scores,
+            commands::replays::analyze_replay
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
