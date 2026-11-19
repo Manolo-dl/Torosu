@@ -71,13 +71,13 @@ pub struct Views {
 }
 
 impl Views {
-    /// Of `notes`, timings beyond `limit` (ms) left out: those are misses.
+    /// Of `notes`: the presses of the notes that were hit, and the releases
+    /// of those long notes within `limit` (ms) of their end.
     fn of<'a>(notes: impl Iterator<Item = &'a NoteEvent> + Clone, limit: f64) -> Self {
-        let within = |offset: Option<f64>| offset.filter(|o| o.abs() <= limit);
-        // A long note's release counts only if its start was pressed.
-        let release = |n: &NoteEvent| if n.hit.is_some() { within(n.release) } else { None };
-        let rice: Vec<f64> = notes.clone().filter(|n| n.end.is_none()).filter_map(|n| within(n.hit)).collect();
-        let ln_presses = notes.clone().filter(|n| n.end.is_some()).filter_map(|n| within(n.hit));
+        let hit = |n: &NoteEvent| n.hit.filter(|_| n.judgement != Judgement::Miss);
+        let release = |n: &NoteEvent| hit(n).and(n.release).filter(|r| r.abs() <= limit);
+        let rice: Vec<f64> = notes.clone().filter(|n| n.end.is_none()).filter_map(hit).collect();
+        let ln_presses = notes.clone().filter(|n| n.end.is_some()).filter_map(hit);
         let releases = notes.filter_map(release);
         let ln: Vec<f64> = ln_presses.chain(releases).collect();
         Self { all: Timing::of(&[rice.as_slice(), &ln].concat()), rice: Timing::of(&rice), ln: Timing::of(&ln) }
@@ -142,7 +142,7 @@ pub fn stats(judged: &[Judged], keys: usize, windows: &Windows, rate: f64) -> St
         })
         .collect();
 
-    // The 50 window in real time: a press beyond it is a miss, not a timing.
+    // The 50 window in real time: a release beyond it is not a timing.
     let limit = windows.n50 / rate;
 
     let keys = (0..keys)
@@ -199,12 +199,12 @@ mod tests {
 
         assert_eq!((stats.notes[0].time, stats.notes[0].hit), (1000.0, Some(-10.0)));
         assert_eq!(stats.notes[3].end, Some(3333.3333333333335));
-        // Two normal notes; the long notes, two presses and the release in time.
+        // Two normal notes; of the long notes, only the one hit: its press and release.
         let t = stats.timing;
-        assert_eq!((t.rice.count, t.all.count, t.ln.count), (2, 5, 3));
+        assert_eq!((t.rice.count, t.all.count, t.ln.count), (2, 4, 2));
         assert_eq!((stats.keys[0].timing.rice.mean, stats.keys[0].notes), (5.0, 2));
         assert_eq!(stats.keys[0].timing.ln.count, 0);
-        assert_eq!((stats.keys[1].timing.ln.count, stats.keys[1].timing.ln.mean), (3, -6.0));
+        assert_eq!((stats.keys[1].timing.ln.count, stats.keys[1].timing.ln.mean), (2, -10.0));
         assert_eq!((stats.keys[1].early_releases, stats.keys[1].late_releases), (1, 0));
         assert_eq!(stats.keys[1].counts, ManiaCounts { max: 1, miss: 2, ..Default::default() });
     }

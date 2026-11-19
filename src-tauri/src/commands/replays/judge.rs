@@ -142,8 +142,13 @@ impl Windows {
         }
     }
 
-    /// Judgement of a normal note hit `offset` ms away.
+    /// Judgement of a normal note hit `offset` ms away. Late, stable gives
+    /// no 50: from the 100 window on (that end of it open) it is a miss, as
+    /// lazer's tests of stable replays show (`TestSceneLegacyReplayPlayback`).
     fn of_hit(&self, offset: f64) -> Judgement {
+        if offset >= self.n100.floor() {
+            return Judgement::Miss;
+        }
         let offset = offset.abs();
         if offset <= self.max {
             Judgement::Max
@@ -393,6 +398,28 @@ mod tests {
                 (Judgement::Miss, None),
             ]
         );
+    }
+
+    /// The cases of lazer's `TestSceneLegacyReplayPlayback` at OD 5 and 9.3.
+    #[test]
+    fn late_hits_get_no_50() {
+        let od5 = Windows::stable(5.0, 0);
+        for (offset, judgement) in [
+            (-16.0, Judgement::Max),
+            (-17.0, Judgement::N300),
+            (-112.0, Judgement::N100),
+            (-113.0, Judgement::N50),
+            (-136.0, Judgement::N50),
+            (-137.0, Judgement::Miss),
+            (111.0, Judgement::N100),
+            (112.0, Judgement::Miss),
+            (135.0, Judgement::Miss),
+        ] {
+            assert_eq!(od5.of_hit(offset), judgement, "{offset} at OD 5");
+        }
+        let od9 = Windows::stable(9.3, 0);
+        assert_eq!((od9.of_hit(98.0), od9.of_hit(99.0), od9.of_hit(-123.0), od9.of_hit(-124.0)),
+            (Judgement::N100, Judgement::Miss, Judgement::N50, Judgement::Miss));
     }
 
     #[test]

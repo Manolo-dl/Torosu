@@ -8,19 +8,19 @@ export interface Sample {
 }
 
 /**
- * The timings `view` counts of `notes`, within `limit` (ms): beyond it they
- * are misses. The same ones as the backend's `Views`.
+ * The timings `view` counts of `notes`: the presses of the notes that were
+ * hit, and the releases of those long notes within `limit` (ms) of their end.
+ * The same ones as the backend's `Views`.
  */
 export function samplesOf(notes: NoteEvent[], view: TimingView, limit: number): Sample[] {
     const samples: Sample[] = [];
-    const add = (time: number, offset: number | null) => {
-        if (offset !== null && Math.abs(offset) <= limit) samples.push({ time, offset });
-    };
     for (const note of notes) {
+        if (note.hit === null || note.judgement === 'miss') continue;
         const long = note.end !== null;
-        if (view === 'all' || (view === 'rice') !== long) add(note.time, note.hit);
-        // A long note's release counts only if its start was pressed.
-        if (view !== 'rice' && long && note.hit !== null) add(note.end!, note.release);
+        if (view === 'all' || (view === 'rice') !== long) samples.push({ time: note.time, offset: note.hit });
+        if (view !== 'rice' && long && note.release !== null && Math.abs(note.release) <= limit) {
+            samples.push({ time: note.end!, offset: note.release });
+        }
     }
     return samples.sort((a, b) => a.time - b.time);
 }

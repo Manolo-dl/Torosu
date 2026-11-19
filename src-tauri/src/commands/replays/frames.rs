@@ -219,7 +219,8 @@ pub fn presses(frames: &[Frame], keys: usize) -> Vec<Vec<Press>> {
     let mut down: Vec<Option<f64>> = vec![None; keys];
 
     for frame in frames {
-        let time = frame.time as f64;
+        // Stable takes a key pressed before the song starts as pressed at 0.
+        let time = (frame.time as f64).max(0.0);
         for (key, start) in down.iter_mut().enumerate() {
             let pressed = frame.keys & (1 << key) != 0;
             match (*start, pressed) {
