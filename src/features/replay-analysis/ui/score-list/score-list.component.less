@@ -33,6 +33,11 @@
   .full-width-virtual-scroll();
   block-size: calc(100vh - 24rem);
   min-block-size: 16rem;
+
+  // Above the charts (see the page): a few rows, not the whole window.
+  @media (max-width: 1280px) {
+    block-size: 16rem;
+  }
 }
 
 .item {

@@ -13,6 +13,16 @@
   .sidebar {
     .sticky();
   }
+
+  // With the window on half a screen, the charts take the whole width and
+  // the list goes above them.
+  @media (max-width: 1280px) {
+    grid-template-columns: minmax(0, 1fr);
+
+    .sidebar {
+      position: static;
+    }
+  }
 }
 
 .main {

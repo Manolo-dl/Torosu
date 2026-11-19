@@ -4,8 +4,8 @@ import { ReplayAnalysis } from '@entities/local-scores';
 import { TUI_DARK_MODE } from '@taiga-ui/core';
 import { TimingView } from '../../stores/replay-analysis.store';
 import { clock, limitOf, niceStep, offsetOf, signed } from '../charts/charts';
+import { hostWidth } from '../charts/width';
 
-const WIDTH = 720;
 const HEIGHT = 240;
 const MARGIN = { top: 16, right: 8, bottom: 24, left: 40 };
 /** The canvas draws at this many pixels per unit of the chart, sharp on HiDPI screens. */
@@ -30,7 +30,7 @@ export class TimelineComponent {
     readonly analysis = input.required<ReplayAnalysis>();
     readonly view = input.required<TimingView>();
 
-    readonly width = WIDTH;
+    readonly width = hostWidth();
     readonly height = HEIGHT;
     readonly margin = MARGIN;
     readonly moving = MOVING;
@@ -63,7 +63,8 @@ export class TimelineComponent {
         const reach = Math.ceil(limitOf(analysis) / 10) * 10;
         const end = Math.max(1000, ...analysis.stats.notes.map(n => n.time));
 
-        const plotWidth = WIDTH - MARGIN.left - MARGIN.right;
+        const width = this.width();
+        const plotWidth = width - MARGIN.left - MARGIN.right;
         const plotHeight = HEIGHT - MARGIN.top - MARGIN.bottom;
         const x = (time: number) => MARGIN.left + (time / end) * plotWidth;
         const y = (ms: number) => MARGIN.top + ((reach - ms) / (2 * reach)) * plotHeight;
@@ -85,12 +86,12 @@ export class TimelineComponent {
         for (let ms = -Math.floor(reach / yStep) * yStep; ms <= reach; ms += yStep) {
             yTicks.push({ y: y(ms), label: signed(ms).replace('.0', '') });
         }
-        const xStep = niceStep(end / 1000, 8) * 1000;
+        const xStep = niceStep(end / 1000, Math.max(3, Math.floor(width / 90))) * 1000;
         const xTicks: { x: number; label: string }[] = [];
         for (let t = 0; t <= end; t += xStep) xTicks.push({ x: x(t), label: clock(t) });
 
         const misses = analysis.gameMisses.map(time => x(time));
-        return { x, y, end, meanPath, mean, yTicks, xTicks, misses, zero: y(0), plotWidth };
+        return { x, y, end, meanPath, mean, yTicks, xTicks, misses, zero: y(0), plotWidth, width };
     });
 
     /** The moving mean and the misses around the pointer. */
@@ -102,7 +103,7 @@ export class TimelineComponent {
         let nearest = c.mean[0];
         for (const m of c.mean) if (Math.abs(m.time - time) < Math.abs(nearest.time - time)) nearest = m;
         const x = c.x(nearest.time);
-        return { x, time: nearest.time, value: nearest.value, left: (x / WIDTH) * 100, top: (MARGIN.top / HEIGHT) * 100 };
+        return { x, time: nearest.time, value: nearest.value, left: x, top: MARGIN.top };
     });
 
     constructor() {
@@ -111,18 +112,19 @@ export class TimelineComponent {
             const chart = this.chart();
             this.darkMode();
             // After the theme's colours are applied.
-            requestAnimationFrame(() => this.draw(points, chart.x, chart.y));
+            requestAnimationFrame(() => this.draw(points, chart.x, chart.y, chart.width));
         });
     }
 
     move(event: MouseEvent) {
         const svg = event.currentTarget as SVGElement;
         const box = svg.getBoundingClientRect();
-        const at = ((event.clientX - box.left) / box.width) * WIDTH;
-        this.pointer.set(at >= MARGIN.left && at <= WIDTH - MARGIN.right ? at : null);
+        const width = this.width();
+        const at = ((event.clientX - box.left) / box.width) * width;
+        this.pointer.set(at >= MARGIN.left && at <= width - MARGIN.right ? at : null);
     }
 
-    private draw(points: Point[], x: (time: number) => number, y: (ms: number) => number) {
+    private draw(points: Point[], x: (time: number) => number, y: (ms: number) => number, width: number) {
         const canvas = this.canvas().nativeElement;
         const context = canvas.getContext('2d');
         if (!context) return;
@@ -131,7 +133,7 @@ export class TimelineComponent {
         const late = style.getPropertyValue('--viz-late').trim();
 
         context.setTransform(RESOLUTION, 0, 0, RESOLUTION, 0, 0);
-        context.clearRect(0, 0, WIDTH, HEIGHT);
+        context.clearRect(0, 0, width, HEIGHT);
         context.globalAlpha = 0.45;
         for (const p of points) {
             context.fillStyle = p.offset < 0 ? early : late;

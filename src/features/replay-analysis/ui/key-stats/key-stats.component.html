@@ -2,12 +2,12 @@
 @let releases = view() === 'releases';
 
 <div class="chart" (mouseleave)="hovered.set(null)">
-  <svg [attr.viewBox]="'0 0 ' + width + ' ' + height" role="img" [attr.aria-label]="'replays.keys.chartLabel' | transloco">
+  <svg [attr.viewBox]="'0 0 ' + width() + ' ' + height" role="img" [attr.aria-label]="'replays.keys.chartLabel' | transloco">
     @for (tick of c.ticks; track tick.y) {
-      <line class="grid" [attr.x1]="margin.left" [attr.x2]="width - margin.right" [attr.y1]="tick.y" [attr.y2]="tick.y" />
+      <line class="grid" [attr.x1]="margin.left" [attr.x2]="width() - margin.right" [attr.y1]="tick.y" [attr.y2]="tick.y" />
       <text class="axis-label" text-anchor="end" dominant-baseline="middle" [attr.x]="margin.left - 6" [attr.y]="tick.y">{{ tick.label }}</text>
     }
-    <line class="zero" [attr.x1]="margin.left" [attr.x2]="width - margin.right" [attr.y1]="c.zero" [attr.y2]="c.zero" />
+    <line class="zero" [attr.x1]="margin.left" [attr.x2]="width() - margin.right" [attr.y1]="c.zero" [attr.y2]="c.zero" />
 
     @for (bar of c.bars; track bar.key) {
       @if (bar.path) {
@@ -26,7 +26,7 @@
   </svg>
 
   @if (tooltip(); as t) {
-    <div class="tooltip" [style.left.%]="t.left" [style.top.%]="t.top">
+    <div class="tooltip" [style.left.px]="t.left" [style.top.px]="t.top">
       <div class="tooltip-title">{{ 'replays.keys.key' | transloco: { key: t.bar.key + 1 } }}</div>
       @if (t.bar.timing.count) {
         <div>{{ 'replays.mean' | transloco }}: {{ signed(t.bar.timing.mean) }} ms</div>

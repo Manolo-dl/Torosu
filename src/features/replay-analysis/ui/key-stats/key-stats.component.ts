@@ -4,8 +4,8 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { KeyStats, ReplayAnalysis, Timing } from '@entities/local-scores';
 import { TimingView } from '../../stores/replay-analysis.store';
 import { barPath, niceStep, signed } from '../charts/charts';
+import { hostWidth } from '../charts/width';
 
-const WIDTH = 720;
 const HEIGHT = 200;
 const MARGIN = { top: 12, right: 8, bottom: 24, left: 40 };
 
@@ -32,7 +32,7 @@ export class KeyStatsComponent {
     readonly analysis = input.required<ReplayAnalysis>();
     readonly view = input.required<TimingView>();
 
-    readonly width = WIDTH;
+    readonly width = hostWidth();
     readonly height = HEIGHT;
     readonly margin = MARGIN;
     readonly signed = signed;
@@ -50,7 +50,7 @@ export class KeyStatsComponent {
         const y = (ms: number) => MARGIN.top + ((reach - ms) / (2 * reach)) * plotHeight;
         const zero = y(0);
 
-        const plotWidth = WIDTH - MARGIN.left - MARGIN.right;
+        const plotWidth = this.width() - MARGIN.left - MARGIN.right;
         const bandWidth = plotWidth / keys.length;
         const barWidth = Math.min(48, bandWidth * 0.6);
 
@@ -82,6 +82,6 @@ export class KeyStatsComponent {
         const key = this.hovered();
         const bar = this.chart().bars.find(b => b.key === key);
         if (!bar) return null;
-        return { bar, left: (bar.center / WIDTH) * 100, top: (MARGIN.top / HEIGHT) * 100 };
+        return { bar, left: bar.center, top: MARGIN.top };
     });
 }

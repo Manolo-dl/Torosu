@@ -3,8 +3,8 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { Judgement, ReplayAnalysis } from '@entities/local-scores';
 import { TimingView } from '../../stores/replay-analysis.store';
 import { barPath, limitOf, niceStep, offsetOf, signed } from '../charts/charts';
+import { hostWidth } from '../charts/width';
 
-const WIDTH = 720;
 const HEIGHT = 220;
 const MARGIN = { top: 22, right: 8, bottom: 24, left: 40 };
 /** Width of a bin (ms). */
@@ -33,7 +33,7 @@ export class HitHistogramComponent {
     readonly analysis = input.required<ReplayAnalysis>();
     readonly view = input.required<TimingView>();
 
-    readonly width = WIDTH;
+    readonly width = hostWidth();
     readonly height = HEIGHT;
     readonly margin = MARGIN;
     readonly bin = BIN;
@@ -61,7 +61,8 @@ export class HitHistogramComponent {
         }
         const highest = Math.max(1, ...counts.values());
 
-        const plotWidth = WIDTH - MARGIN.left - MARGIN.right;
+        const width = this.width();
+        const plotWidth = width - MARGIN.left - MARGIN.right;
         const plotHeight = HEIGHT - MARGIN.top - MARGIN.bottom;
         const x = (ms: number) => MARGIN.left + ((ms + reach) / (2 * reach)) * plotWidth;
         const y = (count: number) => MARGIN.top + plotHeight - (count / highest) * plotHeight;
@@ -95,7 +96,7 @@ export class HitHistogramComponent {
             };
         });
 
-        const step = niceStep(2 * reach, 8);
+        const step = niceStep(2 * reach, Math.max(4, Math.floor(width / 70)));
         const ticks: { x: number; label: string }[] = [];
         for (let ms = -Math.floor(reach / step) * step; ms <= reach; ms += step) {
             ticks.push({ x: x(ms), label: signed(ms).replace('.0', '') });
@@ -108,6 +109,6 @@ export class HitHistogramComponent {
     readonly tooltip = computed(() => {
         const bin = this.hovered();
         if (!bin) return null;
-        return { bin, left: (bin.x / WIDTH) * 100, top: (MARGIN.top / HEIGHT) * 100 };
+        return { bin, left: bin.x, top: MARGIN.top };
     });
 }
