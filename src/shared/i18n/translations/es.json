@@ -458,7 +458,9 @@
     "collectionsDone": "Cargadas {{ count }} colecciones",
     "collectionsFailed": "No se han podido cargar las colecciones",
     "logs": "Cargando logs, espera...",
-    "logsFailed": "No se han podido cargar los logs"
+    "logsFailed": "No se han podido cargar los logs",
+    "localScores": "Leyendo tus scores locales, espera...",
+    "localScoresFailed": "No se pudo leer scores.db"
   },
   "collections": {
     "export": {

@@ -458,7 +458,9 @@
     "collectionsDone": "已加载 {{ count }} 个收藏夹",
     "collectionsFailed": "加载收藏夹失败",
     "logs": "正在加载日志，请稍候……",
-    "logsFailed": "加载日志失败"
+    "logsFailed": "加载日志失败",
+    "localScores": "正在读取本地成绩，请稍候...",
+    "localScoresFailed": "无法读取 scores.db"
   },
   "collections": {
     "export": {

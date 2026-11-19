@@ -458,7 +458,9 @@
     "collectionsDone": "컬렉션 {{ count }}개를 불러왔습니다",
     "collectionsFailed": "컬렉션을 불러오지 못했습니다",
     "logs": "로그를 불러오는 중입니다. 잠시 기다려 주세요...",
-    "logsFailed": "로그를 불러오지 못했습니다"
+    "logsFailed": "로그를 불러오지 못했습니다",
+    "localScores": "로컬 점수를 읽는 중입니다. 잠시 기다려 주세요...",
+    "localScoresFailed": "scores.db를 읽지 못했습니다"
   },
   "collections": {
     "export": {
