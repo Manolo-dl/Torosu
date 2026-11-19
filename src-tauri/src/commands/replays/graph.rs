@@ -182,10 +182,13 @@ mod tests {
     }
 
     /// With osu! installed: the judge against what the game counted, over the
-    /// latest local mania replays. Prints how far each one is.
+    /// latest local mania replays, alone and with the `.osg` put on its notes.
+    /// Prints how far each one is.
     #[test]
     #[ignore = "needs an osu! folder in OSU_PATH"]
     fn the_judge_agrees_with_the_game() {
+        use crate::commands::replays::reconcile::reconcile;
+
         let osu = PathBuf::from(std::env::var("OSU_PATH").unwrap());
         let db = OsuDB::from_file(osu.join("osu!.db")).unwrap();
         let files: HashMap<String, PathBuf> = db
@@ -193,37 +196,40 @@ mod tests {
             .into_iter()
             .filter_map(|b| Some((b.hash?, osu.join("Songs").join(b.folder_name?).join(b.file_name?))))
             .collect();
+        // Judgements counted differently, by the judge alone and reconciled.
+        let off = |ours: ManiaCounts, game: ManiaCounts| {
+            ours.max.abs_diff(game.max)
+                + ours.n300.abs_diff(game.n300)
+                + ours.n200.abs_diff(game.n200)
+                + ours.n100.abs_diff(game.n100)
+                + ours.n50.abs_diff(game.n50)
+                + ours.miss.abs_diff(game.miss)
+        };
 
-        let (mut plays, mut notes, mut off) = (0, 0, 0);
+        let (mut plays, mut notes, mut alone, mut reconciled) = (0, 0, 0, 0);
         for score in scores::read(&osu).unwrap().iter().filter(|s| s.replay.is_some()).take(60) {
             let replay_path = scores::replays_dir(&osu).join(score.replay.as_ref().unwrap());
             let Some(map) = files.get(&score.beatmap_md5).and_then(|p| rosu_map::from_path(p).ok()) else { continue };
             let Ok(chart) = judge::Chart::new(&map, score.mods) else { continue };
+            let Ok(graph) = read(&path_of(&replay_path)) else { continue };
             let replay = frames::read(&replay_path).unwrap();
-            let judged = judge::judge(
-                &chart,
-                &frames::presses(&replay.frames, chart.keys),
-                &judge::Rules::stable(chart.od, score.mods),
-            );
-            let ours = judge::counts(&judged);
-            let game = read(&path_of(&replay_path)).ok().and_then(|g| g.last().map(|p| p.counts)).unwrap_or(score.counts);
+            let rules = judge::Rules::stable(chart.od, score.mods);
+            let mut judged = judge::judge(&chart, &frames::presses(&replay.frames, chart.keys), &rules);
+            let game = graph.last().map_or(score.counts, |p| p.counts);
 
-            let diff = [
-                ours.max.abs_diff(game.max),
-                ours.n300.abs_diff(game.n300),
-                ours.n200.abs_diff(game.n200),
-                ours.n100.abs_diff(game.n100),
-                ours.n50.abs_diff(game.n50),
-                ours.miss.abs_diff(game.miss),
-            ];
-            let total: u32 = diff.iter().sum();
-            println!("{:5} of {:5} off {:?} {}", total, judged.len(), diff, score.beatmap_md5);
+            let before = off(judge::counts(&judged), game);
+            reconcile(&mut judged, &judgements(&graph), &rules.windows);
+            let after = off(judge::counts(&judged), game);
+            println!("{before:5} -> {after:3} of {:5} {}", judged.len(), score.beatmap_md5);
             plays += 1;
             notes += judged.len();
-            off += total as usize;
+            alone += before as usize;
+            reconciled += after as usize;
         }
-        println!("{plays} plays: {off} judgements off of {notes} ({:.2}%)", off as f64 * 100.0 / notes as f64);
+        let pct = |n: usize| n as f64 * 100.0 / notes as f64;
+        println!("{plays} plays, {notes} notes: judge alone {alone} off ({:.2}%), reconciled {reconciled} ({:.2}%)", pct(alone), pct(reconciled));
         // Each wrong judgement counts twice: where it is and where it should be.
-        assert!((off as f64) < notes as f64 * 0.1, "{off} of {notes}");
+        assert!((alone as f64) < notes as f64 * 0.1, "{alone} of {notes}");
+        assert!((reconciled as f64) < notes as f64 * 0.005, "{reconciled} of {notes}");
     }
 }

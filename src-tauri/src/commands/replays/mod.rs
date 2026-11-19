@@ -5,6 +5,7 @@ pub mod frames;
 pub mod graph;
 pub mod judge;
 pub mod live;
+pub mod reconcile;
 pub mod scores;
 pub mod stats;
 
@@ -49,6 +50,10 @@ pub struct Analysis {
     pub game_counts: ManiaCounts,
     /// When the game counted each miss (ms, song time), from the `.osg`.
     pub game_misses: Vec<f64>,
+    /// How many of the game's judgements were put on their notes, which then
+    /// have the game's judgement; `None` without an `.osg`, where every
+    /// judgement is the analysis' own.
+    pub reconciled: Option<reconcile::Reconciled>,
     pub stats: Stats,
 }
 
@@ -82,18 +87,19 @@ pub fn analyze(replay_path: &Path, beatmap_path: &Path) -> Result<Analysis> {
     let rules = Rules::stable(chart.od, replay.mods);
     let rate = judge::rate(replay.mods);
 
-    let judged = judge::judge(&chart, &frames::presses(&replay.frames, chart.keys), &rules);
-    let stats = stats::stats(&judged, chart.keys, &rules.windows, rate);
+    let mut judged = judge::judge(&chart, &frames::presses(&replay.frames, chart.keys), &rules);
 
     // An old replay has no `.osg`, and one osu! can't read is no reason to fail.
     let graph = graph::read(&graph::path_of(replay_path)).ok().filter(|graph| !graph.is_empty());
     let game_counts = graph.as_ref().and_then(|g| g.last()).map_or(replay.counts, |point| point.counts);
-    let game_misses = graph
+    let game_judgements = graph.as_deref().map(graph::judgements).unwrap_or_default();
+    let game_misses = game_judgements
         .iter()
-        .flat_map(|g| graph::judgements(g))
         .filter(|(_, judgement)| *judgement == judge::Judgement::Miss)
-        .map(|(time, _)| f64::from(time) / rate)
+        .map(|&(time, _)| f64::from(time) / rate)
         .collect();
+    let reconciled = graph.is_some().then(|| reconcile::reconcile(&mut judged, &game_judgements, &rules.windows));
+    let stats = stats::stats(&judged, chart.keys, &rules.windows, rate);
 
     let w = rules.windows;
     Ok(Analysis {
@@ -114,6 +120,7 @@ pub fn analyze(replay_path: &Path, beatmap_path: &Path) -> Result<Analysis> {
         scroll_speed_scale: replay.scroll_speed_scale,
         game_counts,
         game_misses,
+        reconciled,
         stats,
     })
 }
