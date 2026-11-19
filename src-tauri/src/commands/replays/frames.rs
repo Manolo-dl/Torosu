@@ -52,13 +52,40 @@ pub struct ManiaReplay {
     pub scroll_speed_scale: Option<f32>,
 }
 
+/// The score of a mania replay, without its frames.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ReplayHeader {
+    pub beatmap_md5: String,
+    pub player_name: String,
+    pub counts: ManiaCounts,
+    pub score: u32,
+    pub max_combo: u32,
+    pub perfect: bool,
+    /// osu!'s mod bits.
+    pub mods: u32,
+    /// `0` if it was not submitted.
+    pub online_id: u64,
+}
+
 /// Reads the mania replay at `path`.
 pub fn read(path: &Path) -> Result<ManiaReplay> {
     let bytes = std::fs::read(path)?;
-    parse(&bytes).ok_or_else(|| format!("{} is not an osu!mania replay osu! can read", path.display()).into())
+    parse(&bytes).ok_or_else(|| not_a_replay(path))
 }
 
-fn parse(bytes: &[u8]) -> Option<ManiaReplay> {
+/// Reads only the score of the mania replay at `path`, which is quick: its
+/// frames are not decompressed.
+pub fn read_header(path: &Path) -> Result<ReplayHeader> {
+    let bytes = std::fs::read(path)?;
+    parse_header(&bytes).map(|(header, _)| header).ok_or_else(|| not_a_replay(path))
+}
+
+fn not_a_replay(path: &Path) -> crate::error::Error {
+    format!("{} is not an osu!mania replay osu! can read", path.display()).into()
+}
+
+/// The header and the compressed frames.
+fn parse_header(bytes: &[u8]) -> Option<(ReplayHeader, &[u8])> {
     let mut r = Reader { bytes, at: 0 };
     if r.u8()? != MANIA {
         return None;
@@ -68,14 +95,31 @@ fn parse(bytes: &[u8]) -> Option<ManiaReplay> {
     let player_name = r.string()?;
     r.string()?; // replay hash
     let [n300, n100, n50, max, n200, miss] = [r.u16()?, r.u16()?, r.u16()?, r.u16()?, r.u16()?, r.u16()?];
-    r.i32()?; // score
-    r.u16()?; // highest combo
-    r.u8()?; // perfect
+    let score = r.i32()? as u32;
+    let max_combo = r.u16()?.into();
+    let perfect = r.u8()? != 0;
     let mods = r.i32()? as u32;
     r.string()?; // health graph
     r.take(8)?; // timestamp
     let length = usize::try_from(r.i32()?).ok()?;
     let compressed = r.take(length)?;
+    // Missing in replays older than 2012.
+    let online_id = r.take(8).map_or(0, |id| u64::from_le_bytes(id.try_into().unwrap()));
+
+    let counts = ManiaCounts {
+        max: max.into(),
+        n300: n300.into(),
+        n200: n200.into(),
+        n100: n100.into(),
+        n50: n50.into(),
+        miss: miss.into(),
+    };
+    let header = ReplayHeader { beatmap_md5, player_name, counts, score, max_combo, perfect, mods, online_id };
+    Some((header, compressed))
+}
+
+fn parse(bytes: &[u8]) -> Option<ManiaReplay> {
+    let (header, compressed) = parse_header(bytes)?;
 
     let mut text = String::new();
     let stream = Stream::new_lzma_decoder(u64::MAX).ok()?;
@@ -83,17 +127,10 @@ fn parse(bytes: &[u8]) -> Option<ManiaReplay> {
     let (frames, scroll_speed_scale) = frames(&text);
 
     Some(ManiaReplay {
-        beatmap_md5,
-        player_name,
-        mods,
-        counts: ManiaCounts {
-            max: max.into(),
-            n300: n300.into(),
-            n200: n200.into(),
-            n100: n100.into(),
-            n50: n50.into(),
-            miss: miss.into(),
-        },
+        beatmap_md5: header.beatmap_md5,
+        player_name: header.player_name,
+        mods: header.mods,
+        counts: header.counts,
         frames,
         scroll_speed_scale,
     })
@@ -272,6 +309,18 @@ pub(crate) mod tests {
             [Frame { time: 999, keys: 0b01 }, Frame { time: 1049, keys: 0b11 }, Frame { time: 1089, keys: 0 }]
         );
         assert_eq!(replay.scroll_speed_scale, Some(1.5));
+    }
+
+    #[test]
+    fn reads_only_the_header() {
+        let dir = crate::test_utils::TestDir::new("replay-header");
+        let path = dir.0.join("play.osr");
+        std::fs::write(&path, osr(MANIA, 64, &frames_text(&[(1000, 1)]))).unwrap();
+
+        let header = read_header(&path).unwrap();
+
+        assert_eq!((header.score, header.max_combo, header.mods, header.online_id), (900_000, 40, 64, 0));
+        assert_eq!(header.player_name, "Manolo_");
     }
 
     #[test]

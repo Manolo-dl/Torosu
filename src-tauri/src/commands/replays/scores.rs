@@ -13,7 +13,7 @@ use chrono::{DateTime, Utc};
 use osynic_osudb::entity::{osu::field::mode::Mode, scores::{field::replay::Replay, scoresdb::ScoresDB}};
 use serde::Serialize;
 
-use crate::error::Result;
+use crate::{commands::replays::frames, error::Result};
 
 /// Ticks of a .NET `DateTime` (100 ns since the year 1) at the Unix epoch.
 const UNIX_EPOCH_TICKS: i64 = 621_355_968_000_000_000;
@@ -55,10 +55,13 @@ pub struct LocalScore {
     pub replay: Option<String>,
 }
 
-/// The mania plays of `<osu>/scores.db`, newest first.
+/// The mania plays of `<osu>/scores.db`, newest first, and those of `Data/r`
+/// it doesn't have yet: osu! writes a replay as soon as the play ends, but
+/// `scores.db` some time later.
 pub fn read(osu: &Path) -> Result<Vec<LocalScore>> {
     let db = ScoresDB::from_file(osu.join("scores.db"))?;
-    let replays = replay_files(&replays_dir(osu));
+    let dir = replays_dir(osu);
+    let mut replays = replay_files(&dir);
 
     let mut scores: Vec<LocalScore> = db
         .beatmaps
@@ -67,13 +70,35 @@ pub fn read(osu: &Path) -> Result<Vec<LocalScore>> {
         .filter(|play| play.mode == Mode::Mania)
         .filter_map(|play| {
             let beatmap_md5 = play.beatmap_hash.clone()?;
-            let replay = Some(replay_name(&beatmap_md5, &play.timestamp)).filter(|name| replays.contains(name));
+            let replay = replays.take(&replay_name(&beatmap_md5, &play.timestamp));
             Some(local_score(play, beatmap_md5, replay))
         })
         .collect();
 
+    // What is left are replays of other modes, and the newest ones.
+    scores.extend(replays.iter().filter_map(|name| from_replay(&dir, name)));
+
     scores.sort_by_key(|score| std::cmp::Reverse(score.timestamp));
     Ok(scores)
+}
+
+/// The score of the replay `name` of `dir` (`Data/r`), if it is a mania one.
+/// Its time is in its name.
+pub fn from_replay(dir: &Path, name: &str) -> Option<LocalScore> {
+    let filetime: i64 = name.strip_suffix(".osr")?.rsplit_once('-')?.1.parse().ok()?;
+    let header = frames::read_header(&dir.join(name)).ok()?;
+    Some(LocalScore {
+        beatmap_md5: header.beatmap_md5,
+        player_name: header.player_name,
+        mods: header.mods,
+        score: header.score,
+        max_combo: header.max_combo,
+        perfect: header.perfect,
+        counts: header.counts,
+        timestamp: (filetime + FILETIME_EPOCH_TICKS - UNIX_EPOCH_TICKS) / 10_000,
+        online_id: header.online_id,
+        replay: Some(name.to_string()),
+    })
 }
 
 /// Where osu! keeps the replays of the local scores.
@@ -198,6 +223,28 @@ mod tests {
         assert_eq!(scores[1].replay.as_deref(), Some(replay.as_str()));
         assert_eq!(scores[1].counts, ManiaCounts { max: 30, n300: 10, n200: 4, n100: 2, n50: 1, miss: 3 });
         assert_eq!(scores[1].mods, 64);
+    }
+
+    #[test]
+    fn adds_the_replays_scores_db_does_not_have_yet() {
+        use crate::commands::replays::frames::tests::{frames_text, osr};
+
+        let dir = TestDir::new("local-scores-new");
+        ScoresDB { version: 20261118, beatmaps: vec![] }.save(dir.0.join("scores.db")).unwrap();
+        let replays = replays_dir(&dir.0);
+        std::fs::create_dir_all(&replays).unwrap();
+        let name = "5556dadd32fc89b9b8055a27ab1bac9f-134263617939639372.osr";
+        std::fs::write(replays.join(name), osr(3, 64, &frames_text(&[(1000, 1)]))).unwrap();
+        // A standard replay is left out.
+        std::fs::write(replays.join("cccc-134263617939639372.osr"), osr(0, 0, &frames_text(&[]))).unwrap();
+
+        let scores = read(&dir.0).unwrap();
+
+        assert_eq!(scores.len(), 1);
+        assert_eq!(scores[0].replay.as_deref(), Some(name));
+        assert_eq!((scores[0].score, scores[0].mods), (900_000, 64));
+        // The same time the score of scores.db has (see names_the_replay_as_osu_does).
+        assert_eq!(scores[0].timestamp, at(639_174_849_939_639_372).timestamp_millis());
     }
 
     /// With osu! installed: most of its mania scores find their replay.
