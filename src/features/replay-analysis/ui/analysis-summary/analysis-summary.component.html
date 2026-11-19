@@ -1,7 +1,6 @@
 @let a = analysis();
-@let hits = a.stats.hits;
 @let releases = a.stats.releases;
-@let combined = a.stats.combined;
+@let timing = a.stats.combined;
 
 <div appearance="floating" tuiCardLarge="compact" class="card">
   <header class="head">
@@ -13,26 +12,22 @@
   </header>
 
   <div class="tiles">
-    <div class="tile">
+    <div class="tile" [tuiHint]="'replays.timingHint' | transloco">
       <span class="label">{{ 'replays.mean' | transloco }}</span>
-      <span class="value">{{ hits.mean | number: '1.1-1' }} ms</span>
+      <span class="value">{{ timing.mean | number: '1.1-1' }} ms</span>
     </div>
-    <div class="tile">
+    <div class="tile" [tuiHint]="'replays.timingHint' | transloco">
       <span class="label">{{ 'replays.median' | transloco }}</span>
-      <span class="value">{{ hits.median | number: '1.1-1' }} ms</span>
+      <span class="value">{{ timing.median | number: '1.1-1' }} ms</span>
     </div>
-    <div class="tile" [tuiHint]="'replays.urHint' | transloco">
+    <div class="tile" [tuiHint]="'replays.timingHint' | transloco">
       <span class="label">UR</span>
-      <span class="value">{{ hits.unstableRate | number: '1.0-0' }}</span>
+      <span class="value">{{ timing.unstableRate | number: '1.2-2' }}</span>
+      <span class="detail">{{ timing.earlyMean | number: '1.2-2' }} / {{ timing.lateMean | number: '1.2-2' }} ms</span>
     </div>
-    <div class="tile" [tuiHint]="'replays.osuUrHint' | transloco">
-      <span class="label">{{ 'replays.osuUr' | transloco }}</span>
-      <span class="value">{{ combined.unstableRate | number: '1.2-2' }}</span>
-      <span class="detail">{{ combined.earlyMean | number: '1.2-2' }} / {{ combined.lateMean | number: '1.2-2' }} ms</span>
-    </div>
-    <div class="tile">
+    <div class="tile" [tuiHint]="'replays.timingHint' | transloco">
       <span class="label">{{ 'replays.earlyLate' | transloco }}</span>
-      <span class="value">{{ hits.early }} / {{ hits.late }}</span>
+      <span class="value">{{ timing.early }} / {{ timing.late }}</span>
     </div>
     <div class="tile" [tuiHint]="'replays.releaseHint' | transloco">
       <span class="label">{{ 'replays.releaseMean' | transloco }}</span>

@@ -543,6 +543,7 @@
     "mean": "Mean",
     "median": "Median",
     "earlyLate": "Early / late",
+    "timingHint": "Presses and long note releases together, as osu!'s results screen counts them. Under the UR, the mean of the early and of the late ones.",
     "releaseMean": "LN release",
     "releaseHint": "Mean of the long note releases within the 50 window: negative is letting go early",
     "accuracy": "Accuracy",
@@ -588,10 +589,7 @@
       "misses": "Misses ({{ count }})"
     },
     "follow": "Analyse new plays",
-    "followHint": "While osu! is open, each play you pass is analysed as soon as it ends",
-    "urHint": "Unstable rate of the presses alone: how spread out your timing is",
-    "osuUr": "UR (osu!)",
-    "osuUrHint": "As osu!'s results screen counts it: presses and long note releases together, with the mean of the early and of the late ones"
+    "followHint": "While osu! is open, each play you pass is analysed as soon as it ends"
   },
   "errors": {
     "io": "File error: {{ detail }}",

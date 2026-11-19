@@ -543,6 +543,7 @@
     "mean": "Moyenne",
     "median": "Médiane",
     "earlyLate": "Avance / retard",
+    "timingHint": "Appuis et relâchements de long notes ensemble, comme l'écran de résultats d'osu! les compte. Sous l'UR, la moyenne des avances et des retards.",
     "releaseMean": "Relâchement LN",
     "releaseHint": "Moyenne des relâchements de long notes dans la fenêtre de 50 : négatif signifie relâcher en avance",
     "accuracy": "Précision",
@@ -588,10 +589,7 @@
       "misses": "Miss ({{ count }})"
     },
     "follow": "Analyser les nouvelles parties",
-    "followHint": "Avec osu! ouvert, chaque partie réussie est analysée dès qu'elle se termine",
-    "urHint": "Unstable rate des appuis seuls : la dispersion de votre timing",
-    "osuUr": "UR (osu!)",
-    "osuUrHint": "Comme l'écran de résultats d'osu! le calcule : appuis et relâchements de long notes ensemble, avec la moyenne des avances et des retards"
+    "followHint": "Avec osu! ouvert, chaque partie réussie est analysée dès qu'elle se termine"
   },
   "errors": {
     "io": "Erreur de fichier : {{ detail }}",

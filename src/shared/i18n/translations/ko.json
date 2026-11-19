@@ -543,6 +543,7 @@
     "mean": "평균",
     "median": "중앙값",
     "earlyLate": "빠름 / 늦음",
+    "timingHint": "osu! 결과 화면처럼 입력과 롱노트 릴리스를 함께 계산합니다. UR 아래는 빠른 쪽과 늦은 쪽의 평균입니다.",
     "releaseMean": "LN 릴리스",
     "releaseHint": "50 판정 범위 안의 롱노트 릴리스 평균: 음수는 일찍 뗀 것입니다",
     "accuracy": "정확도",
@@ -588,10 +589,7 @@
       "misses": "Miss ({{ count }})"
     },
     "follow": "새 플레이 분석",
-    "followHint": "osu!가 열려 있는 동안 클리어한 플레이를 끝나자마자 분석합니다",
-    "urHint": "입력만의 언스테이블 레이트: 타이밍이 얼마나 퍼져 있는지",
-    "osuUr": "UR (osu!)",
-    "osuUrHint": "osu! 결과 화면과 같은 계산: 입력과 롱노트 릴리스를 함께, 빠른 쪽과 늦은 쪽 평균 포함"
+    "followHint": "osu!가 열려 있는 동안 클리어한 플레이를 끝나자마자 분석합니다"
   },
   "errors": {
     "io": "파일 오류: {{ detail }}",

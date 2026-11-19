@@ -543,6 +543,7 @@
     "mean": "Media",
     "median": "Mediana",
     "earlyLate": "Antes / tarde",
+    "timingHint": "Pulsaciones y sueltas de long notes juntas, como las cuenta la pantalla de resultados de osu!. Bajo el UR, la media de las adelantadas y de las atrasadas.",
     "releaseMean": "Suelta de LN",
     "releaseHint": "Media de las sueltas de long notes dentro de la ventana de 50: negativo es soltar antes de tiempo",
     "accuracy": "Precisión",
@@ -588,10 +589,7 @@
       "misses": "Misses ({{ count }})"
     },
     "follow": "Analizar los plays nuevos",
-    "followHint": "Con osu! abierto, cada play que pases se analiza en cuanto termina",
-    "urHint": "Unstable rate solo de las pulsaciones: cuánto se dispersa tu timing",
-    "osuUr": "UR (osu!)",
-    "osuUrHint": "Como lo cuenta la pantalla de resultados de osu!: pulsaciones y sueltas de long notes juntas, con la media de las adelantadas y de las atrasadas"
+    "followHint": "Con osu! abierto, cada play que pases se analiza en cuanto termina"
   },
   "errors": {
     "io": "Error de archivo: {{ detail }}",
