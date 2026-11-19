@@ -301,14 +301,12 @@ fn judge_key<'a>(notes: impl Iterator<Item = &'a Note>, presses: &[Press], rules
 /// released `release` ms from its end.
 fn long_note(hit: f64, release: f64, windows: &Windows) -> Judgement {
     let n50 = windows.n50.floor();
-    if release < -n50 {
+    // Pressed before the 50 window, like a normal note, or let go before it.
+    if hit < -n50 || release < -n50 {
         return Judgement::Miss;
     }
     // Held past the window, stable judges it when the window closes.
-    let tail = release.min(n50);
-    // Pressed before the 50 window, its head counts as hit at the end.
-    let head = if hit < -n50 { f64::INFINITY } else { hit };
-    windows.of_long_note(head, tail)
+    windows.of_long_note(hit, release.min(n50))
 }
 
 /// How many of each judgement.
@@ -424,6 +422,17 @@ mod tests {
             [(Judgement::Max, Some(-5.0)), (Judgement::Miss, Some(-200.0)), (Judgement::N200, Some(500.0))]
         );
         assert_eq!(counts(&judged), ManiaCounts { max: 1, n200: 1, miss: 1, ..Default::default() });
+    }
+
+    #[test]
+    fn a_long_note_pressed_too_early_is_a_miss() {
+        let chart = Chart::new(&beatmap("64,192,1000,128,0,1091:0:0:0:0:\n"), 0).unwrap();
+        // Out of the 50 window (127.5 at OD 8), let go before it starts, grabbed again.
+        let presses = vec![vec![press(855.0, 935.0), press(1023.0, 1132.0)]];
+
+        let judged = judge(&chart, &presses, &Rules::stable(8.0, 0));
+
+        assert_eq!((judged[0].judgement, judged[0].hit), (Judgement::Miss, Some(-145.0)));
     }
 
     #[test]
