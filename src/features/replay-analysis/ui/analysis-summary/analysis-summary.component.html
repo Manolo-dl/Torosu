@@ -13,16 +13,8 @@
 
   <div class="tiles">
     <div class="tile" [tuiHint]="'replays.timingHint' | transloco">
-      <span class="label">{{ 'replays.mean' | transloco }}</span>
-      <span class="value">{{ timing.mean | number: '1.1-1' }} ms</span>
-    </div>
-    <div class="tile" [tuiHint]="'replays.timingHint' | transloco">
-      <span class="label">{{ 'replays.earlyMean' | transloco }}</span>
-      <span class="value">{{ timing.earlyMean | number: '1.2-2' }} ms</span>
-    </div>
-    <div class="tile" [tuiHint]="'replays.timingHint' | transloco">
-      <span class="label">{{ 'replays.lateMean' | transloco }}</span>
-      <span class="value">{{ timing.lateMean | number: '1.2-2' }} ms</span>
+      <span class="label">{{ 'replays.error' | transloco }}</span>
+      <span class="value">{{ timing.earlyMean | number: '1.2-2' }} / {{ timing.lateMean | number: '1.2-2' }} ms</span>
     </div>
     <div class="tile" [tuiHint]="'replays.timingHint' | transloco">
       <span class="label">UR</span>
