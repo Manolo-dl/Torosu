@@ -24,6 +24,7 @@ pub mod mods {
     pub const HALF_TIME: u32 = 1 << 8;
     pub const NIGHTCORE: u32 = 1 << 9;
     pub const RANDOM: u32 = 1 << 21;
+    pub const SCORE_V2: u32 = 1 << 29;
     pub const MIRROR: u32 = 1 << 30;
 }
 
@@ -99,9 +100,10 @@ pub struct Windows {
 }
 
 impl Windows {
-    /// Stable's windows for `od` with `mods`. They are fixed in real time, so
-    /// in map time they grow with DT and shrink with HT; HR narrows them and
-    /// EZ widens them by 1.4.
+    /// Stable's windows for `od` with `mods`: the classic ones, or with
+    /// ScoreV2 the ones lazer has. They are fixed in real time, so in map
+    /// time they grow with DT and shrink with HT; HR narrows them and EZ
+    /// widens them by 1.4.
     pub fn stable(od: f32, mods: u32) -> Self {
         let od = f64::from(od.clamp(0.0, 10.0));
         let difficulty = if mods & mods::HARD_ROCK != 0 {
@@ -113,6 +115,23 @@ impl Windows {
         };
         let scale = rate(mods) / difficulty;
         let window = |base: f64| (base * scale).floor() + 0.5;
+
+        if mods & mods::SCORE_V2 != 0 {
+            // From OD 0 to 5 to 10.
+            let range = |at0: f64, at5: f64, at10: f64| {
+                let ms = if od > 5.0 { at5 + (at10 - at5) * (od - 5.0) / 5.0 } else { at5 + (at5 - at0) * (od - 5.0) / 5.0 };
+                window(ms)
+            };
+            return Self {
+                max: range(22.4, 19.4, 13.9),
+                n300: range(64.0, 49.0, 34.0),
+                n200: range(97.0, 82.0, 67.0),
+                n100: range(127.0, 112.0, 97.0),
+                n50: range(151.0, 136.0, 121.0),
+                miss: range(188.0, 173.0, 158.0),
+            };
+        }
+
         Self {
             max: window(16.0),
             n300: window(64.0 - 3.0 * od),
@@ -159,9 +178,33 @@ impl Windows {
             Judgement::N50
         }
     }
+
+    /// With ScoreV2, the judgement of the end of a long note released
+    /// `release` ms from it: windows 1.5 times as wide, and held past the
+    /// 100 one is a miss.
+    fn of_release(&self, release: f64) -> Judgement {
+        let lenient = |window: f64| window.floor() * 1.5;
+        let off = release.round().abs();
+        if off <= lenient(self.max) {
+            Judgement::Max
+        } else if off <= lenient(self.n300) {
+            Judgement::N300
+        } else if off <= lenient(self.n200) {
+            Judgement::N200
+        } else if release >= lenient(self.n100) {
+            Judgement::Miss
+        } else if off <= lenient(self.n100) {
+            Judgement::N100
+        } else if off <= lenient(self.n50) {
+            Judgement::N50
+        } else {
+            Judgement::Miss
+        }
+    }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+/// From best to worst.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub enum Judgement {
     Max,
@@ -176,7 +219,10 @@ pub enum Judgement {
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Judged {
     pub note: Note,
+    /// Of the whole note; with ScoreV2, of the start of a long note.
     pub judgement: Judgement,
+    /// With ScoreV2, the end of a long note is judged on its own.
+    pub tail: Option<Judgement>,
     /// When it was pressed (ms, map time; negative is early); `None` if it
     /// wasn't.
     pub hit: Option<f64>,
@@ -185,12 +231,27 @@ pub struct Judged {
     pub release: Option<f64>,
 }
 
+/// How the notes are judged.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Rules {
+    pub windows: Windows,
+    /// Long notes judged at both ends, as stable does with ScoreV2.
+    pub score_v2: bool,
+}
+
+impl Rules {
+    /// Stable's, for a map of `od` played with `mods`.
+    pub fn stable(od: f32, mods: u32) -> Self {
+        Self { windows: Windows::stable(od, mods), score_v2: mods & mods::SCORE_V2 != 0 }
+    }
+}
+
 /// Judges every note of `chart` with the `presses` of each key.
-pub fn judge(chart: &Chart, presses: &[Vec<Press>], windows: &Windows) -> Vec<Judged> {
+pub fn judge(chart: &Chart, presses: &[Vec<Press>], rules: &Rules) -> Vec<Judged> {
     let mut judged = Vec::with_capacity(chart.notes.len());
     for key in 0..chart.keys {
         let notes = chart.notes.iter().filter(|note| note.key == key);
-        judge_key(notes, presses.get(key).map_or(&[], Vec::as_slice), windows, &mut judged);
+        judge_key(notes, presses.get(key).map_or(&[], Vec::as_slice), rules, &mut judged);
     }
     judged.sort_by(|a, b| a.note.start.total_cmp(&b.note.start).then(a.note.key.cmp(&b.note.key)));
     judged
@@ -198,26 +259,41 @@ pub fn judge(chart: &Chart, presses: &[Vec<Press>], windows: &Windows) -> Vec<Ju
 
 /// A press judges the first note of its key that is still waiting, if it is
 /// within the miss window; a note no press reached in time is a miss.
-fn judge_key<'a>(notes: impl Iterator<Item = &'a Note>, presses: &[Press], windows: &Windows, out: &mut Vec<Judged>) {
+fn judge_key<'a>(notes: impl Iterator<Item = &'a Note>, presses: &[Press], rules: &Rules, out: &mut Vec<Judged>) {
+    let windows = &rules.windows;
     let mut presses = presses.iter().peekable();
     for &note in notes {
         // Presses too early for this note hit nothing.
         while presses.next_if(|press| press.start < note.start - windows.miss).is_some() {}
 
         let Some(press) = presses.next_if(|press| press.start <= note.start + windows.miss) else {
-            out.push(Judged { note, judgement: Judgement::Miss, hit: None, release: None });
+            let tail = (rules.score_v2 && note.end.is_some()).then_some(Judgement::Miss);
+            out.push(Judged { note, judgement: Judgement::Miss, tail, hit: None, release: None });
             continue;
         };
 
         let hit = press.start - note.start;
-        let (judgement, release) = match note.end {
-            None => (windows.of_hit(hit), None),
-            Some(end) => {
-                let release = press.end - end;
-                (long_note(hit, release, windows), Some(release))
-            }
+        let Some(end) = note.end else {
+            out.push(Judged { note, judgement: windows.of_hit(hit), tail: None, hit: Some(hit), release: None });
+            continue;
         };
-        out.push(Judged { note, judgement, hit: Some(hit), release });
+
+        // Pressed again before its end, the key grabs the same long note.
+        let mut last = *press;
+        let mut regrabbed = false;
+        while let Some(again) = presses.next_if(|again| again.start < end) {
+            last = *again;
+            regrabbed = true;
+        }
+        let release = last.end - end;
+        let (judgement, tail) = if rules.score_v2 {
+            (windows.of_hit(hit), Some(windows.of_release(release)))
+        } else {
+            let judgement = long_note(hit, release, windows);
+            // Stable gives a long note let go and grabbed again 200 at best.
+            (if regrabbed { judgement.max(Judgement::N200) } else { judgement }, None)
+        };
+        out.push(Judged { note, judgement, tail, hit: Some(hit), release: Some(release) });
     }
 }
 
@@ -238,8 +314,8 @@ fn long_note(hit: f64, release: f64, windows: &Windows) -> Judgement {
 /// How many of each judgement.
 pub fn counts(judged: &[Judged]) -> ManiaCounts {
     let mut counts = ManiaCounts::default();
-    for note in judged {
-        match note.judgement {
+    for judgement in judged.iter().flat_map(|note| std::iter::once(note.judgement).chain(note.tail)) {
+        match judgement {
             Judgement::Max => counts.max += 1,
             Judgement::N300 => counts.n300 += 1,
             Judgement::N200 => counts.n200 += 1,
@@ -278,6 +354,10 @@ mod tests {
 
         let hr = Windows::stable(8.0, mods::HARD_ROCK);
         assert_eq!((hr.max, hr.n300), (11.5, 28.5));
+
+        let v2 = Windows::stable(8.0, mods::SCORE_V2);
+        assert_eq!((v2.max, v2.n300, v2.miss), (16.5, 40.5, 164.5));
+        assert_eq!(Windows::stable(5.0, mods::SCORE_V2).max, 19.5);
     }
 
     #[test]
@@ -303,7 +383,7 @@ mod tests {
         // On time, 30 ms late, an early press out of the 50 window, and none.
         let presses = vec![vec![press(1000.0, 1050.0), press(2030.0, 2080.0), press(2850.0, 2900.0)]];
 
-        let judged = judge(&chart, &presses, &Windows::stable(8.0, 0));
+        let judged = judge(&chart, &presses, &Rules::stable(8.0, 0));
 
         let got: Vec<_> = judged.iter().map(|j| (j.judgement, j.hit)).collect();
         assert_eq!(
@@ -322,7 +402,7 @@ mod tests {
         let chart = Chart::new(&beatmap("64,192,1000,1,0,0:0:0:0:\n"), 0).unwrap();
         let presses = vec![vec![press(500.0, 550.0), press(1005.0, 1050.0)]];
 
-        let judged = judge(&chart, &presses, &Windows::stable(8.0, 0));
+        let judged = judge(&chart, &presses, &Rules::stable(8.0, 0));
 
         assert_eq!((judged[0].judgement, judged[0].hit), (Judgement::Max, Some(5.0)));
     }
@@ -336,7 +416,7 @@ mod tests {
         // Clean, released 200 ms early, and held long past the end.
         let presses = vec![vec![press(1005.0, 1495.0), press(2000.0, 2300.0), press(3000.0, 4000.0)]];
 
-        let judged = judge(&chart, &presses, &Windows::stable(8.0, 0));
+        let judged = judge(&chart, &presses, &Rules::stable(8.0, 0));
 
         let got: Vec<_> = judged.iter().map(|j| (j.judgement, j.release)).collect();
         assert_eq!(
@@ -344,5 +424,30 @@ mod tests {
             [(Judgement::Max, Some(-5.0)), (Judgement::Miss, Some(-200.0)), (Judgement::N200, Some(500.0))]
         );
         assert_eq!(counts(&judged), ManiaCounts { max: 1, n200: 1, miss: 1, ..Default::default() });
+    }
+
+    #[test]
+    fn a_long_note_grabbed_again_gets_200_at_best() {
+        let chart = Chart::new(&beatmap("64,192,1000,128,0,2000:0:0:0:0:\n64,192,3000,1,0,0:0:0:0:\n"), 0).unwrap();
+        // Let go at 1500, grabbed again until the end; then the next note.
+        let presses = vec![vec![press(1000.0, 1500.0), press(1520.0, 2000.0), press(3000.0, 3050.0)]];
+
+        let judged = judge(&chart, &presses, &Rules::stable(8.0, 0));
+
+        let got: Vec<_> = judged.iter().map(|j| (j.judgement, j.release)).collect();
+        assert_eq!(got, [(Judgement::N200, Some(0.0)), (Judgement::Max, None)]);
+    }
+
+    #[test]
+    fn score_v2_judges_both_ends_of_a_long_note() {
+        let chart = Chart::new(&beatmap("64,192,1000,128,0,1500:0:0:0:0:\n64,192,2000,128,0,2500:0:0:0:0:\n"), 0).unwrap();
+        // The second one held long past its end.
+        let presses = vec![vec![press(1005.0, 1550.0), press(2000.0, 3000.0)]];
+
+        let judged = judge(&chart, &presses, &Rules::stable(8.0, mods::SCORE_V2));
+
+        let got: Vec<_> = judged.iter().map(|j| (j.judgement, j.tail)).collect();
+        assert_eq!(got, [(Judgement::Max, Some(Judgement::N300)), (Judgement::Max, Some(Judgement::Miss))]);
+        assert_eq!(counts(&judged), ManiaCounts { max: 2, n300: 1, miss: 1, ..Default::default() });
     }
 }
