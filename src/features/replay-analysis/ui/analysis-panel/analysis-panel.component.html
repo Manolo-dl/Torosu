@@ -1,9 +1,7 @@
 @let settings = store.settings();
-<app-analysis-summary [entry]="entry()" [analysis]="analysis()" [includeReleases]="settings.include_releases" />
+<app-option-group class="views" [options]="views()" [active]="viewIndex()" (activeChange)="pickView($event)" />
 
-@if (settings.key_chart || settings.histogram || settings.timeline) {
-  <app-option-group class="views" [options]="views()" [active]="viewIndex()" (activeChange)="pickView($event)" />
-}
+<app-analysis-summary [entry]="entry()" [analysis]="analysis()" [view]="store.view()" />
 
 @if (settings.key_chart) {
   <div appearance="floating" tuiCardLarge="compact" class="card">

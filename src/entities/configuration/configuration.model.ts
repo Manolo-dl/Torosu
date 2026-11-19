@@ -16,8 +16,6 @@ export interface AppConfig {
 export interface ReplaysConfig {
     /** Analyse each play as soon as osu! saves its replay. */
     follow: boolean;
-    /** The summary counts long note releases with the presses, as osu!'s results screen does. */
-    include_releases: boolean;
     /** The charts shown. */
     key_chart: boolean;
     histogram: boolean;

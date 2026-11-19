@@ -112,8 +112,6 @@
     },
     "replays": {
       "analysis": "分析",
-      "includeReleases": "サマリーに LN リリースを含める",
-      "includeReleasesHint": "osu! のリザルト画面と同じ。オフにすると誤差と UR は押下のみになります",
       "charts": "グラフ",
       "chartsHint": "オフにしたグラフは描画されません"
     }
@@ -552,9 +550,6 @@
     "median": "中央値",
     "error": "誤差（早い / 遅い 平均）",
     "earlyLate": "早い / 遅い",
-    "timingHint": "osu! のリザルト画面と同じく、押下とロングノーツのリリースを合わせた値です。",
-    "releaseMean": "LN リリース",
-    "releaseHint": "50 判定内のロングノーツのリリースの平均：マイナスは早離し",
     "accuracy": "精度",
     "game": "ゲーム",
     "analysis": "分析",
@@ -570,8 +565,12 @@
     "early": "早い",
     "late": "遅い",
     "views": {
-      "hits": "押下",
-      "releases": "LN リリース"
+      "all": "すべて",
+      "presses": "押下",
+      "ln": "LN",
+      "allHint": "すべての押下とロングノーツのリリース。osu! のリザルト画面と同じ数え方です。",
+      "pressesHint": "全ノーツの押下のみ。オフセットはこれで決まります。",
+      "lnHint": "ロングノーツのみ：押したタイミングと離したタイミング。"
     },
     "keys": {
       "title": "キー別",
@@ -598,8 +597,7 @@
       "misses": "Miss（{{ count }}）"
     },
     "follow": "新しいプレイを分析",
-    "followHint": "osu! を開いている間、クリアしたプレイを終了後すぐに分析します",
-    "timingHintPresses": "ロングノーツのリリースを除いた押下のみ（設定を参照）。"
+    "followHint": "osu! を開いている間、クリアしたプレイを終了後すぐに分析します"
   },
   "errors": {
     "io": "ファイルエラー: {{ detail }}",

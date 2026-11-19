@@ -3,7 +3,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { ReplayAnalysis } from '@entities/local-scores';
 import { TUI_DARK_MODE } from '@taiga-ui/core';
 import { TimingView } from '../../stores/replay-analysis.store';
-import { clock, limitOf, niceStep, offsetOf, signed } from '../charts/charts';
+import { Sample, clock, limitOf, niceStep, samplesOf, signed } from '../charts/charts';
 import { hostWidth } from '../charts/width';
 
 const HEIGHT = 240;
@@ -13,10 +13,7 @@ const RESOLUTION = 2;
 /** Offsets each point of the moving mean averages. */
 const MOVING = 50;
 
-interface Point {
-    time: number;
-    offset: number;
-}
+type Point = Sample;
 
 /** Every offset along the song, its moving mean, and where the game counted misses. */
 @Component({
@@ -47,21 +44,14 @@ export class TimelineComponent {
 
     readonly points = computed((): Point[] => {
         const analysis = this.analysis();
-        const limit = limitOf(analysis);
-        const view = this.view();
-        const points: Point[] = [];
-        for (const note of analysis.stats.notes) {
-            const offset = offsetOf(note, view, limit);
-            if (offset !== null) points.push({ time: note.time, offset });
-        }
-        return points;
+        return samplesOf(analysis.stats.notes, this.view(), limitOf(analysis));
     });
 
     readonly chart = computed(() => {
         const analysis = this.analysis();
         const points = this.points();
         const reach = Math.ceil(limitOf(analysis) / 10) * 10;
-        const end = Math.max(1000, ...analysis.stats.notes.map(n => n.time));
+        const end = Math.max(1000, ...analysis.stats.notes.map(n => n.end ?? n.time));
 
         const width = this.width();
         const plotWidth = width - MARGIN.left - MARGIN.right;

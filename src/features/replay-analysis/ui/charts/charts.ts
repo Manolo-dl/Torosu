@@ -1,10 +1,28 @@
 import { NoteEvent, ReplayAnalysis } from '@entities/local-scores';
 import { TimingView } from '../../stores/replay-analysis.store';
 
-/** The offset of `note` the charts show in `view` (ms), if it has one within `limit`. */
-export function offsetOf(note: NoteEvent, view: TimingView, limit: number): number | null {
-    const offset = view === 'hits' ? note.hit : note.hit !== null ? note.release : null;
-    return offset !== null && Math.abs(offset) <= limit ? offset : null;
+/** A timing of a note: when, in the song (ms), and how far off (ms). */
+export interface Sample {
+    time: number;
+    offset: number;
+}
+
+/**
+ * The timings `view` counts of `notes`, within `limit` (ms): beyond it they
+ * are misses. The same ones as the backend's `Views`.
+ */
+export function samplesOf(notes: NoteEvent[], view: TimingView, limit: number): Sample[] {
+    const samples: Sample[] = [];
+    const add = (time: number, offset: number | null) => {
+        if (offset !== null && Math.abs(offset) <= limit) samples.push({ time, offset });
+    };
+    for (const note of notes) {
+        const long = note.end !== null;
+        if (view !== 'ln' || long) add(note.time, note.hit);
+        // A long note's release counts only if its start was pressed.
+        if (view !== 'presses' && long && note.hit !== null) add(note.end!, note.release);
+    }
+    return samples.sort((a, b) => a.time - b.time);
 }
 
 /**

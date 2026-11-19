@@ -84,12 +84,12 @@ mod tests {
     #[test]
     fn replay_settings_survive_the_file() {
         let mut config = AppConfig::default();
-        assert!(config.replays.follow && config.replays.include_releases && config.replays.timeline);
+        assert!(config.replays.follow && config.replays.timeline);
         config.replays.timeline = false;
-        config.replays.include_releases = false;
+        config.replays.follow = false;
         let text = toml::to_string_pretty(&config).unwrap();
         let read: AppConfig = toml::from_str(&text).unwrap();
-        assert!(!read.replays.timeline && !read.replays.include_releases && read.replays.histogram);
+        assert!(!read.replays.timeline && !read.replays.follow && read.replays.histogram);
         // A file from before the page: everything on.
         let read: AppConfig = toml::from_str("excluded_tools = []").unwrap();
         assert!(read.replays.follow && read.replays.key_chart && read.replays.timeline);

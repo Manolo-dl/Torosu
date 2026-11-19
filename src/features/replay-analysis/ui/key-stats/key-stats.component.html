@@ -1,5 +1,5 @@
 @let c = chart();
-@let releases = view() === 'releases';
+@let releases = showReleases();
 
 <div class="chart" (mouseleave)="hovered.set(null)">
   <svg [attr.viewBox]="'0 0 ' + width() + ' ' + height" role="img" [attr.aria-label]="'replays.keys.chartLabel' | transloco">
@@ -64,7 +64,7 @@
     @for (bar of c.bars; track bar.key) {
       <tr [class.hovered]="hovered() === bar.key" (mouseenter)="hovered.set(bar.key)" (mouseleave)="hovered.set(null)">
         <td>{{ bar.key + 1 }}</td>
-        <td>{{ releases ? bar.timing.count : bar.stats.notes }}</td>
+        <td>{{ bar.stats.notes }}</td>
         @if (bar.timing.count) {
           <td>{{ signed(bar.timing.mean) }}</td>
           <td>{{ signed(bar.timing.median) }}</td>

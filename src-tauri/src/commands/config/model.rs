@@ -154,11 +154,6 @@ pub struct ReplaysConfig {
     #[serde(default = "default_true")]
     pub follow: bool,
 
-    /// The summary counts the long note releases with the presses, as
-    /// osu!'s results screen does; otherwise only the presses.
-    #[serde(default = "default_true")]
-    pub include_releases: bool,
-
     /// The charts shown: by key, the distribution and along the song.
     #[serde(default = "default_true")]
     pub key_chart: bool,
@@ -200,7 +195,6 @@ impl Default for ReplaysConfig {
     fn default() -> Self {
         Self {
             follow: default_true(),
-            include_releases: default_true(),
             key_chart: default_true(),
             histogram: default_true(),
             timeline: default_true(),

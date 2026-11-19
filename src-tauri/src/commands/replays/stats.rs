@@ -56,6 +56,37 @@ impl Timing {
     }
 }
 
+/// The timing of a set of notes three ways: everything osu! counts in its
+/// unstable rate, only when keys were pressed, and only the long notes (when
+/// each was pressed and when it was let go).
+#[derive(Debug, Clone, Copy, PartialEq, Default, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Views {
+    /// Every press and every release of a long note, as osu!'s results screen counts them.
+    pub all: Timing,
+    /// The presses of every note, long or not.
+    pub presses: Timing,
+    /// The presses and releases of the long notes.
+    pub ln: Timing,
+}
+
+impl Views {
+    /// Of `notes`, timings beyond `limit` (ms) left out: those are misses.
+    fn of<'a>(notes: impl Iterator<Item = &'a NoteEvent> + Clone, limit: f64) -> Self {
+        let within = |offset: Option<f64>| offset.filter(|o| o.abs() <= limit);
+        // A long note's release counts only if its start was pressed.
+        let release = |n: &NoteEvent| if n.hit.is_some() { within(n.release) } else { None };
+        let presses: Vec<f64> = notes.clone().filter_map(|n| within(n.hit)).collect();
+        let releases: Vec<f64> = notes.clone().filter_map(release).collect();
+        let ln_presses = notes.filter(|n| n.end.is_some()).filter_map(|n| within(n.hit));
+        Self {
+            all: Timing::of(&[presses.as_slice(), &releases].concat()),
+            presses: Timing::of(&presses),
+            ln: Timing::of(&ln_presses.chain(releases.iter().copied()).collect::<Vec<_>>()),
+        }
+    }
+}
+
 /// How one key was played.
 #[derive(Debug, Clone, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -63,10 +94,7 @@ pub struct KeyStats {
     pub key: usize,
     pub notes: usize,
     pub counts: ManiaCounts,
-    /// Presses that hit a note within the 50 window.
-    pub hits: Timing,
-    /// Releases of long notes within the 50 window of their end.
-    pub releases: Timing,
+    pub timing: Views,
     /// Long notes let go before the 50 window of their end.
     pub early_releases: usize,
     /// Long notes held past the 50 window of their end.
@@ -79,6 +107,8 @@ pub struct KeyStats {
 pub struct NoteEvent {
     /// When the note comes, in the song (ms).
     pub time: f64,
+    /// When a long note ends, in the song (ms).
+    pub end: Option<f64>,
     pub key: usize,
     pub judgement: Judgement,
     /// With ScoreV2, of the end of a long note.
@@ -94,11 +124,7 @@ pub struct NoteEvent {
 #[serde(rename_all = "camelCase")]
 pub struct Stats {
     pub counts: ManiaCounts,
-    pub hits: Timing,
-    pub releases: Timing,
-    /// Presses and releases together, which is what osu! counts in the
-    /// unstable rate of its results screen.
-    pub combined: Timing,
+    pub timing: Views,
     pub keys: Vec<KeyStats>,
     pub notes: Vec<NoteEvent>,
 }
@@ -110,6 +136,7 @@ pub fn stats(judged: &[Judged], keys: usize, windows: &Windows, rate: f64) -> St
         .iter()
         .map(|j| NoteEvent {
             time: j.note.start / rate,
+            end: j.note.end.map(|end| end / rate),
             key: j.note.key,
             judgement: j.judgement,
             tail: j.tail,
@@ -120,40 +147,24 @@ pub fn stats(judged: &[Judged], keys: usize, windows: &Windows, rate: f64) -> St
 
     // The 50 window in real time: a press beyond it is a miss, not a timing.
     let limit = windows.n50 / rate;
-    let hits_of = |notes: &mut dyn Iterator<Item = &NoteEvent>| -> Vec<f64> {
-        notes.filter_map(|n| n.hit).filter(|hit| hit.abs() <= limit).collect()
-    };
-    let releases_of = |notes: &mut dyn Iterator<Item = &NoteEvent>| -> Vec<f64> {
-        notes.filter(|n| n.hit.is_some()).filter_map(|n| n.release).filter(|r| r.abs() <= limit).collect()
-    };
 
     let keys = (0..keys)
         .map(|key| {
-            let on_key = || notes.iter().filter(move |n| n.key == key);
+            let on_key = notes.iter().filter(move |n| n.key == key);
             let judged_on_key: Vec<Judged> = judged.iter().filter(|j| j.note.key == key).copied().collect();
-            let released = || on_key().filter(|n| n.hit.is_some()).filter_map(|n| n.release);
+            let released = || on_key.clone().filter(|n| n.hit.is_some()).filter_map(|n| n.release);
             KeyStats {
                 key,
                 notes: judged_on_key.len(),
                 counts: judge::counts(&judged_on_key),
-                hits: Timing::of(&hits_of(&mut on_key())),
-                releases: Timing::of(&releases_of(&mut on_key())),
+                timing: Views::of(on_key.clone(), limit),
                 early_releases: released().filter(|&r| r < -limit).count(),
                 late_releases: released().filter(|&r| r > limit).count(),
             }
         })
         .collect();
 
-    let hits = hits_of(&mut notes.iter());
-    let releases = releases_of(&mut notes.iter());
-    Stats {
-        counts: judge::counts(judged),
-        hits: Timing::of(&hits),
-        releases: Timing::of(&releases),
-        combined: Timing::of(&[hits, releases].concat()),
-        keys,
-        notes,
-    }
+    Stats { counts: judge::counts(judged), timing: Views::of(notes.iter(), limit), keys, notes }
 }
 
 #[cfg(test)]
@@ -190,11 +201,13 @@ mod tests {
         let stats = stats(&notes, 2, &windows, 1.5);
 
         assert_eq!((stats.notes[0].time, stats.notes[0].hit), (1000.0, Some(-10.0)));
-        assert_eq!(stats.hits.count, 4);
-        assert_eq!((stats.releases.count, stats.combined.count), (1, 5));
-        assert_eq!((stats.keys[0].hits.mean, stats.keys[0].notes), (5.0, 2));
-        assert_eq!(stats.keys[1].hits.count, 2);
-        assert_eq!((stats.keys[1].releases.count, stats.keys[1].releases.mean), (1, -20.0));
+        assert_eq!(stats.notes[3].end, Some(3333.3333333333335));
+        // Four presses, one release in time; the long notes, two presses and that release.
+        let t = stats.timing;
+        assert_eq!((t.presses.count, t.all.count, t.ln.count), (4, 5, 3));
+        assert_eq!((stats.keys[0].timing.presses.mean, stats.keys[0].notes), (5.0, 2));
+        assert_eq!(stats.keys[0].timing.ln.count, 0);
+        assert_eq!((stats.keys[1].timing.ln.count, stats.keys[1].timing.ln.mean), (3, -6.0));
         assert_eq!((stats.keys[1].early_releases, stats.keys[1].late_releases), (1, 0));
         assert_eq!(stats.keys[1].counts, ManiaCounts { max: 1, miss: 2, ..Default::default() });
     }

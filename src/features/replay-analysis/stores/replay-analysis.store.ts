@@ -18,8 +18,11 @@ export interface ScoreEntry {
     mods: string[];
 }
 
-/** What the charts show: when keys were pressed, or when long notes were let go. */
-export type TimingView = 'hits' | 'releases';
+/**
+ * What the summary and the charts time: everything osu! counts, only the
+ * presses, or only the long notes (their presses and releases).
+ */
+export type TimingView = 'all' | 'presses' | 'ln';
 
 interface ReplayAnalysisState {
     search: string;
@@ -40,13 +43,12 @@ const initialState: ReplayAnalysisState = {
     analysis: null,
     analyzing: false,
     error: null,
-    view: 'hits',
+    view: 'all',
 };
 
 /** Until the configuration arrives, and in one written before the page: everything on. */
 const DEFAULT_SETTINGS: ReplaysConfig = {
     follow: true,
-    include_releases: true,
     key_chart: true,
     histogram: true,
     timeline: true,
@@ -120,7 +122,7 @@ export const ReplayAnalysisStore = signalStore(
             const replay = entry.score.replay;
             if (!replay || !entry.set || !entry.diff || replay === store.selected()) return;
 
-            patchState(store, { selected: replay, analysis: null, analyzing: true, error: null, view: 'hits' });
+            patchState(store, { selected: replay, analysis: null, analyzing: true, error: null, view: 'all' });
             try {
                 const analysis = await invoke<ReplayAnalysis>('analyze_replay', {
                     replay,

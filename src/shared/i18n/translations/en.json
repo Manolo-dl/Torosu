@@ -112,8 +112,6 @@
     },
     "replays": {
       "analysis": "Analysis",
-      "includeReleases": "Count LN releases in the summary",
-      "includeReleasesHint": "As osu!'s results screen does; off, the error and UR are those of the presses alone",
       "charts": "Charts",
       "chartsHint": "Charts turned off are not drawn at all"
     }
@@ -552,9 +550,6 @@
     "median": "Median",
     "error": "Error (early / late avg)",
     "earlyLate": "Early / late",
-    "timingHint": "Presses and long note releases together, as osu!'s results screen counts them.",
-    "releaseMean": "LN release",
-    "releaseHint": "Mean of the long note releases within the 50 window: negative is letting go early",
     "accuracy": "Accuracy",
     "game": "Game",
     "analysis": "Analysis",
@@ -570,8 +565,12 @@
     "early": "Early",
     "late": "Late",
     "views": {
-      "hits": "Presses",
-      "releases": "LN releases"
+      "all": "All",
+      "presses": "Presses",
+      "ln": "LN",
+      "allHint": "Every press and every long note release, as osu!'s results screen counts them.",
+      "pressesHint": "Only when keys were pressed, on every note: what the offset depends on.",
+      "lnHint": "Only the long notes: when each was pressed and when it was let go."
     },
     "keys": {
       "title": "By key",
@@ -598,8 +597,7 @@
       "misses": "Misses ({{ count }})"
     },
     "follow": "Analyse new plays",
-    "followHint": "While osu! is open, each play you pass is analysed as soon as it ends",
-    "timingHintPresses": "Presses alone, without the long note releases (see the settings)."
+    "followHint": "While osu! is open, each play you pass is analysed as soon as it ends"
   },
   "errors": {
     "io": "File error: {{ detail }}",

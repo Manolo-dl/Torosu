@@ -51,7 +51,6 @@ const DEFAULT_CONFIG: AppConfig = {
   },
   replays: {
     follow: true,
-    include_releases: true,
     key_chart: true,
     histogram: true,
     timeline: true,

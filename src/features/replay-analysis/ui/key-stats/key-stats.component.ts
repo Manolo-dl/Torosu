@@ -41,7 +41,8 @@ export class KeyStatsComponent {
 
     readonly chart = computed(() => {
         const keys = this.analysis().stats.keys;
-        const timingOf = (k: KeyStats) => (this.view() === 'hits' ? k.hits : k.releases);
+        const view = this.view();
+        const timingOf = (k: KeyStats) => k.timing[view];
         const means = keys.filter(k => timingOf(k).count > 0).map(k => Math.abs(timingOf(k).mean));
         // Symmetric around zero, so early and late bars compare.
         const step = niceStep(Math.max(5, ...means), 2);
@@ -77,6 +78,9 @@ export class KeyStatsComponent {
         }
         return { bars, ticks, zero };
     });
+
+    /** Whether the table tells the long notes let go early or held too long. */
+    readonly showReleases = computed(() => this.view() !== 'presses' && this.analysis().stats.timing.ln.count > 0);
 
     readonly tooltip = computed(() => {
         const key = this.hovered();

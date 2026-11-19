@@ -112,8 +112,6 @@
     },
     "replays": {
       "analysis": "분석",
-      "includeReleases": "요약에 LN 릴리스 포함",
-      "includeReleasesHint": "osu! 결과 화면과 같습니다. 끄면 오차와 UR은 입력만 계산합니다",
       "charts": "그래프",
       "chartsHint": "끈 그래프는 그리지 않습니다"
     }
@@ -552,9 +550,6 @@
     "median": "중앙값",
     "error": "오차 (빠름 / 늦음 평균)",
     "earlyLate": "빠름 / 늦음",
-    "timingHint": "osu! 결과 화면처럼 입력과 롱노트 릴리스를 함께 계산합니다.",
-    "releaseMean": "LN 릴리스",
-    "releaseHint": "50 판정 범위 안의 롱노트 릴리스 평균: 음수는 일찍 뗀 것입니다",
     "accuracy": "정확도",
     "game": "게임",
     "analysis": "분석",
@@ -570,8 +565,12 @@
     "early": "빠름",
     "late": "늦음",
     "views": {
-      "hits": "입력",
-      "releases": "LN 릴리스"
+      "all": "전체",
+      "presses": "입력",
+      "ln": "LN",
+      "allHint": "모든 입력과 롱노트 릴리스. osu! 결과 화면과 같은 방식입니다.",
+      "pressesHint": "모든 노트의 입력만: 오프셋은 이것에 따라 정해집니다.",
+      "lnHint": "롱노트만: 누른 시점과 뗀 시점."
     },
     "keys": {
       "title": "키별",
@@ -598,8 +597,7 @@
       "misses": "Miss ({{ count }})"
     },
     "follow": "새 플레이 분석",
-    "followHint": "osu!가 열려 있는 동안 클리어한 플레이를 끝나자마자 분석합니다",
-    "timingHintPresses": "롱노트 릴리스 없이 입력만 (설정 참고)."
+    "followHint": "osu!가 열려 있는 동안 클리어한 플레이를 끝나자마자 분석합니다"
   },
   "errors": {
     "io": "파일 오류: {{ detail }}",

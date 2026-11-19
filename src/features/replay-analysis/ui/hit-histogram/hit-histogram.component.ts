@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, input, signal } from '@an
 import { TranslocoPipe } from '@jsverse/transloco';
 import { Judgement, ReplayAnalysis } from '@entities/local-scores';
 import { TimingView } from '../../stores/replay-analysis.store';
-import { barPath, limitOf, niceStep, offsetOf, signed } from '../charts/charts';
+import { barPath, limitOf, niceStep, samplesOf, signed } from '../charts/charts';
 import { hostWidth } from '../charts/width';
 
 const HEIGHT = 220;
@@ -50,9 +50,7 @@ export class HitHistogramComponent {
         const counts = new Map<number, number>();
         let sum = 0;
         let n = 0;
-        for (const note of analysis.stats.notes) {
-            const offset = offsetOf(note, view, limit);
-            if (offset === null) continue;
+        for (const { offset } of samplesOf(analysis.stats.notes, view, limit)) {
             // Bins centred on whole steps, so the one around zero is neither early nor late.
             const from = Math.floor((offset + BIN / 2) / BIN) * BIN - BIN / 2;
             counts.set(from, (counts.get(from) ?? 0) + 1);

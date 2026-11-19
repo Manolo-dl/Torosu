@@ -4,7 +4,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { JUDGEMENTS, ReplayAnalysis, maniaAccuracy } from '@entities/local-scores';
 import { TuiHint } from '@taiga-ui/core';
 import { TuiCardLarge } from '@taiga-ui/layout';
-import { ScoreEntry } from '../../stores/replay-analysis.store';
+import { ScoreEntry, TimingView } from '../../stores/replay-analysis.store';
 
 /** The play at a glance: its timing and its judgements. */
 @Component({
@@ -17,8 +17,8 @@ import { ScoreEntry } from '../../stores/replay-analysis.store';
 export class AnalysisSummaryComponent {
     readonly entry = input.required<ScoreEntry>();
     readonly analysis = input.required<ReplayAnalysis>();
-    /** Count the long note releases with the presses, as osu! does. */
-    readonly includeReleases = input(true);
+    /** What the timing counts. */
+    readonly view = input.required<TimingView>();
 
     readonly judgements = JUDGEMENTS;
 

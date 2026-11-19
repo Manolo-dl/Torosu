@@ -112,8 +112,6 @@
     },
     "replays": {
       "analysis": "分析",
-      "includeReleases": "摘要中计入 LN 松键",
-      "includeReleasesHint": "与 osu! 结算画面相同；关闭后误差与 UR 仅计算按键",
       "charts": "图表",
       "chartsHint": "关闭的图表不会绘制"
     }
@@ -552,9 +550,6 @@
     "median": "中位数",
     "error": "误差（提前 / 延后 平均）",
     "earlyLate": "提前 / 延后",
-    "timingHint": "与 osu! 结算画面相同，按键与长条松键合并计算。",
-    "releaseMean": "LN 松键",
-    "releaseHint": "50 判定范围内长条松键的平均值：负数表示提前松开",
     "accuracy": "准确率",
     "game": "游戏",
     "analysis": "分析",
@@ -570,8 +565,12 @@
     "early": "提前",
     "late": "延后",
     "views": {
-      "hits": "按键",
-      "releases": "LN 松键"
+      "all": "全部",
+      "presses": "按键",
+      "ln": "LN",
+      "allHint": "所有按键与长条松键，与 osu! 结算画面的计算方式相同。",
+      "pressesHint": "仅所有音符的按键：偏移量取决于此。",
+      "lnHint": "仅长条：每个的按下与松开时机。"
     },
     "keys": {
       "title": "按键位",
@@ -598,8 +597,7 @@
       "misses": "Miss（{{ count }}）"
     },
     "follow": "分析新的游玩",
-    "followHint": "osu! 打开时，每次通过的游玩结束后立即分析",
-    "timingHintPresses": "仅按键，不含长条松键（见设置）。"
+    "followHint": "osu! 打开时，每次通过的游玩结束后立即分析"
   },
   "errors": {
     "io": "文件错误：{{ detail }}",

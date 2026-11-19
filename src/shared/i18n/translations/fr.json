@@ -112,8 +112,6 @@
     },
     "replays": {
       "analysis": "Analyse",
-      "includeReleases": "Compter les relâchements de LN dans le résumé",
-      "includeReleasesHint": "Comme l'écran de résultats d'osu! ; désactivé, l'erreur et l'UR ne concernent que les appuis",
       "charts": "Graphiques",
       "chartsHint": "Les graphiques désactivés ne sont pas dessinés"
     }
@@ -552,9 +550,6 @@
     "median": "Médiane",
     "error": "Erreur (moy. avance / retard)",
     "earlyLate": "Avance / retard",
-    "timingHint": "Appuis et relâchements de long notes ensemble, comme l'écran de résultats d'osu! les compte.",
-    "releaseMean": "Relâchement LN",
-    "releaseHint": "Moyenne des relâchements de long notes dans la fenêtre de 50 : négatif signifie relâcher en avance",
     "accuracy": "Précision",
     "game": "Jeu",
     "analysis": "Analyse",
@@ -570,8 +565,12 @@
     "early": "En avance",
     "late": "En retard",
     "views": {
-      "hits": "Appuis",
-      "releases": "Relâchements LN"
+      "all": "Tout",
+      "presses": "Appuis",
+      "ln": "LN",
+      "allHint": "Chaque appui et chaque relâchement de long note, comme l'écran de résultats d'osu! les compte.",
+      "pressesHint": "Seulement les appuis, sur toutes les notes : c'est d'eux que dépend l'offset.",
+      "lnHint": "Seulement les long notes : quand chacune a été appuyée et relâchée."
     },
     "keys": {
       "title": "Par touche",
@@ -598,8 +597,7 @@
       "misses": "Miss ({{ count }})"
     },
     "follow": "Analyser les nouvelles parties",
-    "followHint": "Avec osu! ouvert, chaque partie réussie est analysée dès qu'elle se termine",
-    "timingHintPresses": "Appuis seuls, sans les relâchements de long notes (voir les paramètres)."
+    "followHint": "Avec osu! ouvert, chaque partie réussie est analysée dès qu'elle se termine"
   },
   "errors": {
     "io": "Erreur de fichier : {{ detail }}",

@@ -112,8 +112,6 @@
     },
     "replays": {
       "analysis": "Análisis",
-      "includeReleases": "Contar las sueltas de LN en el resumen",
-      "includeReleasesHint": "Como la pantalla de resultados de osu!; desactivado, el error y el UR son solo de las pulsaciones",
       "charts": "Gráficas",
       "chartsHint": "Las gráficas desactivadas no se dibujan"
     }
@@ -552,9 +550,6 @@
     "median": "Mediana",
     "error": "Error (media antes / tarde)",
     "earlyLate": "Antes / tarde",
-    "timingHint": "Pulsaciones y sueltas de long notes juntas, como las cuenta la pantalla de resultados de osu!.",
-    "releaseMean": "Suelta de LN",
-    "releaseHint": "Media de las sueltas de long notes dentro de la ventana de 50: negativo es soltar antes de tiempo",
     "accuracy": "Precisión",
     "game": "Juego",
     "analysis": "Análisis",
@@ -570,8 +565,12 @@
     "early": "Antes",
     "late": "Tarde",
     "views": {
-      "hits": "Pulsaciones",
-      "releases": "Sueltas de LN"
+      "all": "Todos",
+      "presses": "Pulsaciones",
+      "ln": "LN",
+      "allHint": "Cada pulsación y cada suelta de long note, como las cuenta la pantalla de resultados de osu!.",
+      "pressesHint": "Solo cuándo se pulsó, en todas las notas: de esto depende el offset.",
+      "lnHint": "Solo las long notes: cuándo se pulsó cada una y cuándo se soltó."
     },
     "keys": {
       "title": "Por tecla",
@@ -598,8 +597,7 @@
       "misses": "Misses ({{ count }})"
     },
     "follow": "Analizar los plays nuevos",
-    "followHint": "Con osu! abierto, cada play que pases se analiza en cuanto termina",
-    "timingHintPresses": "Solo las pulsaciones, sin las sueltas de long notes (ver los ajustes)."
+    "followHint": "Con osu! abierto, cada play que pases se analiza en cuanto termina"
   },
   "errors": {
     "io": "Error de archivo: {{ detail }}",

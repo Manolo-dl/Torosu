@@ -56,14 +56,21 @@ export interface Timing {
     lateMean: number;
 }
 
+/** The timing three ways; offsets beyond the 50 window are left out (misses). */
+export interface TimingViews {
+    /** Every press and every long note release, as osu!'s results screen counts them. */
+    all: Timing;
+    /** The presses of every note, long or not. */
+    presses: Timing;
+    /** The presses and releases of the long notes. */
+    ln: Timing;
+}
+
 export interface KeyStats {
     key: number;
     notes: number;
     counts: ManiaCounts;
-    /** Presses that hit a note within the 50 window. */
-    hits: Timing;
-    /** Releases of long notes within the 50 window of their end. */
-    releases: Timing;
+    timing: TimingViews;
     /** Long notes let go before the 50 window of their end. */
     earlyReleases: number;
     /** Long notes held past the 50 window of their end. */
@@ -73,6 +80,8 @@ export interface KeyStats {
 /** One note as it was played. Times are the song's, in ms. */
 export interface NoteEvent {
     time: number;
+    /** When a long note ends; `null` for a normal note. */
+    end: number | null;
     key: number;
     judgement: Judgement;
     /** With ScoreV2, of the end of a long note. */
@@ -85,10 +94,7 @@ export interface NoteEvent {
 
 export interface ReplayStats {
     counts: ManiaCounts;
-    hits: Timing;
-    releases: Timing;
-    /** Presses and releases together: what osu!'s results screen counts. */
-    combined: Timing;
+    timing: TimingViews;
     keys: KeyStats[];
     notes: NoteEvent[];
 }
