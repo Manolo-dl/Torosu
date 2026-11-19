@@ -553,7 +553,7 @@
     "accuracy": "Accuracy",
     "game": "Game",
     "analysis": "Analysis",
-    "countsDiffer": "The analysis judges a few notes differently than osu! (long note quirks it doesn't model); the timing does not depend on them.",
+    "countsDiffer": "Some judgements could not be matched to their note and stay as the analysis judged them.",
     "judgements": {
       "max": "MAX",
       "n300": "300",
@@ -597,7 +597,9 @@
       "misses": "Misses ({{ count }})"
     },
     "follow": "Analyse new plays",
-    "followHint": "While osu! is open, each play you pass is analysed as soon as it ends"
+    "followHint": "While osu! is open, each play you pass is analysed as soon as it ends",
+    "reconciled": "{{ matched }} of {{ total }} of osu!'s judgements put on their note, from the .osg it saves with the replay: each note has the judgement the game gave it.",
+    "noGraph": "This replay has no .osg (osu! saves one since 2026): the judgements are the analysis' own, and a few long notes may differ from the game."
   },
   "errors": {
     "io": "File error: {{ detail }}",

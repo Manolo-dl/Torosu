@@ -553,7 +553,7 @@
     "accuracy": "准确率",
     "game": "游戏",
     "analysis": "分析",
-    "countsDiffer": "分析对少数音符的判定与 osu! 不同（未模拟的长条细节），时机数据不受影响。",
+    "countsDiffer": "部分判定无法对应到音符，保留为分析的判定。",
     "judgements": {
       "max": "MAX",
       "n300": "300",
@@ -597,7 +597,9 @@
       "misses": "Miss（{{ count }}）"
     },
     "follow": "分析新的游玩",
-    "followHint": "osu! 打开时，每次通过的游玩结束后立即分析"
+    "followHint": "osu! 打开时，每次通过的游玩结束后立即分析",
+    "reconciled": "根据随回放保存的 .osg，已将 osu! 的 {{ total }} 个判定中的 {{ matched }} 个对应到音符：每个音符都是游戏给出的判定。",
+    "noGraph": "此回放没有 .osg（osu! 自 2026 年起保存）：判定来自分析，部分长条可能与游戏不同。"
   },
   "errors": {
     "io": "文件错误：{{ detail }}",

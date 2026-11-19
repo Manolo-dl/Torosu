@@ -114,6 +114,11 @@ export interface ReplayAnalysis {
     gameCounts: ManiaCounts;
     /** When the game counted each miss (ms, song time). */
     gameMisses: number[];
+    /**
+     * How many of the game's judgements (from the `.osg`) were put on their
+     * notes, which then have the game's judgement; `null` without an `.osg`.
+     */
+    reconciled: { matched: number; total: number } | null;
     stats: ReplayStats;
 }
 

@@ -553,7 +553,7 @@
     "accuracy": "Precisión",
     "game": "Juego",
     "analysis": "Análisis",
-    "countsDiffer": "El análisis juzga algunas notas distinto que osu! (rarezas de las long notes que no modela); el timing no depende de ellas.",
+    "countsDiffer": "Algunos juicios no se pudieron casar con su nota y quedan como los juzgó el análisis.",
     "judgements": {
       "max": "MAX",
       "n300": "300",
@@ -597,7 +597,9 @@
       "misses": "Misses ({{ count }})"
     },
     "follow": "Analizar los plays nuevos",
-    "followHint": "Con osu! abierto, cada play que pases se analiza en cuanto termina"
+    "followHint": "Con osu! abierto, cada play que pases se analiza en cuanto termina",
+    "reconciled": "{{ matched }} de {{ total }} juicios de osu! colocados en su nota, desde el .osg que guarda con la replay: cada nota tiene el juicio que le dio el juego.",
+    "noGraph": "Esta replay no tiene .osg (osu! lo guarda desde 2026): los juicios son los del análisis y alguna long note puede diferir del juego."
   },
   "errors": {
     "io": "Error de archivo: {{ detail }}",

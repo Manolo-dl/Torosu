@@ -53,6 +53,11 @@
       </tr>
     </tbody>
   </table>
+  @if (a.reconciled; as r) {
+    <p class="note">{{ 'replays.reconciled' | transloco: { matched: r.matched, total: r.total } }}</p>
+  } @else {
+    <p class="note">{{ 'replays.noGraph' | transloco }}</p>
+  }
   @if (differs()) {
     <p class="note">{{ 'replays.countsDiffer' | transloco }}</p>
   }
