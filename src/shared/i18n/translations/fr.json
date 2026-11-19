@@ -566,10 +566,10 @@
     "late": "En retard",
     "views": {
       "all": "Tout",
-      "presses": "Appuis",
+      "rice": "Rice",
       "ln": "LN",
       "allHint": "Chaque appui et chaque relâchement de long note, comme l'écran de résultats d'osu! les compte.",
-      "pressesHint": "Seulement les appuis, sur toutes les notes : c'est d'eux que dépend l'offset.",
+      "riceHint": "Seulement les notes normales : quand chacune a été appuyée.",
       "lnHint": "Seulement les long notes : quand chacune a été appuyée et relâchée."
     },
     "keys": {

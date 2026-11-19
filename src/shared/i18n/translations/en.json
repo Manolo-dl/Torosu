@@ -566,10 +566,10 @@
     "late": "Late",
     "views": {
       "all": "All",
-      "presses": "Presses",
+      "rice": "Rice",
       "ln": "LN",
       "allHint": "Every press and every long note release, as osu!'s results screen counts them.",
-      "pressesHint": "Only when keys were pressed, on every note: what the offset depends on.",
+      "riceHint": "Only the normal notes: when each was pressed.",
       "lnHint": "Only the long notes: when each was pressed and when it was let go."
     },
     "keys": {

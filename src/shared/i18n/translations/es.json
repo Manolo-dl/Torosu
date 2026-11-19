@@ -566,10 +566,10 @@
     "late": "Tarde",
     "views": {
       "all": "Todos",
-      "presses": "Pulsaciones",
+      "rice": "Rice",
       "ln": "LN",
       "allHint": "Cada pulsación y cada suelta de long note, como las cuenta la pantalla de resultados de osu!.",
-      "pressesHint": "Solo cuándo se pulsó, en todas las notas: de esto depende el offset.",
+      "riceHint": "Solo las notas normales: cuándo se pulsó cada una.",
       "lnHint": "Solo las long notes: cuándo se pulsó cada una y cuándo se soltó."
     },
     "keys": {

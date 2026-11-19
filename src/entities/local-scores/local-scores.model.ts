@@ -60,8 +60,8 @@ export interface Timing {
 export interface TimingViews {
     /** Every press and every long note release, as osu!'s results screen counts them. */
     all: Timing;
-    /** The presses of every note, long or not. */
-    presses: Timing;
+    /** The presses of the normal notes. */
+    rice: Timing;
     /** The presses and releases of the long notes. */
     ln: Timing;
 }

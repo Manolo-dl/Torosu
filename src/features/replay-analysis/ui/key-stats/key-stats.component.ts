@@ -80,7 +80,7 @@ export class KeyStatsComponent {
     });
 
     /** Whether the table tells the long notes let go early or held too long. */
-    readonly showReleases = computed(() => this.view() !== 'presses' && this.analysis().stats.timing.ln.count > 0);
+    readonly showReleases = computed(() => this.view() !== 'rice' && this.analysis().stats.timing.ln.count > 0);
 
     readonly tooltip = computed(() => {
         const key = this.hovered();

@@ -57,15 +57,15 @@ impl Timing {
 }
 
 /// The timing of a set of notes three ways: everything osu! counts in its
-/// unstable rate, only when keys were pressed, and only the long notes (when
+/// unstable rate, only the normal notes (rice), and only the long notes (when
 /// each was pressed and when it was let go).
 #[derive(Debug, Clone, Copy, PartialEq, Default, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Views {
     /// Every press and every release of a long note, as osu!'s results screen counts them.
     pub all: Timing,
-    /// The presses of every note, long or not.
-    pub presses: Timing,
+    /// The presses of the normal notes.
+    pub rice: Timing,
     /// The presses and releases of the long notes.
     pub ln: Timing,
 }
@@ -76,14 +76,11 @@ impl Views {
         let within = |offset: Option<f64>| offset.filter(|o| o.abs() <= limit);
         // A long note's release counts only if its start was pressed.
         let release = |n: &NoteEvent| if n.hit.is_some() { within(n.release) } else { None };
-        let presses: Vec<f64> = notes.clone().filter_map(|n| within(n.hit)).collect();
-        let releases: Vec<f64> = notes.clone().filter_map(release).collect();
-        let ln_presses = notes.filter(|n| n.end.is_some()).filter_map(|n| within(n.hit));
-        Self {
-            all: Timing::of(&[presses.as_slice(), &releases].concat()),
-            presses: Timing::of(&presses),
-            ln: Timing::of(&ln_presses.chain(releases.iter().copied()).collect::<Vec<_>>()),
-        }
+        let rice: Vec<f64> = notes.clone().filter(|n| n.end.is_none()).filter_map(|n| within(n.hit)).collect();
+        let ln_presses = notes.clone().filter(|n| n.end.is_some()).filter_map(|n| within(n.hit));
+        let releases = notes.filter_map(release);
+        let ln: Vec<f64> = ln_presses.chain(releases).collect();
+        Self { all: Timing::of(&[rice.as_slice(), &ln].concat()), rice: Timing::of(&rice), ln: Timing::of(&ln) }
     }
 }
 
@@ -202,10 +199,10 @@ mod tests {
 
         assert_eq!((stats.notes[0].time, stats.notes[0].hit), (1000.0, Some(-10.0)));
         assert_eq!(stats.notes[3].end, Some(3333.3333333333335));
-        // Four presses, one release in time; the long notes, two presses and that release.
+        // Two normal notes; the long notes, two presses and the release in time.
         let t = stats.timing;
-        assert_eq!((t.presses.count, t.all.count, t.ln.count), (4, 5, 3));
-        assert_eq!((stats.keys[0].timing.presses.mean, stats.keys[0].notes), (5.0, 2));
+        assert_eq!((t.rice.count, t.all.count, t.ln.count), (2, 5, 3));
+        assert_eq!((stats.keys[0].timing.rice.mean, stats.keys[0].notes), (5.0, 2));
         assert_eq!(stats.keys[0].timing.ln.count, 0);
         assert_eq!((stats.keys[1].timing.ln.count, stats.keys[1].timing.ln.mean), (3, -6.0));
         assert_eq!((stats.keys[1].early_releases, stats.keys[1].late_releases), (1, 0));

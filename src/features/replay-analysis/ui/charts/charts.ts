@@ -18,9 +18,9 @@ export function samplesOf(notes: NoteEvent[], view: TimingView, limit: number): 
     };
     for (const note of notes) {
         const long = note.end !== null;
-        if (view !== 'ln' || long) add(note.time, note.hit);
+        if (view === 'all' || (view === 'rice') !== long) add(note.time, note.hit);
         // A long note's release counts only if its start was pressed.
-        if (view !== 'presses' && long && note.hit !== null) add(note.end!, note.release);
+        if (view !== 'rice' && long && note.hit !== null) add(note.end!, note.release);
     }
     return samples.sort((a, b) => a.time - b.time);
 }

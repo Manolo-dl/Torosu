@@ -10,7 +10,7 @@ import { HitHistogramComponent } from '../hit-histogram/hit-histogram.component'
 import { KeyStatsComponent } from '../key-stats/key-stats.component';
 import { TimelineComponent } from '../timeline/timeline.component';
 
-const VIEWS: TimingView[] = ['all', 'presses', 'ln'];
+const VIEWS: TimingView[] = ['all', 'rice', 'ln'];
 
 /** Everything about the analysed play: the summary, then the charts of the view picked. */
 @Component({
@@ -25,12 +25,15 @@ export class AnalysisPanelComponent {
     readonly analysis = input.required<ReplayAnalysis>();
     readonly store = inject(ReplayAnalysisStore);
 
-    /** Long notes only for maps that have them. */
-    readonly views = computed((): OptionGroupItem[] => [
-        { label: 'replays.views.all', translate: true },
-        { label: 'replays.views.presses', translate: true },
-        { label: 'replays.views.ln', translate: true, disabled: this.analysis().stats.timing.ln.count === 0 },
-    ]);
+    /** Rice and LN only for maps that have them. */
+    readonly views = computed((): OptionGroupItem[] => {
+        const timing = this.analysis().stats.timing;
+        return [
+            { label: 'replays.views.all', translate: true },
+            { label: 'replays.views.rice', translate: true, disabled: timing.rice.count === 0 },
+            { label: 'replays.views.ln', translate: true, disabled: timing.ln.count === 0 },
+        ];
+    });
 
     readonly viewIndex = computed(() => VIEWS.indexOf(this.store.view()));
 

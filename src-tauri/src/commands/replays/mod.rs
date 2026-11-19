@@ -145,7 +145,7 @@ mod tests {
 
         assert_eq!((analysis.keys, analysis.rate), (4, 1.0));
         assert_eq!(analysis.stats.counts, ManiaCounts { max: 1, miss: 1, ..Default::default() });
-        assert_eq!(analysis.stats.timing.presses.mean, 9.0);
+        assert_eq!(analysis.stats.timing.rice.mean, 9.0);
         assert_eq!(analysis.game_counts, ManiaCounts { max: 30, n300: 10, n200: 4, n100: 2, n50: 1, miss: 3 });
         assert!(analysis.game_misses.is_empty());
     }
@@ -169,16 +169,16 @@ mod tests {
             let replay = scores::replays_dir(&osu).join(score.replay.as_ref().unwrap());
             let Ok(a) = analyze(&replay, map) else { continue };
             let s = &a.stats;
-            let (all, presses, ln) = (s.timing.all, s.timing.presses, s.timing.ln);
+            let (all, rice, ln) = (s.timing.all, s.timing.rice, s.timing.ln);
             println!(
-                "{}K x{} | all: Error {:.2}ms - {:.2}ms avg, UR {:.2} | presses: mean {:+.1} UR {:.0} | ln: {} mean {:+.1} | game misses {} ours {}",
-                a.keys, a.rate, all.early_mean, all.late_mean, all.unstable_rate, presses.mean, presses.unstable_rate,
+                "{}K x{} | all: Error {:.2}ms - {:.2}ms avg, UR {:.2} | rice: mean {:+.1} UR {:.0} | ln: {} mean {:+.1} | game misses {} ours {}",
+                a.keys, a.rate, all.early_mean, all.late_mean, all.unstable_rate, rice.mean, rice.unstable_rate,
                 ln.count, ln.mean, a.game_counts.miss, s.counts.miss,
             );
             for k in &s.keys {
-                let (p, ln) = (k.timing.presses, k.timing.ln);
+                let (p, ln) = (k.timing.rice, k.timing.ln);
                 println!(
-                    "  key {} presses {:4} mean {:+5.1} UR {:4.0} | ln {:3} mean {:+5.1} early {} late {} | miss {}",
+                    "  key {} rice {:4} mean {:+5.1} UR {:4.0} | ln {:3} mean {:+5.1} early {} late {} | miss {}",
                     k.key + 1, p.count, p.mean, p.unstable_rate, ln.count, ln.mean, k.early_releases, k.late_releases, k.counts.miss,
                 );
             }

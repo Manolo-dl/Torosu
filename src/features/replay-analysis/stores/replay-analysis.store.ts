@@ -20,9 +20,9 @@ export interface ScoreEntry {
 
 /**
  * What the summary and the charts time: everything osu! counts, only the
- * presses, or only the long notes (their presses and releases).
+ * normal notes (rice), or only the long notes (their presses and releases).
  */
-export type TimingView = 'all' | 'presses' | 'ln';
+export type TimingView = 'all' | 'rice' | 'ln';
 
 interface ReplayAnalysisState {
     search: string;
