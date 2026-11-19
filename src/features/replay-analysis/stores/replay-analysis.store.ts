@@ -17,6 +17,9 @@ export interface ScoreEntry {
     mods: string[];
 }
 
+/** What the charts show: when keys were pressed, or when long notes were let go. */
+export type TimingView = 'hits' | 'releases';
+
 interface ReplayAnalysisState {
     search: string;
     /** Only plays of this many keys; `null` for all. */
@@ -26,6 +29,7 @@ interface ReplayAnalysisState {
     analysis: ReplayAnalysis | null;
     analyzing: boolean;
     error: string | null;
+    view: TimingView;
 }
 
 const initialState: ReplayAnalysisState = {
@@ -35,6 +39,7 @@ const initialState: ReplayAnalysisState = {
     analysis: null,
     analyzing: false,
     error: null,
+    view: 'hits',
 };
 
 export const ReplayAnalysisStore = signalStore(
@@ -89,12 +94,16 @@ export const ReplayAnalysisStore = signalStore(
             patchState(store, { keys });
         },
 
+        setView(view: TimingView) {
+            patchState(store, { view });
+        },
+
         /** Analyses the replay of `entry`, unless it is the one shown. */
         async select(entry: ScoreEntry) {
             const replay = entry.score.replay;
             if (!replay || !entry.set || !entry.diff || replay === store.selected()) return;
 
-            patchState(store, { selected: replay, analysis: null, analyzing: true, error: null });
+            patchState(store, { selected: replay, analysis: null, analyzing: true, error: null, view: 'hits' });
             try {
                 const analysis = await invoke<ReplayAnalysis>('analyze_replay', {
                     replay,

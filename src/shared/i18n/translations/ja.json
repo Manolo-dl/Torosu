@@ -556,6 +556,36 @@
       "n100": "100",
       "n50": "50",
       "miss": "Miss"
+    },
+    "early": "早い",
+    "late": "遅い",
+    "views": {
+      "hits": "押下",
+      "releases": "LN リリース"
+    },
+    "keys": {
+      "title": "キー別",
+      "subtitle": "各キーの平均ズレ：ゼロより下は早く、上は遅い",
+      "chartLabel": "各キーの平均ズレ",
+      "key": "キー {{ key }}",
+      "nothing": "このキーには計測データがありません",
+      "column": "キー",
+      "notes": "ノーツ",
+      "letGoEarly": "早離し",
+      "heldLong": "押しすぎ"
+    },
+    "histogram": {
+      "title": "分布",
+      "subtitle": "判定幅に対して各ズレにいくつ入ったか",
+      "label": "ズレのヒストグラム",
+      "count": "{{ count }} ノーツ"
+    },
+    "timeline": {
+      "title": "曲の流れ",
+      "subtitle": "時間ごとのズレ。どこでずれたり疲れたりするかがわかります",
+      "label": "曲の流れに沿ったズレ",
+      "movingMean": "{{ count }} ノーツの平均",
+      "misses": "Miss（{{ count }}）"
     }
   },
   "errors": {

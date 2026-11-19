@@ -1,0 +1,48 @@
+@let c = chart();
+
+<div class="chart">
+  <canvas #canvas [width]="width * resolution" [height]="height * resolution"></canvas>
+  <svg
+    [attr.viewBox]="'0 0 ' + width + ' ' + height"
+    role="img"
+    [attr.aria-label]="'replays.timeline.label' | transloco"
+    (mousemove)="move($event)"
+    (mouseleave)="pointer.set(null)"
+  >
+    @for (tick of c.yTicks; track tick.y) {
+      <line class="grid" [attr.x1]="margin.left" [attr.x2]="width - margin.right" [attr.y1]="tick.y" [attr.y2]="tick.y" />
+      <text class="axis-label" text-anchor="end" dominant-baseline="middle" [attr.x]="margin.left - 6" [attr.y]="tick.y">{{ tick.label }}</text>
+    }
+    <line class="zero" [attr.x1]="margin.left" [attr.x2]="width - margin.right" [attr.y1]="c.zero" [attr.y2]="c.zero" />
+    @for (tick of c.xTicks; track tick.x) {
+      <text class="axis-label" text-anchor="middle" [attr.x]="tick.x" [attr.y]="height - 6">{{ tick.label }}</text>
+    }
+
+    @for (x of c.misses; track $index) {
+      <line class="miss" [attr.x1]="x" [attr.x2]="x" [attr.y1]="margin.top - 10" [attr.y2]="margin.top - 2" />
+    }
+
+    <path class="moving" [attr.d]="c.meanPath" />
+
+    @if (tooltip(); as t) {
+      <line class="crosshair" [attr.x1]="t.x" [attr.x2]="t.x" [attr.y1]="margin.top" [attr.y2]="height - margin.bottom" />
+      <circle class="marker" r="4" [attr.cx]="t.x" [attr.cy]="c.y(t.value)" />
+    }
+  </svg>
+
+  @if (tooltip(); as t) {
+    <div class="tooltip" [style.left.%]="t.left" [style.top.%]="t.top">
+      <div class="tooltip-title">{{ clock(t.time) }}</div>
+      <div>{{ 'replays.timeline.movingMean' | transloco: { count: moving } }}: {{ signed(t.value) }} ms</div>
+    </div>
+  }
+</div>
+
+<div class="legend">
+  <span><span class="swatch early"></span>{{ 'replays.early' | transloco }}</span>
+  <span><span class="swatch late"></span>{{ 'replays.late' | transloco }}</span>
+  <span><span class="swatch moving"></span>{{ 'replays.timeline.movingMean' | transloco: { count: moving } }}</span>
+  @if (c.misses.length) {
+    <span><span class="swatch miss"></span>{{ 'replays.timeline.misses' | transloco: { count: c.misses.length } }}</span>
+  }
+</div>

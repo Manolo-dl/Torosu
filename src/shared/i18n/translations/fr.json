@@ -556,6 +556,36 @@
       "n100": "100",
       "n50": "50",
       "miss": "Miss"
+    },
+    "early": "En avance",
+    "late": "En retard",
+    "views": {
+      "hits": "Appuis",
+      "releases": "Relâchements LN"
+    },
+    "keys": {
+      "title": "Par touche",
+      "subtitle": "Décalage moyen de chaque touche : sous zéro en avance, au-dessus en retard",
+      "chartLabel": "Décalage moyen de chaque touche",
+      "key": "Touche {{ key }}",
+      "nothing": "Rien de mesuré sur cette touche",
+      "column": "Touche",
+      "notes": "Notes",
+      "letGoEarly": "Relâchées tôt",
+      "heldLong": "Tenues trop longtemps"
+    },
+    "histogram": {
+      "title": "Distribution",
+      "subtitle": "Combien à chaque décalage, face aux fenêtres de jugement",
+      "label": "Histogramme des décalages",
+      "count": "{{ count }} notes"
+    },
+    "timeline": {
+      "title": "Au fil de la chanson",
+      "subtitle": "Chaque décalage dans le temps, pour voir où vous dérivez ou fatiguez",
+      "label": "Décalages au fil de la chanson",
+      "movingMean": "Moyenne de {{ count }} notes",
+      "misses": "Miss ({{ count }})"
     }
   },
   "errors": {

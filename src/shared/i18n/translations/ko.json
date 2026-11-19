@@ -556,6 +556,36 @@
       "n100": "100",
       "n50": "50",
       "miss": "Miss"
+    },
+    "early": "빠름",
+    "late": "늦음",
+    "views": {
+      "hits": "입력",
+      "releases": "LN 릴리스"
+    },
+    "keys": {
+      "title": "키별",
+      "subtitle": "각 키의 평균 오차: 0보다 아래는 빠름, 위는 늦음",
+      "chartLabel": "각 키의 평균 오차",
+      "key": "키 {{ key }}",
+      "nothing": "이 키에서 측정된 것이 없습니다",
+      "column": "키",
+      "notes": "노트",
+      "letGoEarly": "일찍 뗌",
+      "heldLong": "너무 오래 누름"
+    },
+    "histogram": {
+      "title": "분포",
+      "subtitle": "판정 범위에 대해 각 오차에 몇 개가 있었는지",
+      "label": "오차 히스토그램",
+      "count": "노트 {{ count }}개"
+    },
+    "timeline": {
+      "title": "곡 진행에 따라",
+      "subtitle": "시간에 따른 모든 오차로, 어디서 밀리거나 지치는지 확인하세요",
+      "label": "곡 진행에 따른 오차",
+      "movingMean": "노트 {{ count }}개 평균",
+      "misses": "Miss ({{ count }})"
     }
   },
   "errors": {

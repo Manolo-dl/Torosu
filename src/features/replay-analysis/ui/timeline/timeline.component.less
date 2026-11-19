@@ -1,0 +1,62 @@
+@import '../charts/viz';
+
+:host {
+  .viz-colors();
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.viz-chart();
+
+.chart {
+  aspect-ratio: 720 / 240;
+}
+
+canvas {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+svg {
+  position: relative;
+}
+
+.moving {
+  fill: none;
+  stroke: var(--tui-text-primary);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.miss {
+  stroke: var(--viz-miss);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.crosshair {
+  stroke: var(--tui-text-tertiary);
+  stroke-width: 1;
+}
+
+.marker {
+  fill: var(--tui-text-primary);
+  stroke: var(--tui-background-base);
+  stroke-width: 2;
+}
+
+.swatch {
+  &.early { background: var(--viz-early); }
+  &.late { background: var(--viz-late); }
+  &.moving {
+    block-size: 2px;
+    background: var(--tui-text-primary);
+  }
+  &.miss {
+    inline-size: 2px;
+    background: var(--viz-miss);
+  }
+}

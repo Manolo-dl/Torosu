@@ -556,6 +556,36 @@
       "n100": "100",
       "n50": "50",
       "miss": "Miss"
+    },
+    "early": "提前",
+    "late": "延后",
+    "views": {
+      "hits": "按键",
+      "releases": "LN 松键"
+    },
+    "keys": {
+      "title": "按键位",
+      "subtitle": "每个键位的平均偏差：低于零为提前，高于零为延后",
+      "chartLabel": "每个键位的平均偏差",
+      "key": "键位 {{ key }}",
+      "nothing": "该键位没有测到数据",
+      "column": "键位",
+      "notes": "音符",
+      "letGoEarly": "提前松开",
+      "heldLong": "按得太久"
+    },
+    "histogram": {
+      "title": "分布",
+      "subtitle": "各偏差的数量，对照判定区间",
+      "label": "偏差直方图",
+      "count": "{{ count }} 个音符"
+    },
+    "timeline": {
+      "title": "沿着歌曲",
+      "subtitle": "随时间的每个偏差，看看你在哪里偏移或疲劳",
+      "label": "沿歌曲的偏差",
+      "movingMean": "{{ count }} 个音符的平均",
+      "misses": "Miss（{{ count }}）"
     }
   },
   "errors": {

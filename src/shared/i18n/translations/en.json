@@ -556,6 +556,36 @@
       "n100": "100",
       "n50": "50",
       "miss": "Miss"
+    },
+    "early": "Early",
+    "late": "Late",
+    "views": {
+      "hits": "Presses",
+      "releases": "LN releases"
+    },
+    "keys": {
+      "title": "By key",
+      "subtitle": "Mean offset of each key: below zero is early, above is late",
+      "chartLabel": "Mean offset of each key",
+      "key": "Key {{ key }}",
+      "nothing": "Nothing timed on this key",
+      "column": "Key",
+      "notes": "Notes",
+      "letGoEarly": "Let go early",
+      "heldLong": "Held too long"
+    },
+    "histogram": {
+      "title": "Distribution",
+      "subtitle": "How many came at each offset, against the judgement windows",
+      "label": "Histogram of the offsets",
+      "count": "{{ count }} notes"
+    },
+    "timeline": {
+      "title": "Along the song",
+      "subtitle": "Every offset in time, to see where you drift or tire",
+      "label": "Offsets along the song",
+      "movingMean": "Mean of {{ count }} notes",
+      "misses": "Misses ({{ count }})"
     }
   },
   "errors": {

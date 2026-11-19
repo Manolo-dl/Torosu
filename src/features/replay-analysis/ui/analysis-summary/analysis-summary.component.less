@@ -59,14 +59,6 @@
   }
 }
 
-.early {
-  color: #5fa8ff;
-}
-
-.late {
-  color: #ff8a5c;
-}
-
 .counts {
   inline-size: 100%;
   border-collapse: collapse;
@@ -89,12 +81,32 @@
     font-weight: bold;
   }
 
-  [data-judgement='max'] { color: #e6e6ff; }
-  [data-judgement='n300'] { color: #ffd966; }
-  [data-judgement='n200'] { color: #66dd88; }
-  [data-judgement='n100'] { color: #5fa8ff; }
-  [data-judgement='n50'] { color: #b3b3b3; }
-  [data-judgement='miss'] { color: #ff5c5c; }
+  // A mark beside each judgement's name, in an order checked for colour
+  // blindness in both themes (the name is always shown with it).
+  .swatch {
+    display: inline-block;
+    inline-size: 0.5rem;
+    block-size: 0.5rem;
+    margin-inline-end: 0.25rem;
+    border-radius: 2px;
+    vertical-align: middle;
+
+    &[data-judgement='max'] { background: #6250d6; }
+    &[data-judgement='n300'] { background: #eda100; }
+    &[data-judgement='n200'] { background: #1baf7a; }
+    &[data-judgement='n100'] { background: #2a78d6; }
+    &[data-judgement='n50'] { background: #008300; }
+    &[data-judgement='miss'] { background: #e34948; }
+
+    :host-context([tuiTheme='dark']) & {
+      &[data-judgement='max'] { background: #9085e9; }
+      &[data-judgement='n300'] { background: #c98500; }
+      &[data-judgement='n200'] { background: #199e70; }
+      &[data-judgement='n100'] { background: #3987e5; }
+      &[data-judgement='n50'] { background: #0ca30c; }
+      &[data-judgement='miss'] { background: #e66767; }
+    }
+  }
 
   .off {
     color: var(--tui-text-warning);

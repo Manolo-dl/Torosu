@@ -14,7 +14,7 @@
   <div class="tiles">
     <div class="tile">
       <span class="label">{{ 'replays.mean' | transloco }}</span>
-      <span class="value" [class.early]="hits.mean < 0" [class.late]="hits.mean > 0">{{ hits.mean | number: '1.1-1' }} ms</span>
+      <span class="value">{{ hits.mean | number: '1.1-1' }} ms</span>
     </div>
     <div class="tile">
       <span class="label">{{ 'replays.median' | transloco }}</span>
@@ -26,11 +26,11 @@
     </div>
     <div class="tile">
       <span class="label">{{ 'replays.earlyLate' | transloco }}</span>
-      <span class="value"><span class="early">{{ hits.early }}</span> / <span class="late">{{ hits.late }}</span></span>
+      <span class="value">{{ hits.early }} / {{ hits.late }}</span>
     </div>
     <div class="tile" [tuiHint]="'replays.releaseHint' | transloco">
       <span class="label">{{ 'replays.releaseMean' | transloco }}</span>
-      <span class="value" [class.early]="releases.mean < 0" [class.late]="releases.mean > 0">
+      <span class="value">
         @if (releases.count) { {{ releases.mean | number: '1.1-1' }} ms } @else { – }
       </span>
     </div>
@@ -41,7 +41,7 @@
       <tr>
         <th></th>
         @for (j of judgements; track j) {
-          <th [attr.data-judgement]="j">{{ 'replays.judgements.' + j | transloco }}</th>
+          <th><span class="swatch" [attr.data-judgement]="j"></span>{{ 'replays.judgements.' + j | transloco }}</th>
         }
         <th>{{ 'replays.accuracy' | transloco }}</th>
       </tr>

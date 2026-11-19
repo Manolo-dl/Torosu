@@ -14,7 +14,7 @@
       </div>
     } @else if (store.analysis(); as analysis) {
       @if (store.selectedEntry(); as entry) {
-        <app-analysis-summary [entry]="entry" [analysis]="analysis" />
+        <app-analysis-panel [entry]="entry" [analysis]="analysis" />
       }
     } @else {
       <div appearance="floating" tuiCardLarge="compact" class="placeholder">

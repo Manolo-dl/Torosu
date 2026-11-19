@@ -556,6 +556,36 @@
       "n100": "100",
       "n50": "50",
       "miss": "Miss"
+    },
+    "early": "Antes",
+    "late": "Tarde",
+    "views": {
+      "hits": "Pulsaciones",
+      "releases": "Sueltas de LN"
+    },
+    "keys": {
+      "title": "Por tecla",
+      "subtitle": "Offset medio de cada tecla: por debajo de cero es antes, por encima tarde",
+      "chartLabel": "Offset medio de cada tecla",
+      "key": "Tecla {{ key }}",
+      "nothing": "Nada medido en esta tecla",
+      "column": "Tecla",
+      "notes": "Notas",
+      "letGoEarly": "Soltadas antes",
+      "heldLong": "Mantenidas de más"
+    },
+    "histogram": {
+      "title": "Distribución",
+      "subtitle": "Cuántas cayeron en cada offset, frente a las ventanas de juicio",
+      "label": "Histograma de los offsets",
+      "count": "{{ count }} notas"
+    },
+    "timeline": {
+      "title": "A lo largo de la canción",
+      "subtitle": "Cada offset en el tiempo, para ver dónde te desvías o te cansas",
+      "label": "Offsets a lo largo de la canción",
+      "movingMean": "Media de {{ count }} notas",
+      "misses": "Misses ({{ count }})"
     }
   },
   "errors": {

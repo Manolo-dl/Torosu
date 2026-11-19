@@ -1,0 +1,27 @@
+<app-analysis-summary [entry]="entry()" [analysis]="analysis()" />
+
+<app-option-group class="views" [options]="views()" [active]="viewIndex()" (activeChange)="pickView($event)" />
+
+<div appearance="floating" tuiCardLarge="compact" class="card">
+  <h3 tuiTitle>
+    {{ 'replays.keys.title' | transloco }}
+    <span tuiSubtitle>{{ 'replays.keys.subtitle' | transloco }}</span>
+  </h3>
+  <app-key-stats [analysis]="analysis()" [view]="store.view()" />
+</div>
+
+<div appearance="floating" tuiCardLarge="compact" class="card">
+  <h3 tuiTitle>
+    {{ 'replays.histogram.title' | transloco }}
+    <span tuiSubtitle>{{ 'replays.histogram.subtitle' | transloco }}</span>
+  </h3>
+  <app-hit-histogram [analysis]="analysis()" [view]="store.view()" />
+</div>
+
+<div appearance="floating" tuiCardLarge="compact" class="card">
+  <h3 tuiTitle>
+    {{ 'replays.timeline.title' | transloco }}
+    <span tuiSubtitle>{{ 'replays.timeline.subtitle' | transloco }}</span>
+  </h3>
+  <app-timeline [analysis]="analysis()" [view]="store.view()" />
+</div>
