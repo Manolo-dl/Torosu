@@ -45,6 +45,12 @@
                 >
                     {{ 'settings.tabs.trainer' | transloco }}
                 </button>
+                <button
+                    tuiTab
+                    type="button"
+                >
+                    {{ 'settings.tabs.replays' | transloco }}
+                </button>
             </tui-tabs>
         </nav>
     </header>
@@ -363,6 +369,43 @@
                         [presets]="trainerNameFormats"
                         [(format)]="draft().trainer.name_format"
                     />
+                </section>
+            }
+
+            @case (4) {
+                <section>
+                    <h3 tuiTitle="s">{{ 'settings.replays.analysis' | transloco }}</h3>
+                    <label tuiCell>
+                        <span tuiTitle>
+                            {{ 'replays.follow' | transloco }}
+                            <span tuiSubtitle>{{ 'replays.followHint' | transloco }}</span>
+                        </span>
+                        <input tuiSwitch type="checkbox" [(ngModel)]="draft().replays.follow" />
+                    </label>
+                    <label tuiCell>
+                        <span tuiTitle>
+                            {{ 'settings.replays.includeReleases' | transloco }}
+                            <span tuiSubtitle>{{ 'settings.replays.includeReleasesHint' | transloco }}</span>
+                        </span>
+                        <input tuiSwitch type="checkbox" [(ngModel)]="draft().replays.include_releases" />
+                    </label>
+                </section>
+
+                <section>
+                    <h3 tuiTitle="s">{{ 'settings.replays.charts' | transloco }}</h3>
+                    <label tuiCell>
+                        <span tuiTitle>{{ 'replays.keys.title' | transloco }}</span>
+                        <input tuiSwitch type="checkbox" [(ngModel)]="draft().replays.key_chart" />
+                    </label>
+                    <label tuiCell>
+                        <span tuiTitle>{{ 'replays.histogram.title' | transloco }}</span>
+                        <input tuiSwitch type="checkbox" [(ngModel)]="draft().replays.histogram" />
+                    </label>
+                    <label tuiCell>
+                        <span tuiTitle>{{ 'replays.timeline.title' | transloco }}</span>
+                        <input tuiSwitch type="checkbox" [(ngModel)]="draft().replays.timeline" />
+                    </label>
+                    <span class="hint">{{ 'settings.replays.chartsHint' | transloco }}</span>
                 </section>
             }
         }

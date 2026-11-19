@@ -12,7 +12,8 @@
       "general": "General",
       "downloader": "Descargador",
       "packs": "Packs",
-      "trainer": "Trainer"
+      "trainer": "Trainer",
+      "replays": "Replays"
     },
     "general": {
       "osu": "osu!",
@@ -108,6 +109,13 @@
         "mode": "osu!mania",
         "keys": "7K, solo en mania"
       }
+    },
+    "replays": {
+      "analysis": "Análisis",
+      "includeReleases": "Contar las sueltas de LN en el resumen",
+      "includeReleasesHint": "Como la pantalla de resultados de osu!; desactivado, el error y el UR son solo de las pulsaciones",
+      "charts": "Gráficas",
+      "chartsHint": "Las gráficas desactivadas no se dibujan"
     }
   },
   "nav": {
@@ -590,7 +598,8 @@
       "misses": "Misses ({{ count }})"
     },
     "follow": "Analizar los plays nuevos",
-    "followHint": "Con osu! abierto, cada play que pases se analiza en cuanto termina"
+    "followHint": "Con osu! abierto, cada play que pases se analiza en cuanto termina",
+    "timingHintPresses": "Solo las pulsaciones, sin las sueltas de long notes (ver los ajustes)."
   },
   "errors": {
     "io": "Error de archivo: {{ detail }}",

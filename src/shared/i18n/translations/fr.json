@@ -12,7 +12,8 @@
       "general": "Général",
       "downloader": "Téléchargeur",
       "packs": "Packs",
-      "trainer": "Trainer"
+      "trainer": "Trainer",
+      "replays": "Replays"
     },
     "general": {
       "osu": "osu!",
@@ -108,6 +109,13 @@
         "mode": "osu!mania",
         "keys": "7K, seulement en mania"
       }
+    },
+    "replays": {
+      "analysis": "Analyse",
+      "includeReleases": "Compter les relâchements de LN dans le résumé",
+      "includeReleasesHint": "Comme l'écran de résultats d'osu! ; désactivé, l'erreur et l'UR ne concernent que les appuis",
+      "charts": "Graphiques",
+      "chartsHint": "Les graphiques désactivés ne sont pas dessinés"
     }
   },
   "nav": {
@@ -590,7 +598,8 @@
       "misses": "Miss ({{ count }})"
     },
     "follow": "Analyser les nouvelles parties",
-    "followHint": "Avec osu! ouvert, chaque partie réussie est analysée dès qu'elle se termine"
+    "followHint": "Avec osu! ouvert, chaque partie réussie est analysée dès qu'elle se termine",
+    "timingHintPresses": "Appuis seuls, sans les relâchements de long notes (voir les paramètres)."
   },
   "errors": {
     "io": "Erreur de fichier : {{ detail }}",

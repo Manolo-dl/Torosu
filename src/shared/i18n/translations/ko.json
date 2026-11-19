@@ -12,7 +12,8 @@
       "general": "일반",
       "downloader": "다운로더",
       "packs": "팩",
-      "trainer": "트레이너"
+      "trainer": "트레이너",
+      "replays": "리플레이"
     },
     "general": {
       "osu": "osu!",
@@ -108,6 +109,13 @@
         "mode": "osu!mania",
         "keys": "7K, mania 전용"
       }
+    },
+    "replays": {
+      "analysis": "분석",
+      "includeReleases": "요약에 LN 릴리스 포함",
+      "includeReleasesHint": "osu! 결과 화면과 같습니다. 끄면 오차와 UR은 입력만 계산합니다",
+      "charts": "그래프",
+      "chartsHint": "끈 그래프는 그리지 않습니다"
     }
   },
   "nav": {
@@ -590,7 +598,8 @@
       "misses": "Miss ({{ count }})"
     },
     "follow": "새 플레이 분석",
-    "followHint": "osu!가 열려 있는 동안 클리어한 플레이를 끝나자마자 분석합니다"
+    "followHint": "osu!가 열려 있는 동안 클리어한 플레이를 끝나자마자 분석합니다",
+    "timingHintPresses": "롱노트 릴리스 없이 입력만 (설정 참고)."
   },
   "errors": {
     "io": "파일 오류: {{ detail }}",

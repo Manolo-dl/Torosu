@@ -12,7 +12,8 @@
       "general": "一般",
       "downloader": "ダウンローダー",
       "packs": "パック",
-      "trainer": "トレーナー"
+      "trainer": "トレーナー",
+      "replays": "リプレイ"
     },
     "general": {
       "osu": "osu!",
@@ -108,6 +109,13 @@
         "mode": "osu!mania",
         "keys": "7K（mania のみ）"
       }
+    },
+    "replays": {
+      "analysis": "分析",
+      "includeReleases": "サマリーに LN リリースを含める",
+      "includeReleasesHint": "osu! のリザルト画面と同じ。オフにすると誤差と UR は押下のみになります",
+      "charts": "グラフ",
+      "chartsHint": "オフにしたグラフは描画されません"
     }
   },
   "nav": {
@@ -590,7 +598,8 @@
       "misses": "Miss（{{ count }}）"
     },
     "follow": "新しいプレイを分析",
-    "followHint": "osu! を開いている間、クリアしたプレイを終了後すぐに分析します"
+    "followHint": "osu! を開いている間、クリアしたプレイを終了後すぐに分析します",
+    "timingHintPresses": "ロングノーツのリリースを除いた押下のみ（設定を参照）。"
   },
   "errors": {
     "io": "ファイルエラー: {{ detail }}",

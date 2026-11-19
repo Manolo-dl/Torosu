@@ -3,6 +3,7 @@ import { TranslocoService } from '@jsverse/transloco';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withState } from '@ngrx/signals';
 import { invoke } from '@tauri-apps/api/core';
 import { LocalScore, LocalScoresStore, ReplayAnalysis, maniaAccuracy, modAcronyms } from '@entities/local-scores';
+import { ConfigurationStore, ReplaysConfig } from '@entities/configuration';
 import { OsuBeatmapSet, OsuDbStore, OsuDiff } from '@entities/osu-db';
 import { errorText } from '@shared/i18n';
 
@@ -30,8 +31,6 @@ interface ReplayAnalysisState {
     analyzing: boolean;
     error: string | null;
     view: TimingView;
-    /** Analyse each play as soon as osu! saves it. */
-    follow: boolean;
 }
 
 const initialState: ReplayAnalysisState = {
@@ -42,14 +41,22 @@ const initialState: ReplayAnalysisState = {
     analyzing: false,
     error: null,
     view: 'hits',
+};
+
+/** Until the configuration arrives, and in one written before the page: everything on. */
+const DEFAULT_SETTINGS: ReplaysConfig = {
     follow: true,
+    include_releases: true,
+    key_chart: true,
+    histogram: true,
+    timeline: true,
 };
 
 export const ReplayAnalysisStore = signalStore(
     { providedIn: 'root' },
     withState(initialState),
 
-    withComputed((store, scores = inject(LocalScoresStore), osuDb = inject(OsuDbStore)) => {
+    withComputed((store, scores = inject(LocalScoresStore), osuDb = inject(OsuDbStore), config = inject(ConfigurationStore)) => {
         const entries = computed((): ScoreEntry[] => {
             const diffs = osuDb.diffsByMd5();
             const sets = osuDb.beatmapSetsByMd5();
@@ -68,6 +75,8 @@ export const ReplayAnalysisStore = signalStore(
 
         return {
             entries,
+
+            settings: computed((): ReplaysConfig => ({ ...DEFAULT_SETTINGS, ...config.config()?.replays })),
 
             /** The key counts there are plays of, for the filter. */
             keyCounts: computed(() =>
@@ -88,7 +97,7 @@ export const ReplayAnalysisStore = signalStore(
         };
     }),
 
-    withMethods((store, transloco = inject(TranslocoService)) => ({
+    withMethods((store, transloco = inject(TranslocoService), config = inject(ConfigurationStore)) => ({
         setSearch(search: string) {
             patchState(store, { search });
         },
@@ -101,8 +110,9 @@ export const ReplayAnalysisStore = signalStore(
             patchState(store, { view });
         },
 
+        /** Saved in the configuration, like the page's other settings. */
         setFollow(follow: boolean) {
-            patchState(store, { follow });
+            config.updateConfig({ replays: { ...store.settings(), follow } });
         },
 
         /** Analyses the replay of `entry`, unless it is the one shown. */
@@ -132,7 +142,7 @@ export const ReplayAnalysisStore = signalStore(
             effect(() => {
                 const added = scores.added();
                 untracked(() => {
-                    if (!added || !store.follow()) return;
+                    if (!added || !store.settings().follow) return;
                     const entry = store.entries().find(e => e.score.replay === added.replay);
                     if (entry) store.select(entry);
                 });

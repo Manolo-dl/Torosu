@@ -49,6 +49,13 @@ const DEFAULT_CONFIG: AppConfig = {
     shortcuts_enabled: false,
     shortcuts: [],
   },
+  replays: {
+    follow: true,
+    include_releases: true,
+    key_chart: true,
+    histogram: true,
+    timeline: true,
+  },
   open_file: false,
   dev_mode: false,
 };

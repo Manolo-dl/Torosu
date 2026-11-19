@@ -12,7 +12,8 @@
       "general": "General",
       "downloader": "Downloader",
       "packs": "Packs",
-      "trainer": "Trainer"
+      "trainer": "Trainer",
+      "replays": "Replays"
     },
     "general": {
       "osu": "osu!",
@@ -108,6 +109,13 @@
         "mode": "osu!mania",
         "keys": "7K, only in mania"
       }
+    },
+    "replays": {
+      "analysis": "Analysis",
+      "includeReleases": "Count LN releases in the summary",
+      "includeReleasesHint": "As osu!'s results screen does; off, the error and UR are those of the presses alone",
+      "charts": "Charts",
+      "chartsHint": "Charts turned off are not drawn at all"
     }
   },
   "nav": {
@@ -590,7 +598,8 @@
       "misses": "Misses ({{ count }})"
     },
     "follow": "Analyse new plays",
-    "followHint": "While osu! is open, each play you pass is analysed as soon as it ends"
+    "followHint": "While osu! is open, each play you pass is analysed as soon as it ends",
+    "timingHintPresses": "Presses alone, without the long note releases (see the settings)."
   },
   "errors": {
     "io": "File error: {{ detail }}",

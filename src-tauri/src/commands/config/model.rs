@@ -19,6 +19,9 @@ pub struct AppConfig {
     #[serde(default)]
     pub trainer: TrainerConfig,
 
+    #[serde(default)]
+    pub replays: ReplaysConfig,
+
     #[serde(default = "default_false")]
     pub open_file: bool,
 
@@ -144,6 +147,29 @@ pub struct TrainerShortcut {
     pub keys: String,
 }
 
+/// The replay analysis page: what it shows, and what it does on its own.
+#[derive(Deserialize, Serialize, Clone)]
+pub struct ReplaysConfig {
+    /// Analyses each play as soon as osu! saves its replay.
+    #[serde(default = "default_true")]
+    pub follow: bool,
+
+    /// The summary counts the long note releases with the presses, as
+    /// osu!'s results screen does; otherwise only the presses.
+    #[serde(default = "default_true")]
+    pub include_releases: bool,
+
+    /// The charts shown: by key, the distribution and along the song.
+    #[serde(default = "default_true")]
+    pub key_chart: bool,
+
+    #[serde(default = "default_true")]
+    pub histogram: bool,
+
+    #[serde(default = "default_true")]
+    pub timeline: bool,
+}
+
 fn default_true() -> bool { true }
 fn default_false() -> bool { false }
 fn default_max_concurrent_downloads() -> u32 { 1 }
@@ -162,9 +188,22 @@ impl Default for AppConfig {
             downloader: DownloaderConfig::default(),
             packs: PacksConfig::default(),
             trainer: TrainerConfig::default(),
+            replays: ReplaysConfig::default(),
             open_file: default_false(),
             dev_mode: default_false(),
             language: None,
+        }
+    }
+}
+
+impl Default for ReplaysConfig {
+    fn default() -> Self {
+        Self {
+            follow: default_true(),
+            include_releases: default_true(),
+            key_chart: default_true(),
+            histogram: default_true(),
+            timeline: default_true(),
         }
     }
 }

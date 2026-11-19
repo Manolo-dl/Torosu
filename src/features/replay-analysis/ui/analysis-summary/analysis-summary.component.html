@@ -1,6 +1,7 @@
 @let a = analysis();
 @let releases = a.stats.releases;
-@let timing = a.stats.combined;
+@let timing = includeReleases() ? a.stats.combined : a.stats.hits;
+@let hint = (includeReleases() ? 'replays.timingHint' : 'replays.timingHintPresses') | transloco;
 
 <div appearance="floating" tuiCardLarge="compact" class="card">
   <header class="head">
@@ -12,15 +13,15 @@
   </header>
 
   <div class="tiles">
-    <div class="tile" [tuiHint]="'replays.timingHint' | transloco">
+    <div class="tile" [tuiHint]="hint">
       <span class="label">{{ 'replays.error' | transloco }}</span>
       <span class="value">{{ timing.earlyMean | number: '1.2-2' }} / {{ timing.lateMean | number: '1.2-2' }} ms</span>
     </div>
-    <div class="tile" [tuiHint]="'replays.timingHint' | transloco">
+    <div class="tile" [tuiHint]="hint">
       <span class="label">UR</span>
       <span class="value">{{ timing.unstableRate | number: '1.2-2' }}</span>
     </div>
-    <div class="tile" [tuiHint]="'replays.timingHint' | transloco">
+    <div class="tile" [tuiHint]="hint">
       <span class="label">{{ 'replays.earlyLate' | transloco }}</span>
       <span class="value">{{ timing.early }} / {{ timing.late }}</span>
     </div>

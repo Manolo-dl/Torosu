@@ -17,6 +17,8 @@ import { ScoreEntry } from '../../stores/replay-analysis.store';
 export class AnalysisSummaryComponent {
     readonly entry = input.required<ScoreEntry>();
     readonly analysis = input.required<ReplayAnalysis>();
+    /** Count the long note releases with the presses, as osu! does. */
+    readonly includeReleases = input(true);
 
     readonly judgements = JUDGEMENTS;
 

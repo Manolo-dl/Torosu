@@ -4,11 +4,24 @@ export interface AppConfig {
     downloader: DownloaderConfig;
     packs: PacksConfig;
     trainer: TrainerConfig;
+    replays: ReplaysConfig;
     open_file: boolean;
     /** Shows the developer pages (logs, osu! data). */
     dev_mode: boolean;
     /** The language of the interface (`en`, `es`, `fr`, `ja`, `ko`, `zh`); none is English. */
     language?: string | null;
+}
+
+/** The replay analysis page: what it shows, and what it does on its own. */
+export interface ReplaysConfig {
+    /** Analyse each play as soon as osu! saves its replay. */
+    follow: boolean;
+    /** The summary counts long note releases with the presses, as osu!'s results screen does. */
+    include_releases: boolean;
+    /** The charts shown. */
+    key_chart: boolean;
+    histogram: boolean;
+    timeline: boolean;
 }
 
 export interface TrainerConfig {

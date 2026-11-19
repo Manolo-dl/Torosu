@@ -4,7 +4,7 @@
       {{ 'replays.follow' | transloco }}
       <span class="hint">{{ 'replays.followHint' | transloco }}</span>
     </span>
-    <input size="s" tuiSwitch type="checkbox" [checked]="store.follow()" (change)="follow($event)" />
+    <input size="s" tuiSwitch type="checkbox" [checked]="store.settings().follow" (change)="follow($event)" />
   </label>
 
   <tui-textfield iconStart="@tui.search" tuiTextfieldSize="s">

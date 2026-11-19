@@ -12,7 +12,8 @@
       "general": "通用",
       "downloader": "下载器",
       "packs": "谱包",
-      "trainer": "谱面生成器"
+      "trainer": "谱面生成器",
+      "replays": "回放"
     },
     "general": {
       "osu": "osu!",
@@ -108,6 +109,13 @@
         "mode": "osu!mania",
         "keys": "7K，仅 mania"
       }
+    },
+    "replays": {
+      "analysis": "分析",
+      "includeReleases": "摘要中计入 LN 松键",
+      "includeReleasesHint": "与 osu! 结算画面相同；关闭后误差与 UR 仅计算按键",
+      "charts": "图表",
+      "chartsHint": "关闭的图表不会绘制"
     }
   },
   "nav": {
@@ -590,7 +598,8 @@
       "misses": "Miss（{{ count }}）"
     },
     "follow": "分析新的游玩",
-    "followHint": "osu! 打开时，每次通过的游玩结束后立即分析"
+    "followHint": "osu! 打开时，每次通过的游玩结束后立即分析",
+    "timingHintPresses": "仅按键，不含长条松键（见设置）。"
   },
   "errors": {
     "io": "文件错误：{{ detail }}",
