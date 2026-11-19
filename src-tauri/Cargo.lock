@@ -5409,6 +5409,7 @@ dependencies = [
  "chrono",
  "dan-calc",
  "futures-util",
+ "liblzma",
  "log",
  "osu-memory-reader",
  "osynic_osudb",
