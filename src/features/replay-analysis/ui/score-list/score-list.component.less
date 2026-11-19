@@ -10,9 +10,28 @@
   gap: 0.75rem;
 }
 
+.follow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  cursor: pointer;
+
+  .follow-text {
+    display: flex;
+    flex-direction: column;
+    font: var(--tui-typography-body-s);
+  }
+
+  .hint {
+    font: var(--tui-typography-body-xs);
+    color: var(--tui-text-tertiary);
+  }
+}
+
 .viewport {
   .full-width-virtual-scroll();
-  block-size: calc(100vh - 20rem);
+  block-size: calc(100vh - 24rem);
   min-block-size: 16rem;
 }
 

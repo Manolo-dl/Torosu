@@ -586,7 +586,9 @@
       "label": "곡 진행에 따른 오차",
       "movingMean": "노트 {{ count }}개 평균",
       "misses": "Miss ({{ count }})"
-    }
+    },
+    "follow": "새 플레이 분석",
+    "followHint": "osu!가 열려 있는 동안 클리어한 플레이를 끝나자마자 분석합니다"
   },
   "errors": {
     "io": "파일 오류: {{ detail }}",

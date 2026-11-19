@@ -5,14 +5,14 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { LanguageService } from '@shared/i18n';
 import { OptionGroupComponent, OptionGroupItem } from '@shared/ui';
 import { TuiInput, TuiScrollControls, TuiScrollRef } from '@taiga-ui/core';
-import { TuiBadge } from '@taiga-ui/kit';
+import { TuiBadge, TuiSwitch } from '@taiga-ui/kit';
 import { TuiCardLarge } from '@taiga-ui/layout';
 import { ReplayAnalysisStore, ScoreEntry } from '../../stores/replay-analysis.store';
 
 /** The local plays with a replay, to pick the one to analyse. */
 @Component({
     selector: 'app-score-list',
-    imports: [DecimalPipe, OptionGroupComponent, ScrollingModule, TranslocoPipe, TuiBadge, TuiCardLarge, TuiInput, TuiScrollControls, TuiScrollRef],
+    imports: [DecimalPipe, OptionGroupComponent, ScrollingModule, TranslocoPipe, TuiBadge, TuiCardLarge, TuiInput, TuiScrollControls, TuiScrollRef, TuiSwitch],
     templateUrl: './score-list.component.html',
     styleUrl: './score-list.component.less',
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -37,6 +37,10 @@ export class ScoreListComponent {
 
     pickKeys(index: number) {
         this.store.setKeys(index === 0 ? null : this.store.keyCounts()[index - 1]);
+    }
+
+    follow(event: Event) {
+        this.store.setFollow((event.target as HTMLInputElement).checked);
     }
 
     search(event: Event) {

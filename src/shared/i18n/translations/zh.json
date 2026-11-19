@@ -586,7 +586,9 @@
       "label": "沿歌曲的偏差",
       "movingMean": "{{ count }} 个音符的平均",
       "misses": "Miss（{{ count }}）"
-    }
+    },
+    "follow": "分析新的游玩",
+    "followHint": "osu! 打开时，每次通过的游玩结束后立即分析"
   },
   "errors": {
     "io": "文件错误：{{ detail }}",

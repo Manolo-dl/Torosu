@@ -49,7 +49,7 @@ export const routes: Routes = [
             {
                 path: 'replays',
                 loadComponent: () => import('@pages/replays').then(m => m.ReplaysPageComponent),
-                resolve: { osuDb: osuDbResolver, scores: localScoresResolver }
+                resolve: { osuDb: osuDbResolver, scores: localScoresResolver, osuReader: osuReaderResolver }
             }
         ]
     },

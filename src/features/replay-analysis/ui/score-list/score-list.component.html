@@ -1,4 +1,12 @@
 <div appearance="floating" tuiCardLarge="compact" class="card">
+  <label class="follow">
+    <span class="follow-text">
+      {{ 'replays.follow' | transloco }}
+      <span class="hint">{{ 'replays.followHint' | transloco }}</span>
+    </span>
+    <input size="s" tuiSwitch type="checkbox" [checked]="store.follow()" (change)="follow($event)" />
+  </label>
+
   <tui-textfield iconStart="@tui.search" tuiTextfieldSize="s">
     <input
       [placeholder]="'replays.search' | transloco"

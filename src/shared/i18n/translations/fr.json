@@ -586,7 +586,9 @@
       "label": "Décalages au fil de la chanson",
       "movingMean": "Moyenne de {{ count }} notes",
       "misses": "Miss ({{ count }})"
-    }
+    },
+    "follow": "Analyser les nouvelles parties",
+    "followHint": "Avec osu! ouvert, chaque partie réussie est analysée dès qu'elle se termine"
   },
   "errors": {
     "io": "Erreur de fichier : {{ detail }}",

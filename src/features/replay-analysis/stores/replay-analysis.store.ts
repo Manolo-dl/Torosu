@@ -1,6 +1,6 @@
-import { computed, inject } from '@angular/core';
+import { computed, effect, inject, untracked } from '@angular/core';
 import { TranslocoService } from '@jsverse/transloco';
-import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
+import { patchState, signalStore, withComputed, withHooks, withMethods, withState } from '@ngrx/signals';
 import { invoke } from '@tauri-apps/api/core';
 import { LocalScore, LocalScoresStore, ReplayAnalysis, maniaAccuracy, modAcronyms } from '@entities/local-scores';
 import { OsuBeatmapSet, OsuDbStore, OsuDiff } from '@entities/osu-db';
@@ -30,6 +30,8 @@ interface ReplayAnalysisState {
     analyzing: boolean;
     error: string | null;
     view: TimingView;
+    /** Analyse each play as soon as osu! saves it. */
+    follow: boolean;
 }
 
 const initialState: ReplayAnalysisState = {
@@ -40,6 +42,7 @@ const initialState: ReplayAnalysisState = {
     analyzing: false,
     error: null,
     view: 'hits',
+    follow: true,
 };
 
 export const ReplayAnalysisStore = signalStore(
@@ -98,6 +101,10 @@ export const ReplayAnalysisStore = signalStore(
             patchState(store, { view });
         },
 
+        setFollow(follow: boolean) {
+            patchState(store, { follow });
+        },
+
         /** Analyses the replay of `entry`, unless it is the one shown. */
         async select(entry: ScoreEntry) {
             const replay = entry.score.replay;
@@ -118,4 +125,18 @@ export const ReplayAnalysisStore = signalStore(
             }
         },
     })),
+
+    withHooks({
+        onInit(store, scores = inject(LocalScoresStore)) {
+            // A play osu! just saved, analysed if the setting is on.
+            effect(() => {
+                const added = scores.added();
+                untracked(() => {
+                    if (!added || !store.follow()) return;
+                    const entry = store.entries().find(e => e.score.replay === added.replay);
+                    if (entry) store.select(entry);
+                });
+            });
+        },
+    }),
 );

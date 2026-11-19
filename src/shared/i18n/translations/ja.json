@@ -586,7 +586,9 @@
       "label": "曲の流れに沿ったズレ",
       "movingMean": "{{ count }} ノーツの平均",
       "misses": "Miss（{{ count }}）"
-    }
+    },
+    "follow": "新しいプレイを分析",
+    "followHint": "osu! を開いている間、クリアしたプレイを終了後すぐに分析します"
   },
   "errors": {
     "io": "ファイルエラー: {{ detail }}",

@@ -586,7 +586,9 @@
       "label": "Offsets a lo largo de la canción",
       "movingMean": "Media de {{ count }} notas",
       "misses": "Misses ({{ count }})"
-    }
+    },
+    "follow": "Analizar los plays nuevos",
+    "followHint": "Con osu! abierto, cada play que pases se analiza en cuanto termina"
   },
   "errors": {
     "io": "Error de archivo: {{ detail }}",
