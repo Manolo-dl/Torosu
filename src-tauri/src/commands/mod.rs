@@ -5,4 +5,5 @@ pub mod system;
 pub mod dev;
 pub mod osu_reader;
 pub mod trainer;
+pub mod replays;
 pub mod config;
