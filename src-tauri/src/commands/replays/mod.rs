@@ -2,6 +2,7 @@
 //! column by column.
 
 pub mod frames;
+pub mod graph;
 pub mod judge;
 pub mod scores;
 
