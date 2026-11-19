@@ -129,7 +129,9 @@
     "changelog": "Nouveautés",
     "github": "Github",
     "issues": "Problèmes",
-    "support": "Soutenir"
+    "support": "Soutenir",
+    "replays": "Analyse de replays",
+    "replaysDescription": "Voyez comment vous avez joué vos scores locaux : timing, appuis et relâchements en avance ou en retard, touche par touche."
   },
   "header": {
     "toggleTheme": "Changer de thème",
@@ -527,6 +529,34 @@
     "export": "Exporter",
     "preview": "Aperçu",
     "empty": "Aucune beatmap ne correspond aux filtres actuels"
+  },
+  "replays": {
+    "subtitle": "Vos parties, d'après les replays qu'osu! conserve",
+    "search": "Rechercher par titre, artiste, difficulté ou mappeur",
+    "allKeys": "Toutes",
+    "none": "Aucun score local de mania avec replay",
+    "noMatch": "Aucun score ne correspond à la recherche",
+    "mapMissing": "La map de ce score n'est plus dans osu!.db",
+    "unknownMap": "Map inconnue",
+    "pick": "Choisissez un score pour analyser son replay",
+    "analyzing": "Analyse du replay...",
+    "mean": "Moyenne",
+    "median": "Médiane",
+    "earlyLate": "Avance / retard",
+    "releaseMean": "Relâchement LN",
+    "releaseHint": "Moyenne des relâchements de long notes dans la fenêtre de 50 : négatif signifie relâcher en avance",
+    "accuracy": "Précision",
+    "game": "Jeu",
+    "analysis": "Analyse",
+    "countsDiffer": "L'analyse juge quelques notes différemment d'osu! (particularités des long notes qu'elle ne modélise pas) ; le timing n'en dépend pas.",
+    "judgements": {
+      "max": "MAX",
+      "n300": "300",
+      "n200": "200",
+      "n100": "100",
+      "n50": "50",
+      "miss": "Miss"
+    }
   },
   "errors": {
     "io": "Erreur de fichier : {{ detail }}",

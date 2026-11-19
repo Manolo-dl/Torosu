@@ -129,7 +129,9 @@
     "changelog": "更新履歴",
     "github": "Github",
     "issues": "Issues",
-    "support": "サポート"
+    "support": "サポート",
+    "replays": "リプレイ分析",
+    "replaysDescription": "ローカルスコアのプレイを分析：タイミング、早押し・遅押しやリリースをキーごとに確認できます。"
   },
   "header": {
     "toggleTheme": "テーマを切り替え",
@@ -527,6 +529,34 @@
     "export": "エクスポート",
     "preview": "プレビュー",
     "empty": "現在のフィルターに合うビートマップはありません"
+  },
+  "replays": {
+    "subtitle": "osu! が保存しているリプレイからあなたのプレイを分析",
+    "search": "タイトル、アーティスト、難易度、マッパーで検索",
+    "allKeys": "すべて",
+    "none": "リプレイ付きの mania ローカルスコアがありません",
+    "noMatch": "検索に一致するスコアがありません",
+    "mapMissing": "このスコアの譜面は osu!.db にありません",
+    "unknownMap": "不明な譜面",
+    "pick": "スコアを選ぶとリプレイを分析します",
+    "analyzing": "リプレイを分析しています...",
+    "mean": "平均",
+    "median": "中央値",
+    "earlyLate": "早い / 遅い",
+    "releaseMean": "LN リリース",
+    "releaseHint": "50 判定内のロングノーツのリリースの平均：マイナスは早離し",
+    "accuracy": "精度",
+    "game": "ゲーム",
+    "analysis": "分析",
+    "countsDiffer": "分析では一部のノーツの判定が osu! と異なります（再現していないロングノーツの挙動）。タイミングには影響しません。",
+    "judgements": {
+      "max": "MAX",
+      "n300": "300",
+      "n200": "200",
+      "n100": "100",
+      "n50": "50",
+      "miss": "Miss"
+    }
   },
   "errors": {
     "io": "ファイルエラー: {{ detail }}",

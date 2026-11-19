@@ -129,7 +129,9 @@
     "changelog": "Novedades",
     "github": "Github",
     "issues": "Problemas",
-    "support": "Apoyar"
+    "support": "Apoyar",
+    "replays": "Análisis de replays",
+    "replaysDescription": "Mira cómo jugaste tus scores locales: timing, golpes y sueltas antes o tarde, tecla a tecla."
   },
   "header": {
     "toggleTheme": "Cambiar tema",
@@ -527,6 +529,34 @@
     "export": "Exportar",
     "preview": "Vista previa",
     "empty": "Ningún mapa cumple los filtros actuales"
+  },
+  "replays": {
+    "subtitle": "Tus partidas, desde las replays que guarda osu!",
+    "search": "Busca por título, artista, dificultad o mapper",
+    "allKeys": "Todas",
+    "none": "No hay scores locales de mania con replay",
+    "noMatch": "Ningún score coincide con la búsqueda",
+    "mapMissing": "El mapa de este score ya no está en osu!.db",
+    "unknownMap": "Mapa desconocido",
+    "pick": "Elige un score para analizar su replay",
+    "analyzing": "Analizando la replay...",
+    "mean": "Media",
+    "median": "Mediana",
+    "earlyLate": "Antes / tarde",
+    "releaseMean": "Suelta de LN",
+    "releaseHint": "Media de las sueltas de long notes dentro de la ventana de 50: negativo es soltar antes de tiempo",
+    "accuracy": "Precisión",
+    "game": "Juego",
+    "analysis": "Análisis",
+    "countsDiffer": "El análisis juzga algunas notas distinto que osu! (rarezas de las long notes que no modela); el timing no depende de ellas.",
+    "judgements": {
+      "max": "MAX",
+      "n300": "300",
+      "n200": "200",
+      "n100": "100",
+      "n50": "50",
+      "miss": "Miss"
+    }
   },
   "errors": {
     "io": "Error de archivo: {{ detail }}",

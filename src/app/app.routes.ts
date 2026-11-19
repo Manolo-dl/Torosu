@@ -4,6 +4,7 @@ import { osuDbResolver } from "@entities/osu-db";
 import { logResolver } from "@entities/log";
 import { osuPathGuard } from "@entities/osu-path";
 import { osuReaderResolver } from "@entities/osu-reader";
+import { localScoresResolver } from "@entities/local-scores";
 import { devModeGuard, toolEnabledGuard } from "@entities/configuration";
 
 export const routes: Routes = [
@@ -44,6 +45,11 @@ export const routes: Routes = [
                 path: 'trainer',
                 loadComponent: () => import('@pages/trainer').then(m => m.TrainerPageComponent),
                 resolve: { osuReader: osuReaderResolver }
+            },
+            {
+                path: 'replays',
+                loadComponent: () => import('@pages/replays').then(m => m.ReplaysPageComponent),
+                resolve: { osuDb: osuDbResolver, scores: localScoresResolver }
             }
         ]
     },

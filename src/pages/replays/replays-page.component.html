@@ -1,0 +1,25 @@
+<app-page-header [heading]="'nav.replays' | transloco" [subtitle]="'replays.subtitle' | transloco" />
+
+<div class="layout">
+  <aside class="sidebar">
+    <app-score-list />
+  </aside>
+
+  <section class="main">
+    @if (store.error(); as error) {
+      <div appearance="negative" tuiNotification>{{ error }}</div>
+    } @else if (store.analyzing()) {
+      <div appearance="floating" tuiCardLarge="compact" class="placeholder">
+        <tui-loader size="l" [textContent]="'replays.analyzing' | transloco" />
+      </div>
+    } @else if (store.analysis(); as analysis) {
+      @if (store.selectedEntry(); as entry) {
+        <app-analysis-summary [entry]="entry" [analysis]="analysis" />
+      }
+    } @else {
+      <div appearance="floating" tuiCardLarge="compact" class="placeholder">
+        <p class="empty">{{ 'replays.pick' | transloco }}</p>
+      </div>
+    }
+  </section>
+</div>

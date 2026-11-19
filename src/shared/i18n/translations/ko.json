@@ -129,7 +129,9 @@
     "changelog": "변경 내역",
     "github": "Github",
     "issues": "Issues",
-    "support": "후원"
+    "support": "후원",
+    "replays": "리플레이 분석",
+    "replaysDescription": "로컬 점수의 플레이를 분석합니다: 타이밍, 빠르거나 늦은 입력과 릴리스를 키별로 확인하세요."
   },
   "header": {
     "toggleTheme": "테마 전환",
@@ -527,6 +529,34 @@
     "export": "내보내기",
     "preview": "미리보기",
     "empty": "현재 필터에 맞는 비트맵이 없습니다"
+  },
+  "replays": {
+    "subtitle": "osu!가 저장한 리플레이로 본 플레이",
+    "search": "제목, 아티스트, 난이도, 매퍼로 검색",
+    "allKeys": "전체",
+    "none": "리플레이가 있는 mania 로컬 점수가 없습니다",
+    "noMatch": "검색과 일치하는 점수가 없습니다",
+    "mapMissing": "이 점수의 맵이 더 이상 osu!.db에 없습니다",
+    "unknownMap": "알 수 없는 맵",
+    "pick": "점수를 선택하면 리플레이를 분석합니다",
+    "analyzing": "리플레이를 분석하는 중...",
+    "mean": "평균",
+    "median": "중앙값",
+    "earlyLate": "빠름 / 늦음",
+    "releaseMean": "LN 릴리스",
+    "releaseHint": "50 판정 범위 안의 롱노트 릴리스 평균: 음수는 일찍 뗀 것입니다",
+    "accuracy": "정확도",
+    "game": "게임",
+    "analysis": "분석",
+    "countsDiffer": "분석은 일부 노트를 osu!와 다르게 판정합니다(재현하지 않는 롱노트 동작). 타이밍에는 영향이 없습니다.",
+    "judgements": {
+      "max": "MAX",
+      "n300": "300",
+      "n200": "200",
+      "n100": "100",
+      "n50": "50",
+      "miss": "Miss"
+    }
   },
   "errors": {
     "io": "파일 오류: {{ detail }}",

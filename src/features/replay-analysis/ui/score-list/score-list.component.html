@@ -1,0 +1,50 @@
+<div appearance="floating" tuiCardLarge="compact" class="card">
+  <tui-textfield iconStart="@tui.search" tuiTextfieldSize="s">
+    <input
+      [placeholder]="'replays.search' | transloco"
+      tuiInput
+      type="search"
+      [value]="store.search()"
+      (input)="search($event)"
+    />
+  </tui-textfield>
+
+  @if (store.keyCounts().length > 1) {
+    <app-option-group [options]="keyOptions()" [active]="keyIndex()" (activeChange)="pickKeys($event)" />
+  }
+
+  @if (store.filtered().length === 0) {
+    <div class="empty">{{ (store.entries().length ? 'replays.noMatch' : 'replays.none') | transloco }}</div>
+  } @else {
+    <cdk-virtual-scroll-viewport itemSize="64" tuiScrollRef class="viewport">
+      <tui-scroll-controls />
+      <div *cdkVirtualFor="let entry of store.filtered(); trackBy: trackEntry" class="item">
+        <button
+          type="button"
+          class="score"
+          [class.selected]="entry.score.replay === store.selected()"
+          [disabled]="!entry.diff"
+          [title]="entry.diff ? '' : ('replays.mapMissing' | transloco)"
+          (click)="store.select(entry)"
+        >
+          <span class="titles">
+            <span class="title">{{ entry.set?.title ?? ('replays.unknownMap' | transloco) }}</span>
+            <span class="diff">{{ entry.diff?.diffName ?? entry.score.beatmapMd5 }}</span>
+            <span class="date">{{ date(entry.score.timestamp) }}</span>
+          </span>
+          <span class="side">
+            <span class="accuracy">{{ entry.accuracy | number: '1.2-2' }}%</span>
+            <span class="badges">
+              @if (entry.keys) {
+                <span appearance="neutral" size="s" tuiBadge>{{ entry.keys }}K</span>
+              }
+              @for (mod of entry.mods; track mod) {
+                <span appearance="info" size="s" tuiBadge>{{ mod }}</span>
+              }
+            </span>
+          </span>
+        </button>
+      </div>
+    </cdk-virtual-scroll-viewport>
+  }
+</div>

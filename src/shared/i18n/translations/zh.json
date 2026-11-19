@@ -129,7 +129,9 @@
     "changelog": "更新日志",
     "github": "GitHub",
     "issues": "问题反馈",
-    "support": "支持"
+    "support": "支持",
+    "replays": "回放分析",
+    "replaysDescription": "查看你本地成绩的游玩情况：逐键的时机、提前或延后的按键与松键。"
   },
   "header": {
     "toggleTheme": "切换主题",
@@ -527,6 +529,34 @@
     "export": "导出",
     "preview": "预览",
     "empty": "没有谱面符合当前筛选条件"
+  },
+  "replays": {
+    "subtitle": "根据 osu! 保存的回放分析你的游玩",
+    "search": "按标题、艺术家、难度或作者搜索",
+    "allKeys": "全部",
+    "none": "没有带回放的 mania 本地成绩",
+    "noMatch": "没有符合搜索的成绩",
+    "mapMissing": "该成绩的谱面已不在 osu!.db 中",
+    "unknownMap": "未知谱面",
+    "pick": "选择一个成绩来分析其回放",
+    "analyzing": "正在分析回放...",
+    "mean": "平均",
+    "median": "中位数",
+    "earlyLate": "提前 / 延后",
+    "releaseMean": "LN 松键",
+    "releaseHint": "50 判定范围内长条松键的平均值：负数表示提前松开",
+    "accuracy": "准确率",
+    "game": "游戏",
+    "analysis": "分析",
+    "countsDiffer": "分析对少数音符的判定与 osu! 不同（未模拟的长条细节），时机数据不受影响。",
+    "judgements": {
+      "max": "MAX",
+      "n300": "300",
+      "n200": "200",
+      "n100": "100",
+      "n50": "50",
+      "miss": "Miss"
+    }
   },
   "errors": {
     "io": "文件错误：{{ detail }}",

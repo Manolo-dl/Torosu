@@ -129,7 +129,9 @@
     "changelog": "Changelog",
     "github": "Github",
     "issues": "Issues",
-    "support": "Support"
+    "support": "Support",
+    "replays": "Replay Analysis",
+    "replaysDescription": "See how you played your local scores: timing, early or late hits and releases, key by key."
   },
   "header": {
     "toggleTheme": "Toggle theme",
@@ -527,6 +529,34 @@
     "export": "Export",
     "preview": "Preview",
     "empty": "No beatmaps match the current filters"
+  },
+  "replays": {
+    "subtitle": "Your plays, from the replays osu! keeps",
+    "search": "Search by title, artist, difficulty or mapper",
+    "allKeys": "All",
+    "none": "No local mania scores with a replay",
+    "noMatch": "No scores match the search",
+    "mapMissing": "The map of this score is no longer in osu!.db",
+    "unknownMap": "Unknown map",
+    "pick": "Pick a score to analyse its replay",
+    "analyzing": "Analysing the replay...",
+    "mean": "Mean",
+    "median": "Median",
+    "earlyLate": "Early / late",
+    "releaseMean": "LN release",
+    "releaseHint": "Mean of the long note releases within the 50 window: negative is letting go early",
+    "accuracy": "Accuracy",
+    "game": "Game",
+    "analysis": "Analysis",
+    "countsDiffer": "The analysis judges a few notes differently than osu! (long note quirks it doesn't model); the timing does not depend on them.",
+    "judgements": {
+      "max": "MAX",
+      "n300": "300",
+      "n200": "200",
+      "n100": "100",
+      "n50": "50",
+      "miss": "Miss"
+    }
   },
   "errors": {
     "io": "File error: {{ detail }}",
