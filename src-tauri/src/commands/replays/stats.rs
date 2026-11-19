@@ -21,6 +21,10 @@ pub struct Timing {
     pub unstable_rate: f64,
     pub early: usize,
     pub late: usize,
+    /// Mean of the early ones and of the rest (zero counts as late), as
+    /// osu!'s results screen shows them (`Error: -10.26ms - 8.69ms avg`).
+    pub early_mean: f64,
+    pub late_mean: f64,
 }
 
 impl Timing {
@@ -35,6 +39,10 @@ impl Timing {
         sorted.sort_by(f64::total_cmp);
         let middle = sorted.len() / 2;
         let median = if sorted.len().is_multiple_of(2) { (sorted[middle - 1] + sorted[middle]) / 2.0 } else { sorted[middle] };
+        let mean_of = |side: &mut dyn Iterator<Item = &f64>| {
+            let (sum, n) = side.fold((0.0, 0), |(sum, n), o| (sum + o, n + 1));
+            if n == 0 { 0.0 } else { sum / n as f64 }
+        };
         Self {
             count: offsets.len(),
             mean,
@@ -42,6 +50,8 @@ impl Timing {
             unstable_rate: variance.sqrt() * 10.0,
             early: offsets.iter().filter(|&&o| o < 0.0).count(),
             late: offsets.iter().filter(|&&o| o > 0.0).count(),
+            early_mean: mean_of(&mut offsets.iter().filter(|&&o| o < 0.0)),
+            late_mean: mean_of(&mut offsets.iter().filter(|&&o| o >= 0.0)),
         }
     }
 }
@@ -86,6 +96,9 @@ pub struct Stats {
     pub counts: ManiaCounts,
     pub hits: Timing,
     pub releases: Timing,
+    /// Presses and releases together, which is what osu! counts in the
+    /// unstable rate of its results screen.
+    pub combined: Timing,
     pub keys: Vec<KeyStats>,
     pub notes: Vec<NoteEvent>,
 }
@@ -131,10 +144,13 @@ pub fn stats(judged: &[Judged], keys: usize, windows: &Windows, rate: f64) -> St
         })
         .collect();
 
+    let hits = hits_of(&mut notes.iter());
+    let releases = releases_of(&mut notes.iter());
     Stats {
         counts: judge::counts(judged),
-        hits: Timing::of(&hits_of(&mut notes.iter())),
-        releases: Timing::of(&releases_of(&mut notes.iter())),
+        hits: Timing::of(&hits),
+        releases: Timing::of(&releases),
+        combined: Timing::of(&[hits, releases].concat()),
         keys,
         notes,
     }
@@ -154,6 +170,7 @@ mod tests {
     fn timing_of_offsets() {
         let timing = Timing::of(&[-10.0, 0.0, 10.0, 20.0]);
         assert_eq!((timing.count, timing.mean, timing.median, timing.early, timing.late), (4, 5.0, 5.0, 1, 2));
+        assert_eq!((timing.early_mean, timing.late_mean), (-10.0, 10.0));
         assert!((timing.unstable_rate - 111.803).abs() < 0.001);
         assert_eq!(Timing::of(&[]), Timing::default());
     }
@@ -174,6 +191,7 @@ mod tests {
 
         assert_eq!((stats.notes[0].time, stats.notes[0].hit), (1000.0, Some(-10.0)));
         assert_eq!(stats.hits.count, 4);
+        assert_eq!((stats.releases.count, stats.combined.count), (1, 5));
         assert_eq!((stats.keys[0].hits.mean, stats.keys[0].notes), (5.0, 2));
         assert_eq!(stats.keys[1].hits.count, 2);
         assert_eq!((stats.keys[1].releases.count, stats.keys[1].releases.mean), (1, -20.0));

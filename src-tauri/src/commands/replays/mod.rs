@@ -174,6 +174,10 @@ mod tests {
                 a.keys, a.rate, s.hits.count, s.hits.mean, s.hits.median, s.hits.unstable_rate,
                 s.releases.count, s.releases.mean, a.game_counts.miss, s.counts.miss,
             );
+            println!(
+                "  as osu! shows it: Error {:.2}ms - {:.2}ms avg, UR {:.2}",
+                s.combined.early_mean, s.combined.late_mean, s.combined.unstable_rate
+            );
             for k in &s.keys {
                 println!(
                     "  key {} hits {:4} mean {:+5.1} UR {:4.0} | rel {:3} mean {:+5.1} early {} late {} | miss {}",

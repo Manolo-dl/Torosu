@@ -51,6 +51,9 @@ export interface Timing {
     unstableRate: number;
     early: number;
     late: number;
+    /** Mean of the early ones and of the rest, as osu!'s results screen shows them. */
+    earlyMean: number;
+    lateMean: number;
 }
 
 export interface KeyStats {
@@ -84,6 +87,8 @@ export interface ReplayStats {
     counts: ManiaCounts;
     hits: Timing;
     releases: Timing;
+    /** Presses and releases together: what osu!'s results screen counts. */
+    combined: Timing;
     keys: KeyStats[];
     notes: NoteEvent[];
 }

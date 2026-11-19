@@ -588,7 +588,10 @@
       "misses": "Miss ({{ count }})"
     },
     "follow": "Analyser les nouvelles parties",
-    "followHint": "Avec osu! ouvert, chaque partie réussie est analysée dès qu'elle se termine"
+    "followHint": "Avec osu! ouvert, chaque partie réussie est analysée dès qu'elle se termine",
+    "urHint": "Unstable rate des appuis seuls : la dispersion de votre timing",
+    "osuUr": "UR (osu!)",
+    "osuUrHint": "Comme l'écran de résultats d'osu! le calcule : appuis et relâchements de long notes ensemble, avec la moyenne des avances et des retards"
   },
   "errors": {
     "io": "Erreur de fichier : {{ detail }}",

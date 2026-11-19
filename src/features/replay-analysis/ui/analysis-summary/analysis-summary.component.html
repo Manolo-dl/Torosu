@@ -1,6 +1,7 @@
 @let a = analysis();
 @let hits = a.stats.hits;
 @let releases = a.stats.releases;
+@let combined = a.stats.combined;
 
 <div appearance="floating" tuiCardLarge="compact" class="card">
   <header class="head">
@@ -20,9 +21,14 @@
       <span class="label">{{ 'replays.median' | transloco }}</span>
       <span class="value">{{ hits.median | number: '1.1-1' }} ms</span>
     </div>
-    <div class="tile">
+    <div class="tile" [tuiHint]="'replays.urHint' | transloco">
       <span class="label">UR</span>
       <span class="value">{{ hits.unstableRate | number: '1.0-0' }}</span>
+    </div>
+    <div class="tile" [tuiHint]="'replays.osuUrHint' | transloco">
+      <span class="label">{{ 'replays.osuUr' | transloco }}</span>
+      <span class="value">{{ combined.unstableRate | number: '1.2-2' }}</span>
+      <span class="detail">{{ combined.earlyMean | number: '1.2-2' }} / {{ combined.lateMean | number: '1.2-2' }} ms</span>
     </div>
     <div class="tile">
       <span class="label">{{ 'replays.earlyLate' | transloco }}</span>

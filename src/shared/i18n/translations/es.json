@@ -588,7 +588,10 @@
       "misses": "Misses ({{ count }})"
     },
     "follow": "Analizar los plays nuevos",
-    "followHint": "Con osu! abierto, cada play que pases se analiza en cuanto termina"
+    "followHint": "Con osu! abierto, cada play que pases se analiza en cuanto termina",
+    "urHint": "Unstable rate solo de las pulsaciones: cuánto se dispersa tu timing",
+    "osuUr": "UR (osu!)",
+    "osuUrHint": "Como lo cuenta la pantalla de resultados de osu!: pulsaciones y sueltas de long notes juntas, con la media de las adelantadas y de las atrasadas"
   },
   "errors": {
     "io": "Error de archivo: {{ detail }}",
