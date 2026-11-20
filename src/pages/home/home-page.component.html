@@ -1,39 +1,46 @@
-<header class="hero">
-  <div tuiTitle="l">
-    <span class="name">
-      Torosu
-      @if (version(); as version) {
-        <span appearance="neutral" size="m" tuiBadge>v{{ version }}</span>
-      }
-    </span>
-    <span tuiSubtitle>{{ 'home.subtitle' | transloco }}</span>
+<header class="hero" appCard="glass" padding="l">
+  <div class="glow" aria-hidden="true"></div>
+
+  <div class="identity">
+    <img class="logo" src="assets/images/logo.png" alt="" />
+    <div class="titles">
+      <h1>
+        Torosu
+        @if (version(); as version) {
+          <app-badge tone="accent">v{{ version }}</app-badge>
+        }
+      </h1>
+      <p class="subtitle">{{ 'home.subtitle' | transloco }}</p>
+    </div>
   </div>
 
   <div class="facts">
-    <span appearance="info" size="m" tuiBadge>{{ 'home.madeFor' | transloco }}</span>
+    <app-badge tone="accent-2">{{ 'home.madeFor' | transloco }}</app-badge>
     <span class="fact">{{ 'home.noLazer' | transloco }}</span>
   </div>
 
   @if (osuPath.path(); as path) {
-    <div class="folder">
-      <tui-icon icon="@tui.folder" />
-      <span class="path" [title]="path">{{ path }}</span>
-      <span class="hint">{{ 'home.changeFolder' | transloco }}</span>
+    <div class="folder" [title]="'home.changeFolder' | transloco">
+      <app-icon name="folder" />
+      <span class="path">{{ path }}</span>
     </div>
   }
 </header>
 
 <section>
-  <h2 tuiTitle="m">{{ 'home.tools' | transloco }}</h2>
+  <h2>
+    {{ 'home.tools' | transloco }}
+    <app-badge size="s">{{ tools().length }}</app-badge>
+  </h2>
   <div class="tools">
-    @for (tool of tools(); track tool.route) {
-      <a appearance="floating" tuiCardLarge="compact" class="tool" [routerLink]="tool.route">
-        <span class="icon"><tui-icon [icon]="tool.icon" /></span>
-        <span tuiTitle>
-          {{ tool.label | transloco }}
-          <span tuiSubtitle>{{ tool.description ?? '' | transloco }}</span>
+    @for (tool of tools(); track tool.route; let i = $index) {
+      <a appCard interactive class="tool" [routerLink]="tool.route" [style.--i]="i">
+        <span class="icon"><app-icon [name]="tool.icon" /></span>
+        <span class="text">
+          <span class="name">{{ tool.label | transloco }}</span>
+          <span class="description">{{ tool.description ?? '' | transloco }}</span>
         </span>
-        <tui-icon icon="@tui.arrow-right" class="arrow" />
+        <app-icon name="arrow-right" class="arrow" />
       </a>
     } @empty {
       <p class="empty">{{ 'home.noTools' | transloco }}</p>

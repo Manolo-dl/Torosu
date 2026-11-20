@@ -5,13 +5,11 @@ import { getVersion } from '@tauri-apps/api/app';
 import { ConfigurationStore } from '@entities/configuration';
 import { USER_ITEMS } from '@entities/nav-item';
 import { OsuPathStore } from '@entities/osu-path';
-import { TuiIcon, TuiTitle } from '@taiga-ui/core';
-import { TuiBadge } from '@taiga-ui/kit';
-import { TuiCardLarge } from '@taiga-ui/layout';
+import { BadgeComponent, CardComponent, IconComponent } from '@shared/ui';
 
 @Component({
   selector: 'app-home',
-  imports: [RouterLink, TuiIcon, TuiTitle, TuiBadge, TuiCardLarge, TranslocoPipe],
+  imports: [BadgeComponent, CardComponent, IconComponent, RouterLink, TranslocoPipe],
   templateUrl: './home-page.component.html',
   styleUrl: './home-page.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,
