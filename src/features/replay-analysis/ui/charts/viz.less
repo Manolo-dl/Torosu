@@ -1,0 +1,88 @@
+// Colours of the replay charts, light and dark: early and late are the two
+// arms of a diverging pair (blue and red) with a gray midpoint.
+// @import '../charts/viz'; then .viz-colors(); in :host.
+
+.viz-colors() {
+  --viz-early: #2a78d6;
+  --viz-late: #e34948;
+  --viz-neutral: #c9c8c3;
+  --viz-miss: #d03b3b;
+  --viz-band: rgba(0, 0, 0, 0.035);
+  --viz-band-alt: rgba(0, 0, 0, 0.07);
+  --viz-grid: rgba(0, 0, 0, 0.1);
+  --viz-dot: rgba(60, 60, 60, 0.35);
+
+  :host-context([tuiTheme='dark']) & {
+    --viz-early: #3987e5;
+    --viz-late: #e66767;
+    --viz-neutral: #5a5a56;
+    --viz-band: rgba(255, 255, 255, 0.03);
+    --viz-band-alt: rgba(255, 255, 255, 0.065);
+    --viz-grid: rgba(255, 255, 255, 0.1);
+    --viz-dot: rgba(220, 220, 220, 0.3);
+  }
+}
+
+// What every chart shares: its text, axes and tooltip.
+.viz-chart() {
+  .chart {
+    position: relative;
+  }
+
+  svg {
+    display: block;
+    inline-size: 100%;
+    block-size: auto;
+    overflow: visible;
+    font: var(--tui-typography-body-xs);
+  }
+
+  .axis-label {
+    fill: var(--tui-text-tertiary);
+  }
+
+  .grid {
+    stroke: var(--viz-grid);
+    stroke-width: 1;
+  }
+
+  .zero {
+    stroke: var(--tui-text-tertiary);
+    stroke-width: 1;
+  }
+
+  .tooltip {
+    position: absolute;
+    z-index: 1;
+    pointer-events: none;
+    padding: 0.375rem 0.5rem;
+    border-radius: var(--tui-radius-s);
+    background: var(--tui-background-elevation-3);
+    box-shadow: var(--tui-shadow-medium);
+    font: var(--tui-typography-body-xs);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    transform: translate(-50%, calc(-100% - 8px));
+
+    .tooltip-title {
+      font-weight: bold;
+    }
+  }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    font: var(--tui-typography-body-xs);
+    color: var(--tui-text-secondary);
+
+    .swatch {
+      display: inline-block;
+      inline-size: 0.625rem;
+      block-size: 0.625rem;
+      margin-inline-end: 0.25rem;
+      border-radius: 2px;
+      vertical-align: middle;
+    }
+  }
+}

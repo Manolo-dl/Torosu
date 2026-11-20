@@ -1,0 +1,43 @@
+@let c = chart();
+
+<div class="chart" (mouseleave)="hovered.set(null)">
+  <svg [attr.viewBox]="'0 0 ' + width() + ' ' + height" role="img" [attr.aria-label]="'replays.histogram.label' | transloco">
+    @for (band of c.bands; track band.judgement) {
+      @for (r of band.rects; track $index) {
+        <rect class="band" [class.alt]="band.alt" [attr.x]="r.x" [attr.y]="margin.top" [attr.width]="r.width" [attr.height]="c.base - margin.top" />
+      }
+      @if (band.labelled) {
+        <text class="axis-label" text-anchor="middle" [attr.x]="band.labelX" [attr.y]="margin.top - 8">{{ 'replays.judgements.' + band.judgement | transloco }}</text>
+        <text class="axis-label" text-anchor="middle" [attr.x]="2 * c.zeroX - band.labelX" [attr.y]="margin.top - 8">{{ 'replays.judgements.' + band.judgement | transloco }}</text>
+      }
+    }
+
+    @for (bin of c.bins; track bin.from) {
+      <path [attr.d]="bin.path" [attr.data-side]="bin.side" (mouseenter)="hovered.set(bin)" />
+    }
+
+    <line class="zero" [attr.x1]="margin.left" [attr.x2]="width() - margin.right" [attr.y1]="c.base" [attr.y2]="c.base" />
+    @if (c.mean !== null) {
+      <line class="mean" [attr.x1]="c.meanX" [attr.x2]="c.meanX" [attr.y1]="margin.top" [attr.y2]="c.base" />
+    }
+
+    @for (tick of c.ticks; track tick.x) {
+      <text class="axis-label" text-anchor="middle" [attr.x]="tick.x" [attr.y]="height - 6">{{ tick.label }}</text>
+    }
+  </svg>
+
+  @if (tooltip(); as t) {
+    <div class="tooltip" [style.left.px]="t.left" [style.top.px]="t.top">
+      <div class="tooltip-title">{{ signed(t.bin.from).replace('.0', '') }} … {{ signed(t.bin.from + bin).replace('.0', '') }} ms</div>
+      <div>{{ 'replays.histogram.count' | transloco: { count: t.bin.count } }}</div>
+    </div>
+  }
+</div>
+
+<div class="legend">
+  <span><span class="swatch early"></span>{{ 'replays.early' | transloco }}</span>
+  <span><span class="swatch late"></span>{{ 'replays.late' | transloco }}</span>
+  @if (c.mean !== null) {
+    <span><span class="swatch mean"></span>{{ 'replays.mean' | transloco }} ({{ signed(c.mean) }} ms)</span>
+  }
+</div>

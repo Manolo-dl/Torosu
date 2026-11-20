@@ -12,7 +12,8 @@
       "general": "General",
       "downloader": "Downloader",
       "packs": "Packs",
-      "trainer": "Trainer"
+      "trainer": "Trainer",
+      "replays": "Replays"
     },
     "general": {
       "osu": "osu!",
@@ -108,6 +109,11 @@
         "mode": "osu!mania",
         "keys": "7K, only in mania"
       }
+    },
+    "replays": {
+      "analysis": "Analysis",
+      "charts": "Charts",
+      "chartsHint": "Charts turned off are not drawn at all"
     }
   },
   "nav": {
@@ -129,7 +135,9 @@
     "changelog": "Changelog",
     "github": "Github",
     "issues": "Issues",
-    "support": "Support"
+    "support": "Support",
+    "replays": "Replay Analysis",
+    "replaysDescription": "See how you played your local scores: timing, early or late hits and releases, key by key."
   },
   "header": {
     "toggleTheme": "Toggle theme",
@@ -458,7 +466,9 @@
     "collectionsDone": "Loaded {{ count }} collections",
     "collectionsFailed": "Failed to load collections",
     "logs": "Loading logs, please wait...",
-    "logsFailed": "Failed to load logs"
+    "logsFailed": "Failed to load logs",
+    "localScores": "Reading your local scores, please wait...",
+    "localScoresFailed": "Failed to read scores.db"
   },
   "collections": {
     "export": {
@@ -526,6 +536,72 @@
     "preview": "Preview",
     "empty": "No beatmaps match the current filters"
   },
+  "replays": {
+    "subtitle": "Your plays, from the replays osu! keeps",
+    "search": "Search by title, artist, difficulty or mapper",
+    "allKeys": "All",
+    "none": "No local mania scores with a replay",
+    "noMatch": "No scores match the search",
+    "mapMissing": "The map of this score is not in osu!.db: select it in osu! (osu! adds new maps to osu!.db only when it closes)",
+    "unknownMap": "Unknown map",
+    "pick": "Pick a score to analyse its replay",
+    "analyzing": "Analysing the replay...",
+    "mean": "Mean",
+    "median": "Median",
+    "error": "Error (early / late avg)",
+    "earlyLate": "Early / late",
+    "accuracy": "Accuracy",
+    "game": "Game",
+    "analysis": "Analysis",
+    "countsDiffer": "Some judgements could not be matched to their note and stay as the analysis judged them.",
+    "judgements": {
+      "max": "MAX",
+      "n300": "300",
+      "n200": "200",
+      "n100": "100",
+      "n50": "50",
+      "miss": "Miss"
+    },
+    "early": "Early",
+    "late": "Late",
+    "views": {
+      "all": "All",
+      "rice": "Rice",
+      "ln": "LN",
+      "allHint": "Every press and every long note release, as osu!'s results screen counts them.",
+      "riceHint": "Only the normal notes: when each was pressed.",
+      "lnHint": "Only the long notes: when each was pressed and when it was let go."
+    },
+    "keys": {
+      "title": "By key",
+      "subtitle": "Mean offset of each key: below zero is early, above is late",
+      "chartLabel": "Mean offset of each key",
+      "key": "Key {{ key }}",
+      "nothing": "Nothing timed on this key",
+      "column": "Key",
+      "notes": "Notes",
+      "letGoEarly": "Let go early",
+      "heldLong": "Held too long"
+    },
+    "histogram": {
+      "title": "Distribution",
+      "subtitle": "How many came at each offset, against the judgement windows",
+      "label": "Histogram of the offsets",
+      "count": "{{ count }} notes"
+    },
+    "timeline": {
+      "title": "Along the song",
+      "subtitle": "Every offset in time, to see where you drift or tire",
+      "label": "Offsets along the song",
+      "movingMean": "Mean of {{ count }} notes",
+      "misses": "Misses ({{ count }})"
+    },
+    "follow": "Analyse new plays",
+    "followHint": "While osu! is open, each play you pass is analysed as soon as it ends",
+    "reconciled": "{{ matched }} of {{ total }} of osu!'s judgements put on their note, from the .osg it saves with the replay: each note has the judgement the game gave it.",
+    "noGraph": "This replay has no .osg (osu! saves one since 2026): the judgements are the analysis' own, and a few long notes may differ from the game.",
+    "realTime": "At {{ rate }}x, osu! counts the map's ms, as shown above. In real time, which is what the offset depends on: {{ early }} / {{ late }} ms, UR {{ ur }}."
+  },
   "errors": {
     "io": "File error: {{ detail }}",
     "notFound": "A file or folder was not found: {{ detail }}",
@@ -560,6 +636,9 @@
     "onePlayer": "The key converter maps for one player, not {{ layout }}",
     "noAudio": "The map's audio has no supported track",
     "video": "Could not re-encode the video: {{ detail }}",
+    "convertReplay": "Replays of converted maps can't be analysed yet, only those of osu!mania maps",
+    "randomReplay": "Replays with Random can't be analysed: osu! shuffles their notes",
+    "replayUnreadable": "{{ file }} is not an osu!mania replay Torosu can read",
     "noUpdate": "There is no update to install"
   }
 }

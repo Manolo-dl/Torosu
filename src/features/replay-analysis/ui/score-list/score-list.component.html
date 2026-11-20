@@ -1,0 +1,58 @@
+<div appearance="floating" tuiCardLarge="compact" class="card">
+  <label class="follow">
+    <span class="follow-text">
+      {{ 'replays.follow' | transloco }}
+      <span class="hint">{{ 'replays.followHint' | transloco }}</span>
+    </span>
+    <input size="s" tuiSwitch type="checkbox" [checked]="store.settings().follow" (change)="follow($event)" />
+  </label>
+
+  <tui-textfield iconStart="@tui.search" tuiTextfieldSize="s">
+    <input
+      [placeholder]="'replays.search' | transloco"
+      tuiInput
+      type="search"
+      [value]="store.search()"
+      (input)="search($event)"
+    />
+  </tui-textfield>
+
+  @if (store.keyCounts().length > 1) {
+    <app-option-group [options]="keyOptions()" [active]="keyIndex()" (activeChange)="pickKeys($event)" />
+  }
+
+  @if (store.filtered().length === 0) {
+    <div class="empty">{{ (store.entries().length ? 'replays.noMatch' : 'replays.none') | transloco }}</div>
+  } @else {
+    <cdk-virtual-scroll-viewport itemSize="64" tuiScrollRef class="viewport">
+      <tui-scroll-controls />
+      <div *cdkVirtualFor="let entry of store.filtered(); trackBy: trackEntry" class="item">
+        <button
+          type="button"
+          class="score"
+          [class.selected]="entry.score.replay === store.selected()"
+          [disabled]="!entry.map"
+          [title]="entry.map ? '' : ('replays.mapMissing' | transloco)"
+          (click)="store.select(entry)"
+        >
+          <span class="titles">
+            <span class="title">{{ entry.map?.title ?? ('replays.unknownMap' | transloco) }}</span>
+            <span class="diff">{{ entry.map?.diffName ?? entry.score.beatmapMd5 }}</span>
+            <span class="date">{{ date(entry.score.timestamp) }}</span>
+          </span>
+          <span class="side">
+            <span class="accuracy">{{ entry.accuracy | number: '1.2-2' }}%</span>
+            <span class="badges">
+              @if (entry.map) {
+                <span appearance="neutral" size="s" tuiBadge>{{ entry.map.keys }}K</span>
+              }
+              @for (mod of entry.mods; track mod) {
+                <span appearance="info" size="s" tuiBadge>{{ mod }}</span>
+              }
+            </span>
+          </span>
+        </button>
+      </div>
+    </cdk-virtual-scroll-viewport>
+  }
+</div>

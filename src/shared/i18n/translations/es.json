@@ -12,7 +12,8 @@
       "general": "General",
       "downloader": "Descargador",
       "packs": "Packs",
-      "trainer": "Trainer"
+      "trainer": "Trainer",
+      "replays": "Replays"
     },
     "general": {
       "osu": "osu!",
@@ -108,6 +109,11 @@
         "mode": "osu!mania",
         "keys": "7K, solo en mania"
       }
+    },
+    "replays": {
+      "analysis": "Análisis",
+      "charts": "Gráficas",
+      "chartsHint": "Las gráficas desactivadas no se dibujan"
     }
   },
   "nav": {
@@ -129,7 +135,9 @@
     "changelog": "Novedades",
     "github": "Github",
     "issues": "Problemas",
-    "support": "Apoyar"
+    "support": "Apoyar",
+    "replays": "Análisis de replays",
+    "replaysDescription": "Mira cómo jugaste tus scores locales: timing, golpes y sueltas antes o tarde, tecla a tecla."
   },
   "header": {
     "toggleTheme": "Cambiar tema",
@@ -458,7 +466,9 @@
     "collectionsDone": "Cargadas {{ count }} colecciones",
     "collectionsFailed": "No se han podido cargar las colecciones",
     "logs": "Cargando logs, espera...",
-    "logsFailed": "No se han podido cargar los logs"
+    "logsFailed": "No se han podido cargar los logs",
+    "localScores": "Leyendo tus scores locales, espera...",
+    "localScoresFailed": "No se pudo leer scores.db"
   },
   "collections": {
     "export": {
@@ -526,6 +536,72 @@
     "preview": "Vista previa",
     "empty": "Ningún mapa cumple los filtros actuales"
   },
+  "replays": {
+    "subtitle": "Tus partidas, desde las replays que guarda osu!",
+    "search": "Busca por título, artista, dificultad o mapper",
+    "allKeys": "Todas",
+    "none": "No hay scores locales de mania con replay",
+    "noMatch": "Ningún score coincide con la búsqueda",
+    "mapMissing": "El mapa de este score no está en osu!.db: selecciónalo en osu! (osu! añade los mapas nuevos a osu!.db solo al cerrarse)",
+    "unknownMap": "Mapa desconocido",
+    "pick": "Elige un score para analizar su replay",
+    "analyzing": "Analizando la replay...",
+    "mean": "Media",
+    "median": "Mediana",
+    "error": "Error (media antes / tarde)",
+    "earlyLate": "Antes / tarde",
+    "accuracy": "Precisión",
+    "game": "Juego",
+    "analysis": "Análisis",
+    "countsDiffer": "Algunos juicios no se pudieron casar con su nota y quedan como los juzgó el análisis.",
+    "judgements": {
+      "max": "MAX",
+      "n300": "300",
+      "n200": "200",
+      "n100": "100",
+      "n50": "50",
+      "miss": "Miss"
+    },
+    "early": "Antes",
+    "late": "Tarde",
+    "views": {
+      "all": "Todos",
+      "rice": "Rice",
+      "ln": "LN",
+      "allHint": "Cada pulsación y cada suelta de long note, como las cuenta la pantalla de resultados de osu!.",
+      "riceHint": "Solo las notas normales: cuándo se pulsó cada una.",
+      "lnHint": "Solo las long notes: cuándo se pulsó cada una y cuándo se soltó."
+    },
+    "keys": {
+      "title": "Por tecla",
+      "subtitle": "Offset medio de cada tecla: por debajo de cero es antes, por encima tarde",
+      "chartLabel": "Offset medio de cada tecla",
+      "key": "Tecla {{ key }}",
+      "nothing": "Nada medido en esta tecla",
+      "column": "Tecla",
+      "notes": "Notas",
+      "letGoEarly": "Soltadas antes",
+      "heldLong": "Mantenidas de más"
+    },
+    "histogram": {
+      "title": "Distribución",
+      "subtitle": "Cuántas cayeron en cada offset, frente a las ventanas de juicio",
+      "label": "Histograma de los offsets",
+      "count": "{{ count }} notas"
+    },
+    "timeline": {
+      "title": "A lo largo de la canción",
+      "subtitle": "Cada offset en el tiempo, para ver dónde te desvías o te cansas",
+      "label": "Offsets a lo largo de la canción",
+      "movingMean": "Media de {{ count }} notas",
+      "misses": "Misses ({{ count }})"
+    },
+    "follow": "Analizar los plays nuevos",
+    "followHint": "Con osu! abierto, cada play que pases se analiza en cuanto termina",
+    "reconciled": "{{ matched }} de {{ total }} juicios de osu! colocados en su nota, desde el .osg que guarda con la replay: cada nota tiene el juicio que le dio el juego.",
+    "noGraph": "Esta replay no tiene .osg (osu! lo guarda desde 2026): los juicios son los del análisis y alguna long note puede diferir del juego.",
+    "realTime": "A {{ rate }}x, osu! cuenta los ms del mapa, como arriba. En tiempo real, que es de lo que depende el offset: {{ early }} / {{ late }} ms, UR {{ ur }}."
+  },
   "errors": {
     "io": "Error de archivo: {{ detail }}",
     "notFound": "No se encuentra un archivo o carpeta: {{ detail }}",
@@ -560,6 +636,9 @@
     "onePlayer": "El conversor de teclas mapea para un jugador, no {{ layout }}",
     "noAudio": "El audio del mapa no tiene ninguna pista compatible",
     "video": "No se ha podido recodificar el vídeo: {{ detail }}",
+    "convertReplay": "Aún no se pueden analizar replays de mapas convertidos, solo de mapas de osu!mania",
+    "randomReplay": "No se pueden analizar replays con Random: osu! baraja sus notas",
+    "replayUnreadable": "{{ file }} no es una replay de osu!mania que Torosu pueda leer",
     "noUpdate": "No hay ninguna actualización que instalar"
   }
 }

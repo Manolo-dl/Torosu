@@ -12,7 +12,8 @@
       "general": "一般",
       "downloader": "ダウンローダー",
       "packs": "パック",
-      "trainer": "トレーナー"
+      "trainer": "トレーナー",
+      "replays": "リプレイ"
     },
     "general": {
       "osu": "osu!",
@@ -108,6 +109,11 @@
         "mode": "osu!mania",
         "keys": "7K（mania のみ）"
       }
+    },
+    "replays": {
+      "analysis": "分析",
+      "charts": "グラフ",
+      "chartsHint": "オフにしたグラフは描画されません"
     }
   },
   "nav": {
@@ -129,7 +135,9 @@
     "changelog": "更新履歴",
     "github": "Github",
     "issues": "Issues",
-    "support": "サポート"
+    "support": "サポート",
+    "replays": "リプレイ分析",
+    "replaysDescription": "ローカルスコアのプレイを分析：タイミング、早押し・遅押しやリリースをキーごとに確認できます。"
   },
   "header": {
     "toggleTheme": "テーマを切り替え",
@@ -458,7 +466,9 @@
     "collectionsDone": "{{ count }} 個のコレクションを読み込みました",
     "collectionsFailed": "コレクションの読み込みに失敗しました",
     "logs": "ログを読み込み中です。お待ちください...",
-    "logsFailed": "ログの読み込みに失敗しました"
+    "logsFailed": "ログの読み込みに失敗しました",
+    "localScores": "ローカルスコアを読み込んでいます。お待ちください...",
+    "localScoresFailed": "scores.db を読み込めませんでした"
   },
   "collections": {
     "export": {
@@ -526,6 +536,72 @@
     "preview": "プレビュー",
     "empty": "現在のフィルターに合うビートマップはありません"
   },
+  "replays": {
+    "subtitle": "osu! が保存しているリプレイからあなたのプレイを分析",
+    "search": "タイトル、アーティスト、難易度、マッパーで検索",
+    "allKeys": "すべて",
+    "none": "リプレイ付きの mania ローカルスコアがありません",
+    "noMatch": "検索に一致するスコアがありません",
+    "mapMissing": "このスコアの譜面は osu!.db にありません。osu! で選択してください（osu! は終了時にのみ新しい譜面を osu!.db に追加します）",
+    "unknownMap": "不明な譜面",
+    "pick": "スコアを選ぶとリプレイを分析します",
+    "analyzing": "リプレイを分析しています...",
+    "mean": "平均",
+    "median": "中央値",
+    "error": "誤差（早い / 遅い 平均）",
+    "earlyLate": "早い / 遅い",
+    "accuracy": "精度",
+    "game": "ゲーム",
+    "analysis": "分析",
+    "countsDiffer": "一部の判定はノーツに割り当てられず、分析の判定のままです。",
+    "judgements": {
+      "max": "MAX",
+      "n300": "300",
+      "n200": "200",
+      "n100": "100",
+      "n50": "50",
+      "miss": "Miss"
+    },
+    "early": "早い",
+    "late": "遅い",
+    "views": {
+      "all": "すべて",
+      "rice": "Rice",
+      "ln": "LN",
+      "allHint": "すべての押下とロングノーツのリリース。osu! のリザルト画面と同じ数え方です。",
+      "riceHint": "通常ノーツのみ：それぞれを押したタイミング。",
+      "lnHint": "ロングノーツのみ：押したタイミングと離したタイミング。"
+    },
+    "keys": {
+      "title": "キー別",
+      "subtitle": "各キーの平均ズレ：ゼロより下は早く、上は遅い",
+      "chartLabel": "各キーの平均ズレ",
+      "key": "キー {{ key }}",
+      "nothing": "このキーには計測データがありません",
+      "column": "キー",
+      "notes": "ノーツ",
+      "letGoEarly": "早離し",
+      "heldLong": "押しすぎ"
+    },
+    "histogram": {
+      "title": "分布",
+      "subtitle": "判定幅に対して各ズレにいくつ入ったか",
+      "label": "ズレのヒストグラム",
+      "count": "{{ count }} ノーツ"
+    },
+    "timeline": {
+      "title": "曲の流れ",
+      "subtitle": "時間ごとのズレ。どこでずれたり疲れたりするかがわかります",
+      "label": "曲の流れに沿ったズレ",
+      "movingMean": "{{ count }} ノーツの平均",
+      "misses": "Miss（{{ count }}）"
+    },
+    "follow": "新しいプレイを分析",
+    "followHint": "osu! を開いている間、クリアしたプレイを終了後すぐに分析します",
+    "reconciled": "リプレイと一緒に保存される .osg から、osu! の判定 {{ total }} 件中 {{ matched }} 件を各ノーツに割り当てました。各ノーツはゲームが出した判定です。",
+    "noGraph": "このリプレイには .osg がありません（osu! は 2026 年から保存）。判定は分析によるもので、一部のロングノーツはゲームと異なる場合があります。",
+    "realTime": "{{ rate }}x では osu! は上と同じく譜面上の ms で数えます。オフセットに関わる実時間では：{{ early }} / {{ late }} ms、UR {{ ur }}。"
+  },
   "errors": {
     "io": "ファイルエラー: {{ detail }}",
     "notFound": "ファイルまたはフォルダが見つかりません: {{ detail }}",
@@ -560,6 +636,9 @@
     "onePlayer": "キー変換は 1 人用のマップを作ります。{{ layout }} には対応していません",
     "noAudio": "マップの音声に対応しているトラックがありません",
     "video": "動画を再エンコードできませんでした: {{ detail }}",
+    "convertReplay": "コンバート譜面のリプレイはまだ分析できません。osu!mania 譜面のみ対応しています",
+    "randomReplay": "Random 付きのリプレイは分析できません：osu! がノーツを並べ替えるためです",
+    "replayUnreadable": "{{ file }} は Torosu が読み込める osu!mania のリプレイではありません",
     "noUpdate": "インストールする更新がありません"
   }
 }

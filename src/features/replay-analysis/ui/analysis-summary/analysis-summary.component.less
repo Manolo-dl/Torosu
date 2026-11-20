@@ -1,0 +1,120 @@
+@import 'shared/styles/mixins';
+
+:host {
+  display: block;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+
+  .titles {
+    min-inline-size: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .title {
+    .ellipsis();
+    font: var(--tui-typography-heading-6);
+  }
+
+  .diff,
+  .player {
+    font: var(--tui-typography-body-s);
+    color: var(--tui-text-secondary);
+  }
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
+  gap: 0.5rem;
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--tui-radius-s);
+  background: var(--tui-background-elevation-2);
+
+  .label {
+    font: var(--tui-typography-body-xs);
+    color: var(--tui-text-tertiary);
+  }
+
+  .value {
+    font: var(--tui-typography-heading-6);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.counts {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font: var(--tui-typography-body-s);
+  font-variant-numeric: tabular-nums;
+
+  th,
+  td {
+    padding: 0.25rem 0.5rem;
+    text-align: end;
+  }
+
+  th:first-child {
+    text-align: start;
+    color: var(--tui-text-secondary);
+    font-weight: normal;
+  }
+
+  thead th {
+    font-weight: bold;
+  }
+
+  // A mark beside each judgement's name, in an order checked for colour
+  // blindness in both themes (the name is always shown with it).
+  .swatch {
+    display: inline-block;
+    inline-size: 0.5rem;
+    block-size: 0.5rem;
+    margin-inline-end: 0.25rem;
+    border-radius: 2px;
+    vertical-align: middle;
+
+    &[data-judgement='max'] { background: #6250d6; }
+    &[data-judgement='n300'] { background: #eda100; }
+    &[data-judgement='n200'] { background: #1baf7a; }
+    &[data-judgement='n100'] { background: #2a78d6; }
+    &[data-judgement='n50'] { background: #008300; }
+    &[data-judgement='miss'] { background: #e34948; }
+
+    :host-context([tuiTheme='dark']) & {
+      &[data-judgement='max'] { background: #9085e9; }
+      &[data-judgement='n300'] { background: #c98500; }
+      &[data-judgement='n200'] { background: #199e70; }
+      &[data-judgement='n100'] { background: #3987e5; }
+      &[data-judgement='n50'] { background: #0ca30c; }
+      &[data-judgement='miss'] { background: #e66767; }
+    }
+  }
+
+  .off {
+    color: var(--tui-text-warning);
+  }
+}
+
+.note {
+  margin: 0;
+  font: var(--tui-typography-body-xs);
+  color: var(--tui-text-tertiary);
+}

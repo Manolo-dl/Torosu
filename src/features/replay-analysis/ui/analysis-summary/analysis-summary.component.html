@@ -1,0 +1,75 @@
+@let a = analysis();
+@let timing = a.stats.timing[view()];
+@let hint = 'replays.views.' + view() + 'Hint' | transloco;
+
+<div appearance="floating" tuiCardLarge="compact" class="card">
+  <header class="head">
+    <div class="titles">
+      <span class="title">{{ entry().map?.artist }} - {{ entry().map?.title }}</span>
+      <span class="diff">[{{ entry().map?.diffName }}] · {{ a.keys }}K · OD {{ a.od }}@if (a.rate !== 1) { · {{ a.rate }}x }</span>
+    </div>
+    <span class="player">{{ a.playerName }}</span>
+  </header>
+
+  <div class="tiles">
+    <div class="tile" [tuiHint]="hint">
+      <span class="label">{{ 'replays.error' | transloco }}</span>
+      <span class="value">{{ timing.earlyMean | number: '1.2-2' }} / {{ timing.lateMean | number: '1.2-2' }} ms</span>
+    </div>
+    <div class="tile" [tuiHint]="hint">
+      <span class="label">UR</span>
+      <span class="value">{{ timing.unstableRate | number: '1.2-2' }}</span>
+    </div>
+    <div class="tile" [tuiHint]="hint">
+      <span class="label">{{ 'replays.earlyLate' | transloco }}</span>
+      <span class="value">{{ timing.early }} / {{ timing.late }}</span>
+    </div>
+  </div>
+
+  @if (a.rate !== 1) {
+    <p class="note">
+      {{ 'replays.realTime' | transloco: {
+        rate: a.rate,
+        early: (timing.earlyMean / a.rate | number: '1.2-2'),
+        late: (timing.lateMean / a.rate | number: '1.2-2'),
+        ur: (timing.unstableRate / a.rate | number: '1.2-2')
+      } }}
+    </p>
+  }
+
+  <table class="counts">
+    <thead>
+      <tr>
+        <th></th>
+        @for (j of judgements; track j) {
+          <th><span class="swatch" [attr.data-judgement]="j"></span>{{ 'replays.judgements.' + j | transloco }}</th>
+        }
+        <th>{{ 'replays.accuracy' | transloco }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <th>{{ 'replays.game' | transloco }}</th>
+        @for (j of judgements; track j) {
+          <td>{{ a.gameCounts[j] }}</td>
+        }
+        <td>{{ accuracy().game | number: '1.2-2' }}%</td>
+      </tr>
+      <tr>
+        <th>{{ 'replays.analysis' | transloco }}</th>
+        @for (j of judgements; track j) {
+          <td [class.off]="a.gameCounts[j] !== a.stats.counts[j]">{{ a.stats.counts[j] }}</td>
+        }
+        <td>{{ accuracy().ours | number: '1.2-2' }}%</td>
+      </tr>
+    </tbody>
+  </table>
+  @if (a.reconciled; as r) {
+    <p class="note">{{ 'replays.reconciled' | transloco: { matched: r.matched, total: r.total } }}</p>
+  } @else {
+    <p class="note">{{ 'replays.noGraph' | transloco }}</p>
+  }
+  @if (differs()) {
+    <p class="note">{{ 'replays.countsDiffer' | transloco }}</p>
+  }
+</div>

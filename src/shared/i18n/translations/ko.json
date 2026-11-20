@@ -12,7 +12,8 @@
       "general": "일반",
       "downloader": "다운로더",
       "packs": "팩",
-      "trainer": "트레이너"
+      "trainer": "트레이너",
+      "replays": "리플레이"
     },
     "general": {
       "osu": "osu!",
@@ -108,6 +109,11 @@
         "mode": "osu!mania",
         "keys": "7K, mania 전용"
       }
+    },
+    "replays": {
+      "analysis": "분석",
+      "charts": "그래프",
+      "chartsHint": "끈 그래프는 그리지 않습니다"
     }
   },
   "nav": {
@@ -129,7 +135,9 @@
     "changelog": "변경 내역",
     "github": "Github",
     "issues": "Issues",
-    "support": "후원"
+    "support": "후원",
+    "replays": "리플레이 분석",
+    "replaysDescription": "로컬 점수의 플레이를 분석합니다: 타이밍, 빠르거나 늦은 입력과 릴리스를 키별로 확인하세요."
   },
   "header": {
     "toggleTheme": "테마 전환",
@@ -458,7 +466,9 @@
     "collectionsDone": "컬렉션 {{ count }}개를 불러왔습니다",
     "collectionsFailed": "컬렉션을 불러오지 못했습니다",
     "logs": "로그를 불러오는 중입니다. 잠시 기다려 주세요...",
-    "logsFailed": "로그를 불러오지 못했습니다"
+    "logsFailed": "로그를 불러오지 못했습니다",
+    "localScores": "로컬 점수를 읽는 중입니다. 잠시 기다려 주세요...",
+    "localScoresFailed": "scores.db를 읽지 못했습니다"
   },
   "collections": {
     "export": {
@@ -526,6 +536,72 @@
     "preview": "미리보기",
     "empty": "현재 필터에 맞는 비트맵이 없습니다"
   },
+  "replays": {
+    "subtitle": "osu!가 저장한 리플레이로 본 플레이",
+    "search": "제목, 아티스트, 난이도, 매퍼로 검색",
+    "allKeys": "전체",
+    "none": "리플레이가 있는 mania 로컬 점수가 없습니다",
+    "noMatch": "검색과 일치하는 점수가 없습니다",
+    "mapMissing": "이 점수의 맵이 osu!.db에 없습니다. osu!에서 선택하세요 (osu!는 종료할 때만 새 맵을 osu!.db에 추가합니다)",
+    "unknownMap": "알 수 없는 맵",
+    "pick": "점수를 선택하면 리플레이를 분석합니다",
+    "analyzing": "리플레이를 분석하는 중...",
+    "mean": "평균",
+    "median": "중앙값",
+    "error": "오차 (빠름 / 늦음 평균)",
+    "earlyLate": "빠름 / 늦음",
+    "accuracy": "정확도",
+    "game": "게임",
+    "analysis": "분석",
+    "countsDiffer": "일부 판정은 노트에 배정되지 않아 분석의 판정으로 남았습니다.",
+    "judgements": {
+      "max": "MAX",
+      "n300": "300",
+      "n200": "200",
+      "n100": "100",
+      "n50": "50",
+      "miss": "Miss"
+    },
+    "early": "빠름",
+    "late": "늦음",
+    "views": {
+      "all": "전체",
+      "rice": "Rice",
+      "ln": "LN",
+      "allHint": "모든 입력과 롱노트 릴리스. osu! 결과 화면과 같은 방식입니다.",
+      "riceHint": "일반 노트만: 각 노트를 누른 시점.",
+      "lnHint": "롱노트만: 누른 시점과 뗀 시점."
+    },
+    "keys": {
+      "title": "키별",
+      "subtitle": "각 키의 평균 오차: 0보다 아래는 빠름, 위는 늦음",
+      "chartLabel": "각 키의 평균 오차",
+      "key": "키 {{ key }}",
+      "nothing": "이 키에서 측정된 것이 없습니다",
+      "column": "키",
+      "notes": "노트",
+      "letGoEarly": "일찍 뗌",
+      "heldLong": "너무 오래 누름"
+    },
+    "histogram": {
+      "title": "분포",
+      "subtitle": "판정 범위에 대해 각 오차에 몇 개가 있었는지",
+      "label": "오차 히스토그램",
+      "count": "노트 {{ count }}개"
+    },
+    "timeline": {
+      "title": "곡 진행에 따라",
+      "subtitle": "시간에 따른 모든 오차로, 어디서 밀리거나 지치는지 확인하세요",
+      "label": "곡 진행에 따른 오차",
+      "movingMean": "노트 {{ count }}개 평균",
+      "misses": "Miss ({{ count }})"
+    },
+    "follow": "새 플레이 분석",
+    "followHint": "osu!가 열려 있는 동안 클리어한 플레이를 끝나자마자 분석합니다",
+    "reconciled": "리플레이와 함께 저장되는 .osg에서 osu! 판정 {{ total }}개 중 {{ matched }}개를 해당 노트에 배정했습니다. 각 노트는 게임이 준 판정입니다.",
+    "noGraph": "이 리플레이에는 .osg가 없습니다 (osu!는 2026년부터 저장). 판정은 분석 결과이며 일부 롱노트는 게임과 다를 수 있습니다.",
+    "realTime": "{{ rate }}x에서는 osu!가 위처럼 맵 기준 ms로 셉니다. 오프셋에 영향을 주는 실제 시간으로는: {{ early }} / {{ late }} ms, UR {{ ur }}."
+  },
   "errors": {
     "io": "파일 오류: {{ detail }}",
     "notFound": "파일이나 폴더를 찾을 수 없습니다: {{ detail }}",
@@ -560,6 +636,9 @@
     "onePlayer": "키 변환은 1인용 맵을 만듭니다. {{ layout }}은(는) 지원하지 않습니다",
     "noAudio": "맵의 오디오에 지원하는 트랙이 없습니다",
     "video": "영상을 다시 인코딩하지 못했습니다: {{ detail }}",
+    "convertReplay": "컨버트 맵의 리플레이는 아직 분석할 수 없습니다. osu!mania 맵만 가능합니다",
+    "randomReplay": "Random 리플레이는 분석할 수 없습니다: osu!가 노트를 섞기 때문입니다",
+    "replayUnreadable": "{{ file }}은(는) Torosu가 읽을 수 있는 osu!mania 리플레이가 아닙니다",
     "noUpdate": "설치할 업데이트가 없습니다"
   }
 }
