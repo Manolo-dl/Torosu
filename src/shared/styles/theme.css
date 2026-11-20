@@ -168,6 +168,13 @@
   --surface-overlay: oklch(0.21 var(--p-surface-c) var(--p-surface-h) / 0.92);
   --backdrop: oklch(0.08 0.02 var(--p-surface-h) / 0.7);
 
+  /* The frame around the pages (title bar, sidebar), and the soft glow of
+     both accents behind the content. */
+  --chrome: oklch(0.13 var(--p-surface-c) var(--p-surface-h));
+  --ambient:
+    radial-gradient(60rem 40rem at 100% -10%, oklch(0.72 var(--p-accent-c) var(--p-accent-h) / 0.09), transparent 70%),
+    radial-gradient(50rem 36rem at -10% 110%, oklch(0.7 var(--p-accent2-c) var(--p-accent2-h) / 0.08), transparent 70%);
+
   /* Lines: hairlines between areas, borders of controls, and the strong one. */
   --line-subtle: oklch(0.95 0.02 var(--p-surface-h) / 0.06);
   --line: oklch(0.95 0.02 var(--p-surface-h) / 0.11);
@@ -212,55 +219,61 @@
 }
 
 /* ---- Light ----------------------------------------------------------------- */
-/* Softer than a mirror of the dark: off-white greys rather than pure white,
-   and accents a quarter less vivid, which glare on a light background. */
+/* Pastel, not white: every surface carries the palette's hue, the frame the
+   most, the cards the least; accents a quarter less vivid than in the dark,
+   since they glare on a light background. */
 
 :root[data-theme='light'] {
   color-scheme: light;
 
-  --surface-inset: oklch(0.875 calc(var(--p-surface-c) * 0.55) var(--p-surface-h));
-  --surface-0: oklch(0.915 calc(var(--p-surface-c) * 0.5) var(--p-surface-h));
-  --surface-1: oklch(0.94 calc(var(--p-surface-c) * 0.4) var(--p-surface-h));
-  --surface-2: oklch(0.96 calc(var(--p-surface-c) * 0.3) var(--p-surface-h));
-  --surface-3: oklch(0.925 calc(var(--p-surface-c) * 0.5) var(--p-surface-h));
-  --surface-4: oklch(0.895 calc(var(--p-surface-c) * 0.55) var(--p-surface-h));
-  --surface-overlay: oklch(0.955 calc(var(--p-surface-c) * 0.3) var(--p-surface-h) / 0.95);
-  --backdrop: oklch(0.2 0.02 var(--p-surface-h) / 0.3);
+  --surface-inset: oklch(0.875 calc(var(--p-surface-c) * 1.4 + 0.016) var(--p-surface-h));
+  --surface-0: oklch(0.925 calc(var(--p-surface-c) * 1.1 + 0.012) var(--p-surface-h));
+  --surface-1: oklch(0.95 calc(var(--p-surface-c) * 0.8 + 0.008) var(--p-surface-h));
+  --surface-2: oklch(0.97 calc(var(--p-surface-c) * 0.6 + 0.006) var(--p-surface-h));
+  --surface-3: oklch(0.935 calc(var(--p-surface-c) * 1 + 0.012) var(--p-surface-h));
+  --surface-4: oklch(0.905 calc(var(--p-surface-c) * 1.2 + 0.014) var(--p-surface-h));
+  --surface-overlay: oklch(0.97 calc(var(--p-surface-c) * 0.6 + 0.006) var(--p-surface-h) / 0.96);
+  --backdrop: oklch(0.25 0.03 var(--p-surface-h) / 0.3);
 
-  --line-subtle: oklch(0.3 0.02 var(--p-surface-h) / 0.07);
-  --line: oklch(0.3 0.02 var(--p-surface-h) / 0.12);
-  --line-strong: oklch(0.3 0.02 var(--p-surface-h) / 0.2);
+  --chrome: oklch(0.865 calc(var(--p-surface-c) * 1.6 + 0.022) var(--p-surface-h));
+  --ambient:
+    radial-gradient(60rem 40rem at 100% -10%, oklch(0.8 calc(var(--p-accent-c) * 0.8) var(--p-accent-h) / 0.22), transparent 70%),
+    radial-gradient(50rem 36rem at -10% 110%, oklch(0.78 calc(var(--p-accent2-c) * 0.8) var(--p-accent2-h) / 0.18), transparent 70%);
 
-  --text-1: oklch(0.25 0.015 var(--p-surface-h));
-  --text-2: oklch(0.4 0.02 var(--p-surface-h));
-  --text-3: oklch(0.53 0.02 var(--p-surface-h));
-  --text-4: oklch(0.65 0.015 var(--p-surface-h));
+  --line-subtle: oklch(0.35 0.04 var(--p-surface-h) / 0.08);
+  --line: oklch(0.35 0.04 var(--p-surface-h) / 0.14);
+  --line-strong: oklch(0.35 0.04 var(--p-surface-h) / 0.24);
 
-  --accent: oklch(0.6 calc(var(--p-accent-c) * 0.78) var(--p-accent-h));
-  --accent-hover: oklch(0.56 calc(var(--p-accent-c) * 0.78) var(--p-accent-h));
-  --accent-pressed: oklch(0.52 calc(var(--p-accent-c) * 0.78) var(--p-accent-h));
-  --accent-soft: oklch(0.6 calc(var(--p-accent-c) * 0.78) var(--p-accent-h) / 0.11);
-  --accent-soft-hover: oklch(0.6 calc(var(--p-accent-c) * 0.78) var(--p-accent-h) / 0.17);
-  --accent-text: oklch(0.5 calc(var(--p-accent-c) * 0.75) var(--p-accent-h));
+  --text-1: oklch(0.25 0.03 var(--p-surface-h));
+  --text-2: oklch(0.4 0.035 var(--p-surface-h));
+  --text-3: oklch(0.52 0.035 var(--p-surface-h));
+  --text-4: oklch(0.63 0.03 var(--p-surface-h));
+
+  --accent: oklch(0.6 calc(var(--p-accent-c) * 0.85) var(--p-accent-h));
+  --accent-hover: oklch(0.56 calc(var(--p-accent-c) * 0.85) var(--p-accent-h));
+  --accent-pressed: oklch(0.52 calc(var(--p-accent-c) * 0.85) var(--p-accent-h));
+  --accent-soft: oklch(0.6 calc(var(--p-accent-c) * 0.85) var(--p-accent-h) / 0.13);
+  --accent-soft-hover: oklch(0.6 calc(var(--p-accent-c) * 0.85) var(--p-accent-h) / 0.2);
+  --accent-text: oklch(0.5 calc(var(--p-accent-c) * 0.8) var(--p-accent-h));
   --on-accent: oklch(0.98 0.01 var(--p-accent-h));
-  --accent-glow: oklch(0.6 calc(var(--p-accent-c) * 0.78) var(--p-accent-h) / 0.22);
+  --accent-glow: oklch(0.6 calc(var(--p-accent-c) * 0.85) var(--p-accent-h) / 0.25);
 
-  --accent-2: oklch(0.58 calc(var(--p-accent2-c) * 0.78) var(--p-accent2-h));
-  --accent-2-soft: oklch(0.58 calc(var(--p-accent2-c) * 0.78) var(--p-accent2-h) / 0.11);
-  --accent-2-text: oklch(0.48 calc(var(--p-accent2-c) * 0.75) var(--p-accent2-h));
+  --accent-2: oklch(0.58 calc(var(--p-accent2-c) * 0.85) var(--p-accent2-h));
+  --accent-2-soft: oklch(0.58 calc(var(--p-accent2-c) * 0.85) var(--p-accent2-h) / 0.13);
+  --accent-2-text: oklch(0.48 calc(var(--p-accent2-c) * 0.8) var(--p-accent2-h));
 
   --success: oklch(0.57 0.12 150);
-  --success-soft: oklch(0.57 0.12 150 / 0.12);
+  --success-soft: oklch(0.57 0.12 150 / 0.13);
   --warning: oklch(0.66 0.12 75);
-  --warning-soft: oklch(0.66 0.12 75 / 0.13);
+  --warning-soft: oklch(0.66 0.12 75 / 0.15);
   --danger: oklch(0.56 0.15 25);
-  --danger-soft: oklch(0.56 0.15 25 / 0.11);
+  --danger-soft: oklch(0.56 0.15 25 / 0.12);
   --info: oklch(0.57 0.1 240);
-  --info-soft: oklch(0.57 0.1 240 / 0.11);
+  --info-soft: oklch(0.57 0.1 240 / 0.12);
 
-  --shadow-1: 0 1px 2px oklch(0.25 0.02 var(--p-surface-h) / 0.08);
-  --shadow-2: 0 4px 14px oklch(0.25 0.02 var(--p-surface-h) / 0.09), 0 1px 3px oklch(0.25 0.02 var(--p-surface-h) / 0.07);
-  --shadow-3: 0 14px 40px oklch(0.25 0.02 var(--p-surface-h) / 0.14), 0 4px 10px oklch(0.25 0.02 var(--p-surface-h) / 0.07);
+  --shadow-1: 0 1px 2px oklch(0.3 0.04 var(--p-surface-h) / 0.1);
+  --shadow-2: 0 4px 14px oklch(0.3 0.04 var(--p-surface-h) / 0.1), 0 1px 3px oklch(0.3 0.04 var(--p-surface-h) / 0.08);
+  --shadow-3: 0 14px 40px oklch(0.3 0.04 var(--p-surface-h) / 0.16), 0 4px 10px oklch(0.3 0.04 var(--p-surface-h) / 0.08);
 }
 
 /* ---- The base every page starts from --------------------------------------- */
