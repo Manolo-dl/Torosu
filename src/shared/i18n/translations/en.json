@@ -542,7 +542,7 @@
     "allKeys": "All",
     "none": "No local mania scores with a replay",
     "noMatch": "No scores match the search",
-    "mapMissing": "The map of this score is no longer in osu!.db",
+    "mapMissing": "The map of this score is not in osu!.db: select it in osu! (osu! adds new maps to osu!.db only when it closes)",
     "unknownMap": "Unknown map",
     "pick": "Pick a score to analyse its replay",
     "analyzing": "Analysing the replay...",

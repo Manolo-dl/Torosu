@@ -5,8 +5,8 @@
 <div appearance="floating" tuiCardLarge="compact" class="card">
   <header class="head">
     <div class="titles">
-      <span class="title">{{ entry().set?.artist }} - {{ entry().set?.title }}</span>
-      <span class="diff">[{{ entry().diff?.diffName }}] · {{ a.keys }}K · OD {{ a.od }}@if (a.rate !== 1) { · {{ a.rate }}x }</span>
+      <span class="title">{{ entry().map?.artist }} - {{ entry().map?.title }}</span>
+      <span class="diff">[{{ entry().map?.diffName }}] · {{ a.keys }}K · OD {{ a.od }}@if (a.rate !== 1) { · {{ a.rate }}x }</span>
     </div>
     <span class="player">{{ a.playerName }}</span>
   </header>

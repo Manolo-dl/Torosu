@@ -31,20 +31,20 @@
           type="button"
           class="score"
           [class.selected]="entry.score.replay === store.selected()"
-          [disabled]="!entry.diff"
-          [title]="entry.diff ? '' : ('replays.mapMissing' | transloco)"
+          [disabled]="!entry.map"
+          [title]="entry.map ? '' : ('replays.mapMissing' | transloco)"
           (click)="store.select(entry)"
         >
           <span class="titles">
-            <span class="title">{{ entry.set?.title ?? ('replays.unknownMap' | transloco) }}</span>
-            <span class="diff">{{ entry.diff?.diffName ?? entry.score.beatmapMd5 }}</span>
+            <span class="title">{{ entry.map?.title ?? ('replays.unknownMap' | transloco) }}</span>
+            <span class="diff">{{ entry.map?.diffName ?? entry.score.beatmapMd5 }}</span>
             <span class="date">{{ date(entry.score.timestamp) }}</span>
           </span>
           <span class="side">
             <span class="accuracy">{{ entry.accuracy | number: '1.2-2' }}%</span>
             <span class="badges">
-              @if (entry.keys) {
-                <span appearance="neutral" size="s" tuiBadge>{{ entry.keys }}K</span>
+              @if (entry.map) {
+                <span appearance="neutral" size="s" tuiBadge>{{ entry.map.keys }}K</span>
               }
               @for (mod of entry.mods; track mod) {
                 <span appearance="info" size="s" tuiBadge>{{ mod }}</span>

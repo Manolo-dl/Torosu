@@ -542,7 +542,7 @@
     "allKeys": "全部",
     "none": "没有带回放的 mania 本地成绩",
     "noMatch": "没有符合搜索的成绩",
-    "mapMissing": "该成绩的谱面已不在 osu!.db 中",
+    "mapMissing": "该成绩的谱面不在 osu!.db 中：请在 osu! 中选中它（osu! 只在关闭时把新谱面写入 osu!.db）",
     "unknownMap": "未知谱面",
     "pick": "选择一个成绩来分析其回放",
     "analyzing": "正在分析回放...",

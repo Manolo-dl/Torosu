@@ -542,7 +542,7 @@
     "allKeys": "Todas",
     "none": "No hay scores locales de mania con replay",
     "noMatch": "Ningún score coincide con la búsqueda",
-    "mapMissing": "El mapa de este score ya no está en osu!.db",
+    "mapMissing": "El mapa de este score no está en osu!.db: selecciónalo en osu! (osu! añade los mapas nuevos a osu!.db solo al cerrarse)",
     "unknownMap": "Mapa desconocido",
     "pick": "Elige un score para analizar su replay",
     "analyzing": "Analizando la replay...",
