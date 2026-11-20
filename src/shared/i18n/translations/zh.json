@@ -114,6 +114,20 @@
       "analysis": "分析",
       "charts": "图表",
       "chartsHint": "关闭的图表不会绘制"
+    },
+    "appearance": {
+      "title": "外观",
+      "palette": "配色",
+      "font": "字体",
+      "reducedMotion": "减少动画",
+      "reducedMotionHint": "减少动画和过渡；系统要求时也会生效",
+      "palettes": {
+        "sakura": "Sakura",
+        "nebula": "Nebula",
+        "aurora": "Aurora",
+        "ember": "Ember",
+        "mono": "Mono"
+      }
     }
   },
   "nav": {

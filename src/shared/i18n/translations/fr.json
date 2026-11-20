@@ -114,6 +114,20 @@
       "analysis": "Analyse",
       "charts": "Graphiques",
       "chartsHint": "Les graphiques désactivés ne sont pas dessinés"
+    },
+    "appearance": {
+      "title": "Apparence",
+      "palette": "Palette",
+      "font": "Police",
+      "reducedMotion": "Réduire les animations",
+      "reducedMotionHint": "Moins d'animations et de transitions ; aussi quand le système le demande",
+      "palettes": {
+        "sakura": "Sakura",
+        "nebula": "Nebula",
+        "aurora": "Aurora",
+        "ember": "Ember",
+        "mono": "Mono"
+      }
     }
   },
   "nav": {

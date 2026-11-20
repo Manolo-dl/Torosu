@@ -58,6 +58,8 @@
     <div class="content">
         @switch (activeTab()) {
             @case (0) {
+                <app-appearance-settings />
+
                 <section>
                     <h3 tuiTitle="s">{{ 'settings.general.language' | transloco }}</h3>
                     <app-option-group

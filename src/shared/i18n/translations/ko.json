@@ -114,6 +114,20 @@
       "analysis": "분석",
       "charts": "그래프",
       "chartsHint": "끈 그래프는 그리지 않습니다"
+    },
+    "appearance": {
+      "title": "모양",
+      "palette": "팔레트",
+      "font": "글꼴",
+      "reducedMotion": "애니메이션 줄이기",
+      "reducedMotionHint": "애니메이션과 전환을 줄입니다. 시스템 설정에서 요청할 때도 적용됩니다",
+      "palettes": {
+        "sakura": "Sakura",
+        "nebula": "Nebula",
+        "aurora": "Aurora",
+        "ember": "Ember",
+        "mono": "Mono"
+      }
     }
   },
   "nav": {

@@ -16,6 +16,7 @@ import { PlatformStore } from '@shared/stores';
 import { DEFAULT_LANGUAGE, errorText, LANGUAGES } from '@shared/i18n';
 import { OptionGroupComponent, OptionGroupItem } from '@shared/ui';
 import { NameFormatField, NameFormatFieldComponent, NameFormatPreset } from '../name-format-field/name-format-field.component';
+import { AppearanceSettingsComponent } from '../appearance-settings/appearance-settings.component';
 
 /** The names the trainer always gave (`DEFAULT_NAME_FORMAT` in trainer/naming.rs). */
 const DEFAULT_NAME_FORMAT = '{diff} {rate} ({bpm}bpm) ({pitch}) {tasks} {stats}';
@@ -61,7 +62,7 @@ const DEFAULT_CONFIG: AppConfig = {
 
 @Component({
   selector: 'app-config-drawer',
-  imports: [FormsModule, TuiDrawer, TuiHeader, TuiTitle, TuiNavComponent, TuiTabsHorizontal, TuiTab, TuiSwitch, TuiInputNumber, TuiCell, TuiInput, TuiLabel, TuiPopup, TuiButton, NameFormatFieldComponent, OptionGroupComponent, TranslocoPipe],
+  imports: [AppearanceSettingsComponent, FormsModule, TuiDrawer, TuiHeader, TuiTitle, TuiNavComponent, TuiTabsHorizontal, TuiTab, TuiSwitch, TuiInputNumber, TuiCell, TuiInput, TuiLabel, TuiPopup, TuiButton, NameFormatFieldComponent, OptionGroupComponent, TranslocoPipe],
   templateUrl: './config-drawer.component.html',
   styleUrl: './config-drawer.component.less',
 })

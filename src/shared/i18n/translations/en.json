@@ -114,6 +114,20 @@
       "analysis": "Analysis",
       "charts": "Charts",
       "chartsHint": "Charts turned off are not drawn at all"
+    },
+    "appearance": {
+      "title": "Appearance",
+      "palette": "Palette",
+      "font": "Font",
+      "reducedMotion": "Reduce motion",
+      "reducedMotionHint": "Fewer animations and transitions; also when the system asks for it",
+      "palettes": {
+        "sakura": "Sakura",
+        "nebula": "Nebula",
+        "aurora": "Aurora",
+        "ember": "Ember",
+        "mono": "Mono"
+      }
     }
   },
   "nav": {

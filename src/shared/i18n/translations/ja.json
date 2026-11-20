@@ -114,6 +114,20 @@
       "analysis": "分析",
       "charts": "グラフ",
       "chartsHint": "オフにしたグラフは描画されません"
+    },
+    "appearance": {
+      "title": "外観",
+      "palette": "パレット",
+      "font": "フォント",
+      "reducedMotion": "アニメーションを減らす",
+      "reducedMotionHint": "アニメーションとトランジションを減らします。システムの設定でも有効になります",
+      "palettes": {
+        "sakura": "Sakura",
+        "nebula": "Nebula",
+        "aurora": "Aurora",
+        "ember": "Ember",
+        "mono": "Mono"
+      }
     }
   },
   "nav": {

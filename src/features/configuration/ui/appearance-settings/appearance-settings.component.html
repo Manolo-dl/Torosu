@@ -1,0 +1,51 @@
+<section>
+  <h3 tuiTitle="s">{{ 'settings.appearance.title' | transloco }}</h3>
+
+  <span class="label">{{ 'settings.appearance.palette' | transloco }}</span>
+  <div class="palettes" role="radiogroup">
+    @for (palette of palettes; track palette) {
+      <button
+        type="button"
+        role="radio"
+        class="palette"
+        [attr.data-palette]="palette"
+        [attr.aria-checked]="appearance.palette() === palette"
+        [class.active]="appearance.palette() === palette"
+        (click)="appearance.setPalette(palette)"
+      >
+        <span class="preview">
+          <span class="surface"></span>
+          <span class="accent"></span>
+          <span class="accent-2"></span>
+        </span>
+        <span class="name">{{ 'settings.appearance.palettes.' + palette | transloco }}</span>
+      </button>
+    }
+  </div>
+
+  <span class="label">{{ 'settings.appearance.font' | transloco }}</span>
+  <div class="fonts" role="radiogroup">
+    @for (font of fonts; track font) {
+      <button
+        type="button"
+        role="radio"
+        class="font"
+        [style.font-family]="fontFamilies[font]"
+        [attr.aria-checked]="appearance.font() === font"
+        [class.active]="appearance.font() === font"
+        (click)="appearance.setFont(font)"
+      >
+        <span class="sample">Aa 123</span>
+        <span class="name">{{ fontNames[font] }}</span>
+      </button>
+    }
+  </div>
+
+  <label tuiCell>
+    <span tuiTitle>
+      {{ 'settings.appearance.reducedMotion' | transloco }}
+      <span tuiSubtitle>{{ 'settings.appearance.reducedMotionHint' | transloco }}</span>
+    </span>
+    <input tuiSwitch type="checkbox" [checked]="appearance.reducedMotion()" (change)="setReducedMotion($event)" />
+  </label>
+</section>
