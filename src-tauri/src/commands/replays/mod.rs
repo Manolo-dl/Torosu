@@ -41,7 +41,7 @@ pub struct Analysis {
     pub keys: usize,
     pub od: f32,
     pub rate: f64,
-    /// In real time (ms).
+    /// In the map's ms, like the offsets (see `stats`).
     pub windows: Windows,
     /// See [`frames::ManiaReplay::scroll_speed_scale`].
     pub scroll_speed_scale: Option<f32>,
@@ -101,7 +101,6 @@ pub fn analyze(replay_path: &Path, beatmap_path: &Path) -> Result<Analysis> {
     let reconciled = graph.is_some().then(|| reconcile::reconcile(&mut judged, &game_judgements, &rules.windows));
     let stats = stats::stats(&judged, chart.keys, &rules.windows, rate);
 
-    let w = rules.windows;
     Ok(Analysis {
         beatmap_md5: replay.beatmap_md5,
         player_name: replay.player_name,
@@ -109,14 +108,7 @@ pub fn analyze(replay_path: &Path, beatmap_path: &Path) -> Result<Analysis> {
         keys: chart.keys,
         od: chart.od,
         rate,
-        windows: Windows {
-            max: w.max / rate,
-            n300: w.n300 / rate,
-            n200: w.n200 / rate,
-            n100: w.n100 / rate,
-            n50: w.n50 / rate,
-            miss: w.miss / rate,
-        },
+        windows: rules.windows,
         scroll_speed_scale: replay.scroll_speed_scale,
         game_counts,
         game_misses,

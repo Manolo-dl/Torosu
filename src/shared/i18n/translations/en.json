@@ -599,7 +599,8 @@
     "follow": "Analyse new plays",
     "followHint": "While osu! is open, each play you pass is analysed as soon as it ends",
     "reconciled": "{{ matched }} of {{ total }} of osu!'s judgements put on their note, from the .osg it saves with the replay: each note has the judgement the game gave it.",
-    "noGraph": "This replay has no .osg (osu! saves one since 2026): the judgements are the analysis' own, and a few long notes may differ from the game."
+    "noGraph": "This replay has no .osg (osu! saves one since 2026): the judgements are the analysis' own, and a few long notes may differ from the game.",
+    "realTime": "At {{ rate }}x, osu! counts the map's ms, as shown above. In real time, which is what the offset depends on: {{ early }} / {{ late }} ms, UR {{ ur }}."
   },
   "errors": {
     "io": "File error: {{ detail }}",

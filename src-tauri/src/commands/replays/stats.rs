@@ -1,7 +1,9 @@
 //! Timing statistics of a judged replay: overall and per key.
 //!
-//! Every time here is real time (ms): the map's divided by the rate, so plays
-//! with DT or HT compare with the rest.
+//! Offsets are in the map's ms, as osu!'s results screen shows them: with DT
+//! or NC they are 1.5 times the real ones (divide by the rate for those).
+//! When each note comes is in the song's real time, so a chart along the
+//! song lasts what the play did.
 
 use serde::Serialize;
 
@@ -127,7 +129,7 @@ pub struct Stats {
 }
 
 /// The statistics of the `judged` notes of a map of `keys` keys, judged with
-/// `windows` at `rate`.
+/// `windows` (map ms) at `rate`.
 pub fn stats(judged: &[Judged], keys: usize, windows: &Windows, rate: f64) -> Stats {
     let notes: Vec<NoteEvent> = judged
         .iter()
@@ -137,13 +139,13 @@ pub fn stats(judged: &[Judged], keys: usize, windows: &Windows, rate: f64) -> St
             key: j.note.key,
             judgement: j.judgement,
             tail: j.tail,
-            hit: j.hit.map(|hit| hit / rate),
-            release: j.release.map(|release| release / rate),
+            hit: j.hit,
+            release: j.release,
         })
         .collect();
 
-    // The 50 window in real time: a release beyond it is not a timing.
-    let limit = windows.n50 / rate;
+    // A release beyond the 50 window is not a timing.
+    let limit = windows.n50;
 
     let keys = (0..keys)
         .map(|key| {
@@ -184,7 +186,7 @@ mod tests {
     }
 
     #[test]
-    fn per_key_and_in_real_time() {
+    fn per_key_offsets_in_map_ms() {
         let windows = Windows::stable(8.0, judge::mods::DOUBLE_TIME);
         let notes = [
             judged(0, 1500.0, Judgement::Max, Some(-15.0), None),
@@ -197,14 +199,15 @@ mod tests {
 
         let stats = stats(&notes, 2, &windows, 1.5);
 
-        assert_eq!((stats.notes[0].time, stats.notes[0].hit), (1000.0, Some(-10.0)));
+        // The note comes at 1 s of the song; its offset stays the map's.
+        assert_eq!((stats.notes[0].time, stats.notes[0].hit), (1000.0, Some(-15.0)));
         assert_eq!(stats.notes[3].end, Some(3333.3333333333335));
         // Two normal notes; of the long notes, only the one hit: its press and release.
         let t = stats.timing;
         assert_eq!((t.rice.count, t.all.count, t.ln.count), (2, 4, 2));
-        assert_eq!((stats.keys[0].timing.rice.mean, stats.keys[0].notes), (5.0, 2));
+        assert_eq!((stats.keys[0].timing.rice.mean, stats.keys[0].notes), (7.5, 2));
         assert_eq!(stats.keys[0].timing.ln.count, 0);
-        assert_eq!((stats.keys[1].timing.ln.count, stats.keys[1].timing.ln.mean), (2, -10.0));
+        assert_eq!((stats.keys[1].timing.ln.count, stats.keys[1].timing.ln.mean), (2, -15.0));
         assert_eq!((stats.keys[1].early_releases, stats.keys[1].late_releases), (1, 0));
         assert_eq!(stats.keys[1].counts, ManiaCounts { max: 1, miss: 2, ..Default::default() });
     }

@@ -32,7 +32,7 @@ export type Judgement = 'max' | 'n300' | 'n200' | 'n100' | 'n50' | 'miss';
 
 export const JUDGEMENTS: Judgement[] = ['max', 'n300', 'n200', 'n100', 'n50', 'miss'];
 
-/** How far from a note each judgement reaches, in real time (ms). */
+/** How far from a note each judgement reaches, in the map's ms (as osu! shows them). */
 export interface HitWindows {
     max: number;
     n300: number;
@@ -77,7 +77,10 @@ export interface KeyStats {
     lateReleases: number;
 }
 
-/** One note as it was played. Times are the song's, in ms. */
+/**
+ * One note as it was played. When it comes is the song's real time (ms); its
+ * offsets are in the map's ms, as osu! shows them (with DT, 1.5 times the real ones).
+ */
 export interface NoteEvent {
     time: number;
     /** When a long note ends; `null` for a normal note. */

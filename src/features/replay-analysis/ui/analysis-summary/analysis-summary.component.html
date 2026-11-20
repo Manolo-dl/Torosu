@@ -26,6 +26,17 @@
     </div>
   </div>
 
+  @if (a.rate !== 1) {
+    <p class="note">
+      {{ 'replays.realTime' | transloco: {
+        rate: a.rate,
+        early: (timing.earlyMean / a.rate | number: '1.2-2'),
+        late: (timing.lateMean / a.rate | number: '1.2-2'),
+        ur: (timing.unstableRate / a.rate | number: '1.2-2')
+      } }}
+    </p>
+  }
+
   <table class="counts">
     <thead>
       <tr>
