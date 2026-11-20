@@ -1,10 +1,11 @@
-<header>
-  <!-- Left -->
-  <div>
-    <h1>Torosu</h1>
-  </div>
+<header data-tauri-drag-region>
+  <a class="brand" routerLink="/">
+    <img src="assets/images/logo.png" alt="" />
+    <span class="wordmark">Torosu</span>
+  </a>
 
-  <!-- Right -->
+  <div class="drag" data-tauri-drag-region></div>
+
   <div class="actions">
     @if (update.available(); as available) {
       <button
@@ -66,29 +67,18 @@
       </ng-template>
     }
 
-    <button
-      size="m"
-      appearance="flat"
-      tuiIconButton
-      type="button"
-      [iconStart]="icon()"
-      (click)="appearance.toggleDark()"
-    >
+    <button appButton="ghost" type="button" iconOnly [icon]="icon()" (click)="appearance.toggleDark()">
       {{ 'header.toggleTheme' | transloco }}
     </button>
 
     @if (devMode()) {
-      <button
-        size="m"
-        appearance="flat"
-        tuiButton
-        type="button"
-        (click)="navStore.toggleMode()"
-      >
-        {{ navStore.isDevMode() }}
+      <button appButton="ghost" size="s" type="button" icon="code" (click)="navStore.toggleMode()">
+        {{ navStore.isDevMode() ? 'dev' : 'user' }}
       </button>
     }
 
     <app-config-button />
+    <span class="divider"></span>
+    <app-window-controls />
   </div>
 </header>

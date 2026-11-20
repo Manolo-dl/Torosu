@@ -1,16 +1,15 @@
-<div class="window-controls" data-tauri-drag-region>
-  @for (control of controls; track $index) {
-      <button
-        size="m"
-        appearance="flat"
-        tuiIconButton
-        type="button"
-        [iconStart]="control.icon"
-        (click)="control.action()"
-
-        tabIndex="0"
-      >
-        {{ control.label | transloco }}
-      </button>
+<div class="window-controls">
+  @for (control of controls; track control.label) {
+    <button
+      appButton="ghost"
+      size="s"
+      type="button"
+      iconOnly
+      [icon]="control.icon"
+      [class.close]="control.label === 'window.close'"
+      (click)="control.action()"
+    >
+      {{ control.label | transloco }}
+    </button>
   }
 </div>

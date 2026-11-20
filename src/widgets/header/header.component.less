@@ -2,27 +2,62 @@
   display: block;
 }
 
+/* The title bar: the window is dragged by its empty parts. */
 header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  background: var(--tui-background-elevation-1);
-  padding: 0 2rem;
+  gap: var(--space-3);
+  block-size: 3.25rem;
+  padding-inline: var(--space-4) var(--space-2);
+  user-select: none;
+}
 
-  h1 {
-    font-size: 2.5rem;
-    margin: 0;
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-1);
+  text-decoration: none;
+
+  img {
+    inline-size: 1.75rem;
+    block-size: 1.75rem;
+    border-radius: var(--radius-sm);
+    transition: transform var(--duration-3) var(--ease-spring);
   }
 
-  .actions {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+  .wordmark {
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    font-weight: var(--weight-black);
+    letter-spacing: -0.01em;
+  }
+
+  &:hover img {
+    transform: rotate(-8deg) scale(1.08);
   }
 }
 
+.drag {
+  flex: 1;
+  align-self: stretch;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.divider {
+  inline-size: 1px;
+  block-size: 1.25rem;
+  margin-inline: var(--space-1);
+  background: var(--line);
+}
+
 .update {
-  color: var(--tui-status-positive);
+  color: var(--success);
 }
 
 .update-panel {
@@ -37,8 +72,8 @@ header {
     max-block-size: 12rem;
     overflow: auto;
     white-space: pre-wrap;
-    color: var(--tui-text-secondary);
-    font: var(--tui-font-text-s);
+    color: var(--text-2);
+    font-size: var(--text-sm);
   }
 
   progress {

@@ -1,35 +1,35 @@
 <nav>
-    <ul>
-        @for (item of (navStore.isUserMode() ? userItems() : devItems); track item.route) {
-            <li>
-                <a
-                [routerLink]="item.route"
-                routerLinkActive="active"
-                [routerLinkActiveOptions]="{ exact: item.route === '/' }"
-                [class.disabled]="item.disabled"
-                >
-                    <tui-icon [icon]="item.icon" />
-                    <span>{{ item.label | transloco }}</span>
-                </a>
-            </li>
-        }
-    </ul>
-
-    @if (showAppItems) {
-        <ul>
-            @for (item of appItems; track item.route) {
-                <li>
-                    <a
-                    [routerLink]="item.route"
-                    routerLinkActive="active"
-                    [routerLinkActiveOptions]="{ exact: item.route === '/' }"
-                    [class.disabled]="item.disabled"
-                    >
-                        <tui-icon [icon]="item.icon" />
-                        <span>{{ item.label | transloco }}</span>
-                    </a>
-                </li>
-            }
-        </ul>
+  <ul class="items" [style.--active]="activeIndex()" [class.has-active]="activeIndex() >= 0">
+    <span class="indicator" aria-hidden="true"></span>
+    @for (item of items(); track item.route) {
+      <li>
+        <a
+          [routerLink]="item.route"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: item.route === '/' }"
+          [class.disabled]="item.disabled"
+        >
+          <app-icon [name]="item.icon" />
+          <span class="label">{{ item.label | transloco }}</span>
+        </a>
+      </li>
     }
+  </ul>
+
+  @if (showAppItems) {
+    <ul class="items">
+      @for (item of appItems; track item.route) {
+        <li>
+          <a [routerLink]="item.route" routerLinkActive="active" [class.disabled]="item.disabled">
+            <app-icon [name]="item.icon" />
+            <span class="label">{{ item.label | transloco }}</span>
+          </a>
+        </li>
+      }
+    </ul>
+  }
+
+  @if (version(); as version) {
+    <footer>Torosu v{{ version }}</footer>
+  }
 </nav>

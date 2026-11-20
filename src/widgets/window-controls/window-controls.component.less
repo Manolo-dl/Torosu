@@ -4,14 +4,10 @@
 
 .window-controls {
   display: flex;
-  justify-content: flex-end;
-  border-bottom: 2px solid var(--tui-border-normal);
+  gap: 2px;
+}
 
-  &:hover {
-    border-bottom-color: var(--tui-border-hover);
-  }
-
-  &:focus-within {
-    border-bottom-color: var(--tui-border-focus);
-  }
+button.close:hover {
+  background: var(--danger);
+  color: var(--on-accent);
 }

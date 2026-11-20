@@ -7,13 +7,12 @@ import { OsuPathComponent } from "@widgets/osu-path";
 import { OsuPathStore } from "@entities/osu-path";
 import { AppearanceStore, PlatformStore } from "@shared/stores";
 import { ConfigurationStore } from "@entities/configuration";
-import { WindowControlsComponent } from "@widgets/window-controls/window-controls.component";
 import { TrainerShortcutsService } from "@features/trainer";
 import { DEFAULT_LANGUAGE, isLanguage, LanguageService } from "@shared/i18n";
 
 @Component({
   selector: "app-root",
-  imports: [RouterOutlet, HeaderComponent, SidebarComponent, OsuPathComponent, TuiRoot, WindowControlsComponent],
+  imports: [RouterOutlet, HeaderComponent, SidebarComponent, OsuPathComponent, TuiRoot],
   templateUrl: "./app.component.html",
   styleUrl: "./app.component.less",
 })

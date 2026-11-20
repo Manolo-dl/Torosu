@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { TuiButton } from '@taiga-ui/core';
+import { ButtonComponent } from '@shared/ui';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { ConfigurationStore } from '@entities/configuration';
 import { ConfigDrawerComponent } from '../config-drawer/config-drawer.component';
@@ -10,16 +10,9 @@ import { ConfigDrawerComponent } from '../config-drawer/config-drawer.component'
  */
 @Component({
   selector: 'app-config-button',
-  imports: [TuiButton, ConfigDrawerComponent, TranslocoPipe],
+  imports: [ButtonComponent, ConfigDrawerComponent, TranslocoPipe],
   template: `
-    <button
-      size="m"
-      appearance="flat"
-      iconStart="@tui.settings"
-      tuiIconButton
-      type="button"
-      (click)="toggle()"
-    >
+    <button appButton="ghost" icon="settings" iconOnly type="button" (click)="toggle()">
       {{ 'header.settings' | transloco }}
     </button>
 
