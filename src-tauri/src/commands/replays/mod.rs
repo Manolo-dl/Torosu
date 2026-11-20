@@ -82,7 +82,7 @@ fn file_name(name: &str) -> Result<&str> {
 pub fn analyze(replay_path: &Path, beatmap_path: &Path) -> Result<Analysis> {
     let replay = frames::read(replay_path)?;
     let beatmap = rosu_map::from_path(beatmap_path)
-        .map_err(|e| format!("could not read {}: {e}", beatmap_path.display()))?;
+        .map_err(|e| crate::error::Error::ReadDiff { file: beatmap_path.display().to_string(), detail: e.to_string() })?;
     let chart = Chart::new(&beatmap, replay.mods)?;
     let rules = Rules::stable(chart.od, replay.mods);
     let rate = judge::rate(replay.mods);

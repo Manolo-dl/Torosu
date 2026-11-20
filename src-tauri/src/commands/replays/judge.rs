@@ -14,7 +14,7 @@ use crate::{
         replays::{frames::Press, scores::ManiaCounts},
         trainer::mania,
     },
-    error::Result,
+    error::{Error, Result},
 };
 
 pub mod mods {
@@ -62,10 +62,10 @@ impl Chart {
     /// are not supported: their notes are not the ones in the file.
     pub fn new(beatmap: &Beatmap, mods: u32) -> Result<Self> {
         if beatmap.mode != GameMode::Mania {
-            return Err("only osu!mania maps can be analysed, not converts".into());
+            return Err(Error::ConvertReplay);
         }
         if mods & mods::RANDOM != 0 {
-            return Err("replays with Random can't be analysed: their notes are shuffled".into());
+            return Err(Error::RandomReplay);
         }
 
         let keys = mania::key_count(beatmap);
@@ -374,7 +374,9 @@ mod tests {
 
     #[test]
     fn random_is_not_supported() {
-        assert!(Chart::new(&beatmap("64,192,1000,1,0,0:0:0:0:\n"), mods::RANDOM).is_err());
+        assert!(matches!(Chart::new(&beatmap("64,192,1000,1,0,0:0:0:0:\n"), mods::RANDOM), Err(Error::RandomReplay)));
+        let convert: Beatmap = rosu_map::from_str("osu file format v14\n\n[General]\nMode: 0\n\n[HitObjects]\n64,192,1000,1,0,0:0:0:0:\n").unwrap();
+        assert!(matches!(Chart::new(&convert, 0), Err(Error::ConvertReplay)));
     }
 
     #[test]

@@ -635,6 +635,9 @@
     "onePlayer": "The key converter maps for one player, not {{ layout }}",
     "noAudio": "The map's audio has no supported track",
     "video": "Could not re-encode the video: {{ detail }}",
+    "convertReplay": "Replays of converted maps can't be analysed yet, only those of osu!mania maps",
+    "randomReplay": "Replays with Random can't be analysed: osu! shuffles their notes",
+    "replayUnreadable": "{{ file }} is not an osu!mania replay Torosu can read",
     "noUpdate": "There is no update to install"
   }
 }

@@ -635,6 +635,9 @@
     "onePlayer": "Le convertisseur de touches mappe pour un seul joueur, pas {{ layout }}",
     "noAudio": "L’audio de la map n’a aucune piste prise en charge",
     "video": "Impossible de réencoder la vidéo : {{ detail }}",
+    "convertReplay": "Les replays de maps converties ne peuvent pas encore être analysés, seulement ceux des maps osu!mania",
+    "randomReplay": "Les replays avec Random ne peuvent pas être analysés : osu! mélange leurs notes",
+    "replayUnreadable": "{{ file }} n'est pas un replay osu!mania que Torosu peut lire",
     "noUpdate": "Aucune mise à jour à installer"
   }
 }

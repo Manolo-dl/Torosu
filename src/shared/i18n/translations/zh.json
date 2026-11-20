@@ -635,6 +635,9 @@
     "onePlayer": "键数转换器只面向单人，不支持 {{ layout }}",
     "noAudio": "谱面的音频没有受支持的音轨",
     "video": "无法重新编码视频：{{ detail }}",
+    "convertReplay": "暂时无法分析转谱的回放，仅支持 osu!mania 谱面",
+    "randomReplay": "无法分析带 Random 的回放：osu! 会打乱其音符",
+    "replayUnreadable": "{{ file }} 不是 Torosu 能读取的 osu!mania 回放",
     "noUpdate": "没有可安装的更新"
   }
 }

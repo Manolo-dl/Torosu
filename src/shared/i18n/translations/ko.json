@@ -635,6 +635,9 @@
     "onePlayer": "키 변환은 1인용 맵을 만듭니다. {{ layout }}은(는) 지원하지 않습니다",
     "noAudio": "맵의 오디오에 지원하는 트랙이 없습니다",
     "video": "영상을 다시 인코딩하지 못했습니다: {{ detail }}",
+    "convertReplay": "컨버트 맵의 리플레이는 아직 분석할 수 없습니다. osu!mania 맵만 가능합니다",
+    "randomReplay": "Random 리플레이는 분석할 수 없습니다: osu!가 노트를 섞기 때문입니다",
+    "replayUnreadable": "{{ file }}은(는) Torosu가 읽을 수 있는 osu!mania 리플레이가 아닙니다",
     "noUpdate": "설치할 업데이트가 없습니다"
   }
 }

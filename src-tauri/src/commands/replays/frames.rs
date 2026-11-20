@@ -81,7 +81,8 @@ pub fn read_header(path: &Path) -> Result<ReplayHeader> {
 }
 
 fn not_a_replay(path: &Path) -> crate::error::Error {
-    format!("{} is not an osu!mania replay osu! can read", path.display()).into()
+    let file = path.file_name().map_or_else(|| path.display().to_string(), |name| name.to_string_lossy().into_owned());
+    crate::error::Error::ReplayUnreadable { file }
 }
 
 /// The header and the compressed frames.

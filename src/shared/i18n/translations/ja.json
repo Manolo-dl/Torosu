@@ -635,6 +635,9 @@
     "onePlayer": "キー変換は 1 人用のマップを作ります。{{ layout }} には対応していません",
     "noAudio": "マップの音声に対応しているトラックがありません",
     "video": "動画を再エンコードできませんでした: {{ detail }}",
+    "convertReplay": "コンバート譜面のリプレイはまだ分析できません。osu!mania 譜面のみ対応しています",
+    "randomReplay": "Random 付きのリプレイは分析できません：osu! がノーツを並べ替えるためです",
+    "replayUnreadable": "{{ file }} は Torosu が読み込める osu!mania のリプレイではありません",
     "noUpdate": "インストールする更新がありません"
   }
 }
