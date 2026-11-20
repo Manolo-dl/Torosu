@@ -25,9 +25,10 @@
   inline-size: 28rem;
   block-size: 28rem;
   z-index: -1;
+  /* closest-side: each disc fades out before the edge of its box. */
   background:
-    radial-gradient(circle at 35% 40%, var(--accent-glow), transparent 60%),
-    radial-gradient(circle at 70% 70%, color-mix(in oklch, var(--accent-2) 30%, transparent), transparent 60%);
+    radial-gradient(closest-side at 40% 45%, var(--accent-glow), transparent),
+    radial-gradient(closest-side at 65% 65%, color-mix(in oklch, var(--accent-2) 28%, transparent), transparent);
   animation: drift 14s var(--ease-in-out) infinite alternate;
 }
 
