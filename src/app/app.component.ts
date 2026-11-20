@@ -5,7 +5,7 @@ import { HeaderComponent } from "@widgets/header";
 import { SidebarComponent } from "@widgets/sidebar";
 import { OsuPathComponent } from "@widgets/osu-path";
 import { OsuPathStore } from "@entities/osu-path";
-import { PlatformStore } from "@shared/stores";
+import { AppearanceStore, PlatformStore } from "@shared/stores";
 import { ConfigurationStore } from "@entities/configuration";
 import { WindowControlsComponent } from "@widgets/window-controls/window-controls.component";
 import { TrainerShortcutsService } from "@features/trainer";
@@ -20,6 +20,8 @@ import { DEFAULT_LANGUAGE, isLanguage, LanguageService } from "@shared/i18n";
 export class AppComponent implements OnInit {
 
   readonly darkMode = inject(TUI_DARK_MODE);
+  // Applies the saved look (palette, font, theme) before anything shows.
+  private readonly appearance = inject(AppearanceStore);
   readonly platformStore = inject(PlatformStore);
   private readonly config = inject(ConfigurationStore);
   readonly osuPath = inject(OsuPathStore);
@@ -51,7 +53,6 @@ export class AppComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.darkMode.set(true);
     this.platformStore.setOs();
     // The sidebar and the tools read it (e.g. which tools are turned off).
     this.config.load().finally(() => this.settingsRead.set(true));

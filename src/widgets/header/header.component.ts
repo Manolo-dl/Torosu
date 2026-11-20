@@ -5,6 +5,7 @@ import { ConfigurationStore } from '@entities/configuration';
 import { UpdateStore } from '@entities/update';
 import { NavStore } from '@entities/nav-item';
 import { TUI_DARK_MODE, TuiButton, TuiDropdown, TuiTitle } from "@taiga-ui/core";
+import { AppearanceStore } from "@shared/stores";
 import { TuiBadge, TuiButtonLoading, TuiProgress } from '@taiga-ui/kit';
 import { ConfigButtonComponent } from "@features/configuration";
 
@@ -17,6 +18,7 @@ import { ConfigButtonComponent } from "@features/configuration";
 })
 export class HeaderComponent {
   readonly darkMode = inject(TUI_DARK_MODE);
+  readonly appearance = inject(AppearanceStore);
   readonly navStore = inject(NavStore);
   readonly icon = computed(() => this.darkMode() ? '@tui.moon' : '@tui.sun');
   readonly update = inject(UpdateStore);

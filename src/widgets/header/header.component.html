@@ -72,7 +72,7 @@
       tuiIconButton
       type="button"
       [iconStart]="icon()"
-      (click)="darkMode.update(dark => !dark)"
+      (click)="appearance.toggleDark()"
     >
       {{ 'header.toggleTheme' | transloco }}
     </button>
