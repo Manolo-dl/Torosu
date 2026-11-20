@@ -1,0 +1,44 @@
+:host {
+  position: relative;
+  display: block;
+  border: 1px solid var(--line-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-1);
+  color: var(--text-1);
+  text-decoration: none;
+}
+
+:host([data-padding='s']) { padding: var(--space-3); }
+:host([data-padding='m']) { padding: var(--space-5); }
+:host([data-padding='l']) { padding: var(--space-8); }
+:host([data-padding='none']) { padding: 0; }
+
+:host([data-variant='raised']) {
+  background: var(--surface-2);
+  box-shadow: var(--shadow-2);
+}
+
+/* Lets what is behind (the ambient glow) through. */
+:host([data-variant='glass']) {
+  background: color-mix(in oklch, var(--surface-1) 72%, transparent);
+  border-color: var(--line);
+}
+
+:host(.interactive) {
+  cursor: pointer;
+  transition:
+    transform var(--duration-2) var(--ease-out),
+    border-color var(--duration-2) var(--ease-out),
+    box-shadow var(--duration-2) var(--ease-out),
+    background var(--duration-2) var(--ease-out);
+
+  &:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in oklch, var(--accent) 45%, var(--line));
+    box-shadow: var(--shadow-2), 0 8px 28px -12px var(--accent-glow);
+  }
+
+  &:active {
+    transform: translateY(0) scale(0.99);
+  }
+}
