@@ -2,7 +2,16 @@
   display: block;
 }
 
-/* The title bar: the window is dragged by its empty parts. */
+/* The title bar: the window is dragged by its empty parts, which show the
+   open hand (Tauri drags only from elements with data-tauri-drag-region). */
+[data-tauri-drag-region] {
+  cursor: grab;
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
 header {
   display: flex;
   align-items: center;
@@ -44,6 +53,8 @@ header {
 }
 
 .actions {
+  /* Not draggable between its buttons. */
+  cursor: default;
   display: flex;
   align-items: center;
   gap: var(--space-1);
