@@ -1,6 +1,6 @@
-import { BadgeComponent, ButtonComponent } from '@shared/ui';
+import { BadgeComponent, ButtonComponent, IconComponent } from '@shared/ui';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked } from '@angular/core';
+import { ApplicationRef, ChangeDetectionStrategy, Component, computed, DOCUMENT, effect, inject, signal, untracked } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { ConfigurationStore } from '@entities/configuration';
 import { UpdateStore } from '@entities/update';
@@ -13,7 +13,7 @@ import { ConfigButtonComponent } from "@features/configuration";
 
 @Component({
   selector: 'app-header',
-  imports: [ButtonComponent, RouterLink, WindowControlsComponent, TuiDropdown, TuiTitle, TuiProgress, ConfigButtonComponent, TranslocoPipe, BadgeComponent],
+  imports: [ButtonComponent, IconComponent, RouterLink, WindowControlsComponent, TuiDropdown, TuiTitle, TuiProgress, ConfigButtonComponent, TranslocoPipe, BadgeComponent],
   templateUrl: './header.component.html',
   styleUrl: './header.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -27,9 +27,44 @@ export class HeaderComponent {
   readonly updateOpen = signal(false);
   private readonly config = inject(ConfigurationStore);
   private readonly router = inject(Router);
+  private readonly document = inject(DOCUMENT);
+  private readonly appRef = inject(ApplicationRef);
 
   /** Developer mode is turned on in the settings. */
   readonly devMode = computed(() => this.config.config()?.dev_mode ?? false);
+
+  /**
+   * The other theme, spreading in a circle from the button where the engine
+   * can (View Transitions), at once where it can't or motion is reduced.
+   */
+  toggleTheme(event: MouseEvent) {
+    const document = this.document as Document & {
+      startViewTransition?: (update: () => void) => { ready: Promise<void> };
+    };
+    const reduced =
+      this.appearance.reducedMotion() || matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!document.startViewTransition || reduced) {
+      this.appearance.toggleDark();
+      return;
+    }
+
+    const x = event.clientX;
+    const y = event.clientY;
+    const radius = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+    const transition = document.startViewTransition(() => {
+      this.appearance.toggleDark();
+      // The new theme on the page before the transition takes its picture.
+      this.appRef.tick();
+    });
+    transition.ready
+      .then(() =>
+        document.documentElement.animate(
+          { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`] },
+          { duration: 520, easing: 'cubic-bezier(0.65, 0, 0.35, 1)', pseudoElement: '::view-transition-new(root)' },
+        ),
+      )
+      .catch(() => {});
+  }
 
   constructor() {
     // Turned off while on the developer pages: back to the tools.

@@ -20,3 +20,4 @@ export { SectionTitleComponent } from './section-title/section-title.component';
 export { AccordionComponent, AccordionItemComponent } from './accordion/accordion.component';
 export { LoaderComponent } from './loader/loader.component';
 export { CheckboxComponent, SwitchComponent } from './switch/switch.component';
+export { TrianglesComponent } from './triangles/triangles.component';

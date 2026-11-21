@@ -31,7 +31,30 @@
 }
 
 :host(.interactive) {
+  isolation: isolate;
+  overflow: hidden;
   cursor: pointer;
+
+  /* A soft light of the accent under the pointer. */
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: radial-gradient(
+      18rem circle at var(--pointer-x, 50%) var(--pointer-y, 50%),
+      color-mix(in oklch, var(--accent) 12%, transparent),
+      transparent 70%
+    );
+    opacity: 0;
+    transition: opacity var(--duration-3) var(--ease-out);
+    pointer-events: none;
+  }
+
+  &:hover::before {
+    opacity: 1;
+  }
+
   transition:
     transform var(--duration-2) var(--ease-out),
     border-color var(--duration-2) var(--ease-out),

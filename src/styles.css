@@ -91,6 +91,14 @@ tui-expand {
   font-weight: var(--weight-regular);
 }
 
+/* The theme changing (HeaderComponent.toggleTheme): the new one is revealed
+   in a circle drawn from script, the old one stays still underneath. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
 /* Set by AppComponent for a couple of frames while the theme changes,
    so animated surfaces switch colour at the same time as everything else. */
 .theme-switching,
@@ -99,6 +107,40 @@ tui-expand {
 .theme-switching *::after {
   transition-duration: 0s !important;
   transition-delay: 0s !important;
+}
+
+/* Each page comes in as it opens, and its parts one after another. Here
+   and not in AppComponent's styles: the router puts the pages next to its
+   outlet, outside the template those styles are scoped to. */
+/* In :where(), so the page's own display (a flex column, a grid) wins. */
+.page-outlet > :where(:not(router-outlet)) {
+  display: block;
+}
+
+.page-outlet > :not(router-outlet) {
+  animation: page-in var(--duration-3) var(--ease-out) backwards;
+}
+
+.page-outlet > :not(router-outlet) > * {
+  animation: part-in var(--duration-4) var(--ease-out) backwards;
+}
+
+.page-outlet > :not(router-outlet) > :nth-child(2) { animation-delay: calc(var(--stagger) * 2); }
+.page-outlet > :not(router-outlet) > :nth-child(3) { animation-delay: calc(var(--stagger) * 4); }
+.page-outlet > :not(router-outlet) > :nth-child(4) { animation-delay: calc(var(--stagger) * 6); }
+.page-outlet > :not(router-outlet) > :nth-child(n + 5) { animation-delay: calc(var(--stagger) * 8); }
+
+@keyframes page-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes part-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
 }
 
 /* ============================================

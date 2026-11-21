@@ -66,8 +66,11 @@
       </ng-template>
     }
 
-    <button appButton="ghost" type="button" iconOnly [icon]="icon()" (click)="appearance.toggleDark()">
-      {{ 'header.toggleTheme' | transloco }}
+    <button appButton="ghost" type="button" class="theme" (click)="toggleTheme($event)" [attr.aria-label]="'header.toggleTheme' | transloco">
+      <!-- A new icon each time, so it turns in. -->
+      @for (name of [icon()]; track name) {
+        <app-icon class="theme-icon" [name]="name" />
+      }
     </button>
 
     @if (devMode()) {

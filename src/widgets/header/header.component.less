@@ -96,3 +96,21 @@ header {
     inline-size: 100%;
   }
 }
+
+/* The theme button: square, its icon turning in when it changes. */
+.actions .theme {
+  inline-size: 2.375rem;
+  padding: 0;
+}
+
+.theme-icon {
+  font-size: 1.15rem;
+  animation: theme-icon-in var(--duration-4) var(--ease-spring);
+}
+
+@keyframes theme-icon-in {
+  from {
+    opacity: 0;
+    transform: rotate(-120deg) scale(0.4);
+  }
+}

@@ -38,17 +38,5 @@ tui-root {
   flex: 1;
   padding: var(--space-8);
   overflow-y: auto;
-
-  /* Each page comes in as it opens. */
-  > :not(router-outlet) {
-    display: block;
-    animation: page-in var(--duration-3) var(--ease-out) backwards;
-  }
-}
-
-@keyframes page-in {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
+  /* How each page comes in: styles.css, since the pages are not in this template. */
 }

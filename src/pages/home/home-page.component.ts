@@ -5,11 +5,11 @@ import { getVersion } from '@tauri-apps/api/app';
 import { ConfigurationStore } from '@entities/configuration';
 import { USER_ITEMS } from '@entities/nav-item';
 import { OsuPathStore } from '@entities/osu-path';
-import { BadgeComponent, CardComponent, IconComponent } from '@shared/ui';
+import { BadgeComponent, CardComponent, IconComponent, TrianglesComponent } from '@shared/ui';
 
 @Component({
   selector: 'app-home',
-  imports: [BadgeComponent, CardComponent, IconComponent, RouterLink, TranslocoPipe],
+  imports: [BadgeComponent, CardComponent, IconComponent, RouterLink, TrianglesComponent, TranslocoPipe],
   templateUrl: './home-page.component.html',
   styleUrl: './home-page.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,
