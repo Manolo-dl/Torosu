@@ -252,7 +252,12 @@
     "exported": "{{ name }} exporté",
     "exportFailed": "Impossible d’exporter la beatmap : {{ error }}",
     "looking": "Recherche d’osu!...",
-    "startFailed": "Impossible de démarrer le lecteur d’osu!."
+    "startFailed": "Impossible de démarrer le lecteur d’osu!.",
+    "badge": {
+      "connected": "Connecté",
+      "waiting": "En attente d'osu!",
+      "error": "Impossible de lire osu!"
+    }
   },
   "trainer": {
     "subtitle": "Ajustez les stats de difficulté et enchaînez les modificateurs avant de générer une nouvelle map.",
@@ -724,5 +729,22 @@
     "randomReplay": "Les replays avec Random ne peuvent pas être analysés : osu! mélange leurs notes",
     "replayUnreadable": "{{ file }} n'est pas un replay osu!mania que Torosu peut lire",
     "noUpdate": "Aucune mise à jour à installer"
+  },
+  "modes": {
+    "standard": "Standard",
+    "taiko": "Taiko",
+    "catch": "Catch",
+    "mania": "Mania"
+  },
+  "dev": {
+    "osuData": {
+      "subtitle": "La map sélectionnée, lue dans la mémoire d'osu!",
+      "empty": "Rien reçu pour l'instant."
+    },
+    "logs": {
+      "subtitle": "Le journal de l'app, par niveau et module",
+      "entries": "{{ count }} entrées",
+      "empty": "Aucune entrée"
+    }
   }
 }

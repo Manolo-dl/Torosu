@@ -221,7 +221,7 @@
       "diffs": "난이도",
       "inSets": "{{ count }}개 세트",
       "sets": "{{ count }}개 세트",
-      "ranked": "Ranked",
+      "ranked": "랭크됨",
       "loved": "Loved",
       "unsubmitted": "미업로드",
       "played": "플레이함"
@@ -252,7 +252,12 @@
     "exported": "{{ name }}을(를) 내보냈습니다",
     "exportFailed": "비트맵을 내보내지 못했습니다: {{ error }}",
     "looking": "osu!를 찾는 중...",
-    "startFailed": "osu! 리더를 시작하지 못했습니다."
+    "startFailed": "osu! 리더를 시작하지 못했습니다.",
+    "badge": {
+      "connected": "연결됨",
+      "waiting": "osu!를 기다리는 중",
+      "error": "osu!를 읽을 수 없음"
+    }
   },
   "trainer": {
     "subtitle": "새 맵을 만들기 전에 난이도 수치를 조정하고 변경 사항을 조합합니다.",
@@ -724,5 +729,22 @@
     "randomReplay": "Random 리플레이는 분석할 수 없습니다: osu!가 노트를 섞기 때문입니다",
     "replayUnreadable": "{{ file }}은(는) Torosu가 읽을 수 있는 osu!mania 리플레이가 아닙니다",
     "noUpdate": "설치할 업데이트가 없습니다"
+  },
+  "modes": {
+    "standard": "스탠다드",
+    "taiko": "태고",
+    "catch": "캐치",
+    "mania": "매니아"
+  },
+  "dev": {
+    "osuData": {
+      "subtitle": "osu! 메모리에서 읽은 선택된 맵",
+      "empty": "아직 받은 데이터가 없습니다."
+    },
+    "logs": {
+      "subtitle": "앱 로그 (레벨·모듈별)",
+      "entries": "{{ count }}개 항목",
+      "empty": "항목 없음"
+    }
   }
 }

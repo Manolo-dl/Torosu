@@ -1,3 +1,4 @@
+import { TranslocoPipe } from '@jsverse/transloco';
 import { BadgeComponent, CardComponent, AccordionComponent, AccordionItemComponent, AccordionHeadingDirective, AccordionContentDirective } from '@shared/ui';
 import { Component, computed, inject, ChangeDetectionStrategy } from '@angular/core';
 import { OsuReaderStore } from '@entities/osu-reader';
@@ -5,7 +6,7 @@ import { OsuFieldTreeComponent } from '../osu-field-tree/osu-field-tree.componen
 
 @Component({
     selector: 'app-osu-data-sections',
-    imports: [AccordionComponent, AccordionItemComponent, AccordionHeadingDirective, AccordionContentDirective, OsuFieldTreeComponent, BadgeComponent, CardComponent],
+    imports: [TranslocoPipe, AccordionComponent, AccordionItemComponent, AccordionHeadingDirective, AccordionContentDirective, OsuFieldTreeComponent, BadgeComponent, CardComponent],
     templateUrl: './osu-data-sections.component.html',
     styleUrl: './osu-data-sections.component.less',
     changeDetection: ChangeDetectionStrategy.OnPush,

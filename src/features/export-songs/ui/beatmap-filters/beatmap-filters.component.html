@@ -21,12 +21,12 @@
     >
       <div class="mode-header" (click)="toggleExpand(m.value)">
         <app-icon class="mode-icon" [name]="m.icon" />
-        <span class="mode-label">{{ m.label }}</span>
+        <span class="mode-label">{{ m.label | transloco }}</span>
         <input
           size="s"
           appSwitch
           type="checkbox"
-          [attr.aria-label]="(isModeExcluded(m.value) ? 'exportSongs.enable' : 'exportSongs.disable') | transloco: { mode: m.label }"
+          [attr.aria-label]="(isModeExcluded(m.value) ? 'exportSongs.enable' : 'exportSongs.disable') | transloco: { mode: (m.label | transloco) }"
           [ngModel]="!isModeExcluded(m.value)"
           (ngModelChange)="toggleExclude(m.value)"
           (click)="$event.stopPropagation()"

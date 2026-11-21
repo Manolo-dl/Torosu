@@ -8,7 +8,7 @@
   </header>
 
   @if (targetNames().length === 0) {
-    <p class="empty">No entries</p>
+    <p class="empty">{{ 'dev.logs.empty' | transloco }}</p>
   } @else {
     <app-accordion size="s" [closeOthers]="false">
       @for (target of targetNames(); track target) {

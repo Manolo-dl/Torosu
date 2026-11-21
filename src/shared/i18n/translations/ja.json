@@ -252,7 +252,12 @@
     "exported": "{{ name }} をエクスポートしました",
     "exportFailed": "ビートマップのエクスポートに失敗しました: {{ error }}",
     "looking": "osu! を探しています...",
-    "startFailed": "osu! リーダーを起動できませんでした。"
+    "startFailed": "osu! リーダーを起動できませんでした。",
+    "badge": {
+      "connected": "接続中",
+      "waiting": "osu! を待っています",
+      "error": "osu! を読み取れません"
+    }
   },
   "trainer": {
     "subtitle": "新しいマップを作る前に、難易度のステータスを調整し、変更を組み合わせます。",
@@ -724,5 +729,22 @@
     "randomReplay": "Random 付きのリプレイは分析できません：osu! がノーツを並べ替えるためです",
     "replayUnreadable": "{{ file }} は Torosu が読み込める osu!mania のリプレイではありません",
     "noUpdate": "インストールする更新がありません"
+  },
+  "modes": {
+    "standard": "スタンダード",
+    "taiko": "太鼓",
+    "catch": "キャッチ",
+    "mania": "マニア"
+  },
+  "dev": {
+    "osuData": {
+      "subtitle": "osu! のメモリから読み取った選択中のマップ",
+      "empty": "まだ何も受信していません。"
+    },
+    "logs": {
+      "subtitle": "アプリのログ (レベル・モジュール別)",
+      "entries": "{{ count }} 件",
+      "empty": "エントリーなし"
+    }
   }
 }

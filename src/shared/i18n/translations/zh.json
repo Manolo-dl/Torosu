@@ -221,8 +221,8 @@
       "diffs": "难度",
       "inSets": "共 {{ count }} 个图组",
       "sets": "{{ count }} 个图组",
-      "ranked": "Ranked",
-      "loved": "Loved",
+      "ranked": "上架",
+      "loved": "社区喜爱",
       "unsubmitted": "未上传",
       "played": "已玩过"
     },
@@ -252,7 +252,12 @@
     "exported": "已导出 {{ name }}",
     "exportFailed": "导出谱面失败：{{ error }}",
     "looking": "正在寻找 osu!……",
-    "startFailed": "无法启动 osu! 读取器。"
+    "startFailed": "无法启动 osu! 读取器。",
+    "badge": {
+      "connected": "已连接",
+      "waiting": "正在等待 osu!",
+      "error": "无法读取 osu!"
+    }
   },
   "trainer": {
     "subtitle": "在生成新谱面前，微调难度属性并串联各项修改。",
@@ -724,5 +729,22 @@
     "randomReplay": "无法分析带 Random 的回放：osu! 会打乱其音符",
     "replayUnreadable": "{{ file }} 不是 Torosu 能读取的 osu!mania 回放",
     "noUpdate": "没有可安装的更新"
+  },
+  "modes": {
+    "standard": "标准",
+    "taiko": "太鼓",
+    "catch": "接水果",
+    "mania": "下落式"
+  },
+  "dev": {
+    "osuData": {
+      "subtitle": "从 osu! 内存中读取的选中谱面",
+      "empty": "尚未收到任何数据。"
+    },
+    "logs": {
+      "subtitle": "应用日志，按级别和模块分组",
+      "entries": "{{ count }} 条",
+      "empty": "没有条目"
+    }
   }
 }

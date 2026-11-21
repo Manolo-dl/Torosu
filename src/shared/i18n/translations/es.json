@@ -252,7 +252,12 @@
     "exported": "Exportado {{ name }}",
     "exportFailed": "No se ha podido exportar el mapa: {{ error }}",
     "looking": "Buscando osu!...",
-    "startFailed": "No se ha podido iniciar el lector de osu!."
+    "startFailed": "No se ha podido iniciar el lector de osu!.",
+    "badge": {
+      "connected": "Conectado",
+      "waiting": "Esperando a osu!",
+      "error": "No se puede leer osu!"
+    }
   },
   "trainer": {
     "subtitle": "Ajusta los stats de dificultad y encadena modificadores antes de generar un mapa nuevo.",
@@ -724,5 +729,22 @@
     "randomReplay": "No se pueden analizar replays con Random: osu! baraja sus notas",
     "replayUnreadable": "{{ file }} no es una replay de osu!mania que Torosu pueda leer",
     "noUpdate": "No hay ninguna actualización que instalar"
+  },
+  "modes": {
+    "standard": "Standard",
+    "taiko": "Taiko",
+    "catch": "Catch",
+    "mania": "Mania"
+  },
+  "dev": {
+    "osuData": {
+      "subtitle": "El mapa seleccionado, leído de la memoria de osu!",
+      "empty": "Aún no ha llegado nada."
+    },
+    "logs": {
+      "subtitle": "El registro de la app, por nivel y módulo",
+      "entries": "{{ count }} entradas",
+      "empty": "Sin entradas"
+    }
   }
 }

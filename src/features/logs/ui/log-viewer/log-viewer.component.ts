@@ -1,3 +1,4 @@
+import { TranslocoPipe } from '@jsverse/transloco';
 import { ButtonComponent, BadgeComponent } from '@shared/ui';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { LogStore } from '@entities/log';
@@ -5,7 +6,7 @@ import { LogColumnComponent } from '../log-column/log-column.component';
 
 @Component({
   selector: 'app-log-viewer',
-  imports: [LogColumnComponent, ButtonComponent, BadgeComponent],
+  imports: [TranslocoPipe, LogColumnComponent, ButtonComponent, BadgeComponent],
   templateUrl: './log-viewer.component.html',
   styleUrl: './log-viewer.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,

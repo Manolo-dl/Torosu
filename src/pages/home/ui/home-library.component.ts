@@ -7,6 +7,7 @@ import { GAME_MODES } from '@shared/utils';
 import { HomeLibraryInviteComponent } from './home-library-invite.component';
 
 interface ModeStats {
+    /** A translation key. */
     name: string;
     icon: string;
     color: string;
@@ -56,7 +57,7 @@ export class HomeLibraryComponent {
         }
 
         const modes: ModeStats[] = GAME_MODES.map((mode, i) => ({
-            name: mode.shortName,
+            name: mode.key,
             icon: mode.icon,
             color: mode.color,
             ...perMode[i],

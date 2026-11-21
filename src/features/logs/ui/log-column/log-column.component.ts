@@ -1,3 +1,4 @@
+import { TranslocoPipe } from '@jsverse/transloco';
 import { BadgeComponent, CardComponent, BadgeTone, AccordionComponent, AccordionItemComponent, AccordionHeadingDirective, AccordionContentDirective } from '@shared/ui';
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import type { LogEntry } from '@entities/log';
@@ -12,7 +13,7 @@ const LEVEL_TONE: Record<string, BadgeTone> = {
 
 @Component({
   selector: 'app-log-column',
-  imports: [AccordionComponent, AccordionItemComponent, AccordionHeadingDirective, AccordionContentDirective, TuiScrollbar, BadgeComponent, CardComponent],
+  imports: [TranslocoPipe, AccordionComponent, AccordionItemComponent, AccordionHeadingDirective, AccordionContentDirective, TuiScrollbar, BadgeComponent, CardComponent],
   templateUrl: './log-column.component.html',
   styleUrl: './log-column.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -1,17 +1,17 @@
 @switch (store.status().state) {
   @case ('connected') {
     <span appBadge tone="success" size="l" class="connected" dot>
-      Connected
+      {{ 'osuReader.badge.connected' | transloco }}
     </span>
   }
   @case ('waiting') {
     <span appBadge tone="neutral" size="l" dot>
-      Waiting for osu!
+      {{ 'osuReader.badge.waiting' | transloco }}
     </span>
   }
   @case ('error') {
     <span appBadge tone="danger" size="l" dot>
-      Can't read osu!
+      {{ 'osuReader.badge.error' | transloco }}
     </span>
   }
 }

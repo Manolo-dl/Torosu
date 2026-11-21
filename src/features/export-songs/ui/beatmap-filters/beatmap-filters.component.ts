@@ -8,6 +8,7 @@ import { TuiChip } from '@taiga-ui/kit';
 import { GAME_MODES } from '@shared/utils';
 
 export interface ModeConfig {
+  /** A translation key. */
   label: string;
   value: number;
   icon: string;
@@ -19,8 +20,8 @@ export interface ModeConfig {
 
 /** How a mode looks, for its filters. */
 function mode(value: number): Pick<ModeConfig, 'label' | 'value' | 'icon' | 'color'> {
-  const { shortName, icon, color } = GAME_MODES[value];
-  return { label: shortName, value, icon, color };
+  const { key, icon, color } = GAME_MODES[value];
+  return { label: key, value, icon, color };
 }
 
 type RangeKey = { [K in keyof ModeFilters]: ModeFilters[K] extends number | null ? K : never }[keyof ModeFilters];

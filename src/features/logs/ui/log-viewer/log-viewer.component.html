@@ -1,5 +1,5 @@
 <div class="toolbar">
-  <span appBadge tone="neutral">{{ store.totalLogs() }} entries</span>
+  <span appBadge tone="neutral">{{ 'dev.logs.entries' | transloco: { count: store.totalLogs() } }}</span>
   <button
     appButton="secondary"
     icon="@tui.refresh-cw"
