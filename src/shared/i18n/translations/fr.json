@@ -133,7 +133,9 @@
         "nunito": "Arrondie et douce",
         "inter": "Neutre et compacte",
         "grotesk": "Technique, avec du caractère"
-      }
+      },
+      "visualizer": "Musique dans la barre de titre",
+      "visualizerHint": "Des barres qui suivent la musique jouée par osu! ; osu! est lu en arrière-plan pour cela"
     },
     "saved": "Paramètres enregistrés",
     "saving": "Enregistrement…",

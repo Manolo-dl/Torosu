@@ -4,7 +4,12 @@
     <span class="wordmark">Torosu</span>
   </a>
 
-  <div class="drag" data-tauri-drag-region></div>
+  <!-- The music osu! plays, in the middle of what drags the window: it lets the pointer through. -->
+  <div class="drag" data-tauri-drag-region>
+    @if (appearance.visualizer()) {
+      <app-visualizer />
+    }
+  </div>
 
   <div class="actions">
     @if (update.available(); as available) {

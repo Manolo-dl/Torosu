@@ -49,4 +49,12 @@
     </span>
     <input appSwitch type="checkbox" [checked]="appearance.reducedMotion()" (change)="setReducedMotion($event)" />
   </label>
+
+  <label tuiCell>
+    <span tuiTitle>
+      {{ 'settings.appearance.visualizer' | transloco }}
+      <span tuiSubtitle>{{ 'settings.appearance.visualizerHint' | transloco }}</span>
+    </span>
+    <input appSwitch type="checkbox" [checked]="appearance.visualizer()" (change)="setVisualizer($event)" />
+  </label>
 </section>

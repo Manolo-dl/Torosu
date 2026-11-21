@@ -28,6 +28,10 @@ export class AppearanceSettingsComponent {
     readonly fontNames = FONT_NAMES;
     readonly fontFamilies = FONT_FAMILIES;
 
+    setVisualizer(event: Event) {
+        this.appearance.setVisualizer((event.target as HTMLInputElement).checked);
+    }
+
     setReducedMotion(event: Event) {
         this.appearance.setReducedMotion((event.target as HTMLInputElement).checked);
     }

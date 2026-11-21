@@ -1,3 +1,4 @@
+pub mod audio;
 pub mod export;
 
 use std::{sync::atomic::Ordering, thread, time::{Duration, Instant}};

@@ -133,7 +133,9 @@
         "nunito": "Rounded and soft",
         "inter": "Neutral and compact",
         "grotesk": "Technical, with character"
-      }
+      },
+      "visualizer": "Music in the title bar",
+      "visualizerHint": "Bars that follow the song osu! is playing; osu! is read in the background for it"
     },
     "saved": "Settings saved",
     "saving": "Saving…",

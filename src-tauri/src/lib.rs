@@ -87,6 +87,8 @@ pub fn run() {
             app.manage(UpdateState { pending: Mutex::new(None) });
 
             // osu! memory reader, started by the first page that needs it
+            // The song's position for the title bar's visualizer, when it asks.
+            app.manage(commands::osu_reader::audio::OsuAudioState::default());
             app.manage(OsuReaderState {
                 started: AtomicBool::new(false),
                 snapshot: Mutex::new(ReaderSnapshot::new()),
@@ -151,6 +153,7 @@ pub fn run() {
             commands::packs::creator::create_pack,
             commands::dev::logs::read_logs,
             commands::osu_reader::connect_osu_reader,
+            commands::osu_reader::audio::watch_osu_audio,
             commands::osu_reader::export::export_selected_osz,
             commands::trainer::run::run_trainer,
             commands::trainer::preview::preview_converts,

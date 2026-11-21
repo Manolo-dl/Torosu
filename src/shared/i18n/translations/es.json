@@ -133,7 +133,9 @@
         "nunito": "Redondeada y suave",
         "inter": "Neutra y compacta",
         "grotesk": "Técnica, con carácter"
-      }
+      },
+      "visualizer": "Música en la barra de título",
+      "visualizerHint": "Barras que siguen la canción que suena en osu!; para ello se lee osu! en segundo plano"
     },
     "saved": "Configuración guardada",
     "saving": "Guardando…",

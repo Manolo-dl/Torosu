@@ -18,6 +18,8 @@ interface AppearanceState {
     reducedMotion: boolean;
     /** The sidebar shows only its icons. */
     sidebarCollapsed: boolean;
+    /** Bars in the title bar following the music osu! plays. */
+    visualizer: boolean;
 }
 
 const initialState: AppearanceState = {
@@ -26,6 +28,7 @@ const initialState: AppearanceState = {
     dark: true,
     reducedMotion: false,
     sidebarCollapsed: false,
+    visualizer: true,
 };
 
 /** Where it is kept: it is the window's look, not a setting of the tools. */
@@ -40,6 +43,7 @@ function saved(): AppearanceState {
             dark: typeof value.dark === 'boolean' ? value.dark : initialState.dark,
             reducedMotion: value.reducedMotion === true,
             sidebarCollapsed: value.sidebarCollapsed === true,
+            visualizer: value.visualizer !== false,
         };
     } catch {
         return initialState;
@@ -61,6 +65,7 @@ export const AppearanceStore = signalStore(
         toggleDark: () => patchState(store, { dark: !store.dark() }),
         setReducedMotion: (reducedMotion: boolean) => patchState(store, { reducedMotion }),
         toggleSidebar: () => patchState(store, { sidebarCollapsed: !store.sidebarCollapsed() }),
+        setVisualizer: (visualizer: boolean) => patchState(store, { visualizer }),
     })),
 
     withHooks({
@@ -72,6 +77,7 @@ export const AppearanceStore = signalStore(
                     dark: store.dark(),
                     reducedMotion: store.reducedMotion(),
                     sidebarCollapsed: store.sidebarCollapsed(),
+                    visualizer: store.visualizer(),
                 };
                 const root = document.documentElement;
                 root.dataset['palette'] = state.palette;

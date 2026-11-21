@@ -133,7 +133,9 @@
         "nunito": "圆润柔和",
         "inter": "中性紧凑",
         "grotesk": "科技感，富有个性"
-      }
+      },
+      "visualizer": "标题栏中的音乐",
+      "visualizerHint": "随 osu! 正在播放的歌曲跳动的条形；为此会在后台读取 osu!"
     },
     "saved": "设置已保存",
     "saving": "正在保存…",

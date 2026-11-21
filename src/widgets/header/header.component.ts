@@ -5,6 +5,8 @@ import { Router, RouterLink } from '@angular/router';
 import { ConfigurationStore } from '@entities/configuration';
 import { UpdateStore } from '@entities/update';
 import { DEV_ITEMS, NavStore } from '@entities/nav-item';
+import { OsuAudioService } from '@entities/osu-reader';
+import { VisualizerComponent } from './visualizer.component';
 import { TUI_DARK_MODE, TuiDropdown, TuiTitle } from "@taiga-ui/core";
 import { AppearanceStore } from "@shared/stores";
 import { WindowControlsComponent } from "@widgets/window-controls/window-controls.component";
@@ -12,7 +14,7 @@ import { ConfigButtonComponent } from "@features/configuration";
 
 @Component({
   selector: 'app-header',
-  imports: [ProgressComponent, ButtonComponent, IconComponent, RouterLink, WindowControlsComponent, TuiDropdown, TuiTitle, ConfigButtonComponent, TranslocoPipe, BadgeComponent],
+  imports: [ProgressComponent, ButtonComponent, IconComponent, VisualizerComponent, RouterLink, WindowControlsComponent, TuiDropdown, TuiTitle, ConfigButtonComponent, TranslocoPipe, BadgeComponent],
   templateUrl: './header.component.html',
   styleUrl: './header.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -85,6 +87,13 @@ export class HeaderComponent {
   }
 
   constructor() {
+    // The music osu! plays follows the setting (it starts the osu! reader).
+    const audio = inject(OsuAudioService);
+    effect(() => {
+      const enabled = this.appearance.visualizer();
+      untracked(() => audio.setEnabled(enabled));
+    });
+
     // Turned off while on the developer pages: back to the tools.
     effect(() => {
       if (this.devMode()) return;
