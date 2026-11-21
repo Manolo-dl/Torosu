@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { ButtonComponent } from '@shared/ui';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { ConfigurationStore } from '@entities/configuration';
@@ -6,8 +6,9 @@ import { ConfigDrawerComponent } from '../config-drawer/config-drawer.component'
 
 /**
  * The settings button. The drawer and its form (Taiga kit, maskito, forms)
- * are only downloaded the first time it opens. Pressed again, it closes the
- * drawer as its own close button does: saving.
+ * are only downloaded the first time it opens: nothing here may name it
+ * outside @defer, or it would be in the app's first download. Once open, the
+ * drawer covers the button and closes (saving) by itself.
  */
 @Component({
   selector: 'app-config-button',
@@ -27,13 +28,9 @@ export class ConfigButtonComponent {
   private readonly store = inject(ConfigurationStore);
 
   readonly open = signal(false);
-  private readonly drawer = viewChild(ConfigDrawerComponent);
 
   async toggle() {
-    if (this.open()) {
-      await this.drawer()?.close();
-      return;
-    }
+    if (this.open()) return;
 
     // The drawer starts from the saved settings.
     await this.store.ensureLoaded();
