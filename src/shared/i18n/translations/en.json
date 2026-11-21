@@ -187,7 +187,24 @@
     "noLazer": "Lazer is not supported: the tools read and write osu! stable's files.",
     "changeFolder": "Change it in the settings",
     "tools": "Tools",
-    "noTools": "Every tool is turned off. Turn them on in the settings, under General."
+    "noTools": "Every tool is turned off. Turn them on in the settings, under General.",
+    "library": {
+      "title": "Your library",
+      "hint": "Read osu!.db to see what is in your Songs folder: the maps of each mode, how many are ranked or loved, and how many you have played.",
+      "read": "Read osu!.db",
+      "diffs": "diffs",
+      "inSets": "in {{ count }} sets",
+      "sets": "{{ count }} sets",
+      "ranked": "Ranked",
+      "loved": "Loved",
+      "unsubmitted": "Not uploaded",
+      "played": "Played"
+    },
+    "selected": {
+      "title": "Selected in osu!",
+      "by": "mapped by {{ mapper }}",
+      "trainer": "Open in the trainer"
+    }
   },
   "osuPath": {
     "notFound": "osu! folder not found",

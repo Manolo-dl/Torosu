@@ -1,0 +1,54 @@
+<h2 appSectionTitle>
+  {{ 'home.library.title' | transloco }}
+  @if (osuDb.isLoaded()) {
+    <span appBadge size="s">{{ 'home.library.sets' | transloco: { count: stats().sets } }}</span>
+  }
+</h2>
+
+@if (osuDb.isLoaded()) {
+  @let stats = this.stats();
+  <div class="modes">
+    @for (mode of stats.modes; track mode.name; let i = $index) {
+      <div class="mode" [style.--mode-color]="mode.color" [style.--i]="i" [style.--share]="mode.share">
+        <span class="mode-icon"><app-icon [name]="mode.icon" /></span>
+        <span class="name">{{ mode.name }}</span>
+        <strong class="count" [appCountUp]="mode.diffs"></strong>
+        <span class="detail">{{ 'home.library.diffs' | transloco }} · {{ 'home.library.inSets' | transloco: { count: mode.sets } }}</span>
+        <span class="bar"><span class="fill"></span></span>
+      </div>
+    }
+  </div>
+
+  <div class="facts">
+    <div class="fact" data-tone="ranked">
+      <span class="label">{{ 'home.library.ranked' | transloco }}</span>
+      <strong [appCountUp]="stats.ranked"></strong>
+    </div>
+    <div class="fact" data-tone="loved">
+      <span class="label">{{ 'home.library.loved' | transloco }}</span>
+      <strong [appCountUp]="stats.loved"></strong>
+    </div>
+    <div class="fact" data-tone="unsubmitted">
+      <span class="label">{{ 'home.library.unsubmitted' | transloco }}</span>
+      <strong [appCountUp]="stats.unsubmitted"></strong>
+    </div>
+    <div class="fact played" [style.--share]="stats.playedShare">
+      <span class="ring"></span>
+      <span class="label">{{ 'home.library.played' | transloco }}</span>
+      <strong><span [appCountUp]="stats.played"></span>&ngsp;<small>/ {{ stats.diffs }}</small></strong>
+    </div>
+  </div>
+} @else if (osuDb.isLoading()) {
+  <div class="modes" aria-busy="true">
+    @for (mode of modes; track mode.name; let i = $index) {
+      <div class="mode skeleton" [style.--skeleton-delay]="i * 0.1 + 's'">
+        <app-skeleton width="2.5rem" height="2.5rem" radius="var(--radius-md)" />
+        <app-skeleton width="45%" height="0.7rem" />
+        <app-skeleton width="60%" height="1.6rem" />
+        <app-skeleton width="100%" height="0.35rem" radius="pill" />
+      </div>
+    }
+  </div>
+} @else {
+  <app-home-library-invite (read)="osuDb.load()" />
+}

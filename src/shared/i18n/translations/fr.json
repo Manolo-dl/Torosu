@@ -187,7 +187,24 @@
     "noLazer": "Lazer n’est pas pris en charge : les outils lisent et écrivent les fichiers d’osu! stable.",
     "changeFolder": "Changez-le dans les paramètres",
     "tools": "Outils",
-    "noTools": "Tous les outils sont désactivés. Activez-les dans les paramètres, dans Général."
+    "noTools": "Tous les outils sont désactivés. Activez-les dans les paramètres, dans Général.",
+    "library": {
+      "title": "Ta bibliothèque",
+      "hint": "Lis osu!.db pour voir ce que contient ton dossier Songs : les maps de chaque mode, combien sont ranked ou loved, et combien tu en as joué.",
+      "read": "Lire osu!.db",
+      "diffs": "difficultés",
+      "inSets": "dans {{ count }} sets",
+      "sets": "{{ count }} sets",
+      "ranked": "Ranked",
+      "loved": "Loved",
+      "unsubmitted": "Non publiées",
+      "played": "Jouées"
+    },
+    "selected": {
+      "title": "Sélectionnée dans osu!",
+      "by": "mappée par {{ mapper }}",
+      "trainer": "Ouvrir dans le trainer"
+    }
   },
   "osuPath": {
     "notFound": "Dossier d’osu! introuvable",

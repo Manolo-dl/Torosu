@@ -187,7 +187,24 @@
     "noLazer": "不支持 osu!lazer：这些工具读写的是 osu! stable 的文件。",
     "changeFolder": "在设置中修改",
     "tools": "工具",
-    "noTools": "所有工具都已关闭。请在设置的“通用”中启用。"
+    "noTools": "所有工具都已关闭。请在设置的“通用”中启用。",
+    "library": {
+      "title": "你的曲库",
+      "hint": "读取 osu!.db 即可查看 Songs 文件夹的内容：各模式的谱面、Ranked 与 Loved 的数量，以及你玩过的数量。",
+      "read": "读取 osu!.db",
+      "diffs": "难度",
+      "inSets": "共 {{ count }} 个图组",
+      "sets": "{{ count }} 个图组",
+      "ranked": "Ranked",
+      "loved": "Loved",
+      "unsubmitted": "未上传",
+      "played": "已玩过"
+    },
+    "selected": {
+      "title": "osu! 中选中的谱面",
+      "by": "作图者 {{ mapper }}",
+      "trainer": "在训练器中打开"
+    }
   },
   "osuPath": {
     "notFound": "未找到 osu! 文件夹",

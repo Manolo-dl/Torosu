@@ -38,6 +38,19 @@
   }
 }
 
+/* The modes orbiting a hit circle, on the right of the hero. */
+.orbit {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-end: var(--space-8);
+  z-index: -1;
+  margin-block-start: -5.5rem;
+
+  @media (max-width: 1100px) {
+    display: none;
+  }
+}
+
 .identity {
   display: flex;
   align-items: center;

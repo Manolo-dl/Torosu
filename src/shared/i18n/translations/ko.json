@@ -187,7 +187,24 @@
     "noLazer": "Lazer는 지원하지 않습니다: 도구들은 osu! stable의 파일을 읽고 씁니다.",
     "changeFolder": "설정에서 바꿀 수 있습니다",
     "tools": "도구",
-    "noTools": "모든 도구가 꺼져 있습니다. 설정의 '일반'에서 켜세요."
+    "noTools": "모든 도구가 꺼져 있습니다. 설정의 '일반'에서 켜세요.",
+    "library": {
+      "title": "내 라이브러리",
+      "hint": "osu!.db를 읽으면 Songs 폴더의 내용을 볼 수 있습니다: 모드별 맵, Ranked와 Loved 수, 플레이한 수.",
+      "read": "osu!.db 읽기",
+      "diffs": "난이도",
+      "inSets": "{{ count }}개 세트",
+      "sets": "{{ count }}개 세트",
+      "ranked": "Ranked",
+      "loved": "Loved",
+      "unsubmitted": "미업로드",
+      "played": "플레이함"
+    },
+    "selected": {
+      "title": "osu!에서 선택됨",
+      "by": "매퍼: {{ mapper }}",
+      "trainer": "트레이너에서 열기"
+    }
   },
   "osuPath": {
     "notFound": "osu! 폴더를 찾을 수 없습니다",

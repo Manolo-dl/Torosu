@@ -5,11 +5,14 @@ import { getVersion } from '@tauri-apps/api/app';
 import { ConfigurationStore } from '@entities/configuration';
 import { USER_ITEMS } from '@entities/nav-item';
 import { OsuPathStore } from '@entities/osu-path';
-import { BadgeComponent, CardComponent, IconComponent, toolTransitionName, TrianglesComponent } from '@shared/ui';
+import { BadgeComponent, CardComponent, IconComponent, ModeOrbitComponent, toolTransitionName, TrianglesComponent } from '@shared/ui';
+import { OsuReaderStore } from '@entities/osu-reader';
+import { HomeLibraryComponent } from './ui/home-library.component';
+import { HomeSelectedComponent } from './ui/home-selected.component';
 
 @Component({
   selector: 'app-home',
-  imports: [BadgeComponent, CardComponent, IconComponent, RouterLink, TrianglesComponent, TranslocoPipe],
+  imports: [BadgeComponent, CardComponent, HomeLibraryComponent, HomeSelectedComponent, IconComponent, ModeOrbitComponent, RouterLink, TrianglesComponent, TranslocoPipe],
   templateUrl: './home-page.component.html',
   styleUrl: './home-page.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -17,6 +20,8 @@ import { BadgeComponent, CardComponent, IconComponent, toolTransitionName, Trian
 export class HomePageComponent {
   private readonly config = inject(ConfigurationStore);
   readonly osuPath = inject(OsuPathStore);
+  /** The map selected in osu!, if a tool has started the reader. */
+  readonly reader = inject(OsuReaderStore);
   readonly version = signal<string | null>(null);
 
   /** The tools turned on in the settings. */

@@ -187,7 +187,24 @@
     "noLazer": "Lazer には対応していません: 各ツールは osu! stable のファイルを読み書きします。",
     "changeFolder": "設定で変更できます",
     "tools": "ツール",
-    "noTools": "すべてのツールがオフになっています。設定の「一般」でオンにしてください。"
+    "noTools": "すべてのツールがオフになっています。設定の「一般」でオンにしてください。",
+    "library": {
+      "title": "ライブラリ",
+      "hint": "osu!.db を読み込むと、Songs フォルダの内容が見られます: モードごとのマップ数、Ranked と Loved の数、プレイした数。",
+      "read": "osu!.db を読み込む",
+      "diffs": "難易度",
+      "inSets": "{{ count }} セット",
+      "sets": "{{ count }} セット",
+      "ranked": "Ranked",
+      "loved": "Loved",
+      "unsubmitted": "未投稿",
+      "played": "プレイ済み"
+    },
+    "selected": {
+      "title": "osu! で選択中",
+      "by": "マッパー: {{ mapper }}",
+      "trainer": "トレーナーで開く"
+    }
   },
   "osuPath": {
     "notFound": "osu! フォルダが見つかりません",

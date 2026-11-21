@@ -1,6 +1,7 @@
 <header class="hero" appCard="glass" padding="l">
   <div class="glow" aria-hidden="true"></div>
   <app-triangles />
+  <app-mode-orbit class="orbit" />
 
   <div class="identity">
     <img class="logo" src="assets/images/logo.png" alt="" />
@@ -28,6 +29,10 @@
   }
 </header>
 
+@if (reader.connected() && reader.data()) {
+  <app-home-selected />
+}
+
 <section>
   <h2>
     {{ 'home.tools' | transloco }}
@@ -48,3 +53,5 @@
     }
   </div>
 </section>
+
+<app-home-library />

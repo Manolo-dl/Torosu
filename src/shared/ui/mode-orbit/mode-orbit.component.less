@@ -1,0 +1,143 @@
+:host {
+  --orbit-size: 11rem;
+  --orbit-turn: 36s;
+
+  position: relative;
+  display: grid;
+  place-items: center;
+  inline-size: var(--orbit-size);
+  block-size: var(--orbit-size);
+  flex-shrink: 0;
+}
+
+.track {
+  position: absolute;
+  inset: 0;
+  border: 1px dashed color-mix(in oklch, var(--text-1) 14%, transparent);
+  border-radius: 50%;
+}
+
+/* The hit circle, in both accents, and its approach circle closing in. */
+.hit {
+  position: relative;
+  inline-size: 34%;
+  block-size: 34%;
+  border-radius: 50%;
+  background: var(--accent-gradient);
+  box-shadow:
+    inset 0 0 0 3px oklch(1 0 0 / 0.85),
+    0 0 28px -4px var(--accent-glow);
+  animation: hit 1.6s var(--ease-out) infinite;
+}
+
+.approach {
+  position: absolute;
+  inset: 0;
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  animation: approach 1.6s linear infinite;
+}
+
+@keyframes approach {
+  0% {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* A small pop as the approach circle reaches it. */
+@keyframes hit {
+  0%,
+  92% {
+    transform: scale(1);
+  }
+  96% {
+    transform: scale(1.08);
+  }
+}
+
+/* The icons go round; each turns the other way as much, so stays upright. */
+.orbit {
+  position: absolute;
+  inset: 0;
+  animation: turn var(--orbit-turn) linear infinite;
+}
+
+.mode {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  display: grid;
+  place-items: center;
+  inline-size: 2.4rem;
+  block-size: 2.4rem;
+  margin: -1.2rem;
+  border-radius: 50%;
+  background: color-mix(in oklch, var(--surface-1) 85%, transparent);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--mode-color) 45%, transparent),
+    0 0 18px -6px var(--mode-color);
+  color: var(--mode-color);
+  font-size: 1.45rem;
+  transform: rotate(calc(var(--i) * 90deg)) translateX(calc(var(--orbit-size) / 2)) rotate(calc(var(--i) * -90deg));
+  animation: pop-in var(--duration-4) var(--ease-spring) backwards;
+  animation-delay: calc(200ms + var(--i) * 90ms);
+
+  app-icon {
+    animation: upright var(--orbit-turn) linear infinite;
+  }
+}
+
+@keyframes turn {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+@keyframes upright {
+  to {
+    transform: rotate(-1turn);
+  }
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    scale: 0.3;
+  }
+}
+
+:host-context([data-motion='reduced']) {
+  .orbit,
+  .mode app-icon,
+  .hit,
+  .approach {
+    animation: none;
+  }
+
+  .approach {
+    transform: scale(1.5);
+    opacity: 0.4;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orbit,
+  .mode app-icon,
+  .hit,
+  .approach {
+    animation: none;
+  }
+
+  .approach {
+    transform: scale(1.5);
+    opacity: 0.4;
+  }
+}
