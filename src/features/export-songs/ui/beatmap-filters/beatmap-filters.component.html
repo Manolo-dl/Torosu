@@ -56,7 +56,7 @@
                   [appearance]="modeFilters(m.value).status === s.toLowerCase() ? 'primary' : 'neutral'"
                   (click)="setModeFilter(m.value, 'status', s.toLowerCase())"
                 >
-                  {{ s }}
+                  {{ 'exportSongs.statuses.' + s.toLowerCase() | transloco }}
                 </button>
               }
             </div>

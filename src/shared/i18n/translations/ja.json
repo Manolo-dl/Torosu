@@ -20,7 +20,7 @@
     "general": {
       "osu": "osu!",
       "osuPath": "osu! フォルダのパス",
-      "osuPathPlaceholder": "C:\\Users\\you\\AppData\\Local\\osu!",
+      "osuPathPlaceholder": "C:\\Users\\ユーザー名\\AppData\\Local\\osu!",
       "pickOsuPath": "osu! フォルダを選択",
       "language": "言語",
       "languageHint": "Torosu の表示言語",
@@ -124,11 +124,11 @@
       "reducedMotion": "アニメーションを減らす",
       "reducedMotionHint": "アニメーションとトランジションを減らします。システムの設定でも有効になります",
       "palettes": {
-        "sakura": "Sakura",
-        "nebula": "Nebula",
-        "aurora": "Aurora",
-        "ember": "Ember",
-        "mono": "Mono"
+        "sakura": "桜",
+        "nebula": "星雲",
+        "aurora": "オーロラ",
+        "ember": "残り火",
+        "mono": "モノクロ"
       },
       "fonts": {
         "outfit": "osu! のような幾何学的な書体",
@@ -185,8 +185,8 @@
     "logs": "ログ",
     "osuData": "osu-data",
     "changelog": "更新履歴",
-    "github": "Github",
-    "issues": "Issues",
+    "github": "GitHub",
+    "issues": "不具合報告",
     "support": "サポート",
     "replays": "リプレイ分析",
     "replaysDescription": "ローカルスコアのプレイを分析：タイミング、早押し・遅押しやリリースをキーごとに確認できます。",
@@ -223,8 +223,8 @@
       "diffs": "難易度",
       "inSets": "{{ count }} セット",
       "sets": "{{ count }} セット",
-      "ranked": "Ranked",
-      "loved": "Loved",
+      "ranked": "ランク済み",
+      "loved": "ラブド",
       "unsubmitted": "未投稿",
       "played": "プレイ済み"
     },
@@ -357,7 +357,7 @@
     "tasks": {
       "RateChange": "レートチェンジャー",
       "SVNormalizer": "SV 正規化",
-      "FlnConverter": "Full LN",
+      "FlnConverter": "フルLN",
       "NoLn": "LN なし",
       "ShortLn": "短い LN",
       "KeyConverter": "キー変換"
@@ -667,7 +667,14 @@
     "filtered": "絞り込んだビートマップセット",
     "export": "エクスポート",
     "preview": "プレビュー",
-    "empty": "現在のフィルターに合うビートマップはありません"
+    "empty": "現在のフィルターに合うビートマップはありません",
+    "statuses": {
+      "ranked": "ランク済み",
+      "loved": "ラブド",
+      "approved": "承認済み",
+      "qualified": "クオリファイド",
+      "unranked": "未ランク"
+    }
   },
   "replays": {
     "subtitle": "osu! が保存しているリプレイからあなたのプレイを分析",
@@ -693,13 +700,13 @@
       "n200": "200",
       "n100": "100",
       "n50": "50",
-      "miss": "Miss"
+      "miss": "ミス"
     },
     "early": "早い",
     "late": "遅い",
     "views": {
       "all": "すべて",
-      "rice": "Rice",
+      "rice": "通常ノーツ",
       "ln": "LN",
       "allHint": "すべての押下とロングノーツのリリース。osu! のリザルト画面と同じ数え方です。",
       "riceHint": "通常ノーツのみ：それぞれを押したタイミング。",

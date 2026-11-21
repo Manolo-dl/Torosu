@@ -125,9 +125,9 @@
       "reducedMotionHint": "Moins d'animations et de transitions ; aussi quand le système le demande",
       "palettes": {
         "sakura": "Sakura",
-        "nebula": "Nebula",
-        "aurora": "Aurora",
-        "ember": "Ember",
+        "nebula": "Nébuleuse",
+        "aurora": "Aurore",
+        "ember": "Braise",
         "mono": "Mono"
       },
       "fonts": {
@@ -185,7 +185,7 @@
     "logs": "logs",
     "osuData": "osu-data",
     "changelog": "Nouveautés",
-    "github": "Github",
+    "github": "GitHub",
     "issues": "Problèmes",
     "support": "Soutenir",
     "replays": "Analyse de replays",
@@ -223,7 +223,7 @@
       "diffs": "difficultés",
       "inSets": "dans {{ count }} sets",
       "sets": "{{ count }} sets",
-      "ranked": "Ranked",
+      "ranked": "Classées",
       "loved": "Loved",
       "unsubmitted": "Non publiées",
       "played": "Jouées"
@@ -304,7 +304,7 @@
       "createMaps": "Créer {{ count }} maps"
     },
     "presets": {
-      "title": "Presets",
+      "title": "Préréglages",
       "subtitle": "Remplace les converts par une liste enregistrée",
       "delete": "Supprimer le preset",
       "deleteTitle": "Supprimer ce preset",
@@ -357,7 +357,7 @@
     "tasks": {
       "RateChange": "Changeur de rate",
       "SVNormalizer": "Normaliseur de SV",
-      "FlnConverter": "Full LN",
+      "FlnConverter": "LN complètes",
       "NoLn": "Sans LN",
       "ShortLn": "LN courtes",
       "KeyConverter": "Convertisseur de touches"
@@ -667,7 +667,14 @@
     "filtered": "Sets de beatmaps filtrés",
     "export": "Exporter",
     "preview": "Aperçu",
-    "empty": "Aucune beatmap ne correspond aux filtres actuels"
+    "empty": "Aucune beatmap ne correspond aux filtres actuels",
+    "statuses": {
+      "ranked": "Classées",
+      "loved": "Loved",
+      "approved": "Approuvées",
+      "qualified": "Qualifiées",
+      "unranked": "Non classées"
+    }
   },
   "replays": {
     "subtitle": "Vos parties, d'après les replays qu'osu! conserve",
@@ -693,7 +700,7 @@
       "n200": "200",
       "n100": "100",
       "n50": "50",
-      "miss": "Miss"
+      "miss": "Raté"
     },
     "early": "En avance",
     "late": "En retard",

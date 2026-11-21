@@ -185,7 +185,7 @@
     "logs": "logs",
     "osuData": "osu-data",
     "changelog": "Changelog",
-    "github": "Github",
+    "github": "GitHub",
     "issues": "Issues",
     "support": "Support",
     "replays": "Replay Analysis",
@@ -667,7 +667,14 @@
     "filtered": "Filtered beatmap sets",
     "export": "Export",
     "preview": "Preview",
-    "empty": "No beatmaps match the current filters"
+    "empty": "No beatmaps match the current filters",
+    "statuses": {
+      "ranked": "Ranked",
+      "loved": "Loved",
+      "approved": "Approved",
+      "qualified": "Qualified",
+      "unranked": "Unranked"
+    }
   },
   "replays": {
     "subtitle": "Your plays, from the replays osu! keeps",

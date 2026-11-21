@@ -20,7 +20,7 @@
     "general": {
       "osu": "osu!",
       "osuPath": "osu! 폴더 경로",
-      "osuPathPlaceholder": "C:\\Users\\you\\AppData\\Local\\osu!",
+      "osuPathPlaceholder": "C:\\Users\\사용자\\AppData\\Local\\osu!",
       "pickOsuPath": "osu! 폴더 선택",
       "language": "언어",
       "languageHint": "Torosu의 표시 언어",
@@ -124,11 +124,11 @@
       "reducedMotion": "애니메이션 줄이기",
       "reducedMotionHint": "애니메이션과 전환을 줄입니다. 시스템 설정에서 요청할 때도 적용됩니다",
       "palettes": {
-        "sakura": "Sakura",
-        "nebula": "Nebula",
-        "aurora": "Aurora",
-        "ember": "Ember",
-        "mono": "Mono"
+        "sakura": "벚꽃",
+        "nebula": "성운",
+        "aurora": "오로라",
+        "ember": "잔불",
+        "mono": "모노"
       },
       "fonts": {
         "outfit": "osu!처럼 기하학적인 글꼴",
@@ -185,8 +185,8 @@
     "logs": "로그",
     "osuData": "osu-data",
     "changelog": "변경 내역",
-    "github": "Github",
-    "issues": "Issues",
+    "github": "GitHub",
+    "issues": "버그 제보",
     "support": "후원",
     "replays": "리플레이 분석",
     "replaysDescription": "로컬 점수의 플레이를 분석합니다: 타이밍, 빠르거나 늦은 입력과 릴리스를 키별로 확인하세요.",
@@ -224,7 +224,7 @@
       "inSets": "{{ count }}개 세트",
       "sets": "{{ count }}개 세트",
       "ranked": "랭크됨",
-      "loved": "Loved",
+      "loved": "러브드",
       "unsubmitted": "미업로드",
       "played": "플레이함"
     },
@@ -357,7 +357,7 @@
     "tasks": {
       "RateChange": "배속 변경기",
       "SVNormalizer": "SV 정규화",
-      "FlnConverter": "Full LN",
+      "FlnConverter": "풀 LN",
       "NoLn": "LN 없음",
       "ShortLn": "짧은 LN",
       "KeyConverter": "키 변환"
@@ -667,7 +667,14 @@
     "filtered": "걸러낸 비트맵 세트",
     "export": "내보내기",
     "preview": "미리보기",
-    "empty": "현재 필터에 맞는 비트맵이 없습니다"
+    "empty": "현재 필터에 맞는 비트맵이 없습니다",
+    "statuses": {
+      "ranked": "랭크됨",
+      "loved": "러브드",
+      "approved": "승인됨",
+      "qualified": "퀄리파이드",
+      "unranked": "언랭크"
+    }
   },
   "replays": {
     "subtitle": "osu!가 저장한 리플레이로 본 플레이",
@@ -693,13 +700,13 @@
       "n200": "200",
       "n100": "100",
       "n50": "50",
-      "miss": "Miss"
+      "miss": "미스"
     },
     "early": "빠름",
     "late": "늦음",
     "views": {
       "all": "전체",
-      "rice": "Rice",
+      "rice": "일반 노트",
       "ln": "LN",
       "allHint": "모든 입력과 롱노트 릴리스. osu! 결과 화면과 같은 방식입니다.",
       "riceHint": "일반 노트만: 각 노트를 누른 시점.",

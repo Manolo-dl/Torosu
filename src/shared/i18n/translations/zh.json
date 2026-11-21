@@ -20,7 +20,7 @@
     "general": {
       "osu": "osu!",
       "osuPath": "osu! 文件夹路径",
-      "osuPathPlaceholder": "C:\\Users\\you\\AppData\\Local\\osu!",
+      "osuPathPlaceholder": "C:\\Users\\用户名\\AppData\\Local\\osu!",
       "pickOsuPath": "选择 osu! 文件夹",
       "language": "语言",
       "languageHint": "Torosu 的界面语言",
@@ -124,11 +124,11 @@
       "reducedMotion": "减少动画",
       "reducedMotionHint": "减少动画和过渡；系统要求时也会生效",
       "palettes": {
-        "sakura": "Sakura",
-        "nebula": "Nebula",
-        "aurora": "Aurora",
-        "ember": "Ember",
-        "mono": "Mono"
+        "sakura": "樱花",
+        "nebula": "星云",
+        "aurora": "极光",
+        "ember": "余烬",
+        "mono": "单色"
       },
       "fonts": {
         "outfit": "几何风格，与 osu! 相似",
@@ -357,7 +357,7 @@
     "tasks": {
       "RateChange": "倍速调整器",
       "SVNormalizer": "SV 标准化器",
-      "FlnConverter": "Full LN",
+      "FlnConverter": "全LN",
       "NoLn": "去除 LN",
       "ShortLn": "短长条",
       "KeyConverter": "键数转换器"
@@ -667,7 +667,14 @@
     "filtered": "筛选后的谱面集",
     "export": "导出",
     "preview": "预览",
-    "empty": "没有谱面符合当前筛选条件"
+    "empty": "没有谱面符合当前筛选条件",
+    "statuses": {
+      "ranked": "上架",
+      "loved": "社区喜爱",
+      "approved": "批准",
+      "qualified": "过审",
+      "unranked": "未上架"
+    }
   },
   "replays": {
     "subtitle": "根据 osu! 保存的回放分析你的游玩",
@@ -693,13 +700,13 @@
       "n200": "200",
       "n100": "100",
       "n50": "50",
-      "miss": "Miss"
+      "miss": "失误"
     },
     "early": "提前",
     "late": "延后",
     "views": {
       "all": "全部",
-      "rice": "Rice",
+      "rice": "米",
       "ln": "LN",
       "allHint": "所有按键与长条松键，与 osu! 结算画面的计算方式相同。",
       "riceHint": "仅普通音符：每个音符的按下时机。",

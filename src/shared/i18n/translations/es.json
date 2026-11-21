@@ -125,9 +125,9 @@
       "reducedMotionHint": "Menos animaciones y transiciones; también cuando lo pide el sistema",
       "palettes": {
         "sakura": "Sakura",
-        "nebula": "Nebula",
+        "nebula": "Nebulosa",
         "aurora": "Aurora",
-        "ember": "Ember",
+        "ember": "Brasa",
         "mono": "Mono"
       },
       "fonts": {
@@ -185,7 +185,7 @@
     "logs": "logs",
     "osuData": "osu-data",
     "changelog": "Novedades",
-    "github": "Github",
+    "github": "GitHub",
     "issues": "Problemas",
     "support": "Apoyar",
     "replays": "Análisis de replays",
@@ -223,7 +223,7 @@
       "diffs": "dificultades",
       "inSets": "en {{ count }} sets",
       "sets": "{{ count }} sets",
-      "ranked": "Ranked",
+      "ranked": "Rankeados",
       "loved": "Loved",
       "unsubmitted": "Sin subir",
       "played": "Jugadas"
@@ -304,7 +304,7 @@
       "createMaps": "Crear {{ count }} mapas"
     },
     "presets": {
-      "title": "Presets",
+      "title": "Preajustes",
       "subtitle": "Sustituye los converts por una lista guardada",
       "delete": "Borrar preset",
       "deleteTitle": "Borrar este preset",
@@ -357,7 +357,7 @@
     "tasks": {
       "RateChange": "Cambiador de rate",
       "SVNormalizer": "Normalizador de SV",
-      "FlnConverter": "Full LN",
+      "FlnConverter": "LN completas",
       "NoLn": "Sin LN",
       "ShortLn": "LN cortas",
       "KeyConverter": "Conversor de teclas"
@@ -667,7 +667,14 @@
     "filtered": "Sets de mapas filtrados",
     "export": "Exportar",
     "preview": "Vista previa",
-    "empty": "Ningún mapa cumple los filtros actuales"
+    "empty": "Ningún mapa cumple los filtros actuales",
+    "statuses": {
+      "ranked": "Rankeados",
+      "loved": "Loved",
+      "approved": "Aprobados",
+      "qualified": "Calificados",
+      "unranked": "Sin rankear"
+    }
   },
   "replays": {
     "subtitle": "Tus partidas, desde las replays que guarda osu!",
@@ -693,7 +700,7 @@
       "n200": "200",
       "n100": "100",
       "n50": "50",
-      "miss": "Miss"
+      "miss": "Fallo"
     },
     "early": "Antes",
     "late": "Tarde",
@@ -780,7 +787,7 @@
     "noUpdate": "No hay ninguna actualización que instalar"
   },
   "modes": {
-    "standard": "Standard",
+    "standard": "Estándar",
     "taiko": "Taiko",
     "catch": "Catch",
     "mania": "Mania"
