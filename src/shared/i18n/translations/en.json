@@ -452,7 +452,12 @@
       "failedFile": "Failed maps are saved to <strong>failed_downloads.txt</strong> in your osu! folder.",
       "clear": "Clear queue",
       "start": "Start download",
-      "downloadFailed": "Download failed"
+      "downloadFailed": "Download failed",
+      "setNumber": "Beatmap set #{{ id }}",
+      "openPage": "Open its page on osu!",
+      "remove": "Remove from the queue",
+      "overall": "{{ finished }} of {{ total }}",
+      "nameSoon": "its name shows as it starts"
     },
     "status": {
       "pending": "pending",

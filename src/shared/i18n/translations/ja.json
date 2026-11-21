@@ -452,7 +452,12 @@
       "failedFile": "失敗したマップは osu! フォルダの <strong>failed_downloads.txt</strong> に保存されます。",
       "clear": "キューを消去",
       "start": "ダウンロード開始",
-      "downloadFailed": "ダウンロード失敗"
+      "downloadFailed": "ダウンロード失敗",
+      "setNumber": "ビートマップセット #{{ id }}",
+      "openPage": "osu! でページを開く",
+      "remove": "キューから削除",
+      "overall": "{{ total }} 件中 {{ finished }} 件",
+      "nameSoon": "開始すると名前が表示されます"
     },
     "status": {
       "pending": "保留",

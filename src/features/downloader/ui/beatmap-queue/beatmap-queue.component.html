@@ -23,22 +23,71 @@
     }
 
     @if (downloadQueue.queue().length > 0) {
+      <!-- How far the whole queue has got, while it runs or once it has. -->
+      @if (downloadQueue.isDownloading() || done() + failed() > 0) {
+        <div class="overall">
+          <progress appProgress max="100" [value]="overall()"></progress>
+          <span>{{ 'downloader.queue.overall' | transloco: { finished: done() + failed(), total: downloadQueue.queue().length } }}</span>
+        </div>
+      }
+
       <tui-scrollbar class="list">
-        @for (item of downloadQueue.queue(); track item.beatmapSetId) {
-          <div class="item" [attr.data-status]="item.status">
-            <span class="id">#{{ item.beatmapSetId }}</span>
+        @for (item of downloadQueue.queue(); track item.beatmapSetId; let i = $index) {
+          <div class="item" [attr.data-status]="item.status" [style.--i]="i < 12 ? i : 12">
+            <span class="state">
+              <app-icon [name]="stateIcons[item.status]" />
+            </span>
+
+            <div class="text">
+              <button
+                type="button"
+                class="name"
+                [class.unknown]="!item.name"
+                [title]="'downloader.queue.openPage' | transloco"
+                (click)="openPage(item.beatmapSetId)"
+              >
+                {{ item.name ?? ('downloader.queue.setNumber' | transloco: { id: item.beatmapSetId }) }}
+              </button>
+              @if (item.status === 'downloading') {
+                <progress size="s" appProgress max="100" [value]="item.progress"></progress>
+              } @else {
+                <span class="sub">
+                  <!-- The id, unless it is already the title. -->
+                  @if (item.name) {
+                    <span class="mono">#{{ item.beatmapSetId }}</span> ·
+                  }
+                  {{ 'downloader.status.' + item.status | transloco }}
+                  @if (item.status === 'pending' && !item.name) {
+                    · {{ 'downloader.queue.nameSoon' | transloco }}
+                  }
+                </span>
+              }
+            </div>
+
             @if (item.status === 'downloading') {
-              <progress
-                size="s"
-                appProgress
-                max="100"
-                [value]="item.progress"
-              ></progress>
-              <span class="pct">{{ item.progress | number:'1.0-0' }}%</span>
-            } @else {
-              <span appBadge [tone]="statusTone[item.status]" size="s">
-                {{ 'downloader.status.' + item.status | transloco }}
-              </span>
+              <span class="pct">{{ item.progress | number: '1.0-0' }}%</span>
+            }
+            <button
+              appButton="ghost"
+              iconOnly
+              icon="external-link"
+              size="xs"
+              type="button"
+              (click)="openPage(item.beatmapSetId)"
+            >
+              {{ 'downloader.queue.openPage' | transloco }}
+            </button>
+            @if (item.status !== 'downloading' && !downloadQueue.isDownloading()) {
+              <button
+                appButton="ghost"
+                iconOnly
+                icon="x"
+                size="xs"
+                type="button"
+                (click)="downloadQueue.removeItem(item.beatmapSetId)"
+              >
+                {{ 'downloader.queue.remove' | transloco }}
+              </button>
             }
           </div>
         }
@@ -60,6 +109,7 @@
       <button
         appButton="primary"
         size="m"
+        icon="download"
         type="button"
         [disabled]="pending() === 0 || downloadQueue.isDownloading()"
         [loading]="downloadQueue.isDownloading()"

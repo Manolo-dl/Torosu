@@ -452,7 +452,12 @@
       "failedFile": "Les maps en échec sont enregistrées dans <strong>failed_downloads.txt</strong> dans votre dossier osu!.",
       "clear": "Vider la file",
       "start": "Lancer le téléchargement",
-      "downloadFailed": "Le téléchargement a échoué"
+      "downloadFailed": "Le téléchargement a échoué",
+      "setNumber": "Set de maps #{{ id }}",
+      "openPage": "Ouvrir sa page sur osu!",
+      "remove": "Retirer de la file",
+      "overall": "{{ finished }} sur {{ total }}",
+      "nameSoon": "son nom s'affiche au démarrage"
     },
     "status": {
       "pending": "en attente",

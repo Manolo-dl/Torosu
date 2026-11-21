@@ -21,6 +21,10 @@ pub struct DownloadProgress {
     pub beatmap_set_id: u64,
     pub progress: f64,
     pub status: String,
+    /// "Artist - Title", once osu! has said it (the file's name); the
+    /// frontend keeps it for the reports that don't carry it.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
 }
 
 /// How the downloads went. The frontend notifies with it when the settings
@@ -79,7 +83,7 @@ pub async fn start_downloads(
             let permit = semaphore.acquire().await.unwrap();
 
             app.emit("download:progress", DownloadProgress {
-                beatmap_set_id: id, progress: 0.0, status: "downloading".to_string(),
+                beatmap_set_id: id, progress: 0.0, status: "downloading".to_string(), name: None,
             }).ok();
 
             let result = download_beatmap(&app, &client, id, &osu_session, &songs_folder, skip_video, open_file).await;
@@ -87,13 +91,13 @@ pub async fn start_downloads(
             match &result {
                 Ok(_) => {
                     app.emit("download:progress", DownloadProgress {
-                        beatmap_set_id: id, progress: 100.0, status: "done".to_string(),
+                        beatmap_set_id: id, progress: 100.0, status: "done".to_string(), name: None,
                     }).ok();
                 }
                 Err(e) => {
                     log::warn!("Beatmap {} marked as failed: {}", id, e);
                     app.emit("download:progress", DownloadProgress {
-                        beatmap_set_id: id, progress: 0.0, status: "failed".to_string(),
+                        beatmap_set_id: id, progress: 0.0, status: "failed".to_string(), name: None,
                     }).ok();
                 }
             }
@@ -173,6 +177,17 @@ async fn download_beatmap(
         .to_string();
 
     let filename = extract_filename(&disposition, beatmap_set_id);
+    let name = display_name(&filename, beatmap_set_id);
+
+    // Which map it is, as soon as it is known: the queue shows its name.
+    if name.is_some() {
+        app.emit("download:progress", DownloadProgress {
+            beatmap_set_id,
+            progress: 0.0,
+            status: "downloading".to_string(),
+            name: name.clone(),
+        }).ok();
+    }
 
     let temp_dir = songs_folder
         .parent()
@@ -219,6 +234,7 @@ async fn download_beatmap(
                 beatmap_set_id,
                 progress,
                 status: "downloading".to_string(),
+                name: name.clone(),
             }).ok();
         }
     }
@@ -257,6 +273,15 @@ fn extract_filename(disposition: &str, beatmap_set_id: u64) -> String {
     }
 }
 
+/// The map's name in the file osu! sends, "123 Artist - Title.osz": without
+/// the set's id and the extension. None when osu! gave no name.
+fn display_name(filename: &str, beatmap_set_id: u64) -> Option<String> {
+    let stem = filename.strip_suffix(".osz").unwrap_or(filename);
+    let id = beatmap_set_id.to_string();
+    let name = stem.strip_prefix(&id).map(str::trim_start).unwrap_or(stem).trim();
+    (!name.is_empty() && name != id).then(|| name.to_string())
+}
+
 fn sanitize_filename(name: &str) -> String {
     name.chars()
         .map(|c| match c {
@@ -286,4 +311,23 @@ pub fn set_osu_session(
     state.update(|config| {
         config.downloader.osu_session = if config.downloader.save_session { session } else { None };
     })
+}
+#[cfg(test)]
+mod tests {
+    use super::{display_name, extract_filename};
+
+    #[test]
+    fn names_the_map_from_the_file_osu_sends() {
+        let file = extract_filename("attachment; filename=\"1234567 xi - FREEDOM DiVE.osz\"", 1234567);
+        assert_eq!(display_name(&file, 1234567).as_deref(), Some("xi - FREEDOM DiVE"));
+        // A name without the id in front is kept whole.
+        assert_eq!(display_name("Camellia - Exit This Earth's Atomosphere.osz", 5).as_deref(), Some("Camellia - Exit This Earth's Atomosphere"));
+    }
+
+    #[test]
+    fn no_name_when_osu_gave_none() {
+        let file = extract_filename("", 42);
+        assert_eq!(file, "42.osz");
+        assert_eq!(display_name(&file, 42), None);
+    }
 }

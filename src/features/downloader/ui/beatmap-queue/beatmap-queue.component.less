@@ -1,3 +1,5 @@
+@import 'shared/styles/mixins';
+
 :host {
   display: block;
 }
@@ -5,58 +7,170 @@
 [appCard] {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: var(--space-4);
 }
 
 .stats {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: var(--space-2);
+}
+
+/* The whole queue: a bar and how many are finished. */
+.overall {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--text-3);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+
+  progress {
+    flex: 1;
+  }
 }
 
 .list {
-  max-block-size: 22.5rem;
+  max-block-size: 24rem;
+}
 
-  .item {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.5rem 0.75rem;
-    border-bottom: 1px solid var(--tui-border-normal);
-    font: var(--tui-typography-body-s);
+.item {
+  --state-color: var(--text-4);
 
-    &:last-child {
-      border-bottom: none;
-    }
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-block-size: 3.25rem;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  transition: background var(--duration-2) var(--ease-out);
+  animation: row-in var(--duration-3) var(--ease-out) backwards;
+  animation-delay: calc(var(--i, 0) * var(--stagger));
 
-    .id {
-      flex-shrink: 0;
-      min-inline-size: 5rem;
-      font-family: var(--font-mono);
-      font-weight: 600;
-      color: var(--tui-text-secondary);
-    }
+  & + & {
+    margin-block-start: 2px;
+  }
 
-    progress {
-      flex: 1;
-    }
+  &:hover {
+    background: color-mix(in oklch, var(--text-1) 4%, transparent);
+  }
 
-    .pct {
-      flex-shrink: 0;
-      min-inline-size: 2.5rem;
-      text-align: end;
-      font-weight: 600;
-      color: var(--tui-text-action);
-    }
+  &[data-status='downloading'] {
+    --state-color: var(--accent);
+    background: var(--accent-soft);
 
-    [appBadge] {
-      margin-inline-start: auto;
-      text-transform: capitalize;
+    .state app-icon {
+      animation: spin 0.9s linear infinite;
     }
   }
+
+  &[data-status='done'] {
+    --state-color: var(--success);
+
+    .state app-icon {
+      animation: pop var(--duration-4) var(--ease-spring);
+    }
+  }
+
+  &[data-status='failed'] {
+    --state-color: var(--danger);
+  }
+}
+
+.state {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  inline-size: 2rem;
+  block-size: 2rem;
+  border-radius: var(--radius-pill);
+  background: color-mix(in oklch, var(--state-color) 14%, transparent);
+  color: var(--state-color);
+  font-size: 1.05rem;
+  transition:
+    background var(--duration-2) var(--ease-out),
+    color var(--duration-2) var(--ease-out);
+}
+
+.text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-inline-size: 0;
+
+  progress {
+    inline-size: 100%;
+  }
+}
+
+/* The map's name opens its page. */
+.name {
+  .ellipsis();
+  align-self: flex-start;
+  max-inline-size: 100%;
+  color: var(--text-1);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  text-align: start;
+  transition: color var(--duration-1) var(--ease-out);
+  animation: name-in var(--duration-3) var(--ease-out);
+
+  &.unknown {
+    color: var(--text-2);
+    font-weight: var(--weight-medium);
+  }
+
+  &:hover {
+    color: var(--accent-text);
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+}
+
+.sub {
+  .ellipsis();
+  color: var(--text-3);
+  font-size: var(--text-2xs);
+}
+
+.pct {
+  flex-shrink: 0;
+  min-inline-size: 2.75rem;
+  color: var(--accent-text);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  font-variant-numeric: tabular-nums;
+  text-align: end;
 }
 
 .controls {
   display: flex;
-  gap: 0.5rem;
+  gap: var(--space-2);
+}
+
+@keyframes row-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@keyframes name-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+@keyframes pop {
+  from {
+    transform: scale(0.4);
+  }
 }

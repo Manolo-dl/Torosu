@@ -452,7 +452,12 @@
       "failedFile": "失败的谱面会保存到 osu! 文件夹中的 <strong>failed_downloads.txt</strong>。",
       "clear": "清空队列",
       "start": "开始下载",
-      "downloadFailed": "下载失败"
+      "downloadFailed": "下载失败",
+      "setNumber": "谱面集 #{{ id }}",
+      "openPage": "在 osu! 上打开页面",
+      "remove": "从队列中移除",
+      "overall": "{{ finished }} / {{ total }}",
+      "nameSoon": "开始下载时显示名称"
     },
     "status": {
       "pending": "待处理",

@@ -452,7 +452,12 @@
       "failedFile": "Los mapas fallidos se guardan en <strong>failed_downloads.txt</strong> en tu carpeta de osu!.",
       "clear": "Vaciar cola",
       "start": "Empezar descarga",
-      "downloadFailed": "La descarga ha fallado"
+      "downloadFailed": "La descarga ha fallado",
+      "setNumber": "Set de mapas #{{ id }}",
+      "openPage": "Abrir su página en osu!",
+      "remove": "Quitar de la cola",
+      "overall": "{{ finished }} de {{ total }}",
+      "nameSoon": "su nombre sale al empezar"
     },
     "status": {
       "pending": "pendiente",

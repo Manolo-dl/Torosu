@@ -452,7 +452,12 @@
       "failedFile": "실패한 맵은 osu! 폴더의 <strong>failed_downloads.txt</strong>에 저장됩니다.",
       "clear": "대기열 비우기",
       "start": "다운로드 시작",
-      "downloadFailed": "다운로드 실패"
+      "downloadFailed": "다운로드 실패",
+      "setNumber": "비트맵 세트 #{{ id }}",
+      "openPage": "osu!에서 페이지 열기",
+      "remove": "대기열에서 제거",
+      "overall": "{{ total }}개 중 {{ finished }}개",
+      "nameSoon": "시작하면 이름이 표시됩니다"
     },
     "status": {
       "pending": "보류",
