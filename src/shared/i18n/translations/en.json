@@ -440,7 +440,8 @@
       "isRequired": "The cookie is required",
       "tooShort": "The cookie is too short",
       "tooLong": "The cookie is too long",
-      "failed": "Could not use the cookie"
+      "failed": "Could not use the cookie",
+      "updated": "Cookie in use: you can download now"
     },
     "queue": {
       "queued": "{{ count }} queued",

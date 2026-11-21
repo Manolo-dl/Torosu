@@ -5,6 +5,8 @@ import { form, maxLength, minLength, required, FormRoot, FormField } from '@angu
 import { signal } from '@angular/core';
 import { UserStore } from '../../user.store';
 import { ConfigurationStore } from '@entities/configuration';
+import { NotifyService } from '@shared/services';
+import { TranslocoService } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-osu-cookie-input',
@@ -16,6 +18,8 @@ import { ConfigurationStore } from '@entities/configuration';
 export class OsuCookieInputComponent {
   readonly userStore = inject(UserStore);
   readonly config = inject(ConfigurationStore);
+  private readonly notify = inject(NotifyService);
+  private readonly transloco = inject(TranslocoService);
 
   /** The messages are translation keys, shown by `StatefulInputComponent`. */
   readonly osuCookieForm = form(
@@ -31,8 +35,10 @@ export class OsuCookieInputComponent {
           const previous = this.userStore.user()?.osuSession ?? '';
           try {
             this.userStore.updateUser({ osuSession: field().value().osuSession });
+            // Emptied, not to leave the cookie on screen; the badge above says it is in use.
             field().value.set({ osuSession: '' });
             field().reset();
+            this.notify.success(this.transloco.translate('downloader.cookie.updated'));
             return null;
           } catch {
             if (previous) field().value.set({ osuSession: previous });

@@ -440,7 +440,8 @@
       "isRequired": "Cookie は必須です",
       "tooShort": "Cookie が短すぎます",
       "tooLong": "Cookie が長すぎます",
-      "failed": "Cookie を使用できませんでした"
+      "failed": "Cookie を使用できませんでした",
+      "updated": "Cookie を使用中: ダウンロードできます"
     },
     "queue": {
       "queued": "{{ count }} 件待機中",

@@ -440,7 +440,8 @@
       "isRequired": "需要 Cookie",
       "tooShort": "Cookie 太短",
       "tooLong": "Cookie 太长",
-      "failed": "无法使用该 Cookie"
+      "failed": "无法使用该 Cookie",
+      "updated": "Cookie 已启用：现在可以下载了"
     },
     "queue": {
       "queued": "排队 {{ count }} 个",
