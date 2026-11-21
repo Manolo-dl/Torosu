@@ -8,6 +8,24 @@
   display: block;
   inline-size: 15rem;
   flex-shrink: 0;
+  transition: inline-size var(--duration-3) var(--ease-out);
+}
+
+/* Only the icons: as wide as an item is tall, plus the padding. */
+:host(.collapsed) {
+  inline-size: calc(@item-height + 2 * var(--space-3));
+
+  .label,
+  .group-label,
+  .version {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .group-label {
+    block-size: 0;
+    margin: 0;
+  }
 }
 
 nav {
@@ -16,7 +34,26 @@ nav {
   gap: var(--space-4);
   block-size: 100%;
   padding: var(--space-2) var(--space-3) var(--space-3);
+  overflow-x: hidden;
   overflow-y: auto;
+}
+
+/* Small capitals over the tools, as the sections of the pages. */
+.group-label {
+  block-size: 1rem;
+  margin-block-end: calc(-1 * var(--space-2));
+  padding-inline: var(--space-3);
+  color: var(--text-4);
+  font-family: var(--font-display);
+  font-size: 0.6875rem;
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transition:
+    opacity var(--duration-2) var(--ease-out),
+    block-size var(--duration-3) var(--ease-out),
+    margin var(--duration-3) var(--ease-out);
 }
 
 .items {
@@ -86,6 +123,7 @@ a {
 
   .label {
     .ellipsis();
+    transition: opacity var(--duration-2) var(--ease-out);
   }
 
   &:hover:not(.disabled):not(.active) {
@@ -109,8 +147,35 @@ a {
 }
 
 footer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
   margin-block-start: auto;
-  padding-inline: var(--space-3);
   font-size: var(--text-2xs);
   color: var(--text-4);
+}
+
+.version {
+  white-space: nowrap;
+  transition: opacity var(--duration-2) var(--ease-out);
+}
+
+/* Lines up with the items' icons. */
+.collapse {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  inline-size: @item-height;
+  block-size: 2rem;
+  border-radius: var(--radius-md);
+  color: var(--text-3);
+  font-size: 1.1rem;
+  transition:
+    background var(--duration-2) var(--ease-out),
+    color var(--duration-2) var(--ease-out);
+
+  &:hover {
+    background: color-mix(in oklch, var(--text-1) 6%, transparent);
+    color: var(--text-1);
+  }
 }

@@ -7,16 +7,21 @@ import { getVersion } from '@tauri-apps/api/app';
 import { APP_ITEMS, DEV_ITEMS, NavItem, NavStore, USER_ITEMS } from '@entities/nav-item';
 import { ConfigurationStore } from '@entities/configuration';
 import { IconComponent } from '@shared/ui';
+import { AppearanceStore } from '@shared/stores';
 
 @Component({
   selector: 'app-sidebar',
   imports: [IconComponent, RouterLink, RouterLinkActive, TranslocoPipe],
   templateUrl: './sidebar.component.html',
   styleUrl: './sidebar.component.less',
+  host: { '[class.collapsed]': 'collapsed()' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SidebarComponent {
   readonly navStore = inject(NavStore);
+  readonly appearance = inject(AppearanceStore);
+  /** Only the icons show. */
+  readonly collapsed = this.appearance.sidebarCollapsed;
   private readonly config = inject(ConfigurationStore);
   private readonly router = inject(Router);
 

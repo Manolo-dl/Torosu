@@ -16,6 +16,8 @@ interface AppearanceState {
     dark: boolean;
     /** Fewer animations, besides the system's own setting. */
     reducedMotion: boolean;
+    /** The sidebar shows only its icons. */
+    sidebarCollapsed: boolean;
 }
 
 const initialState: AppearanceState = {
@@ -23,6 +25,7 @@ const initialState: AppearanceState = {
     font: 'outfit',
     dark: true,
     reducedMotion: false,
+    sidebarCollapsed: false,
 };
 
 /** Where it is kept: it is the window's look, not a setting of the tools. */
@@ -36,6 +39,7 @@ function saved(): AppearanceState {
             font: FONTS.includes(value.font as Font) ? (value.font as Font) : initialState.font,
             dark: typeof value.dark === 'boolean' ? value.dark : initialState.dark,
             reducedMotion: value.reducedMotion === true,
+            sidebarCollapsed: value.sidebarCollapsed === true,
         };
     } catch {
         return initialState;
@@ -56,6 +60,7 @@ export const AppearanceStore = signalStore(
         setDark: (dark: boolean) => patchState(store, { dark }),
         toggleDark: () => patchState(store, { dark: !store.dark() }),
         setReducedMotion: (reducedMotion: boolean) => patchState(store, { reducedMotion }),
+        toggleSidebar: () => patchState(store, { sidebarCollapsed: !store.sidebarCollapsed() }),
     })),
 
     withHooks({
@@ -66,6 +71,7 @@ export const AppearanceStore = signalStore(
                     font: store.font(),
                     dark: store.dark(),
                     reducedMotion: store.reducedMotion(),
+                    sidebarCollapsed: store.sidebarCollapsed(),
                 };
                 const root = document.documentElement;
                 root.dataset['palette'] = state.palette;

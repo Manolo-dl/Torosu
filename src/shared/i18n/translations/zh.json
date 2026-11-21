@@ -157,7 +157,10 @@
     "issues": "问题反馈",
     "support": "支持",
     "replays": "回放分析",
-    "replaysDescription": "查看你本地成绩的游玩情况：逐键的时机、提前或延后的按键与松键。"
+    "replaysDescription": "查看你本地成绩的游玩情况：逐键的时机、提前或延后的按键与松键。",
+    "tools": "工具",
+    "collapse": "收起侧边栏",
+    "expand": "展开侧边栏"
   },
   "header": {
     "toggleTheme": "切换主题",

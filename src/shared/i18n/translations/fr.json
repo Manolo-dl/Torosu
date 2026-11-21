@@ -157,7 +157,10 @@
     "issues": "Problèmes",
     "support": "Soutenir",
     "replays": "Analyse de replays",
-    "replaysDescription": "Voyez comment vous avez joué vos scores locaux : timing, appuis et relâchements en avance ou en retard, touche par touche."
+    "replaysDescription": "Voyez comment vous avez joué vos scores locaux : timing, appuis et relâchements en avance ou en retard, touche par touche.",
+    "tools": "Outils",
+    "collapse": "Réduire la barre latérale",
+    "expand": "Agrandir la barre latérale"
   },
   "header": {
     "toggleTheme": "Changer de thème",

@@ -157,7 +157,10 @@
     "issues": "Issues",
     "support": "サポート",
     "replays": "リプレイ分析",
-    "replaysDescription": "ローカルスコアのプレイを分析：タイミング、早押し・遅押しやリリースをキーごとに確認できます。"
+    "replaysDescription": "ローカルスコアのプレイを分析：タイミング、早押し・遅押しやリリースをキーごとに確認できます。",
+    "tools": "ツール",
+    "collapse": "サイドバーを折りたたむ",
+    "expand": "サイドバーを展開"
   },
   "header": {
     "toggleTheme": "テーマを切り替え",

@@ -157,7 +157,10 @@
     "issues": "Issues",
     "support": "후원",
     "replays": "리플레이 분석",
-    "replaysDescription": "로컬 점수의 플레이를 분석합니다: 타이밍, 빠르거나 늦은 입력과 릴리스를 키별로 확인하세요."
+    "replaysDescription": "로컬 점수의 플레이를 분석합니다: 타이밍, 빠르거나 늦은 입력과 릴리스를 키별로 확인하세요.",
+    "tools": "도구",
+    "collapse": "사이드바 접기",
+    "expand": "사이드바 펼치기"
   },
   "header": {
     "toggleTheme": "테마 전환",

@@ -157,7 +157,10 @@
     "issues": "Issues",
     "support": "Support",
     "replays": "Replay Analysis",
-    "replaysDescription": "See how you played your local scores: timing, early or late hits and releases, key by key."
+    "replaysDescription": "See how you played your local scores: timing, early or late hits and releases, key by key.",
+    "tools": "Tools",
+    "collapse": "Collapse the sidebar",
+    "expand": "Expand the sidebar"
   },
   "header": {
     "toggleTheme": "Toggle theme",

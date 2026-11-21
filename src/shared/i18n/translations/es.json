@@ -157,7 +157,10 @@
     "issues": "Problemas",
     "support": "Apoyar",
     "replays": "Análisis de replays",
-    "replaysDescription": "Mira cómo jugaste tus scores locales: timing, golpes y sueltas antes o tarde, tecla a tecla."
+    "replaysDescription": "Mira cómo jugaste tus scores locales: timing, golpes y sueltas antes o tarde, tecla a tecla.",
+    "tools": "Herramientas",
+    "collapse": "Contraer la barra lateral",
+    "expand": "Expandir la barra lateral"
   },
   "header": {
     "toggleTheme": "Cambiar tema",
