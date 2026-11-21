@@ -3,30 +3,27 @@ import { MUSIC_BANDS, Music, MusicService, OsuReaderStore } from '@entities/osu-
 import { AppearanceStore } from '@shared/stores';
 
 /**
- * Bars in the title bar following the music osu! is playing, mirrored about
- * their middle, in both accents and brighter on each bass hit
- * (`MusicService` gives their levels). Hidden while osu! is not open. Lets
- * the pointer through, so the window is still dragged from there.
+ * The music osu! is playing across the whole title bar, behind its contents:
+ * bars rising from its bottom edge, the bass in the middle and the highs out
+ * to the sides (where the buttons are, the music is quietest), fading out
+ * upwards so what is over them stays readable, brighter on each bass hit.
+ * `MusicService` gives their levels. Hidden while osu! is not open. Lets the
+ * pointer through: the window still drags from the title bar.
  */
 @Component({
     selector: 'app-visualizer',
     template: '<canvas #canvas></canvas>',
     styles: `
         :host {
-            display: block;
-            inline-size: clamp(9rem, 22vw, 17rem);
-            block-size: 2.4rem;
+            position: absolute;
+            inset: 0;
             pointer-events: none;
             opacity: 0;
-            transform: scaleY(0.3);
-            transition:
-                opacity var(--duration-3) var(--ease-out),
-                transform var(--duration-3) var(--ease-out);
+            transition: opacity var(--duration-4) var(--ease-out);
         }
 
         :host(.shown) {
             opacity: 1;
-            transform: none;
         }
 
         canvas {
@@ -110,25 +107,39 @@ export class VisualizerComponent {
         const reach = this.appearance.reducedMotion() ? 0.35 : 1;
         context.clearRect(0, 0, width, height);
 
+        // About 3px bars, no more than 180 of them: wider on wide windows.
         const gap = 2;
-        const bar = (width - gap * (MUSIC_BANDS - 1)) / MUSIC_BANDS;
+        const count = Math.min(180, Math.floor(width / 5));
+        const bar = (width - gap * (count - 1)) / count;
+        const middle = (count - 1) / 2;
+
+        // The second accent out to the sides, the first in the middle.
         const gradient = context.createLinearGradient(0, 0, width, 0);
-        gradient.addColorStop(0, this.colors[0]);
+        gradient.addColorStop(0, this.colors[1]);
+        gradient.addColorStop(0.5, this.colors[0]);
         gradient.addColorStop(1, this.colors[1]);
         context.fillStyle = gradient;
+        context.globalAlpha = Math.min(0.85, 0.45 + beat * 0.3);
 
-        for (let i = 0; i < MUSIC_BANDS; i++) {
-            const level = Math.min(levels[i], reach);
-            // At rest, a dot; playing, up and down from the middle.
-            const size = Math.max(bar, level * height);
-            const x = i * (bar + gap);
-            const y = (height - size) / 2;
-            context.globalAlpha = Math.min(1, 0.4 + level * 0.5 + beat * 0.3);
-            context.beginPath();
-            context.roundRect(x, y, bar, size, bar / 2);
-            context.fill();
+        for (let i = 0; i < count; i++) {
+            // How far from the middle, 0 to 1: which band, between two of them.
+            const at = (Math.abs(i - middle) / middle) * (MUSIC_BANDS - 1);
+            const low = Math.floor(at);
+            const high = Math.min(MUSIC_BANDS - 1, low + 1);
+            const level = Math.min(reach, levels[low] + (levels[high] - levels[low]) * (at - low));
+            const size = Math.max(1.5, level * height * 0.9);
+            context.fillRect(i * (bar + gap), height - size, bar, size);
         }
+
+        // Fading out upwards: what is over the bars stays readable.
         context.globalAlpha = 1;
+        context.globalCompositeOperation = 'destination-in';
+        const fade = context.createLinearGradient(0, height, 0, 0);
+        fade.addColorStop(0, 'rgba(0, 0, 0, 1)');
+        fade.addColorStop(1, 'rgba(0, 0, 0, 0.15)');
+        context.fillStyle = fade;
+        context.fillRect(0, 0, width, height);
+        context.globalCompositeOperation = 'source-over';
         return false;
     }
 }

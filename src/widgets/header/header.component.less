@@ -13,6 +13,8 @@
 }
 
 header {
+  /* The visualizer fills it from behind; its contents come after, so over it. */
+  position: relative;
   display: flex;
   align-items: center;
   gap: var(--space-3);
@@ -51,12 +53,15 @@ header {
   }
 }
 
+.brand,
+.drag,
+.actions {
+  position: relative;
+}
+
 .drag {
-  display: flex;
   flex: 1;
   align-self: stretch;
-  align-items: center;
-  justify-content: center;
 }
 
 .actions {
