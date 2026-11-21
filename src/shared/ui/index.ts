@@ -23,3 +23,4 @@ export { CheckboxComponent, SwitchComponent } from './switch/switch.component';
 export { TrianglesComponent } from './triangles/triangles.component';
 export { ProgressComponent } from './progress/progress.component';
 export { SkeletonComponent } from './skeleton/skeleton.component';
+export { ToastsComponent } from './toast/toasts.component';

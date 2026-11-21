@@ -6,13 +6,14 @@ import { SidebarComponent } from "@widgets/sidebar";
 import { OsuPathComponent } from "@widgets/osu-path";
 import { OsuPathStore } from "@entities/osu-path";
 import { AppearanceStore, PlatformStore } from "@shared/stores";
+import { ToastsComponent } from "@shared/ui";
 import { ConfigurationStore } from "@entities/configuration";
 import { TrainerShortcutsService } from "@features/trainer";
 import { DEFAULT_LANGUAGE, isLanguage, LanguageService } from "@shared/i18n";
 
 @Component({
   selector: "app-root",
-  imports: [RouterOutlet, HeaderComponent, SidebarComponent, OsuPathComponent, TuiRoot],
+  imports: [RouterOutlet, HeaderComponent, SidebarComponent, OsuPathComponent, ToastsComponent, TuiRoot],
   templateUrl: "./app.component.html",
   styleUrl: "./app.component.less",
 })
