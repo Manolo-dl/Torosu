@@ -2,9 +2,15 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    if torosu_lib::wayland_session() {
+    // WebKitGTK's DMABUF renderer left the window blank on Wayland with
+    // NVIDIA's driver before it had explicit sync (555). Turned off only
+    // there: off, WebKit draws in software and animations stutter. A value
+    // set by hand is kept, to try either way.
+    if torosu_lib::wayland_session()
+        && std::env::var_os("WEBKIT_DISABLE_DMABUF_RENDERER").is_none()
+        && torosu_lib::nvidia_without_explicit_sync()
+    {
         std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
-        //std::env::set_var("WEBKIT_DISABLE_COMPOSITING_MODE", "1");
     }
     torosu_lib::run()
 }

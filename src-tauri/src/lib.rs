@@ -23,6 +23,41 @@ pub fn wayland_session() -> bool {
     cfg!(target_os = "linux") && std::env::var_os("WAYLAND_DISPLAY").is_some()
 }
 
+/// Whether NVIDIA's own driver is loaded in a version before 555, the first
+/// with explicit sync, which WebKitGTK's DMABUF renderer needs (see `main`).
+pub fn nvidia_without_explicit_sync() -> bool {
+    std::fs::read_to_string("/proc/driver/nvidia/version")
+        .ok()
+        .and_then(|text| nvidia_major_version(&text))
+        .is_some_and(|major| major < 555)
+}
+
+/// The major version in /proc/driver/nvidia/version: "NVRM version: NVIDIA
+/// UNIX Open Kernel Module for x86_64  595.99.02  Release Build …".
+fn nvidia_major_version(text: &str) -> Option<u32> {
+    let line = text.lines().find(|line| line.starts_with("NVRM version"))?;
+    line.split_whitespace()
+        .find(|word| word.contains('.') && word.chars().next().is_some_and(|c| c.is_ascii_digit()))?
+        .split('.')
+        .next()?
+        .parse()
+        .ok()
+}
+
+#[cfg(test)]
+mod nvidia_tests {
+    use super::nvidia_major_version;
+
+    #[test]
+    fn reads_the_major_version() {
+        let open = "NVRM version: NVIDIA UNIX Open Kernel Module for x86_64  595.99.02  Release Build  (dvs-builder@U22)  Wed Aug 26 2026\nGCC version:  gcc version 13.3.0\n";
+        assert_eq!(nvidia_major_version(open), Some(595));
+        let old = "NVRM version: NVIDIA UNIX x86_64 Kernel Module  535.183.01  Sun May 12 19:39:15 UTC 2024\n";
+        assert_eq!(nvidia_major_version(old), Some(535));
+        assert_eq!(nvidia_major_version("nothing here"), None);
+    }
+}
+
 pub fn run() {
     // reqwest is built without a bundled crypto provider; share ring with the updater
     let _ = rustls::crypto::ring::default_provider().install_default();
