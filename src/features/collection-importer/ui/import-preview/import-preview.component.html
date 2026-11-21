@@ -5,10 +5,10 @@
     <p class="empty">{{ 'collections.import.empty' | transloco }}</p>
   } @else {
     <tui-scrollbar class="groups">
-      <tui-accordion size="s">
+      <app-accordion size="s">
         @for (group of store.previewGroups(); track group.name; let first = $first) {
-          <button type="button" [tuiAccordion]="first">
-            <span class="group-header">
+          <app-accordion-item [open]="first">
+            <span appAccordionHeading class="group-header">
               <span class="name">{{ group.name }}</span>
               <span
                 appBadge
@@ -19,18 +19,18 @@
               </span>
               <span appBadge tone="neutral" size="s">{{ 'collections.import.sets' | transloco: { count: group.sets.length } }}</span>
             </span>
-          </button>
-          <tui-expand>
-            <div class="sets">
-              @for (set of group.sets; track set.folderName) {
-                <app-beatmap-set-card [set]="set" />
-              } @empty {
-                <p class="empty">{{ 'collections.import.noInstalled' | transloco }}</p>
-              }
-            </div>
-          </tui-expand>
+            <ng-template appAccordionContent>
+              <div class="sets">
+                @for (set of group.sets; track set.folderName) {
+                  <app-beatmap-set-card [set]="set" />
+                } @empty {
+                  <p class="empty">{{ 'collections.import.noInstalled' | transloco }}</p>
+                }
+              </div>
+            </ng-template>
+          </app-accordion-item>
         }
-      </tui-accordion>
+      </app-accordion>
     </tui-scrollbar>
   }
 </div>

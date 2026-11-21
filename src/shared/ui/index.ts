@@ -17,7 +17,7 @@ export type { CardVariant } from './card/card.component';
 export { NoticeComponent } from './notice/notice.component';
 export type { NoticeTone } from './notice/notice.component';
 export { SectionTitleComponent } from './section-title/section-title.component';
-export { AccordionComponent, AccordionItemComponent } from './accordion/accordion.component';
+export { AccordionComponent, AccordionContentDirective, AccordionHeadingDirective, AccordionItemComponent } from './accordion/accordion.component';
 export { LoaderComponent } from './loader/loader.component';
 export { CheckboxComponent, SwitchComponent } from './switch/switch.component';
 export { TrianglesComponent } from './triangles/triangles.component';

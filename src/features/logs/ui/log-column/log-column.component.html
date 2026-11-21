@@ -10,25 +10,25 @@
   @if (targetNames().length === 0) {
     <p class="empty">No entries</p>
   } @else {
-    <tui-accordion size="s" [closeOthers]="false">
+    <app-accordion size="s" [closeOthers]="false">
       @for (target of targetNames(); track target) {
-        <button type="button" [tuiAccordion]="false">
-          <span class="target">
+        <app-accordion-item>
+          <span appAccordionHeading class="target">
             <span class="name">{{ target }}</span>
             <span appBadge tone="neutral" size="s">{{ entriesFor(target).length }}</span>
           </span>
-        </button>
-        <tui-expand>
-          <tui-scrollbar *tuiItem class="entries">
-            @for (entry of entriesFor(target); track $index) {
-              <div class="entry">
-                <span class="timestamp">{{ entry.timestamp }}</span>
-                <span class="message">{{ entry.message }}</span>
-              </div>
-            }
-          </tui-scrollbar>
-        </tui-expand>
+          <ng-template appAccordionContent>
+            <tui-scrollbar class="entries">
+              @for (entry of entriesFor(target); track $index) {
+                <div class="entry">
+                  <span class="timestamp">{{ entry.timestamp }}</span>
+                  <span class="message">{{ entry.message }}</span>
+                </div>
+              }
+            </tui-scrollbar>
+          </ng-template>
+        </app-accordion-item>
       }
-    </tui-accordion>
+    </app-accordion>
   }
 </div>

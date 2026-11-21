@@ -1,9 +1,7 @@
-import { BadgeComponent, CardComponent, BadgeTone } from '@shared/ui';
+import { BadgeComponent, CardComponent, BadgeTone, AccordionComponent, AccordionItemComponent, AccordionHeadingDirective, AccordionContentDirective } from '@shared/ui';
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import type { LogEntry } from '@entities/log';
-import { TuiItem } from '@taiga-ui/cdk';
-import { TuiExpand, TuiScrollbar } from '@taiga-ui/core';
-import { TuiAccordion} from '@taiga-ui/kit';
+import { TuiScrollbar } from '@taiga-ui/core';
 
 const LEVEL_TONE: Record<string, BadgeTone> = {
   DEBUG: 'info',
@@ -14,7 +12,7 @@ const LEVEL_TONE: Record<string, BadgeTone> = {
 
 @Component({
   selector: 'app-log-column',
-  imports: [TuiAccordion, TuiExpand, TuiItem, TuiScrollbar, BadgeComponent, CardComponent],
+  imports: [AccordionComponent, AccordionItemComponent, AccordionHeadingDirective, AccordionContentDirective, TuiScrollbar, BadgeComponent, CardComponent],
   templateUrl: './log-column.component.html',
   styleUrl: './log-column.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,
