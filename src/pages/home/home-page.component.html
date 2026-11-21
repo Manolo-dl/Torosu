@@ -6,13 +6,8 @@
   <div class="identity">
     <img class="logo" src="assets/images/logo.png" alt="" />
     <div class="titles">
-      <h1 aria-label="Torosu">
-        <!-- Its letters fall like notes onto a judgement line, and hop as keys under the pointer. -->
-        <span class="wordmark" aria-hidden="true">
-          @for (letter of letters; track $index) {
-            <span class="letter" [style.--i]="$index"><span class="key">{{ letter }}</span></span>
-          }
-        </span>
+      <h1>
+        <app-home-wordmark />
         @if (version(); as version) {
           <app-badge tone="accent">v{{ version }}</app-badge>
         }

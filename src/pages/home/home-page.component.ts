@@ -9,10 +9,11 @@ import { BadgeComponent, CardComponent, IconComponent, ModeOrbitComponent, toolT
 import { OsuReaderStore } from '@entities/osu-reader';
 import { HomeLibraryComponent } from './ui/home-library.component';
 import { HomeSelectedComponent } from './ui/home-selected.component';
+import { HomeWordmarkComponent } from './ui/home-wordmark.component';
 
 @Component({
   selector: 'app-home',
-  imports: [BadgeComponent, CardComponent, HomeLibraryComponent, HomeSelectedComponent, IconComponent, ModeOrbitComponent, RouterLink, TrianglesComponent, TranslocoPipe],
+  imports: [BadgeComponent, CardComponent, HomeLibraryComponent, HomeSelectedComponent, HomeWordmarkComponent, IconComponent, ModeOrbitComponent, RouterLink, TrianglesComponent, TranslocoPipe],
   templateUrl: './home-page.component.html',
   styleUrl: './home-page.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -30,7 +31,6 @@ export class HomePageComponent {
   );
 
   readonly transitionName = toolTransitionName;
-  readonly letters = [...'Torosu'];
 
   constructor() {
     getVersion().then(version => this.version.set(version)).catch(() => {});

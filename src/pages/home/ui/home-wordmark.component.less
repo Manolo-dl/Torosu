@@ -1,0 +1,81 @@
+/* ---- The wordmark ----
+   Each letter falls like a note onto a judgement line drawn under them,
+   squashing as it lands with a flash of the accent. Under the pointer they
+   hop one after another, as keys pressed, and take the accents' colours.
+   Only transforms move, and the colour while landing. */
+
+:host {
+  position: relative;
+  display: inline-flex;
+  padding-block-end: 0.12em;
+  cursor: default;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset-inline: -0.05em;
+    inset-block-end: 0;
+    block-size: 3px;
+    border-radius: var(--radius-pill);
+    background: var(--accent-gradient);
+    box-shadow: 0 0 12px var(--accent-glow);
+    opacity: 0.85;
+    transform-origin: left;
+    animation: judgement-line var(--duration-4) var(--ease-out) backwards;
+    animation-delay: calc(var(--stagger) * 4);
+  }
+}
+
+.letter {
+  display: inline-block;
+  transform-origin: bottom;
+  animation: note-fall calc(var(--duration-4) * 1.1) cubic-bezier(0.3, 1.3, 0.5, 1) backwards;
+  animation-delay: calc(var(--stagger) * 6 + var(--i) * var(--stagger) * 2);
+}
+
+.key {
+  display: inline-block;
+  transform-origin: bottom;
+  transition: color var(--duration-3) var(--ease-out);
+  transition-delay: calc(var(--i) * 40ms);
+}
+
+:host(:hover) .key {
+  /* From the first accent to the second along the word. */
+  color: color-mix(in oklch, var(--accent-2) calc(var(--i) * 20%), var(--accent));
+  animation: key-press var(--duration-4) var(--ease-out);
+  animation-delay: calc(var(--i) * 45ms);
+}
+
+@keyframes judgement-line {
+  from {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+}
+
+@keyframes note-fall {
+  0% {
+    opacity: 0;
+    color: var(--accent);
+    transform: translateY(-1.1em) scaleY(1.25);
+  }
+  55% {
+    opacity: 1;
+    color: var(--accent);
+    transform: translateY(0) scale(1.1, 0.8);
+  }
+  80% {
+    transform: translateY(-0.04em) scale(0.97, 1.04);
+  }
+}
+
+@keyframes key-press {
+  35% {
+    transform: translateY(-0.2em);
+  }
+  65% {
+    transform: translateY(0) scale(1.06, 0.88);
+  }
+}
+
