@@ -1,6 +1,14 @@
 <div appCard>
   <header>
-    <h3 tuiTitle>{{ 'trainer.convert' | transloco: { number: number() } }}</h3>
+    <h3 class="title">
+      <span class="number">{{ number() }}</span>
+      {{ 'trainer.convert' | transloco: { number: number() } }}
+      @if (convert().tasks.length > 0) {
+        <span appBadge size="s">
+          {{ convert().tasks.length === 1 ? ('trainer.oneTask' | transloco) : ('trainer.tasksCount' | transloco: { count: convert().tasks.length }) }}
+        </span>
+      }
+    </h3>
     <div class="actions">
       <button
         appButton="primary"
@@ -38,13 +46,7 @@
       </button>
     </div>
     <ng-template #taskMenu>
-      <tui-data-list>
-        @for (type of availableTasksFiltered(); track type) {
-          <button tuiOption type="button" (click)="addTask(type)">
-            {{ taskLabels[type] | transloco }}
-          </button>
-        }
-      </tui-data-list>
+      <app-trainer-task-menu [types]="availableTasksFiltered()" (pick)="addTask($event)" />
     </ng-template>
   </header>
 
@@ -61,8 +63,17 @@
 
   <div class="list" cdkDropList (cdkDropListDropped)="onDrop($event)">
     @for (entry of convert().tasks; track entry.id) {
-      <div class="task" cdkDrag [class.skipped]="isSkipped(entry.task.type)">
-        <app-icon name="@tui.grip-vertical" class="handle" cdkDragHandle />
+      <div
+        class="task"
+        cdkDrag
+        animate.enter="task-in"
+        [class.skipped]="isSkipped(entry.task.type)"
+        [style.--task-hue]="looks[entry.task.type].hue"
+      >
+        <span class="tile" cdkDragHandle [appTooltip]="'trainer.dragTask' | transloco">
+          <app-icon class="kind" [name]="looks[entry.task.type].icon" />
+          <app-icon class="grip" name="@tui.grip-vertical" />
+        </span>
 
         <div class="content">
           <span class="label">
@@ -106,6 +117,12 @@
                   (change)="onBpmInput(entry.id, $any($event.target).value, entry.task.params)"
                 />
               </tui-textfield>
+
+              <app-trainer-quick-rates
+                class="quick"
+                [rate]="entry.task.params.rate"
+                (rateChange)="onRateInput(entry.id, '' + $event, entry.task.params)"
+              />
 
               @if (!autoPitch()) {
                 <label tuiLabel class="option">
@@ -297,7 +314,10 @@
         </button>
       </div>
     } @empty {
-      <p class="empty">{{ 'trainer.noTasks' | transloco }}</p>
+      <div class="empty">
+        <app-icon name="@tui.layers" />
+        <p>{{ 'trainer.noTasks' | transloco }}</p>
+      </div>
     }
   </div>
 </div>

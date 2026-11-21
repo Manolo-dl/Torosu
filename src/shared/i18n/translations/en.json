@@ -296,7 +296,9 @@
       "lock": "Lock",
       "unlock": "Unlock",
       "lockStat": "Lock {{ stat }}",
-      "unlockStat": "Unlock {{ stat }}"
+      "unlockStat": "Unlock {{ stat }}",
+      "restoreAll": "Map values",
+      "backTo": "Back to the map's {{ value }}"
     },
     "actions": {
       "reset": "Reset",
@@ -369,7 +371,8 @@
       "scaleVideo": "Scale video",
       "noFfmpeg": "Scaling the video needs <strong>ffmpeg</strong>, which was not found. Install it and make sure it is in the PATH, then restart the app.",
       "videoSlow": "The video is re-encoded at the new speed, which can take a while for long videos.",
-      "storyboard": "If the set has a shared <strong>.osb</strong> storyboard, it is used by every difficulty, so this difficulty will be exported to a <strong>new beatmap set</strong> (title ending in <strong>({{ rate }}x SB)</strong>) to avoid overlapping with the original one."
+      "storyboard": "If the set has a shared <strong>.osb</strong> storyboard, it is used by every difficulty, so this difficulty will be exported to a <strong>new beatmap set</strong> (title ending in <strong>({{ rate }}x SB)</strong>) to avoid overlapping with the original one.",
+      "quick": "Quick rates"
     },
     "sv": {
       "description": "The original SV changes are removed and an SV is set on every BPM change, so the scroll speed stays the one of the main BPM. BPM changes, kiai and hitsounds are kept."
@@ -436,6 +439,17 @@
       "select": "Select a map in osu!",
       "selectHint": "Pick one in song select and it shows up here, ready to change.",
       "error": "Can't read osu!"
+    },
+    "oneTask": "1 task",
+    "tasksCount": "{{ count }} tasks",
+    "dragTask": "Drag to change the order",
+    "taskHints": {
+      "RateChange": "Faster or slower, with the BPM and the audio",
+      "SVNormalizer": "One scroll speed all the way through",
+      "FlnConverter": "Every note held until the next one",
+      "NoLn": "Long notes turned into normal notes",
+      "ShortLn": "Long notes kept within a length",
+      "KeyConverter": "The map on another key count"
     }
   },
   "downloader": {

@@ -296,7 +296,9 @@
       "lock": "ロック",
       "unlock": "ロック解除",
       "lockStat": "{{ stat }} をロック",
-      "unlockStat": "{{ stat }} のロックを解除"
+      "unlockStat": "{{ stat }} のロックを解除",
+      "restoreAll": "マップの値",
+      "backTo": "マップの {{ value }} に戻す"
     },
     "actions": {
       "reset": "リセット",
@@ -369,7 +371,8 @@
       "scaleVideo": "動画を合わせる",
       "noFfmpeg": "動画の速度変更には <strong>ffmpeg</strong> が必要ですが、見つかりませんでした。インストールして PATH に入っていることを確認し、アプリを再起動してください。",
       "videoSlow": "動画は新しい速度で再エンコードされるため、長い動画では時間がかかることがあります。",
-      "storyboard": "セットに共有の <strong>.osb</strong> ストーリーボードがある場合、すべての難易度で使われるため、元のセットと重ならないよう、この難易度は<strong>新しいビートマップセット</strong>（タイトルの末尾が <strong>({{ rate }}x SB)</strong>）としてエクスポートされます。"
+      "storyboard": "セットに共有の <strong>.osb</strong> ストーリーボードがある場合、すべての難易度で使われるため、元のセットと重ならないよう、この難易度は<strong>新しいビートマップセット</strong>（タイトルの末尾が <strong>({{ rate }}x SB)</strong>）としてエクスポートされます。",
+      "quick": "クイックレート"
     },
     "sv": {
       "description": "元の SV 変化を取り除き、BPM が変わるたびに SV を設定して、スクロール速度をメイン BPM のものに保ちます。BPM 変化、キアイ、ヒットサウンドは残ります。"
@@ -436,6 +439,17 @@
       "select": "osu! でマップを選んでください",
       "selectHint": "曲選択画面でマップを選ぶと、ここに表示され、すぐに変更できます。",
       "error": "osu! を読み取れません"
+    },
+    "oneTask": "1 タスク",
+    "tasksCount": "{{ count }} タスク",
+    "dragTask": "ドラッグで順番を変更",
+    "taskHints": {
+      "RateChange": "BPM と音声ごと速く・遅くする",
+      "SVNormalizer": "最初から最後まで同じスクロール速度",
+      "FlnConverter": "すべてのノーツを次のノーツまで伸ばす",
+      "NoLn": "ロングノーツを通常ノーツに変換",
+      "ShortLn": "ロングノーツを一定の長さに収める",
+      "KeyConverter": "別のキー数のマップに変換"
     }
   },
   "downloader": {

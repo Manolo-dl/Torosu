@@ -1,0 +1,33 @@
+:host {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+button {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--tui-border-normal);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--tui-text-secondary);
+  font: var(--tui-typography-body-xs);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition:
+    background var(--duration-1),
+    color var(--duration-1),
+    border-color var(--duration-1);
+
+  // --task-color and --task-tint come from the task around.
+  &:hover {
+    border-color: var(--task-color, var(--tui-border-hover));
+    color: var(--tui-text-primary);
+  }
+
+  &.active {
+    border-color: var(--task-color, var(--tui-background-accent-1));
+    background: var(--task-tint, transparent);
+    color: var(--task-color, var(--tui-text-action));
+  }
+}

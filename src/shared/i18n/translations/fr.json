@@ -296,7 +296,9 @@
       "lock": "Verrouiller",
       "unlock": "Déverrouiller",
       "lockStat": "Verrouiller {{ stat }}",
-      "unlockStat": "Déverrouiller {{ stat }}"
+      "unlockStat": "Déverrouiller {{ stat }}",
+      "restoreAll": "Valeurs de la map",
+      "backTo": "Revenir au {{ value }} de la map"
     },
     "actions": {
       "reset": "Réinitialiser",
@@ -369,7 +371,8 @@
       "scaleVideo": "Adapter la vidéo",
       "noFfmpeg": "Adapter la vidéo nécessite <strong>ffmpeg</strong>, qui est introuvable. Installez-le, vérifiez qu’il est dans le PATH, puis redémarrez l’application.",
       "videoSlow": "La vidéo est réencodée à la nouvelle vitesse, ce qui peut prendre du temps pour les vidéos longues.",
-      "storyboard": "Si le set a un storyboard <strong>.osb</strong> partagé, toutes les difficultés l’utilisent : cette difficulté sera donc exportée dans un <strong>nouveau set de beatmaps</strong> (titre se terminant par <strong>({{ rate }}x SB)</strong>) pour ne pas se superposer à l’original."
+      "storyboard": "Si le set a un storyboard <strong>.osb</strong> partagé, toutes les difficultés l’utilisent : cette difficulté sera donc exportée dans un <strong>nouveau set de beatmaps</strong> (titre se terminant par <strong>({{ rate }}x SB)</strong>) pour ne pas se superposer à l’original.",
+      "quick": "Rates rapides"
     },
     "sv": {
       "description": "Les changements de SV d’origine sont supprimés et un SV est placé à chaque changement de BPM, pour que la vitesse de défilement reste celle du BPM principal. Les changements de BPM, le kiai et les hitsounds sont conservés."
@@ -436,6 +439,17 @@
       "select": "Sélectionne une map dans osu!",
       "selectHint": "Choisis-en une dans la sélection des musiques et elle apparaît ici, prête à être modifiée.",
       "error": "Impossible de lire osu!"
+    },
+    "oneTask": "1 tâche",
+    "tasksCount": "{{ count }} tâches",
+    "dragTask": "Glissez pour changer l'ordre",
+    "taskHints": {
+      "RateChange": "Plus rapide ou plus lent, avec le BPM et l’audio",
+      "SVNormalizer": "Une seule vitesse de défilement partout",
+      "FlnConverter": "Chaque note tenue jusqu’à la suivante",
+      "NoLn": "Les notes longues deviennent des notes normales",
+      "ShortLn": "Les notes longues gardées dans une durée",
+      "KeyConverter": "La map sur un autre nombre de touches"
     }
   },
   "downloader": {

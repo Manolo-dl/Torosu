@@ -296,7 +296,9 @@
       "lock": "잠금",
       "unlock": "잠금 해제",
       "lockStat": "{{ stat }} 잠금",
-      "unlockStat": "{{ stat }} 잠금 해제"
+      "unlockStat": "{{ stat }} 잠금 해제",
+      "restoreAll": "맵 값으로",
+      "backTo": "맵의 {{ value }}(으)로 되돌리기"
     },
     "actions": {
       "reset": "초기화",
@@ -369,7 +371,8 @@
       "scaleVideo": "영상 맞추기",
       "noFfmpeg": "영상 속도를 바꾸려면 <strong>ffmpeg</strong>가 필요하지만 찾지 못했습니다. 설치하고 PATH에 있는지 확인한 뒤 앱을 다시 시작하세요.",
       "videoSlow": "영상은 새 속도로 다시 인코딩되므로, 긴 영상은 시간이 걸릴 수 있습니다.",
-      "storyboard": "세트에 공유 <strong>.osb</strong> 스토리보드가 있으면 모든 난이도가 그것을 쓰므로, 원본과 겹치지 않도록 이 난이도는 <strong>새 비트맵 세트</strong>(제목 끝이 <strong>({{ rate }}x SB)</strong>)로 내보내집니다."
+      "storyboard": "세트에 공유 <strong>.osb</strong> 스토리보드가 있으면 모든 난이도가 그것을 쓰므로, 원본과 겹치지 않도록 이 난이도는 <strong>새 비트맵 세트</strong>(제목 끝이 <strong>({{ rate }}x SB)</strong>)로 내보내집니다.",
+      "quick": "빠른 배속"
     },
     "sv": {
       "description": "원래의 SV 변화를 없애고 BPM이 바뀔 때마다 SV를 설정해, 스크롤 속도를 메인 BPM의 속도로 유지합니다. BPM 변화, 키아이, 히트사운드는 그대로 남습니다."
@@ -436,6 +439,17 @@
       "select": "osu!에서 맵을 선택하세요",
       "selectHint": "곡 선택 화면에서 맵을 고르면 여기에 표시되어 바로 바꿀 수 있습니다.",
       "error": "osu!를 읽을 수 없습니다"
+    },
+    "oneTask": "작업 1개",
+    "tasksCount": "작업 {{ count }}개",
+    "dragTask": "드래그해서 순서 변경",
+    "taskHints": {
+      "RateChange": "BPM과 오디오까지 빠르게 또는 느리게",
+      "SVNormalizer": "처음부터 끝까지 같은 스크롤 속도",
+      "FlnConverter": "모든 노트를 다음 노트까지 늘림",
+      "NoLn": "롱노트를 일반 노트로 변환",
+      "ShortLn": "롱노트를 일정 길이 안으로",
+      "KeyConverter": "다른 키 수의 맵으로 변환"
     }
   },
   "downloader": {

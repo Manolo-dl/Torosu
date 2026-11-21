@@ -1,0 +1,39 @@
+@import '../trainer-task.mixins.less';
+
+:host {
+  display: block;
+  max-inline-size: 22rem;
+}
+
+[tuiOption] {
+  .task-colors();
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  block-size: auto;
+  min-block-size: 3.25rem;
+  padding-block: 0.375rem;
+  text-align: start;
+}
+
+.tile {
+  .task-tile(2rem);
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.0625rem;
+  min-inline-size: 0;
+  white-space: normal;
+
+  strong {
+    font: var(--tui-typography-body-s);
+    font-weight: 700;
+  }
+
+  small {
+    font: var(--tui-typography-body-xs);
+    color: var(--tui-text-secondary);
+  }
+}

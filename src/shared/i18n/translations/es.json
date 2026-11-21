@@ -296,7 +296,9 @@
       "lock": "Bloquear",
       "unlock": "Desbloquear",
       "lockStat": "Bloquear {{ stat }}",
-      "unlockStat": "Desbloquear {{ stat }}"
+      "unlockStat": "Desbloquear {{ stat }}",
+      "restoreAll": "Valores del mapa",
+      "backTo": "Volver al {{ value }} del mapa"
     },
     "actions": {
       "reset": "Restablecer",
@@ -369,7 +371,8 @@
       "scaleVideo": "Escalar el vídeo",
       "noFfmpeg": "Escalar el vídeo necesita <strong>ffmpeg</strong>, que no se ha encontrado. Instálalo, asegúrate de que está en el PATH y reinicia la app.",
       "videoSlow": "El vídeo se recodifica a la nueva velocidad, lo que puede tardar con vídeos largos.",
-      "storyboard": "Si el set tiene un storyboard <strong>.osb</strong> compartido, lo usan todas las dificultades, así que esta dificultad se exportará a un <strong>set nuevo</strong> (con el título acabado en <strong>({{ rate }}x SB)</strong>) para no pisar el original."
+      "storyboard": "Si el set tiene un storyboard <strong>.osb</strong> compartido, lo usan todas las dificultades, así que esta dificultad se exportará a un <strong>set nuevo</strong> (con el título acabado en <strong>({{ rate }}x SB)</strong>) para no pisar el original.",
+      "quick": "Rates rápidos"
     },
     "sv": {
       "description": "Se quitan los cambios de SV originales y se pone un SV en cada cambio de BPM, para que la velocidad de scroll sea la del BPM principal. Se mantienen los cambios de BPM, el kiai y los hitsounds."
@@ -436,6 +439,17 @@
       "select": "Selecciona un mapa en osu!",
       "selectHint": "Elige uno en la selección de canciones y aparecerá aquí, listo para cambiarlo.",
       "error": "No se puede leer osu!"
+    },
+    "oneTask": "1 tarea",
+    "tasksCount": "{{ count }} tareas",
+    "dragTask": "Arrastra para cambiar el orden",
+    "taskHints": {
+      "RateChange": "Más rápido o más lento, con el BPM y el audio",
+      "SVNormalizer": "Una sola velocidad de scroll en todo el mapa",
+      "FlnConverter": "Cada nota se mantiene hasta la siguiente",
+      "NoLn": "Las notas largas pasan a ser normales",
+      "ShortLn": "Las notas largas, dentro de una duración",
+      "KeyConverter": "El mapa con otro número de teclas"
     }
   },
   "downloader": {

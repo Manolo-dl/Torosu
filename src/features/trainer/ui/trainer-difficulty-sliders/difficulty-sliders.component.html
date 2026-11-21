@@ -1,22 +1,48 @@
 <div appCard>
-  <h3 tuiTitle>{{ 'trainer.difficulty.title' | transloco }}</h3>
+  <header>
+    <h3 tuiTitle>{{ 'trainer.difficulty.title' | transloco }}</h3>
+    @if (changed() > 0) {
+      <button appButton="ghost" size="xs" icon="@tui.rotate-ccw" type="button" animate.enter="fade-in" (click)="restoreAll()">
+        {{ 'trainer.difficulty.restoreAll' | transloco }}
+      </button>
+    }
+  </header>
 
   <div class="list">
     @for (key of keys; track key) {
       @let stat = trainer[key]();
-      <div class="row" [class.locked]="stat.locked">
+      @let original = originals()?.[key] ?? null;
+      @let moved = original !== null && stat.value !== original;
+      <div class="row" [class.locked]="stat.locked" [class.moved]="moved">
         <span class="label">{{ key.toUpperCase() }}</span>
-        <input
-          max="10"
-          min="0"
-          step="0.1"
-          tuiSlider
-          type="range"
-          [disabled]="stat.locked"
-          [ngModel]="stat.value"
-          (ngModelChange)="trainer.setValue(key, $event)"
-        />
-        <span class="value">{{ stat.value | number:'1.1-1' }}</span>
+        <div class="track" [style.--at]="(original ?? 0) / 10">
+          <input
+            max="10"
+            min="0"
+            step="0.1"
+            tuiSlider
+            type="range"
+            [disabled]="stat.locked"
+            [ngModel]="stat.value"
+            (ngModelChange)="trainer.setValue(key, $event)"
+          />
+          @if (moved) {
+            <span class="origin" aria-hidden="true"></span>
+          }
+        </div>
+        @if (moved) {
+          <button
+            type="button"
+            class="value"
+            [appTooltip]="'trainer.difficulty.backTo' | transloco: { value: (original | number:'1.1-1') }"
+            [disabled]="stat.locked"
+            (click)="trainer.setValue(key, original)"
+          >
+            <span class="delta">{{ stat.value > original ? '▲' : '▼' }}</span>{{ stat.value | number:'1.1-1' }}
+          </button>
+        } @else {
+          <span class="value">{{ stat.value | number:'1.1-1' }}</span>
+        }
         <button
           [appButton]="stat.locked ? 'primary' : 'ghost'"
           iconOnly
