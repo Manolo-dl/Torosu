@@ -26,3 +26,4 @@ export { SkeletonComponent } from './skeleton/skeleton.component';
 export { ToastsComponent } from './toast/toasts.component';
 export { DrawerComponent } from './drawer/drawer.component';
 export { ModeOrbitComponent } from './mode-orbit/mode-orbit.component';
+export { ParticlesComponent } from './particles/particles.component';

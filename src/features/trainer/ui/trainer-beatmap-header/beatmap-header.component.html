@@ -8,6 +8,7 @@
     } @else {
       <app-triangles class="fallback" />
     }
+    <app-particles />
 
     <div class="overlay">
       <div class="info">
@@ -61,6 +62,7 @@
   @let status = reader.status();
   <div class="banner empty" role="status">
     <app-triangles />
+    <app-particles [density]="0.6" />
     <app-mode-orbit class="orbit" />
     <div class="message">
       @switch (status.state) {
