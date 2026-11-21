@@ -7,6 +7,7 @@ import { UpdateStore } from '@entities/update';
 import { DEV_ITEMS, NavStore } from '@entities/nav-item';
 import { MusicPulseDirective, OsuAudioService } from '@entities/osu-reader';
 import { VisualizerComponent } from './visualizer.component';
+import { VIEW_TRANSITIONS } from '@shared/utils';
 import { TUI_DARK_MODE, TuiDropdown, TuiTitle } from "@taiga-ui/core";
 import { AppearanceStore } from "@shared/stores";
 import { WindowControlsComponent } from "@widgets/window-controls/window-controls.component";
@@ -44,7 +45,7 @@ export class HeaderComponent {
     };
     const reduced =
       this.appearance.reducedMotion() || matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (!document.startViewTransition || reduced || !this.appearance.transitions()) {
+    if (!VIEW_TRANSITIONS || !document.startViewTransition || reduced || !this.appearance.transitions()) {
       this.appearance.toggleDark();
       return;
     }

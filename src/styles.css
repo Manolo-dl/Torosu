@@ -126,11 +126,16 @@ tui-expand {
 .page-outlet > :not(router-outlet) > :nth-child(4) { animation-delay: calc(var(--stagger) * 6); }
 .page-outlet > :not(router-outlet) > :nth-child(n + 5) { animation-delay: calc(var(--stagger) * 8); }
 
-/* Without View Transitions, the page fades in by itself. */
+/* Without View Transitions (none in the engine, or they leak: see
+   VIEW_TRANSITIONS), the page rises into place by itself. */
 @supports not (view-transition-name: page) {
   .page-outlet > :not(router-outlet) {
     animation: page-in var(--duration-3) var(--ease-out) backwards;
   }
+}
+
+:root[data-view-transitions='off'][data-transitions='on'] .page-outlet > :not(router-outlet) {
+  animation: page-in-rise var(--duration-4) var(--ease-out) backwards;
 }
 
 @keyframes page-in {
