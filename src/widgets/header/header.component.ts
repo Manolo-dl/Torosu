@@ -38,7 +38,7 @@ export class HeaderComponent {
    */
   toggleTheme(event: MouseEvent) {
     const document = this.document as Document & {
-      startViewTransition?: (update: () => void) => { ready: Promise<void> };
+      startViewTransition?: (update: () => void) => { ready: Promise<void>; finished: Promise<void> };
     };
     const reduced =
       this.appearance.reducedMotion() || matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -50,6 +50,9 @@ export class HeaderComponent {
     const x = event.clientX;
     const y = event.clientY;
     const radius = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+    // One picture of the whole window (styles.css), the page's panel included.
+    const root = document.documentElement;
+    root.classList.add('theme-transition');
     const transition = document.startViewTransition(() => {
       this.appearance.toggleDark();
       // The new theme on the page before the transition takes its picture.
@@ -63,6 +66,7 @@ export class HeaderComponent {
         ),
       )
       .catch(() => {});
+    transition.finished.finally(() => root.classList.remove('theme-transition'));
   }
 
   constructor() {

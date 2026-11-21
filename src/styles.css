@@ -117,10 +117,6 @@ tui-expand {
   display: block;
 }
 
-.page-outlet > :not(router-outlet) {
-  animation: page-in var(--duration-3) var(--ease-out) backwards;
-}
-
 .page-outlet > :not(router-outlet) > * {
   animation: part-in var(--duration-4) var(--ease-out) backwards;
 }
@@ -129,6 +125,13 @@ tui-expand {
 .page-outlet > :not(router-outlet) > :nth-child(3) { animation-delay: calc(var(--stagger) * 4); }
 .page-outlet > :not(router-outlet) > :nth-child(4) { animation-delay: calc(var(--stagger) * 6); }
 .page-outlet > :not(router-outlet) > :nth-child(n + 5) { animation-delay: calc(var(--stagger) * 8); }
+
+/* Without View Transitions, the page fades in by itself. */
+@supports not (view-transition-name: page) {
+  .page-outlet > :not(router-outlet) {
+    animation: page-in var(--duration-3) var(--ease-out) backwards;
+  }
+}
 
 @keyframes page-in {
   from {
@@ -141,6 +144,56 @@ tui-expand {
     opacity: 0;
     transform: translateY(14px);
   }
+}
+
+/* ---- View Transitions -------------------------------------------------------
+   Between pages (app.config.ts) only the page's panel moves: the title bar
+   and the sidebar are the same before and after, so stay still. The page
+   that leaves lifts and fades, the new one rises into place. */
+
+.page-outlet {
+  view-transition-name: page;
+}
+
+::view-transition-group(page) {
+  animation-duration: var(--duration-4);
+  animation-timing-function: var(--ease-out);
+}
+
+::view-transition-old(page) {
+  animation: page-out var(--duration-2) var(--ease-out) both;
+}
+
+::view-transition-new(page) {
+  animation: page-in-rise var(--duration-4) var(--ease-out) both;
+  animation-delay: 60ms;
+}
+
+@keyframes page-out {
+  to {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.99);
+  }
+}
+
+@keyframes page-in-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+}
+
+/* A tool's icon (view-transition-name tool-…, on the home's cards and the
+   page headers) flies from one to the other. */
+::view-transition-group(*.tool-icon) {
+  animation-duration: var(--duration-4);
+  animation-timing-function: cubic-bezier(0.3, 1.2, 0.4, 1);
+}
+
+/* While the theme changes (HeaderComponent.toggleTheme) the whole window is
+   one picture, revealed in a circle: no part of it apart. */
+:root.theme-transition .page-outlet {
+  view-transition-name: none;
 }
 
 /* ============================================

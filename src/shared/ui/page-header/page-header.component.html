@@ -1,6 +1,7 @@
 <header>
   @if (icon(); as icon) {
-    <span class="icon" aria-hidden="true"><app-icon [name]="icon" /></span>
+    <!-- Named as on the home's card, so it flies from there (View Transitions). -->
+    <span class="icon" aria-hidden="true" [style.view-transition-name]="transitionName()"><app-icon [name]="icon" /></span>
   }
   <div class="titles">
     <h1>{{ heading() }}</h1>

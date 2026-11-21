@@ -5,7 +5,7 @@ import { getVersion } from '@tauri-apps/api/app';
 import { ConfigurationStore } from '@entities/configuration';
 import { USER_ITEMS } from '@entities/nav-item';
 import { OsuPathStore } from '@entities/osu-path';
-import { BadgeComponent, CardComponent, IconComponent, TrianglesComponent } from '@shared/ui';
+import { BadgeComponent, CardComponent, IconComponent, toolTransitionName, TrianglesComponent } from '@shared/ui';
 
 @Component({
   selector: 'app-home',
@@ -23,6 +23,8 @@ export class HomePageComponent {
   readonly tools = computed(() =>
     USER_ITEMS.filter(item => item.route !== '/' && !this.config.excludedTools().has(item.route)),
   );
+
+  readonly transitionName = toolTransitionName;
 
   constructor() {
     getVersion().then(version => this.version.set(version)).catch(() => {});
