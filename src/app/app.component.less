@@ -23,8 +23,9 @@ tui-root {
 }
 
 .app-content {
+  /* Not `isolation: isolate`: with the page's view-transition-name inside,
+     WebKitGTK stopped drawing the page once a transition ended. */
   position: relative;
-  isolation: isolate;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -37,11 +38,11 @@ tui-root {
 }
 
 /* Behind the pages: both accents rising from the top and the bottom as
-   osu!'s music gets loud (its opacity and scale, set by appMusicPulse). */
+   osu!'s music gets loud (its opacity and scale, set by appMusicPulse).
+   Under the pages by coming first, no negative z-index: see .app-content. */
 .music-glow {
   position: absolute;
   inset: 0;
-  z-index: -1;
   background:
     radial-gradient(60% 45% at 50% -5%, color-mix(in oklch, var(--accent) 22%, transparent), transparent 70%),
     radial-gradient(55% 40% at 50% 105%, color-mix(in oklch, var(--accent-2) 18%, transparent), transparent 70%);
@@ -50,6 +51,7 @@ tui-root {
 }
 
 .page-outlet {
+  position: relative;
   flex: 1;
   padding: var(--space-8);
   overflow-y: auto;
