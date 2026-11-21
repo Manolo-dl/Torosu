@@ -1,4 +1,4 @@
-import { ButtonComponent, BadgeComponent, CardComponent, NoticeComponent, BadgeTone } from '@shared/ui';
+import { ButtonComponent, BadgeComponent, CardComponent, NoticeComponent, BadgeTone, ProgressComponent } from '@shared/ui';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
@@ -6,11 +6,10 @@ import { BeatmapDownloadService } from '../../beatmap-download.service';
 import { DownloadStatus } from '../../download-queue.model';
 import { DownloadQueueStore } from '../../download-queue.store';
 import { TuiScrollbar } from '@taiga-ui/core';
-import { TuiProgress } from '@taiga-ui/kit';
 
 @Component({
   selector: 'app-beatmap-queue',
-  imports: [DecimalPipe, TuiScrollbar, TuiProgress, TranslocoPipe, ButtonComponent, BadgeComponent, CardComponent, NoticeComponent],
+  imports: [ProgressComponent, DecimalPipe, TuiScrollbar, TranslocoPipe, ButtonComponent, BadgeComponent, CardComponent, NoticeComponent],
   templateUrl: './beatmap-queue.component.html',
   styleUrl: './beatmap-queue.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,

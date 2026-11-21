@@ -37,7 +37,7 @@
           @if (update.installing()) {
             <progress
               size="s"
-              tuiProgressBar
+              appProgress
               [max]="100"
               [value]="update.percent() ?? 0"
             ></progress>

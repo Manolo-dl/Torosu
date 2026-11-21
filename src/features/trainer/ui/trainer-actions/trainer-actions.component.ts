@@ -1,12 +1,11 @@
-import { ButtonComponent } from '@shared/ui';
+import { ButtonComponent, ProgressComponent } from '@shared/ui';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { TrainerStore } from '../../stores/trainer.store';
-import { TuiProgress } from '@taiga-ui/kit';
 
 @Component({
   selector: 'app-trainer-actions',
-  imports: [TuiProgress, TranslocoPipe, ButtonComponent],
+  imports: [ProgressComponent, TranslocoPipe, ButtonComponent],
   templateUrl: './trainer-actions.component.html',
   styleUrl: './trainer-actions.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,
