@@ -1,4 +1,4 @@
-import { errorText } from '@shared/i18n';
+import { errorText, LanguageService } from '@shared/i18n';
 import { patchState, signalStore, withComputed, withMethods, withState } from "@ngrx/signals";
 import { OsuReaderSnapshot, OsuReaderStatus, PlayedSkillUpdate, SelectedBeatmap, SkillUpdate } from "./osu-reader.model";
 import { invoke } from "@tauri-apps/api/core";
@@ -54,7 +54,7 @@ export const OsuReaderStore = signalStore(
         played: computed(() => store.data()?.played ?? null),
     })),
 
-    withMethods((store, notify = inject(NotifyService), transloco = inject(TranslocoService)) => {
+    withMethods((store, notify = inject(NotifyService), transloco = inject(TranslocoService), language = inject(LanguageService)) => {
         // Path of the background being shown (or loading), to skip reloading it
         // and to drop responses that arrive late.
         let backgroundPath: string | null = null;
@@ -107,6 +107,11 @@ export const OsuReaderStore = signalStore(
         function setStatus(status: OsuReaderStatus) {
             const previous = store.status();
             patchState(store, { status });
+            // Said in the language in use: at startup, once it is loaded.
+            language.ready.then(() => announce(status, previous));
+        }
+
+        function announce(status: OsuReaderStatus, previous: OsuReaderStatus) {
             switch (status.state) {
                 case 'waiting':
                     if (previous.state === 'connected') {
@@ -172,7 +177,7 @@ export const OsuReaderStore = signalStore(
                     }
                 } catch (e) {
                     console.error('connect_osu_reader failed', e);
-                    notify.error(transloco.translate('osuReader.startFailed'));
+                    language.ready.then(() => notify.error(transloco.translate('osuReader.startFailed')));
                     patchState(store, { started: false });
                 }
             },

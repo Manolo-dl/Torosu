@@ -37,8 +37,11 @@ export class NotifyService {
     this.list.update(toasts => toasts.filter(toast => toast.id !== id));
   }
 
+  /** The same message again takes the place of the one showing, its time anew. */
   private show(message: string, tone: ToastTone) {
     const toast: Toast = { id: this.nextId++, message, tone };
-    this.list.update(toasts => [...toasts, toast].slice(-MAX_TOASTS));
+    this.list.update(toasts =>
+      [...toasts.filter(other => other.message !== message || other.tone !== tone), toast].slice(-MAX_TOASTS),
+    );
   }
 }
