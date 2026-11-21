@@ -1,20 +1,20 @@
+import { BadgeComponent, CardComponent, BadgeTone } from '@shared/ui';
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import type { LogEntry } from '@entities/log';
 import { TuiItem } from '@taiga-ui/cdk';
 import { TuiExpand, TuiScrollbar } from '@taiga-ui/core';
-import { TuiAccordion, TuiBadge } from '@taiga-ui/kit';
-import { TuiCardLarge } from '@taiga-ui/layout';
+import { TuiAccordion} from '@taiga-ui/kit';
 
-const LEVEL_APPEARANCE: Record<string, string> = {
+const LEVEL_TONE: Record<string, BadgeTone> = {
   DEBUG: 'info',
-  INFO: 'primary',
+  INFO: 'accent',
   WARN: 'warning',
-  ERROR: 'negative',
+  ERROR: 'danger',
 };
 
 @Component({
   selector: 'app-log-column',
-  imports: [TuiAccordion, TuiBadge, TuiCardLarge, TuiExpand, TuiItem, TuiScrollbar],
+  imports: [TuiAccordion, TuiExpand, TuiItem, TuiScrollbar, BadgeComponent, CardComponent],
   templateUrl: './log-column.component.html',
   styleUrl: './log-column.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -23,7 +23,7 @@ export class LogColumnComponent {
   readonly level = input.required<string>();
   readonly groups = input.required<Record<string, LogEntry[]>>();
 
-  readonly appearance = computed(() => LEVEL_APPEARANCE[this.level()] ?? 'neutral');
+  readonly tone = computed<BadgeTone>(() => LEVEL_TONE[this.level()] ?? 'neutral');
 
   readonly targetNames = computed(() => Object.keys(this.groups()));
 

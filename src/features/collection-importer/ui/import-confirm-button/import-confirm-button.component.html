@@ -1,7 +1,7 @@
 <button
-  iconStart="@tui.download"
+  appButton="primary"
+  icon="@tui.download"
   size="m"
-  tuiButton
   type="button"
   [disabled]="store.totalMaps() === 0"
   [loading]="store.isImporting()"
@@ -10,9 +10,8 @@
   {{ 'collections.import.importMaps' | transloco: { count: store.totalMaps() } }}
 </button>
 <button
-  appearance="secondary"
+  appButton="secondary"
   size="m"
-  tuiButton
   type="button"
   [disabled]="store.isImporting() || store.parsedImports().length === 0"
   (click)="store.clear()"

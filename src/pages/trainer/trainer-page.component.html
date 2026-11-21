@@ -1,4 +1,4 @@
-<app-page-header [heading]="'nav.trainer' | transloco" [subtitle]="'trainer.subtitle' | transloco" />
+<app-page-header icon="sliders-horizontal" [heading]="'nav.trainer' | transloco" [subtitle]="'trainer.subtitle' | transloco" />
 
 <app-trainer-beatmap-header />
 
@@ -14,10 +14,9 @@
       <app-trainer-task-pipeline [convert]="convert" [number]="i + 1" />
     }
     <button
-      appearance="secondary"
-      iconStart="@tui.plus"
+      appButton="secondary"
+      icon="@tui.plus"
       size="m"
-      tuiButton
       type="button"
       (click)="trainer.addConvert()"
     >

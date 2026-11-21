@@ -1,7 +1,6 @@
 <button
-  appearance="secondary"
+  appButton="secondary"
   size="m"
-  tuiButton
   type="button"
   [disabled]="store.isCreating()"
   (click)="store.clear()"
@@ -9,12 +8,12 @@
   {{ 'packs.reset' | transloco }}
 </button>
 <button
-  iconStart="@tui.package"
+  appButton="primary"
+  icon="@tui.package"
   size="m"
-  tuiButton
   type="button"
   [disabled]="store.selectedDiffs().length === 0 || !store.titleValid()
-    || !store.finalCreator() || store.duplicateNames().size > 0
+    || !store.finalCreator() || store.duplicateNames().size> 0
     || store.hasEmptyNames()"
   [loading]="store.isCreating()"
   (click)="onCreate()"

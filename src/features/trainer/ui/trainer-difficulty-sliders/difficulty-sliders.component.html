@@ -1,4 +1,4 @@
-<div appearance="floating" tuiCardLarge="compact">
+<div appCard>
   <h3 tuiTitle>{{ 'trainer.difficulty.title' | transloco }}</h3>
 
   <div class="list">
@@ -18,11 +18,11 @@
         />
         <span class="value">{{ stat.value | number:'1.1-1' }}</span>
         <button
+          [appButton]="stat.locked ? 'primary' : 'ghost'"
+          iconOnly
           size="xs"
-          tuiIconButton
           type="button"
-          [appearance]="stat.locked ? 'primary' : 'flat'"
-          [iconStart]="stat.locked ? '@tui.lock' : '@tui.lock-open'"
+          [icon]="stat.locked ? '@tui.lock' : '@tui.lock-open'"
           [attr.title]="(stat.locked ? 'trainer.difficulty.unlockStat' : 'trainer.difficulty.lockStat') | transloco: { stat: key.toUpperCase() }"
           (click)="trainer.toggleLock(key)"
         >

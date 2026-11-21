@@ -1,12 +1,11 @@
-<div appearance="floating" tuiCardLarge="compact">
+<div appCard>
   <header>
     <h3 tuiTitle>{{ 'packs.fromCollection' | transloco }}</h3>
     @if (!collectionStore.isLoaded() && !collectionStore.isLoading()) {
       <button
-        appearance="flat"
-        iconStart="@tui.folder-open"
+        appButton="ghost"
+        icon="@tui.folder-open"
         size="xs"
-        tuiButton
         type="button"
         (click)="collectionStore.load()"
       >
@@ -16,7 +15,7 @@
   </header>
 
   @if (collectionStore.isLoading()) {
-    <tui-loader size="m" class="state" />
+    <app-loader class="state" />
   } @else if (!collectionStore.isLoaded()) {
     <p class="state">{{ 'packs.collectionsNotLoaded' | transloco }}</p>
   } @else if (entries().length === 0) {
@@ -27,19 +26,18 @@
         <div class="row">
           <span class="name">{{ entry.collection.name }}</span>
           <span
+            appBadge
+            [tone]="entry.added === entry.available ? 'success' : 'neutral'"
             size="s"
-            tuiBadge
-            [appearance]="entry.added === entry.available ? 'positive' : 'neutral'"
           >
             {{ entry.added }}/{{ entry.available }}
           </span>
           <button
+            [appButton]="entry.added === entry.available ? 'ghost' : 'secondary'"
             size="xs"
-            tuiButton
             type="button"
-            [appearance]="entry.added === entry.available ? 'flat' : 'secondary'"
             [disabled]="entry.added === entry.available"
-            [iconStart]="entry.added === entry.available ? '@tui.check' : '@tui.plus'"
+            [icon]="entry.added === entry.available ? '@tui.check' : '@tui.plus'"
             (click)="addCollection(entry)"
           >
             {{ (entry.added === entry.available ? 'packs.added' : 'packs.add') | transloco }}

@@ -1,6 +1,6 @@
+import { ButtonComponent } from '../button/button.component';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, signal } from '@angular/core';
-import { TuiButton } from '@taiga-ui/core';
 import { TuiSegmented } from '@taiga-ui/kit';
 
 export interface ExportFormat {
@@ -11,7 +11,7 @@ export interface ExportFormat {
 
 @Component({
   selector: 'app-export-controls',
-  imports: [TuiButton, TuiSegmented, TranslocoPipe],
+  imports: [TuiSegmented, TranslocoPipe, ButtonComponent],
   templateUrl: './export-controls.component.html',
   styleUrl: './export-controls.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,

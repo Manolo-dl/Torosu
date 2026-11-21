@@ -1,4 +1,4 @@
-<app-page-header [heading]="'nav.replays' | transloco" [subtitle]="'replays.subtitle' | transloco">
+<app-page-header icon="activity" [heading]="'nav.replays' | transloco" [subtitle]="'replays.subtitle' | transloco">
   <app-osu-reader-status />
 </app-page-header>
 
@@ -9,17 +9,17 @@
 
   <section class="main">
     @if (store.error(); as error) {
-      <div appearance="negative" tuiNotification>{{ error }}</div>
+      <div appNotice="danger">{{ error }}</div>
     } @else if (store.analyzing()) {
-      <div appearance="floating" tuiCardLarge="compact" class="placeholder">
-        <tui-loader size="l" [textContent]="'replays.analyzing' | transloco" />
+      <div appCard class="placeholder">
+        <app-loader size="l">{{ 'replays.analyzing' | transloco }}</app-loader>
       </div>
     } @else if (store.analysis(); as analysis) {
       @if (store.selectedEntry(); as entry) {
         <app-analysis-panel [entry]="entry" [analysis]="analysis" />
       }
     } @else {
-      <div appearance="floating" tuiCardLarge="compact" class="placeholder">
+      <div appCard class="placeholder">
         <p class="empty">{{ 'replays.pick' | transloco }}</p>
       </div>
     }

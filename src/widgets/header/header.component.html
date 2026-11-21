@@ -9,10 +9,9 @@
   <div class="actions">
     @if (update.available(); as available) {
       <button
-        size="m"
-        appearance="flat"
-        iconStart="@tui.circle-arrow-up"
-        tuiIconButton
+        appButton="soft"
+        size="s"
+        icon="@tui.circle-arrow-up"
         type="button"
         class="update"
         [tuiDropdown]="updatePanel"
@@ -26,7 +25,7 @@
           <div tuiTitle>
             <span>
               Torosu {{ available.version }}
-              <span appearance="info" size="s" tuiBadge>{{ 'header.new' | transloco }}</span>
+              <span appBadge tone="info" size="s">{{ 'header.new' | transloco }}</span>
             </span>
             <span tuiSubtitle>{{ 'header.youHave' | transloco: { version: available.currentVersion } }}</span>
           </div>
@@ -48,14 +47,14 @@
             <p class="notes">
               {{ 'header.updateFailed' | transloco }}
             </p>
-            <button iconStart="@tui.external-link" size="m" tuiButton type="button" (click)="update.openReleases()">
+            <button appButton="primary" icon="@tui.external-link" size="m" type="button" (click)="update.openReleases()">
               {{ 'header.openReleases' | transloco }}
             </button>
           } @else {
             <button
-              iconStart="@tui.download"
+              appButton="primary"
+              icon="@tui.download"
               size="m"
-              tuiButton
               type="button"
               [loading]="update.installing()"
               (click)="update.install()"

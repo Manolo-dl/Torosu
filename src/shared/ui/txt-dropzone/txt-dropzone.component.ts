@@ -1,8 +1,9 @@
+import { IconComponent } from '../icon/icon.component';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { ChangeDetectionStrategy, Component, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TxtFileDropDirective } from '@shared/directives';
-import { TuiIcon, TuiLink } from '@taiga-ui/core';
+import { TuiLink } from '@taiga-ui/core';
 import { TuiFiles } from '@taiga-ui/kit';
 
 /**
@@ -11,7 +12,7 @@ import { TuiFiles } from '@taiga-ui/kit';
  */
 @Component({
   selector: 'app-txt-dropzone',
-  imports: [FormsModule, TxtFileDropDirective, TuiFiles, TuiIcon, TuiLink, TranslocoPipe],
+  imports: [FormsModule, TxtFileDropDirective, TuiFiles, TuiLink, TranslocoPipe, IconComponent],
   templateUrl: './txt-dropzone.component.html',
   styleUrl: './txt-dropzone.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,

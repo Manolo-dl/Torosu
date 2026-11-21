@@ -1,8 +1,8 @@
-<div appearance="floating" tuiCardLarge="compact">
+<div appCard>
   <header>
     <h3 tuiTitle>{{ 'collections.export.preview' | transloco }}</h3>
     @if (store.selectedCount() > 0) {
-      <span appearance="info" tuiBadge>{{ 'collections.export.sets' | transloco: { count: store.totalSelectedSets() } }}</span>
+      <span appBadge tone="info">{{ 'collections.export.sets' | transloco: { count: store.totalSelectedSets() } }}</span>
     }
   </header>
   <app-beatmap-set-list

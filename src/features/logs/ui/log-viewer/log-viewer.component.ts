@@ -1,12 +1,11 @@
+import { ButtonComponent, BadgeComponent } from '@shared/ui';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { LogStore } from '@entities/log';
-import { TuiButton } from '@taiga-ui/core';
-import { TuiBadge, TuiButtonLoading } from '@taiga-ui/kit';
 import { LogColumnComponent } from '../log-column/log-column.component';
 
 @Component({
   selector: 'app-log-viewer',
-  imports: [LogColumnComponent, TuiBadge, TuiButton, TuiButtonLoading],
+  imports: [LogColumnComponent, ButtonComponent, BadgeComponent],
   templateUrl: './log-viewer.component.html',
   styleUrl: './log-viewer.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,

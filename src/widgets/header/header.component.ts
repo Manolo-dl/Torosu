@@ -1,19 +1,19 @@
+import { BadgeComponent, ButtonComponent } from '@shared/ui';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { ConfigurationStore } from '@entities/configuration';
 import { UpdateStore } from '@entities/update';
 import { NavStore } from '@entities/nav-item';
-import { TUI_DARK_MODE, TuiButton, TuiDropdown, TuiTitle } from "@taiga-ui/core";
+import { TUI_DARK_MODE, TuiDropdown, TuiTitle } from "@taiga-ui/core";
 import { AppearanceStore } from "@shared/stores";
-import { ButtonComponent } from "@shared/ui";
 import { WindowControlsComponent } from "@widgets/window-controls/window-controls.component";
-import { TuiBadge, TuiButtonLoading, TuiProgress } from '@taiga-ui/kit';
+import { TuiProgress } from '@taiga-ui/kit';
 import { ConfigButtonComponent } from "@features/configuration";
 
 @Component({
   selector: 'app-header',
-  imports: [ButtonComponent, RouterLink, WindowControlsComponent, TuiButton, TuiButtonLoading, TuiDropdown, TuiTitle, TuiBadge, TuiProgress, ConfigButtonComponent, TranslocoPipe],
+  imports: [ButtonComponent, RouterLink, WindowControlsComponent, TuiDropdown, TuiTitle, TuiProgress, ConfigButtonComponent, TranslocoPipe, BadgeComponent],
   templateUrl: './header.component.html',
   styleUrl: './header.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,

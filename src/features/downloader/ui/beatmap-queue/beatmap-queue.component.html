@@ -1,23 +1,23 @@
 @if (downloadQueue.queue().length > 0 || downloadQueue.skippedCount() > 0) {
-  <div appearance="floating" tuiCardLarge>
+  <div appCard>
     <div class="stats">
-      <span appearance="neutral" tuiBadge>{{ 'downloader.queue.queued' | transloco: { count: downloadQueue.queue().length } }}</span>
+      <span appBadge tone="neutral">{{ 'downloader.queue.queued' | transloco: { count: downloadQueue.queue().length } }}</span>
       @if (done() > 0) {
-        <span appearance="positive" tuiBadge>{{ 'downloader.queue.done' | transloco: { count: done() } }}</span>
+        <span appBadge tone="success">{{ 'downloader.queue.done' | transloco: { count: done() } }}</span>
       }
       @if (pending() > 0) {
-        <span appearance="info" tuiBadge>{{ 'downloader.queue.pending' | transloco: { count: pending() } }}</span>
+        <span appBadge tone="info">{{ 'downloader.queue.pending' | transloco: { count: pending() } }}</span>
       }
       @if (failed() > 0) {
-        <span appearance="negative" tuiBadge>{{ 'downloader.queue.failed' | transloco: { count: failed() } }}</span>
+        <span appBadge tone="danger">{{ 'downloader.queue.failed' | transloco: { count: failed() } }}</span>
       }
       @if (downloadQueue.skippedCount() > 0) {
-        <span appearance="neutral" tuiBadge>{{ 'downloader.queue.owned' | transloco: { count: downloadQueue.skippedCount() } }}</span>
+        <span appBadge tone="neutral">{{ 'downloader.queue.owned' | transloco: { count: downloadQueue.skippedCount() } }}</span>
       }
     </div>
 
     @if (downloader.error()) {
-      <div appearance="negative" size="m" tuiNotification>
+      <div appNotice="danger">
         {{ downloader.error() }}
       </div>
     }
@@ -36,7 +36,7 @@
               ></progress>
               <span class="pct">{{ item.progress | number:'1.0-0' }}%</span>
             } @else {
-              <span size="s" tuiBadge [appearance]="statusAppearance[item.status]">
+              <span appBadge [tone]="statusTone[item.status]" size="s">
                 {{ 'downloader.status.' + item.status | transloco }}
               </span>
             }
@@ -45,13 +45,12 @@
       </tui-scrollbar>
     }
 
-    <div appearance="warning" size="s" tuiNotification [innerHTML]="'downloader.queue.failedFile' | transloco"></div>
+    <div appNotice="warning" size="s" [innerHTML]="'downloader.queue.failedFile' | transloco"></div>
 
     <div class="controls">
       <button
-        appearance="secondary"
+        appButton="secondary"
         size="m"
-        tuiButton
         type="button"
         [disabled]="downloadQueue.isDownloading()"
         (click)="downloadQueue.clearQueue()"
@@ -59,8 +58,8 @@
         {{ 'downloader.queue.clear' | transloco }}
       </button>
       <button
+        appButton="primary"
         size="m"
-        tuiButton
         type="button"
         [disabled]="pending() === 0 || downloadQueue.isDownloading()"
         [loading]="downloadQueue.isDownloading()"

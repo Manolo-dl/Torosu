@@ -1,16 +1,14 @@
+import { ButtonComponent, BadgeComponent, NoticeComponent, StatefulInputComponent } from '@shared/ui';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { form, maxLength, minLength, required, FormRoot, FormField } from '@angular/forms/signals';
 import { signal } from '@angular/core';
 import { UserStore } from '../../user.store';
 import { ConfigurationStore } from '@entities/configuration';
-import { StatefulInputComponent } from "@shared/ui";
-import { TuiButton, TuiNotificationDirective, TuiTitle } from '@taiga-ui/core';
-import { TuiBadge } from '@taiga-ui/kit';
 
 @Component({
   selector: 'app-osu-cookie-input',
-  imports: [FormRoot, StatefulInputComponent, FormField, TuiButton, TuiNotificationDirective, TuiTitle, TuiBadge, TranslocoPipe],
+  imports: [FormRoot, StatefulInputComponent, FormField, TranslocoPipe, ButtonComponent, BadgeComponent, NoticeComponent],
   templateUrl: './osu-cookie-input.component.html',
   styleUrl: './osu-cookie-input.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,

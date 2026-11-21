@@ -1,4 +1,4 @@
-<div appearance="floating" tuiCardLarge="compact" class="card">
+<div appCard class="card">
   <label class="follow">
     <span class="follow-text">
       {{ 'replays.follow' | transloco }}
@@ -44,10 +44,10 @@
             <span class="accuracy">{{ entry.accuracy | number: '1.2-2' }}%</span>
             <span class="badges">
               @if (entry.map) {
-                <span appearance="neutral" size="s" tuiBadge>{{ entry.map.keys }}K</span>
+                <span appBadge tone="neutral" size="s">{{ entry.map.keys }}K</span>
               }
               @for (mod of entry.mods; track mod) {
-                <span appearance="info" size="s" tuiBadge>{{ mod }}</span>
+                <span appBadge tone="info" size="s">{{ mod }}</span>
               }
             </span>
           </span>

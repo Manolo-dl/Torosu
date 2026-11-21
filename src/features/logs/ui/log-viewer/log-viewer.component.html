@@ -1,10 +1,9 @@
 <div class="toolbar">
-  <span appearance="neutral" tuiBadge>{{ store.totalLogs() }} entries</span>
+  <span appBadge tone="neutral">{{ store.totalLogs() }} entries</span>
   <button
-    appearance="secondary"
-    iconStart="@tui.refresh-cw"
+    appButton="secondary"
+    icon="@tui.refresh-cw"
     size="s"
-    tuiButton
     type="button"
     [loading]="reloading()"
     (click)="reload()"

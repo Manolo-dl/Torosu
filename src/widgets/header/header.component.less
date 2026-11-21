@@ -56,8 +56,24 @@ header {
   background: var(--line);
 }
 
-.update {
-  color: var(--success);
+/* A new version: in green, with a soft pulse until it is opened. */
+.actions .update {
+  --button-bg: var(--success-soft);
+  --button-bg-hover: color-mix(in oklch, var(--success) 24%, transparent);
+  --button-fg: var(--success);
+
+  margin-inline-end: var(--space-2);
+  animation: update-pulse 2.4s var(--ease-out) infinite;
+}
+
+@keyframes update-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in oklch, var(--success) 45%, transparent);
+  }
+  70%,
+  100% {
+    box-shadow: 0 0 0 8px transparent;
+  }
 }
 
 .update-panel {

@@ -3,9 +3,7 @@ import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/cor
 import { BeatmapImportComponent, BeatmapQueueComponent, OsuCookieInputComponent, UserStore } from '@features/downloader';
 import { OsuDbStore } from '@entities/osu-db';
 import { ConfigurationStore } from '@entities/configuration';
-import { TuiTitle, TuiNotificationDirective, TuiButton } from "@taiga-ui/core";
-import { PageHeaderComponent } from '@shared/ui';
-import { TuiAccordion } from '@taiga-ui/kit';
+import { AccordionComponent, AccordionItemComponent, ButtonComponent, NoticeComponent, PageHeaderComponent, SectionTitleComponent } from '@shared/ui';
 
 interface PageInfo {
   title: string,
@@ -19,7 +17,7 @@ interface Step {
 
 @Component({
   selector: 'app-downloader',
-  imports: [PageHeaderComponent, BeatmapImportComponent, BeatmapQueueComponent, OsuCookieInputComponent, TuiTitle, TuiNotificationDirective, TuiButton, TuiAccordion, TranslocoPipe],
+  imports: [PageHeaderComponent, SectionTitleComponent, AccordionComponent, AccordionItemComponent, NoticeComponent, ButtonComponent, BeatmapImportComponent, BeatmapQueueComponent, OsuCookieInputComponent, TranslocoPipe],
   templateUrl: './downloader-page.component.html',
   styleUrl: './downloader-page.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,

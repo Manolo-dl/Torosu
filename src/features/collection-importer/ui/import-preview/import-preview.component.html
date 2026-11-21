@@ -1,4 +1,4 @@
-<div appearance="floating" tuiCardLarge="compact">
+<div appCard>
   <h3 tuiTitle>{{ 'collections.import.preview' | transloco }}</h3>
 
   @if (store.previewGroups().length === 0) {
@@ -11,13 +11,13 @@
             <span class="group-header">
               <span class="name">{{ group.name }}</span>
               <span
+                appBadge
+                [tone]="group.isExisting ? 'warning' : 'success'"
                 size="s"
-                tuiBadge
-                [appearance]="group.isExisting ? 'warning' : 'positive'"
               >
                 {{ (group.isExisting ? 'collections.import.merge' : 'collections.import.new') | transloco }}
               </span>
-              <span appearance="neutral" size="s" tuiBadge>{{ 'collections.import.sets' | transloco: { count: group.sets.length } }}</span>
+              <span appBadge tone="neutral" size="s">{{ 'collections.import.sets' | transloco: { count: group.sets.length } }}</span>
             </span>
           </button>
           <tui-expand>

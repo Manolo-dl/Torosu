@@ -2,10 +2,9 @@ import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input, signal, TemplateRef } from '@angular/core';
 import { OsuBeatmapSet, OsuDiff, setStatus } from '../../osu-db.model';
 import { openUrl } from '@tauri-apps/plugin-opener';
-import { StarBadgeComponent } from '@shared/ui';
+import { StarBadgeComponent, BadgeComponent, IconComponent } from '@shared/ui';
 import { beatmapsetUrl, modeColor, modeIcon, starBg } from '@shared/utils';
-import { TuiExpand, TuiIcon, TuiLink } from '@taiga-ui/core';
-import { TuiBadge } from '@taiga-ui/kit';
+import { TuiExpand, TuiLink } from '@taiga-ui/core';
 
 /** Pips of each mode on the closed card; the rest are only counted. */
 const MAX_PIPS = 6;
@@ -18,7 +17,7 @@ export interface DiffActionContext {
 
 @Component({
   selector: 'app-beatmap-set-card',
-  imports: [NgTemplateOutlet, StarBadgeComponent, TuiBadge, TuiExpand, TuiIcon, TuiLink],
+  imports: [NgTemplateOutlet, StarBadgeComponent, TuiExpand, TuiLink, BadgeComponent, IconComponent],
   templateUrl: './beatmap-set-card.component.html',
   styleUrl: './beatmap-set-card.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,

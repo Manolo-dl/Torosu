@@ -10,7 +10,7 @@ export const GAME_MODES = [
   { name: 'osu!mania', shortName: 'Mania', ruleset: 'mania', icon: 'assets/icons/modes/mania.svg', color: '#c966ff' },
 ] as const;
 
-/** The icon of a game mode, for `<tui-icon [icon]>`; drawn in the text colour. */
+/** The icon of a game mode, for `<app-icon [name]>`; drawn in the text colour. */
 export function modeIcon(mode: number): string {
   return (GAME_MODES[mode] ?? GAME_MODES[0]).icon;
 }

@@ -77,6 +77,20 @@ tui-expand {
   --tui-text-negative-hover: color-mix(in oklch, var(--danger) 85%, white);
 }
 
+/* Taiga's titles, still in some cards, as Torosu's: bold, with a quieter
+   subtitle. Taiga's own rules are in :where(), so these win. */
+[tuiTitle] {
+  color: var(--text-1);
+  font-family: var(--font-display);
+  font-weight: var(--weight-bold);
+}
+
+[tuiTitle] [tuiSubtitle] {
+  color: var(--text-3);
+  font-family: var(--font-sans);
+  font-weight: var(--weight-regular);
+}
+
 /* Set by AppComponent for a couple of frames while the theme changes,
    so animated surfaces switch colour at the same time as everything else. */
 .theme-switching,

@@ -1,15 +1,15 @@
+import { ButtonComponent, CardComponent } from '@shared/ui';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DifficultyKey } from '../../models/trainer.model';
 import { TrainerStore } from '../../stores/trainer.store';
-import { TuiButton, TuiSlider, TuiTitle } from '@taiga-ui/core';
-import { TuiCardLarge } from '@taiga-ui/layout';
+import { TuiSlider, TuiTitle } from '@taiga-ui/core';
 
 @Component({
   selector: 'app-trainer-difficulty-sliders',
-  imports: [DecimalPipe, FormsModule, TuiButton, TuiCardLarge, TuiSlider, TuiTitle, TranslocoPipe],
+  imports: [DecimalPipe, FormsModule, TuiSlider, TuiTitle, TranslocoPipe, ButtonComponent, CardComponent],
   templateUrl: './difficulty-sliders.component.html',
   styleUrl: './difficulty-sliders.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,

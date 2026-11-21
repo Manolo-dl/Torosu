@@ -4,7 +4,7 @@
 <app-analysis-summary [entry]="entry()" [analysis]="analysis()" [view]="store.view()" />
 
 @if (settings.key_chart) {
-  <div appearance="floating" tuiCardLarge="compact" class="card">
+  <div appCard class="card">
     <h3 tuiTitle>
       {{ 'replays.keys.title' | transloco }}
       <span tuiSubtitle>{{ 'replays.keys.subtitle' | transloco }}</span>
@@ -14,7 +14,7 @@
 }
 
 @if (settings.histogram) {
-  <div appearance="floating" tuiCardLarge="compact" class="card">
+  <div appCard class="card">
     <h3 tuiTitle>
       {{ 'replays.histogram.title' | transloco }}
       <span tuiSubtitle>{{ 'replays.histogram.subtitle' | transloco }}</span>
@@ -24,7 +24,7 @@
 }
 
 @if (settings.timeline) {
-  <div appearance="floating" tuiCardLarge="compact" class="card">
+  <div appCard class="card">
     <h3 tuiTitle>
       {{ 'replays.timeline.title' | transloco }}
       <span tuiSubtitle>{{ 'replays.timeline.subtitle' | transloco }}</span>

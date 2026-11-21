@@ -7,11 +7,11 @@
       </div>
 
       <div class="side">
-        <span size="s" tuiBadge class="status">{{ status() }}</span>
+        <span appBadge size="s" class="status">{{ status() }}</span>
         <div class="side-bottom">
           <div class="pips">
             @for (group of pips(); track group.mode) {
-              <tui-icon class="pip-mode" [icon]="modeIcon(group.mode)" [style.color]="modeColor(group.mode)" />
+              <app-icon class="pip-mode" [name]="modeIcon(group.mode)" [style.color]="modeColor(group.mode)" />
               @for (diff of group.diffs; track diff.md5) {
                 <span class="pip" [style.background]="diffBg(diff.stars)"></span>
               }
@@ -20,7 +20,7 @@
               }
             }
           </div>
-          <tui-icon icon="@tui.chevron-down" class="chevron" [class.open]="expanded()" />
+          <app-icon name="@tui.chevron-down" class="chevron" [class.open]="expanded()" />
         </div>
       </div>
     </div>
@@ -29,11 +29,11 @@
       <div class="diffs">
         @for (diff of sortedDiffs(); track diff.md5) {
           <div class="diff">
-            <tui-icon class="mode" [icon]="modeIcon(diff.mode)" [style.color]="modeColor(diff.mode)" />
+            <app-icon class="mode" [name]="modeIcon(diff.mode)" [style.color]="modeColor(diff.mode)" />
             <app-star-badge size="s" class="stars" [stars]="diff.stars" />
             <span class="name">{{ diff.diffName }}</span>
             @if (diff.status !== status()) {
-              <span appearance="neutral" size="s" tuiBadge>{{ diff.status }}</span>
+              <span appBadge tone="neutral" size="s">{{ diff.status }}</span>
             }
             @if (diffAction(); as action) {
               <span class="action">

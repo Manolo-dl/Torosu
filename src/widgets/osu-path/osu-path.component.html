@@ -1,23 +1,22 @@
-<div appearance="warning" size="m" tuiNotification>
-    <div tuiTitle>
-        {{ 'osuPath.notFound' | transloco }}
-        <span tuiSubtitle [innerHTML]="'osuPath.needed' | transloco"></span>
-    </div>
-    <div class="actions">
+<div appNotice="warning">
+    <p class="notice-title">{{ 'osuPath.notFound' | transloco }}</p>
+    <p [innerHTML]="'osuPath.needed' | transloco"></p>
+    <div class="notice-actions">
         <button
+            appButton="primary"
             size="s"
-            tuiButton
             type="button"
+            icon="folder-open"
             [disabled]="osuPath.isLoading()"
             (click)="osuPath.selectManually()"
         >
             {{ 'osuPath.select' | transloco }}
         </button>
         <button
-            appearance="secondary"
+            appButton="secondary"
             size="s"
-            tuiButton
             type="button"
+            icon="scan-search"
             [loading]="osuPath.isLoading()"
             (click)="osuPath.retry()"
         >

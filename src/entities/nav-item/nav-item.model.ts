@@ -2,7 +2,7 @@ export interface NavItem {
     /** A translation key. */
     label: string;
     route: string;
-    /** Taiga UI icon, for `<tui-icon [icon]>`. */
+    /** An icon of the set, for `<app-icon [name]>`. */
     icon: string;
     /** What the tool does, for its card on the home page. */
     /** A translation key. */

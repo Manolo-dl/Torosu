@@ -1,4 +1,4 @@
-<div appearance="floating" tuiCardLarge="compact">
+<div appCard>
   <h3 tuiTitle>
     {{ 'trainer.presets.title' | transloco }}
     <span tuiSubtitle>{{ 'trainer.presets.subtitle' | transloco }}</span>
@@ -7,9 +7,8 @@
   <div class="presets">
     @for (preset of builtIn; track preset.name) {
       <button
-        appearance="secondary"
+        appButton="secondary"
         size="s"
-        tuiButton
         type="button"
         [title]="describe(preset)"
         (click)="presets.apply(preset)"
@@ -20,9 +19,8 @@
     @for (preset of presets.custom(); track preset.name) {
       <span class="custom">
         <button
-          appearance="secondary"
+          appButton="secondary"
           size="s"
-          tuiButton
           type="button"
           [title]="describe(preset)"
           (click)="presets.apply(preset)"
@@ -30,10 +28,10 @@
           {{ preset.name }}
         </button>
         <button
-          appearance="flat"
-          iconStart="@tui.trash-2"
+          appButton="ghost"
+          iconOnly
+          icon="@tui.trash-2"
           size="xs"
-          tuiIconButton
           type="button"
           [title]="'trainer.presets.deleteTitle' | transloco"
           (click)="presets.remove(preset.name)"
@@ -67,10 +65,10 @@
           </tui-textfield>
           @switch (stateOf(preset.name)) {
             @case ('active') {
-              <tui-icon class="active" icon="@tui.circle-check" [title]="'trainer.shortcuts.active' | transloco" />
+              <app-icon class="active" name="@tui.circle-check" [title]="'trainer.shortcuts.active' | transloco" />
             }
             @case ('failed') {
-              <tui-icon class="failed" icon="@tui.circle-alert" [title]="'trainer.shortcuts.failedTitle' | transloco" />
+              <app-icon class="failed" name="@tui.circle-alert" [title]="'trainer.shortcuts.failedTitle' | transloco" />
             }
           }
         </div>
@@ -96,8 +94,8 @@
         />
       </tui-textfield>
       <button
+        appButton="primary"
         size="s"
-        tuiButton
         type="button"
         [disabled]="!name().trim()"
         (click)="save()"
@@ -105,9 +103,8 @@
         {{ 'trainer.presets.save' | transloco }}
       </button>
       <button
-        appearance="flat"
+        appButton="ghost"
         size="s"
-        tuiButton
         type="button"
         (click)="naming.set(false)"
       >
@@ -116,10 +113,9 @@
     </div>
   } @else {
     <button
-      appearance="flat"
-      iconStart="@tui.save"
+      appButton="ghost"
+      icon="@tui.save"
       size="s"
-      tuiButton
       type="button"
       [disabled]="!canSave()"
       (click)="naming.set(true)"

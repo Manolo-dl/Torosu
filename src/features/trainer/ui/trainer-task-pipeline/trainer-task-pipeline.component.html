@@ -1,11 +1,11 @@
-<div appearance="floating" tuiCardLarge="compact">
+<div appCard>
   <header>
     <h3 tuiTitle>{{ 'trainer.convert' | transloco: { number: number() } }}</h3>
     <div class="actions">
       <button
-        iconStart="@tui.plus"
+        appButton="primary"
+        icon="@tui.plus"
         size="s"
-        tuiButton
         type="button"
         [disabled]="availableTasksFiltered().length === 0"
         [tuiDropdown]="taskMenu"
@@ -14,10 +14,10 @@
         {{ 'trainer.addTask' | transloco }}
       </button>
       <button
-        appearance="flat"
-        iconStart="@tui.copy"
+        appButton="ghost"
+        iconOnly
+        icon="@tui.copy"
         size="s"
-        tuiIconButton
         type="button"
         [title]="'trainer.duplicateTitle' | transloco"
         (click)="trainer.duplicateConvert(convert().id)"
@@ -25,10 +25,10 @@
         {{ 'trainer.duplicate' | transloco }}
       </button>
       <button
-        appearance="flat"
-        iconStart="@tui.x"
+        appButton="ghost"
+        iconOnly
+        icon="@tui.x"
         size="s"
-        tuiIconButton
         type="button"
         [title]="'trainer.removeTitle' | transloco"
         [disabled]="trainer.converts().length === 1"
@@ -62,14 +62,14 @@
   <div class="list" cdkDropList (cdkDropListDropped)="onDrop($event)">
     @for (entry of convert().tasks; track entry.id) {
       <div class="task" cdkDrag [class.skipped]="isSkipped(entry.task.type)">
-        <tui-icon icon="@tui.grip-vertical" class="handle" cdkDragHandle />
+        <app-icon name="@tui.grip-vertical" class="handle" cdkDragHandle />
 
         <div class="content">
           <span class="label">
             {{ taskLabels[entry.task.type] | transloco }}
             @if (isSkipped(entry.task.type)) {
               <span class="skipped-note">
-                <tui-icon icon="@tui.ban" />
+                <app-icon name="@tui.ban" />
                 {{ skippedReason(entry.task.type) }}
               </span>
             }
@@ -145,27 +145,26 @@
             </div>
 
             @if (!trainer.ffmpegAvailable()) {
-              <div appearance="neutral" size="s" tuiNotification [innerHTML]="'trainer.rate.noFfmpeg' | transloco"></div>
+              <div appNotice="neutral" size="s" [innerHTML]="'trainer.rate.noFfmpeg' | transloco"></div>
             } @else if (entry.task.params.scaleVideo) {
-              <div appearance="info" size="s" tuiNotification>{{ 'trainer.rate.videoSlow' | transloco }}</div>
+              <div appNotice="info" size="s">{{ 'trainer.rate.videoSlow' | transloco }}</div>
             }
 
             @if (entry.task.params.scaleStoryboard) {
               <div
-                appearance="info"
+                appNotice="info"
                 size="s"
-                tuiNotification
                 [innerHTML]="'trainer.rate.storyboard' | transloco: { rate: entry.task.params.rate }"
               ></div>
             }
           }
 
           @if (entry.task.type === 'SVNormalizer') {
-            <div appearance="info" size="s" tuiNotification>{{ 'trainer.sv.description' | transloco }}</div>
+            <div appNotice="info" size="s">{{ 'trainer.sv.description' | transloco }}</div>
           }
 
           @if (entry.task.type === 'NoLn') {
-            <div appearance="info" size="s" tuiNotification>{{ 'trainer.noLn.description' | transloco }}</div>
+            <div appNotice="info" size="s">{{ 'trainer.noLn.description' | transloco }}</div>
           }
 
           @if (entry.task.type === 'ShortLn') {
@@ -287,10 +286,10 @@
         </div>
 
         <button
-          appearance="flat"
-          iconStart="@tui.trash-2"
+          appButton="ghost"
+          iconOnly
+          icon="@tui.trash-2"
           size="s"
-          tuiIconButton
           type="button"
           (click)="trainer.removeTask(convert().id, entry.id)"
         >

@@ -1,13 +1,14 @@
+import { ButtonComponent, IconComponent } from '@shared/ui';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal } from '@angular/core';
 import { form, required, FormField } from '@angular/forms/signals';
 import { SelectedDiff } from '../../pack.model';
 import { PackStore } from '../../pack.store';
-import { TuiButton, TuiHint, TuiIcon, TuiInput, tuiTextfieldOptionsProvider } from '@taiga-ui/core';
+import { TuiHint, TuiInput, tuiTextfieldOptionsProvider } from '@taiga-ui/core';
 
 @Component({
   selector: 'app-pack-preview-card',
-  imports: [FormField, TuiButton, TuiHint, TuiIcon, TuiInput, TranslocoPipe],
+  imports: [FormField, TuiHint, TuiInput, TranslocoPipe, ButtonComponent, IconComponent],
   providers: [tuiTextfieldOptionsProvider({ size: signal('s'), cleaner: signal(false) })],
   templateUrl: './pack-preview-card.component.html',
   styleUrl: './pack-preview-card.component.less',

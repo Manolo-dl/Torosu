@@ -1,10 +1,10 @@
+import { ButtonComponent, CardComponent, IconComponent } from '@shared/ui';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { BeatmapExporterStore, ModeFilters, emptyModeFilters } from '../../stores/beatmap-exporter.store';
-import { TuiButton, TuiExpand, TuiIcon, TuiInput, TuiTitle } from '@taiga-ui/core';
+import { TuiExpand, TuiInput, TuiTitle } from '@taiga-ui/core';
 import { TuiChip, TuiSegmented, TuiSwitch } from '@taiga-ui/kit';
-import { TuiCardLarge } from '@taiga-ui/layout';
 import { GAME_MODES } from '@shared/utils';
 
 export interface ModeConfig {
@@ -40,7 +40,7 @@ interface RangeField {
 
 @Component({
   selector: 'app-beatmap-filters',
-  imports: [FormsModule, TuiButton, TuiCardLarge, TuiChip, TuiExpand, TuiIcon, TuiInput, TuiSegmented, TuiSwitch, TuiTitle, TranslocoPipe],
+  imports: [FormsModule, TuiChip, TuiExpand, TuiInput, TuiSegmented, TuiSwitch, TuiTitle, TranslocoPipe, ButtonComponent, CardComponent, IconComponent],
   templateUrl: './beatmap-filters.component.html',
   styleUrl: './beatmap-filters.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,

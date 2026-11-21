@@ -1,4 +1,4 @@
-<div appearance="floating" tuiCardLarge="compact">
+<div appCard>
   <header>
     <h3 tuiTitle>{{ 'collections.export.list' | transloco }}</h3>
     <label tuiLabel>
@@ -15,7 +15,7 @@
   </header>
 
   @if (store.isLoading()) {
-    <tui-loader size="m" class="state" />
+    <app-loader class="state" />
   } @else if (!store.isLoaded()) {
     <p class="state">{{ 'collections.export.notLoaded' | transloco }}</p>
   } @else if (store.collectionsWithBeatmaps().length === 0) {
@@ -35,7 +35,7 @@
             (ngModelChange)="store.toggleSelection(col.name)"
           />
           <span class="name">{{ col.name }}</span>
-          <span appearance="neutral" size="s" tuiBadge>{{ col.sets.length }}</span>
+          <span appBadge tone="neutral" size="s">{{ col.sets.length }}</span>
         </label>
       }
     </tui-scrollbar>

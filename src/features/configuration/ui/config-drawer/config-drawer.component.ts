@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { TuiDrawer, TuiTabsHorizontal, TuiTab, TuiSwitch, TuiInputNumber } from "@taiga-ui/kit";
 import { open as openDialog } from '@tauri-apps/plugin-dialog';
 import { TuiHeader, TuiNavComponent } from "@taiga-ui/layout";
-import { TuiTitle, TuiPopup, TuiButton, TuiCell, TuiInput, TuiLabel } from "@taiga-ui/core";
+import { TuiTitle, TuiPopup, TuiCell, TuiInput, TuiLabel } from "@taiga-ui/core";
 import { Router } from '@angular/router';
 import { AppConfig, ConfigurationStore } from '@entities/configuration';
 import { USER_ITEMS } from '@entities/nav-item';
@@ -14,7 +14,7 @@ import { OsuPathStore } from '@entities/osu-path';
 import { NotifyService } from '@shared/services';
 import { PlatformStore } from '@shared/stores';
 import { DEFAULT_LANGUAGE, errorText, LANGUAGES } from '@shared/i18n';
-import { OptionGroupComponent, OptionGroupItem } from '@shared/ui';
+import { OptionGroupComponent, OptionGroupItem, ButtonComponent } from '@shared/ui';
 import { NameFormatField, NameFormatFieldComponent, NameFormatPreset } from '../name-format-field/name-format-field.component';
 import { AppearanceSettingsComponent } from '../appearance-settings/appearance-settings.component';
 
@@ -62,7 +62,7 @@ const DEFAULT_CONFIG: AppConfig = {
 
 @Component({
   selector: 'app-config-drawer',
-  imports: [AppearanceSettingsComponent, FormsModule, TuiDrawer, TuiHeader, TuiTitle, TuiNavComponent, TuiTabsHorizontal, TuiTab, TuiSwitch, TuiInputNumber, TuiCell, TuiInput, TuiLabel, TuiPopup, TuiButton, NameFormatFieldComponent, OptionGroupComponent, TranslocoPipe],
+  imports: [AppearanceSettingsComponent, FormsModule, TuiDrawer, TuiHeader, TuiTitle, TuiNavComponent, TuiTabsHorizontal, TuiTab, TuiSwitch, TuiInputNumber, TuiCell, TuiInput, TuiLabel, TuiPopup, NameFormatFieldComponent, OptionGroupComponent, TranslocoPipe, ButtonComponent],
   templateUrl: './config-drawer.component.html',
   styleUrl: './config-drawer.component.less',
 })

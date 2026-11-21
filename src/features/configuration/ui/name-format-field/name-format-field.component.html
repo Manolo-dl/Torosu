@@ -10,9 +10,8 @@
 <div class="formats">
   @for (preset of presets(); track preset.label) {
     <button
-      appearance="secondary"
+      appButton="secondary"
       size="xs"
-      tuiButton
       type="button"
       (click)="format.set(preset.format)"
     >

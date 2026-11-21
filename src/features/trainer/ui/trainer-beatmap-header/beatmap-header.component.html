@@ -22,9 +22,9 @@
       <app-skill-summary size="l" onImage [skill]="shownSkill()" [display]="skillDisplay()" />
       @let current = mode();
       @if (current !== null) {
-        <tui-icon
+        <app-icon
           class="mode"
-          [icon]="modeIcon(current)"
+          [name]="modeIcon(current)"
           [style.color]="modeColor(current)"
           [attr.title]="modeName()"
           [attr.aria-label]="modeName()"
@@ -33,10 +33,10 @@
       <app-star-badge size="l" class="stars" [stars]="reader.stars()" />
       @if (reader.data()?.paths) {
         <button
-          appearance="floating"
-          iconStart="@tui.download"
+          appButton="secondary"
+          iconOnly
+          icon="@tui.download"
           size="s"
-          tuiIconButton
           type="button"
           [title]="'trainer.exportOsz' | transloco"
           [loading]="reader.exporting()"

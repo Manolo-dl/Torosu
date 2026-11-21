@@ -1,15 +1,15 @@
+import { CardComponent } from '@shared/ui';
 import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { JUDGEMENTS, ReplayAnalysis, maniaAccuracy } from '@entities/local-scores';
 import { TuiHint } from '@taiga-ui/core';
-import { TuiCardLarge } from '@taiga-ui/layout';
 import { ScoreEntry, TimingView } from '../../stores/replay-analysis.store';
 
 /** The play at a glance: its timing and its judgements. */
 @Component({
     selector: 'app-analysis-summary',
-    imports: [DecimalPipe, TranslocoPipe, TuiCardLarge, TuiHint],
+    imports: [DecimalPipe, TranslocoPipe, TuiHint, CardComponent],
     templateUrl: './analysis-summary.component.html',
     styleUrl: './analysis-summary.component.less',
     changeDetection: ChangeDetectionStrategy.OnPush,

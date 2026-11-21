@@ -14,16 +14,14 @@ import {
   rateChangeTask,
   TrainerTaskType,
   TASK_MODES,
-  taskSupportsMode,
-} from '../../models/trainer.model';
+  taskSupportsMode } from '../../models/trainer.model';
 import { TrainerStore } from '../../stores/trainer.store';
 import { ConfigurationStore } from '@entities/configuration';
 import { OsuReaderStore, SkillSummaryComponent } from '@entities/osu-reader';
 import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDropList } from '@angular/cdk/drag-drop';
-import { TuiButton, TuiCheckbox, TuiDataList, TuiDropdown, TuiIcon, TuiInput, TuiNotificationDirective, TuiTitle } from '@taiga-ui/core';
-import { TuiCardLarge } from '@taiga-ui/layout';
+import { TuiCheckbox, TuiDataList, TuiDropdown, TuiInput, TuiTitle } from '@taiga-ui/core';
 import { TrainerNoteLengthComponent } from '../trainer-note-length/trainer-note-length.component';
-import { OptionGroupComponent, OptionGroupItem } from '@shared/ui';
+import { OptionGroupComponent, OptionGroupItem, ButtonComponent, CardComponent, IconComponent, NoticeComponent } from '@shared/ui';
 
 interface DensityOption {
   value: KeyDensity;
@@ -34,7 +32,7 @@ interface DensityOption {
 /** The tasks of one convert. */
 @Component({
   selector: 'app-trainer-task-pipeline',
-  imports: [CdkDrag, CdkDropList, CdkDragHandle, FormsModule, TuiButton, TuiCardLarge, TuiCheckbox, TuiDataList, TuiDropdown, TuiIcon, TuiInput, TuiNotificationDirective, TuiTitle, TrainerNoteLengthComponent, OptionGroupComponent, SkillSummaryComponent, TranslocoPipe],
+  imports: [CdkDrag, CdkDropList, CdkDragHandle, FormsModule, TuiCheckbox, TuiDataList, TuiDropdown, TuiInput, TuiTitle, TrainerNoteLengthComponent, OptionGroupComponent, SkillSummaryComponent, TranslocoPipe, ButtonComponent, CardComponent, IconComponent, NoticeComponent],
   templateUrl: './trainer-task-pipeline.component.html',
   styleUrl: './trainer-task-pipeline.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,

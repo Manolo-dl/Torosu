@@ -6,17 +6,17 @@
   />
 </tui-textfield>
 @if (error(); as message) {
-  <tui-icon
-    icon="@tui.circle-alert"
+  <app-icon
+    name="@tui.circle-alert"
     class="error"
     [tuiHint]="message | transloco"
   />
 }
 <button
-  appearance="flat"
-  iconStart="@tui.trash-2"
+  appButton="ghost"
+  iconOnly
+  icon="@tui.trash-2"
   size="s"
-  tuiIconButton
   type="button"
   (click)="onRemove()"
 >

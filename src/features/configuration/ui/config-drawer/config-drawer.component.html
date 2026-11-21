@@ -8,10 +8,10 @@
 
             <div tuiAccesories>
                 <button
+                    appButton="ghost"
+                    iconOnly
                     size="m"
-                    appearance="icon"
-                    iconStart="@tui.x"
-                    tuiIconButton
+                    icon="@tui.x"
                     type="button"
                     (click)="open.set(false)"
                 >
@@ -81,10 +81,10 @@
                             (ngModelChange)="draft().osu_path = $event || undefined"
                         />
                         <button
-                            appearance="icon"
-                            iconStart="@tui.folder-open"
+                            appButton="ghost"
+                            iconOnly
+                            icon="@tui.folder-open"
                             size="xs"
-                            tuiIconButton
                             type="button"
                             (click)="pickOsuPath()"
                         >
@@ -147,10 +147,10 @@
                             (ngModelChange)="draft().downloader.output_path = $event || undefined"
                         />
                         <button
-                            appearance="icon"
-                            iconStart="@tui.folder-open"
+                            appButton="ghost"
+                            iconOnly
+                            icon="@tui.folder-open"
                             size="xs"
-                            tuiIconButton
                             type="button"
                             (click)="pickOutputPath()"
                         >
@@ -408,17 +408,16 @@
 
     <footer>
         <button
-            appearance="secondary"
+            appButton="secondary"
             size="m"
-            tuiButton
             type="button"
             (click)="open.set(false)"
         >
             {{ 'settings.cancel' | transloco }}
         </button>
         <button
+            appButton="primary"
             size="m"
-            tuiButton
             type="button"
             (click)="save()"
         >

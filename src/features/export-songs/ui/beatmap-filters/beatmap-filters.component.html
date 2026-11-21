@@ -1,11 +1,10 @@
-<div appearance="floating" tuiCardLarge="compact">
+<div appCard>
   <header>
     <h3 tuiTitle>{{ 'exportSongs.filters' | transloco }}</h3>
     <button
-      appearance="flat"
-      iconStart="@tui.rotate-ccw"
+      appButton="ghost"
+      icon="@tui.rotate-ccw"
       size="xs"
-      tuiButton
       type="button"
       (click)="reset()"
     >
@@ -21,7 +20,7 @@
       [style.--mode-color]="m.color"
     >
       <div class="mode-header" (click)="toggleExpand(m.value)">
-        <tui-icon class="mode-icon" [icon]="m.icon" />
+        <app-icon class="mode-icon" [name]="m.icon" />
         <span class="mode-label">{{ m.label }}</span>
         <input
           size="s"
@@ -32,7 +31,7 @@
           (ngModelChange)="toggleExclude(m.value)"
           (click)="$event.stopPropagation()"
         />
-        <tui-icon icon="@tui.chevron-down" class="chevron" [class.open]="isExpanded(m.value)" />
+        <app-icon name="@tui.chevron-down" class="chevron" [class.open]="isExpanded(m.value)" />
       </div>
 
       <tui-expand [expanded]="isExpanded(m.value)">

@@ -1,16 +1,16 @@
 @switch (store.status().state) {
   @case ('connected') {
-    <span appearance="positive" size="l" tuiBadge tuiStatus="var(--tui-status-positive)" class="connected">
+    <span appBadge tone="success" size="l" class="connected" dot>
       Connected
     </span>
   }
   @case ('waiting') {
-    <span appearance="neutral" size="l" tuiBadge tuiStatus="var(--tui-text-tertiary)">
+    <span appBadge tone="neutral" size="l" dot>
       Waiting for osu!
     </span>
   }
   @case ('error') {
-    <span appearance="negative" size="l" tuiBadge tuiStatus="var(--tui-status-negative)">
+    <span appBadge tone="danger" size="l" dot>
       Can't read osu!
     </span>
   }

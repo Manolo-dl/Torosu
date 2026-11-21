@@ -1,11 +1,10 @@
 <div
-  appearance="floating"
-  tuiCardLarge="compact"
+  appCard
   [attr.data-level]="level().toLowerCase()"
 >
   <header>
-    <span size="m" tuiBadge [appearance]="appearance()">{{ level() }}</span>
-    <span appearance="neutral" size="s" tuiBadge>{{ totalCount() }}</span>
+    <span appBadge [tone]="tone()" size="m">{{ level() }}</span>
+    <span appBadge tone="neutral" size="s">{{ totalCount() }}</span>
   </header>
 
   @if (targetNames().length === 0) {
@@ -16,7 +15,7 @@
         <button type="button" [tuiAccordion]="false">
           <span class="target">
             <span class="name">{{ target }}</span>
-            <span appearance="neutral" size="s" tuiBadge>{{ entriesFor(target).length }}</span>
+            <span appBadge tone="neutral" size="s">{{ entriesFor(target).length }}</span>
           </span>
         </button>
         <tui-expand>

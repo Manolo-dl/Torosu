@@ -13,11 +13,11 @@
   />
   <ng-template let-dragged>
     <div class="content">
-      <tui-icon icon="@tui.file-text" />
+      <app-icon name="@tui.file-text" />
       @if (dragged || dropzone.isDragOver()) {
         <span [innerHTML]="'dropzone.dropHere' | transloco"></span>
       } @else {
-        <span><span [innerHTML]="'dropzone.dropOr' | transloco"></span> <a tuiLink>{{ 'dropzone.browse' | transloco }}</a></span>
+        <span><span [innerHTML]="'dropzone.dropOr' | transloco"></span>&ngsp;<a tuiLink>{{ 'dropzone.browse' | transloco }}</a></span>
       }
     </div>
   </ng-template>

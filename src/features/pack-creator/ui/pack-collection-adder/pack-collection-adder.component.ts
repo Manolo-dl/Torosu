@@ -1,12 +1,11 @@
+import { ButtonComponent, BadgeComponent, CardComponent, LoaderComponent } from '@shared/ui';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { Component, computed, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CollectionStore } from '@entities/collection';
 import { OsuDbStore } from '@entities/osu-db';
 import { PackStore } from '../../pack.store';
 import { OsuCollection } from '@entities/collection';
-import { TuiButton, TuiLoader, TuiScrollbar, TuiTitle } from '@taiga-ui/core';
-import { TuiBadge } from '@taiga-ui/kit';
-import { TuiCardLarge } from '@taiga-ui/layout';
+import { TuiScrollbar, TuiTitle } from '@taiga-ui/core';
 
 interface CollectionEntry {
     collection: OsuCollection;
@@ -16,7 +15,7 @@ interface CollectionEntry {
 
 @Component({
     selector: 'app-pack-collection-adder',
-    imports: [TuiBadge, TuiButton, TuiCardLarge, TuiLoader, TuiScrollbar, TuiTitle, TranslocoPipe],
+    imports: [LoaderComponent, TuiScrollbar, TuiTitle, TranslocoPipe, ButtonComponent, BadgeComponent, CardComponent],
     templateUrl: './pack-collection-adder.component.html',
     styleUrl: './pack-collection-adder.component.less',
     changeDetection: ChangeDetectionStrategy.OnPush,

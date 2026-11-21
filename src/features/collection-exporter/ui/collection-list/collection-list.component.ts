@@ -1,14 +1,13 @@
+import { BadgeComponent, CardComponent, LoaderComponent } from '@shared/ui';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CollectionStore } from '@entities/collection';
-import { TuiCell, TuiCheckbox, TuiLabel, TuiLoader, TuiScrollbar, TuiTitle } from '@taiga-ui/core';
-import { TuiBadge } from '@taiga-ui/kit';
-import { TuiCardLarge } from '@taiga-ui/layout';
+import { TuiCell, TuiCheckbox, TuiLabel, TuiScrollbar, TuiTitle } from '@taiga-ui/core';
 
 @Component({
   selector: 'app-collection-list',
-  imports: [FormsModule, TuiCardLarge, TuiCell, TuiCheckbox, TuiLabel, TuiLoader, TuiScrollbar, TuiTitle, TuiBadge, TranslocoPipe],
+  imports: [LoaderComponent, FormsModule, TuiCell, TuiCheckbox, TuiLabel, TuiScrollbar, TuiTitle, TranslocoPipe, BadgeComponent, CardComponent],
   templateUrl: './collection-list.component.html',
   styleUrl: './collection-list.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,

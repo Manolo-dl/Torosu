@@ -1,24 +1,19 @@
-<div
-  size="m"
-  tuiNotification
-  [appearance]="userStore.user()?.osuSession ? 'info' : 'warning'"
->
-  <div tuiTitle>
-    <span>
-      {{ 'downloader.session' | transloco }}
-      @if (userStore.user()?.osuSession) {
-        <span appearance="positive" size="s" tuiBadge>{{ 'downloader.cookie.active' | transloco }}</span>
-      } @else {
-        <span appearance="warning" size="s" tuiBadge>{{ 'downloader.cookie.none' | transloco }}</span>
-      }
-    </span>
-    <div tuiSubtitle>
-      <span [innerHTML]="'downloader.cookie.required' | transloco"></span>
-      <span
-        [innerHTML]="(config.config()?.downloader?.save_session ? 'downloader.cookie.saved' : 'downloader.cookie.sessionOnly') | transloco"
-      ></span>
-    </div>
-  </div>
+<div [appNotice]="userStore.user()?.osuSession ? 'success' : 'warning'">
+  <p class="notice-title">
+    {{ 'downloader.session' | transloco }}
+    @if (userStore.user()?.osuSession) {
+      <span appBadge tone="success" size="s" dot>{{ 'downloader.cookie.active' | transloco }}</span>
+    } @else {
+      <span appBadge tone="warning" size="s">{{ 'downloader.cookie.none' | transloco }}</span>
+    }
+  </p>
+  <p>
+    <span [innerHTML]="'downloader.cookie.required' | transloco"></span>
+    &ngsp;
+    <span
+      [innerHTML]="(config.config()?.downloader?.save_session ? 'downloader.cookie.saved' : 'downloader.cookie.sessionOnly') | transloco"
+    ></span>
+  </p>
 </div>
 
 <form [formRoot]="osuCookieForm">
@@ -29,12 +24,11 @@
     placeholder="downloader.cookie.placeholder" />
 
   <div class="button-group">
-    <button size="m" tuiButton type="submit">{{ 'downloader.cookie.use' | transloco }}</button>
+    <button appButton="primary" size="m" type="submit" icon="key-round">{{ 'downloader.cookie.use' | transloco }}</button>
     @if (userStore.user()?.osuSession) {
       <button
-        appearance="negative"
+        appButton="danger"
         size="m"
-        tuiButton
         type="button"
         (click)="clearSession()"
       >
