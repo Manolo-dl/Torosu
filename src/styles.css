@@ -18,11 +18,9 @@ tui-expand {
    whose .dark/.light classes win over Taiga's own [tuiTheme] values.
    ============================================ */
 
+/* (Their fonts are set in theme.css, on :root, where they need to be.) */
 .dark,
 .light {
-  --tui-typography-family-text: var(--font-sans);
-  --tui-typography-family-display: var(--font-display);
-
   --tui-background-base: var(--surface-0);
   --tui-background-base-alt: var(--surface-1);
   --tui-background-neutral-1: color-mix(in oklch, var(--text-1) 7%, transparent);

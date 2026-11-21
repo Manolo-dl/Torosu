@@ -1,15 +1,16 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { AppearanceStore, FONTS, PALETTES } from '@shared/stores';
+import { AppearanceStore, Font, FONTS, PALETTES } from '@shared/stores';
 import { TuiCell, TuiTitle } from '@taiga-ui/core';
 import { TuiSwitch } from '@taiga-ui/kit';
 
 /** How each font is named, in its own letters. */
-const FONT_NAMES: Record<(typeof FONTS)[number], string> = { nunito: 'Nunito', outfit: 'Outfit', inter: 'Inter' };
-const FONT_FAMILIES: Record<(typeof FONTS)[number], string> = {
-    nunito: "'Nunito Variable'",
+const FONT_NAMES: Record<Font, string> = { outfit: 'Outfit', nunito: 'Nunito', inter: 'Inter', grotesk: 'Space Grotesk' };
+const FONT_FAMILIES: Record<Font, string> = {
     outfit: "'Outfit Variable'",
+    nunito: "'Nunito Variable'",
     inter: "'Inter Variable'",
+    grotesk: "'Space Grotesk Variable'",
 };
 
 /** The palette, the font and the motion: they change the app as they are picked. */

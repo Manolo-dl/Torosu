@@ -7,7 +7,7 @@ export const PALETTES = ['sakura', 'nebula', 'aurora', 'ember', 'mono'] as const
 export type Palette = (typeof PALETTES)[number];
 
 /** The bundled fonts. */
-export const FONTS = ['nunito', 'outfit', 'inter'] as const;
+export const FONTS = ['outfit', 'nunito', 'inter', 'grotesk'] as const;
 export type Font = (typeof FONTS)[number];
 
 interface AppearanceState {
@@ -20,7 +20,7 @@ interface AppearanceState {
 
 const initialState: AppearanceState = {
     palette: 'sakura',
-    font: 'nunito',
+    font: 'outfit',
     dark: true,
     reducedMotion: false,
 };

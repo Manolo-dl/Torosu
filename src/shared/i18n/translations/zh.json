@@ -127,6 +127,12 @@
         "aurora": "Aurora",
         "ember": "Ember",
         "mono": "Mono"
+      },
+      "fonts": {
+        "outfit": "几何风格，与 osu! 相似",
+        "nunito": "圆润柔和",
+        "inter": "中性紧凑",
+        "grotesk": "科技感，富有个性"
       }
     }
   },

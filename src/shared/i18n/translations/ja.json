@@ -127,6 +127,12 @@
         "aurora": "Aurora",
         "ember": "Ember",
         "mono": "Mono"
+      },
+      "fonts": {
+        "outfit": "osu! のような幾何学的な書体",
+        "nunito": "丸みのある柔らかな書体",
+        "inter": "ニュートラルでコンパクト",
+        "grotesk": "テクニカルで個性的"
       }
     }
   },

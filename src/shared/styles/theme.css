@@ -66,25 +66,49 @@
 }
 
 /* ---- Fonts --------------------------------------------------------------- */
+/* Four, each a different voice, used whole: text and titles in the same one.
+   The numbers and paths are in JetBrains Mono whatever the choice. */
 
 :root {
   /* After the chosen one, the system's, then fonts for Japanese, Korean and
      Chinese, which the bundled fonts don't cover. */
   --font-fallback: system-ui, -apple-system, 'Segoe UI', 'Noto Sans', 'Hiragino Sans', 'Noto Sans CJK JP',
     'Noto Sans CJK KR', 'Noto Sans CJK SC', 'Yu Gothic UI', 'Malgun Gothic', 'Microsoft YaHei UI', sans-serif;
-  --font-mono: ui-monospace, 'JetBrains Mono', 'Cascadia Code', 'Fira Code', monospace;
-  --font-sans: 'Nunito Variable', var(--font-fallback);
-  --font-display: var(--font-sans);
-}
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, 'Cascadia Code', monospace;
 
-:root[data-font='outfit'] {
+  /* Outfit, geometric like osu!'s own Torus: the default. */
   --font-sans: 'Outfit Variable', var(--font-fallback);
+  --font-display: var(--font-sans);
+  /* How much tighter the titles are set than the text. */
+  --tracking-display: -0.015em;
 }
 
-/* Inter for text; Outfit for titles, rounder and bolder than Inter's. */
+/* Rounded and soft. */
+:root[data-font='nunito'] {
+  --font-sans: 'Nunito Variable', var(--font-fallback);
+  --tracking-display: -0.01em;
+}
+
+/* Neutral and compact, for the most information in the least room. */
 :root[data-font='inter'] {
   --font-sans: 'Inter Variable', var(--font-fallback);
-  --font-display: 'Outfit Variable', var(--font-fallback);
+  --tracking-display: -0.025em;
+}
+
+/* Technical, with the quirks of a grotesque. */
+:root[data-font='grotesk'] {
+  --font-sans: 'Space Grotesk Variable', var(--font-fallback);
+  --tracking-display: -0.02em;
+}
+
+/* Taiga's fonts. On :root, where Taiga composes its `font` shorthands
+   (--tui-typography-body-s and the rest) out of these two: set lower down,
+   on <tui-root>, they came too late, the shorthands kept Taiga's own font
+   (Manrope, which isn't bundled) and the whole app fell back to the
+   system's, whatever font was picked. */
+:root {
+  --tui-typography-family-text: var(--font-sans);
+  --tui-typography-family-display: var(--font-display);
 }
 
 /* ---- Scales shared by every palette -------------------------------------- */
@@ -325,4 +349,10 @@ html {
 /* Numbers that line up in columns. */
 .tabular {
   font-variant-numeric: tabular-nums;
+}
+
+/* Paths, hashes, numbers read digit by digit. */
+.mono {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
 }

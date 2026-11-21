@@ -127,6 +127,12 @@
         "aurora": "Aurora",
         "ember": "Ember",
         "mono": "Mono"
+      },
+      "fonts": {
+        "outfit": "osu!처럼 기하학적인 글꼴",
+        "nunito": "둥글고 부드러운 글꼴",
+        "inter": "중립적이고 촘촘한 글꼴",
+        "grotesk": "기술적이고 개성 있는 글꼴"
       }
     }
   },

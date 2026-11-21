@@ -127,6 +127,12 @@
         "aurora": "Aurora",
         "ember": "Ember",
         "mono": "Mono"
+      },
+      "fonts": {
+        "outfit": "Geometric, like osu!'s",
+        "nunito": "Rounded and soft",
+        "inter": "Neutral and compact",
+        "grotesk": "Technical, with character"
       }
     }
   },
