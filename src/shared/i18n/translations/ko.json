@@ -553,7 +553,15 @@
     "search": "제목, 아티스트, 파일 이름으로 검색...",
     "created": "팩 {{ title }}을(를) 만들었습니다!",
     "createdParts": "팩 {{ title }}을(를) {{ parts }}개로 나눠 만들었습니다!",
-    "createFailed": "팩을 만들지 못했습니다: {{ error }}"
+    "createFailed": "팩을 만들지 못했습니다: {{ error }}",
+    "stats": {
+      "diffs": "난이도",
+      "sets": "세트",
+      "packs": "팩",
+      "stars": "별",
+      "packsHint": "설정의 팩당 최대 세트 수로 나뉩니다"
+    },
+    "emptyHint": "맵에서 난이도를 고르거나 컬렉션을 통째로 추가하세요."
   },
   "beatmaps": {
     "none": "비트맵이 없습니다"

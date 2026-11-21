@@ -553,7 +553,15 @@
     "search": "按曲名、艺术家或文件名搜索……",
     "created": "谱包 {{ title }} 已创建！",
     "createdParts": "谱包 {{ title }} 已创建，共 {{ parts }} 部分！",
-    "createFailed": "创建谱包失败：{{ error }}"
+    "createFailed": "创建谱包失败：{{ error }}",
+    "stats": {
+      "diffs": "难度",
+      "sets": "图组",
+      "packs": "曲包",
+      "stars": "星数",
+      "packsHint": "按设置中每个曲包的最大图组数拆分"
+    },
+    "emptyHint": "从谱面中挑选难度，或整个添加一个收藏夹。"
   },
   "beatmaps": {
     "none": "没有谱面"

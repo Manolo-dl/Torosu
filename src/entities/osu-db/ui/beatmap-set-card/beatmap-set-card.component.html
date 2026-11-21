@@ -1,8 +1,12 @@
-<div class="card" [attr.data-status]="status()" (click)="toggleExpand($event)">
+<div class="card" [attr.data-status]="status()" [class.expanded]="expanded()" (click)="toggleExpand($event)">
+  <!-- Its cover from osu!, behind the side of the card, fading toward the titles. -->
+  @if (cover(); as url) {
+    <img class="cover" alt="" loading="lazy" [src]="url" [class.shown]="coverLoaded()" (load)="coverLoaded.set(true)" (error)="coverFailed.set(true)" />
+  }
   <div class="body">
     <div class="head">
       <div class="titles">
-        <button tuiLink type="button" class="title" (click)="openSet($event)">{{ set().title }}</button>
+        <button type="button" class="title" [disabled]="set().beatmapsetId <= 0" (click)="openSet($event)">{{ set().title }}</button>
         <span class="artist">{{ set().artist }}</span>
       </div>
 

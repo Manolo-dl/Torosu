@@ -3,8 +3,8 @@ import { ChangeDetectionStrategy, Component, computed, input, signal, TemplateRe
 import { OsuBeatmapSet, OsuDiff, setStatus } from '../../osu-db.model';
 import { openUrl } from '@tauri-apps/plugin-opener';
 import { StarBadgeComponent, BadgeComponent, IconComponent } from '@shared/ui';
-import { beatmapsetUrl, modeColor, modeIcon, starBg } from '@shared/utils';
-import { TuiExpand, TuiLink } from '@taiga-ui/core';
+import { beatmapsetCover, beatmapsetUrl, modeColor, modeIcon, starBg } from '@shared/utils';
+import { TuiExpand } from '@taiga-ui/core';
 
 /** Pips of each mode on the closed card; the rest are only counted. */
 const MAX_PIPS = 6;
@@ -17,7 +17,7 @@ export interface DiffActionContext {
 
 @Component({
   selector: 'app-beatmap-set-card',
-  imports: [NgTemplateOutlet, StarBadgeComponent, TuiExpand, TuiLink, BadgeComponent, IconComponent],
+  imports: [NgTemplateOutlet, StarBadgeComponent, TuiExpand, BadgeComponent, IconComponent],
   templateUrl: './beatmap-set-card.component.html',
   styleUrl: './beatmap-set-card.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -28,6 +28,11 @@ export class BeatmapSetCardComponent {
   readonly diffAction = input<TemplateRef<DiffActionContext>>();
 
   readonly expanded = signal(false);
+
+  /** Its cover on osu!'s servers; none for a set not on the website, or that has none. */
+  readonly coverFailed = signal(false);
+  readonly coverLoaded = signal(false);
+  readonly cover = computed(() => (this.coverFailed() ? null : beatmapsetCover(this.set().beatmapsetId)));
   readonly status = computed(() => setStatus(this.set()));
 
   /** By mode, then by stars. */

@@ -1,10 +1,97 @@
-// Fixed height: must match itemSize of the virtual scroll in pack-preview.
+@import 'shared/styles/mixins';
+
+// Fixed height: must match itemSize (66) of the virtual scroll in pack-preview.
 :host {
+  display: block;
+  block-size: 66px;
+  padding-block-end: 4px;
+}
+
+.card {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  block-size: 36px;
-  padding-inline-end: 0.75rem;
+  gap: var(--space-3);
+  block-size: 100%;
+  padding: 0 var(--space-2) 0 var(--space-2);
+  border: 1px solid var(--line-subtle);
+  border-radius: var(--radius-md);
+  background: color-mix(in oklch, var(--text-1) 4%, var(--surface-1));
+  transition:
+    background var(--duration-2) var(--ease-out),
+    border-color var(--duration-2) var(--ease-out);
+
+  &:hover,
+  &:focus-within {
+    background: color-mix(in oklch, var(--text-1) 7%, var(--surface-1));
+
+    .remove {
+      opacity: 1;
+    }
+  }
+
+  &.invalid {
+    border-color: color-mix(in oklch, var(--danger) 45%, transparent);
+  }
+}
+
+.thumb {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  inline-size: 46px;
+  block-size: 46px;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--mode-color) 16%, transparent);
+  color: var(--mode-color);
+  font-size: 1.4rem;
+  overflow: hidden;
+
+  img {
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+    animation: thumb-in var(--duration-3) var(--ease-out);
+  }
+}
+
+.text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+  min-inline-size: 0;
+}
+
+.source {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-inline-size: 0;
+  font-size: var(--text-2xs);
+
+  .stars {
+    flex-shrink: 0;
+    font-weight: var(--weight-bold);
+  }
+
+  .title {
+    .ellipsis();
+    color: var(--text-2);
+    font-weight: var(--weight-bold);
+  }
+
+  .from {
+    .ellipsis();
+    flex-shrink: 1;
+    max-inline-size: 45%;
+    color: var(--text-3);
+  }
+}
+
+.name-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
 
   tui-textfield {
     flex: 1;
@@ -12,8 +99,22 @@
   }
 
   .error {
-    font-size: 1.125rem;
-    color: var(--tui-status-negative);
+    flex-shrink: 0;
+    color: var(--danger);
+    font-size: 1.1rem;
     cursor: help;
+  }
+}
+
+// Shows as the pointer comes, not to crowd every row.
+.remove {
+  flex-shrink: 0;
+  opacity: 0.35;
+  transition: opacity var(--duration-2) var(--ease-out);
+}
+
+@keyframes thumb-in {
+  from {
+    opacity: 0;
   }
 }

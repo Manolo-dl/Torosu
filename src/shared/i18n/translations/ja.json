@@ -553,7 +553,15 @@
     "search": "タイトル、アーティスト、ファイル名で検索...",
     "created": "パック {{ title }} を作成しました！",
     "createdParts": "パック {{ title }} を {{ parts }} 個に分けて作成しました！",
-    "createFailed": "パックの作成に失敗しました: {{ error }}"
+    "createFailed": "パックの作成に失敗しました: {{ error }}",
+    "stats": {
+      "diffs": "難易度",
+      "sets": "セット",
+      "packs": "パック",
+      "stars": "スター",
+      "packsHint": "設定のパックあたり最大セット数で分割されます"
+    },
+    "emptyHint": "マップから難易度を選ぶか、コレクションを丸ごと追加してください。"
   },
   "beatmaps": {
     "none": "ビートマップがありません"

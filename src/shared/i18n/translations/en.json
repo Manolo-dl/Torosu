@@ -553,7 +553,15 @@
     "search": "Search by title, artist or file name...",
     "created": "Pack {{ title }} created!",
     "createdParts": "Pack {{ title }} created in {{ parts }} parts!",
-    "createFailed": "Failed to create the pack: {{ error }}"
+    "createFailed": "Failed to create the pack: {{ error }}",
+    "stats": {
+      "diffs": "Diffs",
+      "sets": "Sets",
+      "packs": "Packs",
+      "stars": "Stars",
+      "packsHint": "Split by the most sets per pack in the settings"
+    },
+    "emptyHint": "Pick diffs from the maps, or add a whole collection."
   },
   "beatmaps": {
     "none": "No beatmaps"

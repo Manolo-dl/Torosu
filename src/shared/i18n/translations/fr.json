@@ -553,7 +553,15 @@
     "search": "Rechercher par titre, artiste ou nom de fichier...",
     "created": "Pack {{ title }} créé !",
     "createdParts": "Pack {{ title }} créé en {{ parts }} parties !",
-    "createFailed": "Impossible de créer le pack : {{ error }}"
+    "createFailed": "Impossible de créer le pack : {{ error }}",
+    "stats": {
+      "diffs": "Difficultés",
+      "sets": "Sets",
+      "packs": "Packs",
+      "stars": "Étoiles",
+      "packsHint": "Découpé selon le maximum de sets par pack des paramètres"
+    },
+    "emptyHint": "Choisis des difficultés dans les maps, ou ajoute une collection entière."
   },
   "beatmaps": {
     "none": "Aucune beatmap"
