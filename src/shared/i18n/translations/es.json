@@ -491,7 +491,8 @@
     "logs": "Cargando logs, espera...",
     "logsFailed": "No se han podido cargar los logs",
     "localScores": "Leyendo tus scores locales, espera...",
-    "localScoresFailed": "No se pudo leer scores.db"
+    "localScoresFailed": "No se pudo leer scores.db",
+    "retry": "Reintentar"
   },
   "collections": {
     "export": {

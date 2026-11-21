@@ -21,7 +21,23 @@
     <app-option-group [options]="keyOptions()" [active]="keyIndex()" (activeChange)="pickKeys($event)" />
   }
 
-  @if (store.filtered().length === 0) {
+  @if (loading()) {
+    <div class="skeletons" aria-busy="true">
+      @for (row of [0, 1, 2, 3, 4, 5]; track row) {
+        <div class="skeleton-score" [style.--skeleton-delay]="row * 0.08 + 's'">
+          <span class="titles">
+            <app-skeleton [width]="row % 2 === 0 ? '75%' : '60%'" height="0.8rem" />
+            <app-skeleton [width]="row % 3 === 0 ? '45%' : '35%'" height="0.65rem" />
+            <app-skeleton width="30%" height="0.55rem" />
+          </span>
+          <span class="side">
+            <app-skeleton width="3rem" height="0.8rem" />
+            <app-skeleton width="2.25rem" height="1rem" radius="pill" />
+          </span>
+        </div>
+      }
+    </div>
+  } @else if (store.filtered().length === 0) {
     <div class="empty">{{ (store.entries().length ? 'replays.noMatch' : 'replays.none') | transloco }}</div>
   } @else {
     <cdk-virtual-scroll-viewport itemSize="64" tuiScrollRef class="viewport">

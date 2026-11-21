@@ -1,4 +1,4 @@
-import { ButtonComponent, BadgeComponent, CardComponent, LoaderComponent } from '@shared/ui';
+import { ButtonComponent, BadgeComponent, CardComponent, SkeletonComponent } from '@shared/ui';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { Component, computed, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CollectionStore } from '@entities/collection';
@@ -15,7 +15,7 @@ interface CollectionEntry {
 
 @Component({
     selector: 'app-pack-collection-adder',
-    imports: [LoaderComponent, TuiScrollbar, TuiTitle, TranslocoPipe, ButtonComponent, BadgeComponent, CardComponent],
+    imports: [SkeletonComponent, TuiScrollbar, TuiTitle, TranslocoPipe, ButtonComponent, BadgeComponent, CardComponent],
     templateUrl: './pack-collection-adder.component.html',
     styleUrl: './pack-collection-adder.component.less',
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -24,6 +24,10 @@ export class PackCollectionAdderComponent {
     readonly collectionStore = inject(CollectionStore);
     readonly packStore = inject(PackStore);
     readonly osuDb = inject(OsuDbStore);
+    /** What each collection has comes from osu!.db: both are needed. */
+    readonly loading = computed(
+        () => this.collectionStore.isLoading() || (this.collectionStore.isLoaded() && this.osuDb.isLoading()),
+    );
 
     entries = computed<CollectionEntry[]>(() => {
         const collections = this.collectionStore.collections();

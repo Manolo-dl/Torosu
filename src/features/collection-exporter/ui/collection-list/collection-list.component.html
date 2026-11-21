@@ -14,8 +14,16 @@
     </label>
   </header>
 
-  @if (store.isLoading()) {
-    <app-loader class="state" />
+  @if (loading()) {
+    <div class="skeleton-rows" aria-busy="true">
+    @for (row of [0, 1, 2, 3, 4]; track row) {
+      <div class="skeleton-row" [style.--skeleton-delay]="row * 0.08 + 's'">
+        <app-skeleton width="1rem" height="1rem" radius="0.3rem" />
+        <app-skeleton [width]="row % 2 === 0 ? '60%' : '42%'" height="0.75rem" />
+        <app-skeleton width="1.75rem" height="1.1rem" radius="pill" />
+      </div>
+    }
+  </div>
   } @else if (!store.isLoaded()) {
     <p class="state">{{ 'collections.export.notLoaded' | transloco }}</p>
   } @else if (store.collectionsWithBeatmaps().length === 0) {

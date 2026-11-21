@@ -491,7 +491,8 @@
     "logs": "Loading logs, please wait...",
     "logsFailed": "Failed to load logs",
     "localScores": "Reading your local scores, please wait...",
-    "localScoresFailed": "Failed to read scores.db"
+    "localScoresFailed": "Failed to read scores.db",
+    "retry": "Try again"
   },
   "collections": {
     "export": {

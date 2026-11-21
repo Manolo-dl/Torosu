@@ -491,7 +491,8 @@
     "logs": "ログを読み込み中です。お待ちください...",
     "logsFailed": "ログの読み込みに失敗しました",
     "localScores": "ローカルスコアを読み込んでいます。お待ちください...",
-    "localScoresFailed": "scores.db を読み込めませんでした"
+    "localScoresFailed": "scores.db を読み込めませんでした",
+    "retry": "再試行"
   },
   "collections": {
     "export": {
