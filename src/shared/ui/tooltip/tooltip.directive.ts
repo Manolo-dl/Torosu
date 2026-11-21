@@ -22,6 +22,10 @@ const MARGIN = 8;
         '(focusin)': 'show()',
         '(focusout)': 'hide()',
         '(keydown.escape)': 'hide()',
+        // Pressing it means using it: and a drag (cdkDrag) moves it from
+        // under the pointer without a mouseleave, which left the card behind.
+        '(pointerdown)': 'hide()',
+        '(dragstart)': 'hide()',
     },
 })
 export class TooltipDirective {
@@ -41,7 +45,10 @@ export class TooltipDirective {
 
     schedule() {
         clearTimeout(this.timer);
-        this.timer = setTimeout(() => this.show(), SHOW_DELAY_MS);
+        // Only if the pointer is still on it: it may have left without a mouseleave.
+        this.timer = setTimeout(() => {
+            if (this.host.matches(':hover')) this.show();
+        }, SHOW_DELAY_MS);
     }
 
     show() {
@@ -63,6 +70,8 @@ export class TooltipDirective {
         document.body.append(panel);
         this.panel = panel;
         this.place(panel);
+        document.addEventListener('pointermove', this.check, { passive: true });
+        document.addEventListener('scroll', this.check, { passive: true, capture: true });
     }
 
     hide() {
@@ -89,7 +98,18 @@ export class TooltipDirective {
         panel.style.setProperty('--arrow-x', `${box.left + box.width / 2 - left}px`);
     }
 
+    /**
+     * Gone when the pointer is no longer on its element nor the focus in it:
+     * moved or hidden under the pointer (a drag, a list that changed), the
+     * element never gets a mouseleave.
+     */
+    private readonly check = () => {
+        if (this.panel && !this.panel.classList.contains('leaving') && !this.host.matches(':hover, :focus-within')) this.hide();
+    };
+
     private remove() {
+        document.removeEventListener('pointermove', this.check);
+        document.removeEventListener('scroll', this.check, { capture: true });
         this.view?.destroy();
         this.view = null;
         this.panel?.remove();
