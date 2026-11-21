@@ -1,1 +1,25 @@
-<app-txt-dropzone (fileContent)="addToQueue($event)" />
+<app-option-group size="s" [options]="modes" [active]="mode()" (activeChange)="mode.set($event)" />
+
+@if (mode() === 0) {
+  <app-txt-dropzone (fileContent)="add($event)" />
+} @else {
+  <div class="paste">
+    <textarea
+      class="links"
+      rows="5"
+      spellcheck="false"
+      [placeholder]="'downloader.importer.pastePlaceholder' | transloco"
+      [value]="text()"
+      (input)="text.set($any($event.target).value)"
+    ></textarea>
+    <div class="paste-foot">
+      <span class="found" [class.some]="found() > 0">
+        <app-icon [name]="found() > 0 ? 'circle-check' : 'link'" />
+        {{ 'downloader.importer.found' | transloco: { count: found() } }}
+      </span>
+      <button appButton="primary" size="s" icon="list-plus" type="button" [disabled]="found() === 0" (click)="add(text(), true)">
+        {{ 'downloader.importer.add' | transloco }}
+      </button>
+    </div>
+  </div>
+}

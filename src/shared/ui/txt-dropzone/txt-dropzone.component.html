@@ -1,24 +1,15 @@
 <label
+  class="zone"
   appTxtFileDrop
   #dropzone="appTxtFileDrop"
-  tuiInputFiles
   [class.drag-over]="dropzone.isDragOver()"
   (fileContent)="fileContent.emit($event)"
 >
-  <input
-    accept=".txt"
-    tuiInputFiles
-    [ngModel]="null"
-    (ngModelChange)="onFileSelect($event)"
-  />
-  <ng-template let-dragged>
-    <div class="content">
-      <app-icon name="@tui.file-text" />
-      @if (dragged || dropzone.isDragOver()) {
-        <span [innerHTML]="'dropzone.dropHere' | transloco"></span>
-      } @else {
-        <span><span [innerHTML]="'dropzone.dropOr' | transloco"></span>&ngsp;<a tuiLink>{{ 'dropzone.browse' | transloco }}</a></span>
-      }
-    </div>
-  </ng-template>
+  <input type="file" accept=".txt,text/plain" class="file" (change)="onPick($event)" />
+  <span class="icon"><app-icon [name]="dropzone.isDragOver() ? 'file-down' : 'file-text'" /></span>
+  @if (dropzone.isDragOver()) {
+    <span class="title" [innerHTML]="'dropzone.dropHere' | transloco"></span>
+  } @else {
+    <span class="title"><span [innerHTML]="'dropzone.dropOr' | transloco"></span>&ngsp;<span class="browse">{{ 'dropzone.browse' | transloco }}</span></span>
+  }
 </label>

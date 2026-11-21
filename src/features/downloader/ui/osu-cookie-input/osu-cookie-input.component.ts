@@ -1,4 +1,4 @@
-import { ButtonComponent, BadgeComponent, NoticeComponent, StatefulInputComponent } from '@shared/ui';
+import { ButtonComponent, BadgeComponent, IconComponent, NoticeComponent, StatefulInputComponent } from '@shared/ui';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { form, maxLength, minLength, required, FormRoot, FormField } from '@angular/forms/signals';
@@ -10,7 +10,7 @@ import { TranslocoService } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-osu-cookie-input',
-  imports: [FormRoot, StatefulInputComponent, FormField, TranslocoPipe, ButtonComponent, BadgeComponent, NoticeComponent],
+  imports: [FormRoot, StatefulInputComponent, FormField, TranslocoPipe, ButtonComponent, BadgeComponent, IconComponent, NoticeComponent],
   templateUrl: './osu-cookie-input.component.html',
   styleUrl: './osu-cookie-input.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -20,6 +20,11 @@ export class OsuCookieInputComponent {
   readonly config = inject(ConfigurationStore);
   private readonly notify = inject(NotifyService);
   private readonly transloco = inject(TranslocoService);
+
+  /** Changing the cookie in use: its form shows instead of the row. */
+  readonly editing = signal(false);
+  /** The cookie typed is shown instead of hidden. */
+  readonly revealed = signal(false);
 
   /** The messages are translation keys, shown by `StatefulInputComponent`. */
   readonly osuCookieForm = form(
@@ -39,6 +44,8 @@ export class OsuCookieInputComponent {
             field().value.set({ osuSession: '' });
             field().reset();
             this.notify.success(this.transloco.translate('downloader.cookie.updated'));
+            this.editing.set(false);
+            this.revealed.set(false);
             return null;
           } catch {
             if (previous) field().value.set({ osuSession: previous });

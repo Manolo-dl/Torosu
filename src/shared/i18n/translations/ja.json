@@ -486,7 +486,11 @@
       "tooShort": "Cookie が短すぎます",
       "tooLong": "Cookie が長すぎます",
       "failed": "Cookie を使用できませんでした",
-      "updated": "Cookie を使用中: ダウンロードできます"
+      "updated": "Cookie を使用中: ダウンロードできます",
+      "activeHint": "ダウンロードには osu! アカウントを使います。",
+      "change": "変更",
+      "show": "Cookie を表示",
+      "hide": "Cookie を隠す"
     },
     "queue": {
       "queued": "{{ count }} 件待機中",
@@ -513,6 +517,24 @@
     "notification": {
       "title": "ダウンローダー",
       "body": "{{ succeeded }} 件ダウンロード、{{ failed }} 件失敗"
+    },
+    "importer": {
+      "file": "ファイル",
+      "paste": "リンクを貼り付け",
+      "pastePlaceholder": "1 行に 1 つのリンクまたはセット ID:\nhttps://osu.ppy.sh/beatmapsets/39804\n39804",
+      "found": "{{ count }} セット見つかりました",
+      "add": "キューに追加",
+      "added": "{{ count }} セットをキューに追加しました",
+      "addedSkipped": "{{ count }} セットをキューに追加しました。{{ skipped }} セットはすでにキューかライブラリにあります",
+      "nothing": "マップのリンクや ID が見つかりません"
+    },
+    "steps": {
+      "session": "セッション",
+      "import": "ダウンロードするマップ",
+      "queue": "キュー",
+      "help": "ヘルプ",
+      "needSession": "先にセッションを設定してください。osu! はアカウントでのみマップをダウンロードできます。",
+      "queueEmpty": "追加したマップがここに表示され、ダウンロードできます。"
     }
   },
   "dropzone": {

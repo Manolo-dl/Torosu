@@ -486,7 +486,11 @@
       "tooShort": "La cookie es demasiado corta",
       "tooLong": "La cookie es demasiado larga",
       "failed": "No se ha podido usar la cookie",
-      "updated": "Cookie en uso: ya puedes descargar"
+      "updated": "Cookie en uso: ya puedes descargar",
+      "activeHint": "Las descargas usan tu cuenta de osu!.",
+      "change": "Cambiar",
+      "show": "Mostrar la cookie",
+      "hide": "Ocultar la cookie"
     },
     "queue": {
       "queued": "{{ count }} en cola",
@@ -513,6 +517,24 @@
     "notification": {
       "title": "Descargador",
       "body": "{{ succeeded }} descargadas, {{ failed }} fallidas"
+    },
+    "importer": {
+      "file": "Archivo",
+      "paste": "Pegar enlaces",
+      "pastePlaceholder": "Un enlace o ID de set por línea:\nhttps://osu.ppy.sh/beatmapsets/39804\n39804",
+      "found": "{{ count }} sets encontrados",
+      "add": "Añadir a la cola",
+      "added": "{{ count }} sets añadidos a la cola",
+      "addedSkipped": "{{ count }} sets añadidos a la cola; {{ skipped }} ya estaban en ella o en tu biblioteca",
+      "nothing": "No se ha encontrado ningún enlace ni ID de mapa"
+    },
+    "steps": {
+      "session": "Sesión",
+      "import": "Mapas a descargar",
+      "queue": "Cola",
+      "help": "Ayuda",
+      "needSession": "Primero pon la sesión: osu! solo deja descargar mapas con una cuenta.",
+      "queueEmpty": "Los mapas que añadas aparecerán aquí, listos para descargar."
     }
   },
   "dropzone": {

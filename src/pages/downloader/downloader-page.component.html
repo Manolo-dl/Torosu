@@ -1,14 +1,65 @@
 <div class="page-container">
   <app-page-header icon="download" [heading]="'nav.downloader' | transloco" [subtitle]="'downloader.subtitle' | transloco" />
 
+  @let session = !!userStore.user()?.osuSession;
+  @let queued = downloadQueue.queue().length > 0;
+
+  <!-- Three steps, one after another: the session, the maps, the queue. -->
+  <ol class="steps">
+    <li class="step" [class.done]="session">
+      <span class="number">@if (session) { <app-icon name="check" /> } @else { 1 }</span>
+      <h2 appSectionTitle>{{ 'downloader.steps.session' | transloco }}</h2>
+      <app-osu-cookie-input />
+    </li>
+
+    <li class="step" [class.done]="queued" [class.locked]="!session">
+      <span class="number">@if (queued) { <app-icon name="check" /> } @else { 2 }</span>
+      <h2 appSectionTitle>{{ 'downloader.steps.import' | transloco }}</h2>
+      @if (session) {
+        @if (!osuDb.isLoaded()) {
+          <div appNotice="info" size="s" class="library">
+            <p class="notice-title">{{ 'downloader.libraryNotLoaded' | transloco }}</p>
+            <p>{{ 'downloader.libraryHint' | transloco }}</p>
+            <div class="notice-actions">
+              <button
+                appButton="soft"
+                type="button"
+                size="s"
+                icon="library-big"
+                [loading]="osuDb.isLoading()"
+                (click)="loadLibrary()"
+              >
+                {{ (osuDb.isLoading() ? 'downloader.loading' : 'downloader.loadLibrary') | transloco }}
+              </button>
+            </div>
+          </div>
+        }
+        <app-beatmap-import />
+      } @else {
+        <p class="locked-hint"><app-icon name="lock" /> {{ 'downloader.steps.needSession' | transloco }}</p>
+      }
+    </li>
+
+    <li class="step" [class.locked]="!queued">
+      <span class="number">3</span>
+      <h2 appSectionTitle>{{ 'downloader.steps.queue' | transloco }}</h2>
+      @if (queued || downloadQueue.skippedCount() > 0) {
+        <app-beatmap-queue />
+      } @else {
+        <p class="locked-hint"><app-icon name="inbox" /> {{ 'downloader.steps.queueEmpty' | transloco }}</p>
+      }
+    </li>
+  </ol>
+
   <section>
+    <h2 appSectionTitle>{{ 'downloader.steps.help' | transloco }}</h2>
     <app-accordion>
       @for (item of downloaderInfo; track $index) {
         <app-accordion-item [heading]="item.title | transloco">
-          <ol class="steps">
+          <ol class="guide">
             @for (step of item.steps; track $index) {
-              <li class="step">
-                <span class="number">{{ $index + 1 }}</span>
+              <li class="guide-step">
+                <span class="guide-number">{{ $index + 1 }}</span>
                 <div class="body">
                   <span>{{ step.desc | transloco }}</span>
                   @if (step.image) {
@@ -22,41 +73,4 @@
       }
     </app-accordion>
   </section>
-
-  <section>
-    <h2 appSectionTitle>{{ 'downloader.session' | transloco }}</h2>
-    <app-osu-cookie-input />
-  </section>
-
-  @if (!osuDb.isLoaded()) {
-    <div appNotice="info">
-      <p class="notice-title">{{ 'downloader.libraryNotLoaded' | transloco }}</p>
-      <p>{{ 'downloader.libraryHint' | transloco }}</p>
-      <div class="notice-actions">
-        <button
-          appButton="primary"
-          type="button"
-          size="s"
-          icon="library-big"
-          [loading]="osuDb.isLoading()"
-          (click)="loadLibrary()"
-        >
-          {{ (osuDb.isLoading() ? 'downloader.loading' : 'downloader.loadLibrary') | transloco }}
-        </button>
-      </div>
-    </div>
-  }
-
-  <!-- Nothing can be downloaded without the cookie. -->
-  @if (userStore.user()?.osuSession) {
-    <section>
-      <h2 appSectionTitle>{{ 'downloader.import' | transloco }}</h2>
-      <app-beatmap-import />
-    </section>
-
-    <section>
-      <h2 appSectionTitle>{{ 'downloader.queueTitle' | transloco }}</h2>
-      <app-beatmap-queue />
-    </section>
-  }
 </div>

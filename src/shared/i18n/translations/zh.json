@@ -486,7 +486,11 @@
       "tooShort": "Cookie 太短",
       "tooLong": "Cookie 太长",
       "failed": "无法使用该 Cookie",
-      "updated": "Cookie 已启用：现在可以下载了"
+      "updated": "Cookie 已启用：现在可以下载了",
+      "activeHint": "下载会使用你的 osu! 账号。",
+      "change": "更换",
+      "show": "显示 Cookie",
+      "hide": "隐藏 Cookie"
     },
     "queue": {
       "queued": "排队 {{ count }} 个",
@@ -513,6 +517,24 @@
     "notification": {
       "title": "下载器",
       "body": "成功 {{ succeeded }} 个，失败 {{ failed }} 个"
+    },
+    "importer": {
+      "file": "文件",
+      "paste": "粘贴链接",
+      "pastePlaceholder": "每行一个链接或谱面集 ID：\nhttps://osu.ppy.sh/beatmapsets/39804\n39804",
+      "found": "找到 {{ count }} 个图组",
+      "add": "加入队列",
+      "added": "已将 {{ count }} 个图组加入队列",
+      "addedSkipped": "已将 {{ count }} 个图组加入队列；{{ skipped }} 个已在队列或曲库中",
+      "nothing": "未找到谱面链接或 ID"
+    },
+    "steps": {
+      "session": "会话",
+      "import": "要下载的谱面",
+      "queue": "队列",
+      "help": "帮助",
+      "needSession": "请先设置会话：osu! 只允许登录账号下载谱面。",
+      "queueEmpty": "添加的谱面会显示在这里，随时可以下载。"
     }
   },
   "dropzone": {
