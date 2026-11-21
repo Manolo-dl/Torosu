@@ -1,13 +1,18 @@
 <header class="hero" appCard="glass" padding="l">
   <div class="glow" aria-hidden="true"></div>
   <app-triangles />
-  <app-mode-orbit class="orbit" />
 
+  <div class="content">
   <div class="identity">
     <img class="logo" src="assets/images/logo.png" alt="" />
     <div class="titles">
-      <h1>
-        Torosu
+      <h1 aria-label="Torosu">
+        <!-- Its letters fall like notes onto a judgement line, and hop as keys under the pointer. -->
+        <span class="wordmark" aria-hidden="true">
+          @for (letter of letters; track $index) {
+            <span class="letter" [style.--i]="$index"><span class="key">{{ letter }}</span></span>
+          }
+        </span>
         @if (version(); as version) {
           <app-badge tone="accent">v{{ version }}</app-badge>
         }
@@ -27,6 +32,9 @@
       <span class="path">{{ path }}</span>
     </div>
   }
+  </div>
+
+  <app-mode-orbit class="orbit" />
 </header>
 
 @if (reader.connected() && reader.data()) {

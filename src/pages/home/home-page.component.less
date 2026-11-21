@@ -4,17 +4,29 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-8);
-  max-inline-size: 72rem;
+  max-inline-size: 100rem;
+  margin-inline: auto;
 }
 
 /* ---- Hero ---- */
 
+/* The text on the left, the orbit on the right as big as the hero is wide
+   (a container: --orbit-size is a share of its width). */
 .hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-6);
+  overflow: hidden;
+  isolation: isolate;
+  container-type: inline-size;
+}
+
+.content {
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
-  overflow: hidden;
-  isolation: isolate;
+  min-inline-size: 0;
 }
 
 /* Two blurred discs of the accents in a corner. */
@@ -38,15 +50,12 @@
   }
 }
 
-/* The modes orbiting a hit circle, on the right of the hero. */
+/* The modes orbiting a hit circle: from a small one in a narrow window to a
+   big one in a full screen. Gone only when there is no room left for it. */
 .orbit {
-  position: absolute;
-  inset-block-start: 50%;
-  inset-inline-end: var(--space-8);
-  z-index: -1;
-  margin-block-start: -5.5rem;
+  --orbit-size: clamp(7.5rem, 18cqi, 12.5rem);
 
-  @media (max-width: 1100px) {
+  @container (max-width: 30rem) {
     display: none;
   }
 }
@@ -80,11 +89,12 @@
 
   h1 {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: var(--space-3);
     margin: 0;
     font-family: var(--font-display);
-    font-size: var(--text-3xl);
+    font-size: clamp(var(--text-2xl), 5cqi, 3rem);
     font-weight: var(--weight-black);
     letter-spacing: var(--tracking-display);
     line-height: 1.1;
@@ -127,6 +137,87 @@
     font-family: var(--font-mono);
     font-size: var(--text-xs);
     color: var(--text-2);
+  }
+}
+
+/* ---- The wordmark ----
+   Each letter falls like a note onto a judgement line drawn under them,
+   squashing as it lands with a flash of the accent. Under the pointer they
+   hop one after another, as keys pressed, and take the accents' colours.
+   Only transforms move, and the colour while landing. */
+
+.wordmark {
+  position: relative;
+  display: inline-flex;
+  padding-block-end: 0.12em;
+  cursor: default;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset-inline: -0.05em;
+    inset-block-end: 0;
+    block-size: 3px;
+    border-radius: var(--radius-pill);
+    background: var(--accent-gradient);
+    box-shadow: 0 0 12px var(--accent-glow);
+    opacity: 0.85;
+    transform-origin: left;
+    animation: judgement-line var(--duration-4) var(--ease-out) backwards;
+    animation-delay: calc(var(--stagger) * 4);
+  }
+}
+
+.letter {
+  display: inline-block;
+  transform-origin: bottom;
+  animation: note-fall calc(var(--duration-4) * 1.1) cubic-bezier(0.3, 1.3, 0.5, 1) backwards;
+  animation-delay: calc(var(--stagger) * 6 + var(--i) * var(--stagger) * 2);
+}
+
+.key {
+  display: inline-block;
+  transform-origin: bottom;
+  transition: color var(--duration-3) var(--ease-out);
+  transition-delay: calc(var(--i) * 40ms);
+}
+
+.wordmark:hover .key {
+  /* From the first accent to the second along the word. */
+  color: color-mix(in oklch, var(--accent-2) calc(var(--i) * 20%), var(--accent));
+  animation: key-press var(--duration-4) var(--ease-out);
+  animation-delay: calc(var(--i) * 45ms);
+}
+
+@keyframes judgement-line {
+  from {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+}
+
+@keyframes note-fall {
+  0% {
+    opacity: 0;
+    color: var(--accent);
+    transform: translateY(-1.1em) scaleY(1.25);
+  }
+  55% {
+    opacity: 1;
+    color: var(--accent);
+    transform: translateY(0) scale(1.1, 0.8);
+  }
+  80% {
+    transform: translateY(-0.04em) scale(0.97, 1.04);
+  }
+}
+
+@keyframes key-press {
+  35% {
+    transform: translateY(-0.2em);
+  }
+  65% {
+    transform: translateY(0) scale(1.06, 0.88);
   }
 }
 

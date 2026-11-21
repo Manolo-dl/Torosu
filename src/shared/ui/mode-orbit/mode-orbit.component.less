@@ -7,6 +7,8 @@
   place-items: center;
   inline-size: var(--orbit-size);
   block-size: var(--orbit-size);
+  /* Room for the icons, which stand half out of the circle. */
+  margin: calc(var(--orbit-size) * 0.12);
   flex-shrink: 0;
 }
 
@@ -76,16 +78,19 @@
   inset-inline-start: 50%;
   display: grid;
   place-items: center;
-  inline-size: 2.4rem;
-  block-size: 2.4rem;
-  margin: -1.2rem;
+  /* As big as the orbit allows. */
+  --mode-size: max(1.75rem, calc(var(--orbit-size) * 0.22));
+
+  inline-size: var(--mode-size);
+  block-size: var(--mode-size);
+  margin: calc(var(--mode-size) / -2);
   border-radius: 50%;
   background: color-mix(in oklch, var(--surface-1) 85%, transparent);
   box-shadow:
     inset 0 0 0 1px color-mix(in srgb, var(--mode-color) 45%, transparent),
     0 0 18px -6px var(--mode-color);
   color: var(--mode-color);
-  font-size: 1.45rem;
+  font-size: calc(var(--mode-size) * 0.6);
   transform: rotate(calc(var(--i) * 90deg)) translateX(calc(var(--orbit-size) / 2)) rotate(calc(var(--i) * -90deg));
   animation: pop-in var(--duration-4) var(--ease-spring) backwards;
   animation-delay: calc(200ms + var(--i) * 90ms);

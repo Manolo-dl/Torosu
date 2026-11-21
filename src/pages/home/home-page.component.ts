@@ -30,6 +30,7 @@ export class HomePageComponent {
   );
 
   readonly transitionName = toolTransitionName;
+  readonly letters = [...'Torosu'];
 
   constructor() {
     getVersion().then(version => this.version.set(version)).catch(() => {});
