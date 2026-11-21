@@ -134,7 +134,11 @@
         "inter": "Neutra y compacta",
         "grotesk": "Técnica, con carácter"
       }
-    }
+    },
+    "saved": "Configuración guardada",
+    "saving": "Guardando…",
+    "autosave": "Se guarda al cerrar",
+    "saveFailed": "No se ha podido guardar la configuración"
   },
   "nav": {
     "home": "Inicio",

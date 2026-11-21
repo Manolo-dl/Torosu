@@ -1,0 +1,119 @@
+:host {
+  display: contents;
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  background: var(--backdrop);
+}
+
+.panel {
+  position: fixed;
+  inset-block: var(--space-2);
+  inset-inline-end: var(--space-2);
+  z-index: 901;
+  display: flex;
+  flex-direction: column;
+  inline-size: min(34rem, calc(100vw - 2 * var(--space-2)));
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  background: var(--surface-1);
+  box-shadow: var(--shadow-3);
+  overflow: hidden;
+  /* Its own layer: sliding it repaints nothing. */
+  will-change: transform;
+}
+
+header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-5) var(--space-5) var(--space-3);
+
+  .titles {
+    flex: 1;
+    min-inline-size: 0;
+  }
+
+  h2 {
+    margin: 0;
+    outline: none;
+    box-shadow: none;
+    color: var(--text-1);
+    font-family: var(--font-display);
+    font-size: var(--text-xl);
+    font-weight: var(--weight-black);
+    letter-spacing: var(--tracking-display);
+  }
+
+  p {
+    margin: 0.15rem 0 0;
+    color: var(--text-3);
+    font-size: var(--text-sm);
+  }
+}
+
+.close {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  inline-size: 2rem;
+  block-size: 2rem;
+  border-radius: var(--radius-md);
+  color: var(--text-3);
+  font-size: 1.1rem;
+  transition:
+    background var(--duration-1) var(--ease-out),
+    color var(--duration-1) var(--ease-out),
+    transform var(--duration-3) var(--ease-spring);
+
+  &:hover {
+    background: color-mix(in oklch, var(--text-1) 8%, transparent);
+    color: var(--text-1);
+    transform: rotate(90deg);
+  }
+}
+
+.body {
+  flex: 1;
+  min-block-size: 0;
+  padding: var(--space-4) var(--space-5) var(--space-6);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.backdrop-enter {
+  animation: fade-in var(--duration-3) var(--ease-out);
+}
+
+.backdrop-leave {
+  animation: fade-in var(--duration-2) var(--ease-out) reverse forwards;
+}
+
+.panel-enter {
+  animation: slide-in var(--duration-4) var(--ease-out);
+}
+
+.panel-leave {
+  animation: slide-out var(--duration-3) var(--ease-in-out) forwards;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes slide-in {
+  from {
+    transform: translateX(calc(100% + var(--space-4)));
+  }
+}
+
+@keyframes slide-out {
+  to {
+    transform: translateX(calc(100% + var(--space-4)));
+  }
+}

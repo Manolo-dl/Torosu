@@ -134,7 +134,11 @@
         "inter": "Neutre et compacte",
         "grotesk": "Technique, avec du caractère"
       }
-    }
+    },
+    "saved": "Paramètres enregistrés",
+    "saving": "Enregistrement…",
+    "autosave": "Enregistré à la fermeture",
+    "saveFailed": "Impossible d'enregistrer les paramètres"
   },
   "nav": {
     "home": "Accueil",

@@ -24,3 +24,4 @@ export { TrianglesComponent } from './triangles/triangles.component';
 export { ProgressComponent } from './progress/progress.component';
 export { SkeletonComponent } from './skeleton/skeleton.component';
 export { ToastsComponent } from './toast/toasts.component';
+export { DrawerComponent } from './drawer/drawer.component';

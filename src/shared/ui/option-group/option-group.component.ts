@@ -34,9 +34,10 @@ export interface OptionGroupItem {
     @for (option of options(); track $index) {
       <button
         #option
-        role="radio"
         type="button"
-        [attr.aria-checked]="$index === active()"
+        [attr.role]="variant() === 'tabs' ? 'tab' : 'radio'"
+        [attr.aria-checked]="variant() === 'tabs' ? null : $index === active()"
+        [attr.aria-selected]="variant() === 'tabs' ? $index === active() : null"
         [class.active]="$index === active()"
         [disabled]="option.disabled"
         (click)="pick($index)"
@@ -46,7 +47,12 @@ export interface OptionGroupItem {
     }
   `,
   styleUrl: './option-group.component.less',
-  host: { role: 'radiogroup', '[attr.data-size]': 'size()', '[class.stretch]': 'stretch()' },
+  host: {
+    '[attr.role]': 'variant() === "tabs" ? "tablist" : "radiogroup"',
+    '[attr.data-size]': 'size()',
+    '[attr.data-variant]': 'variant()',
+    '[class.stretch]': 'stretch()',
+  },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OptionGroupComponent {
@@ -54,6 +60,8 @@ export class OptionGroupComponent {
   /** Index of the option picked. */
   readonly active = input.required<number>();
   readonly size = input<'s' | 'm'>('m');
+  /** `tabs`: a row of tabs, the one open underlined. */
+  readonly variant = input<'pills' | 'tabs'>('pills');
   /** As wide as where it is, its options sharing the width. */
   readonly stretch = input(false, { transform: booleanAttribute });
   readonly activeChange = output<number>();
@@ -89,8 +97,11 @@ export class OptionGroupComponent {
     }
     indicator.style.opacity = '1';
     indicator.style.inlineSize = `${button.offsetWidth}px`;
-    indicator.style.blockSize = `${button.offsetHeight}px`;
-    indicator.style.transform = `translate(${button.offsetLeft}px, ${button.offsetTop}px)`;
+    // Tabs: a line under the tab rather than a fill behind it.
+    const line = this.variant() === 'tabs' ? 2 : 0;
+    indicator.style.blockSize = `${line || button.offsetHeight}px`;
+    const top = line ? button.offsetTop + button.offsetHeight - line : button.offsetTop;
+    indicator.style.transform = `translate(${button.offsetLeft}px, ${top}px)`;
     // Placed once without moving: from then on it slides.
     if (!indicator.classList.contains('ready')) {
       requestAnimationFrame(() => indicator.classList.add('ready'));

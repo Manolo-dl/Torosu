@@ -1,59 +1,23 @@
-<tui-drawer *tuiPopup="open()">
-    <header>
-        <h2 tuiHeader="body-l">
-            <div tuiTitle>
-                {{ 'settings.title' | transloco }}
-                <div tuiSubtitle>{{ 'settings.subtitle' | transloco }}</div>
-            </div>
+<app-drawer
+    [open]="open()"
+    [autoClose]="false"
+    [heading]="'settings.title' | transloco"
+    [subtitle]="'settings.subtitle' | transloco"
+    (closeRequest)="close()"
+>
+    <span appDrawerStatus class="status" [class.saving]="saving()">
+        <app-icon [name]="saving() ? 'loader-circle' : 'cloud-check'" />
+        {{ (saving() ? 'settings.saving' : 'settings.autosave') | transloco }}
+    </span>
 
-            <div tuiAccesories>
-                <button
-                    appButton="ghost"
-                    iconOnly
-                    size="m"
-                    icon="@tui.x"
-                    type="button"
-                    (click)="open.set(false)"
-                >
-                    {{ 'settings.close' | transloco }}
-                </button>
-            </div>
-        </h2>
-        <nav tuiNavigationNav>
-            <tui-tabs [(activeItemIndex)]="activeTab">
-                <button
-                    tuiTab
-                    type="button"
-                >
-                    {{ 'settings.tabs.general' | transloco }}
-                </button>
-                <button
-                    tuiTab
-                    type="button"
-                >
-                    {{ 'settings.tabs.downloader' | transloco }}
-                </button>
-                <button
-                    tuiTab
-                    type="button"
-                >
-                    {{ 'settings.tabs.packs' | transloco }}
-                </button>
-                <button
-                    tuiTab
-                    type="button"
-                >
-                    {{ 'settings.tabs.trainer' | transloco }}
-                </button>
-                <button
-                    tuiTab
-                    type="button"
-                >
-                    {{ 'settings.tabs.replays' | transloco }}
-                </button>
-            </tui-tabs>
-        </nav>
-    </header>
+    <app-option-group
+        appDrawerNav
+        variant="tabs"
+        class="tabs"
+        [options]="tabs"
+        [active]="activeTab()"
+        (activeChange)="activeTab.set($event)"
+    />
 
     <div class="content">
         @switch (activeTab()) {
@@ -61,7 +25,7 @@
                 <app-appearance-settings />
 
                 <section>
-                    <h3 tuiTitle="s">{{ 'settings.general.language' | transloco }}</h3>
+                    <h3 appSectionTitle>{{ 'settings.general.language' | transloco }}</h3>
                     <app-option-group
                         [active]="languageIndex()"
                         [options]="languageOptions"
@@ -71,7 +35,7 @@
                 </section>
 
                 <section>
-                    <h3 tuiTitle="s">{{ 'settings.general.osu' | transloco }}</h3>
+                    <h3 appSectionTitle>{{ 'settings.general.osu' | transloco }}</h3>
                     <tui-textfield>
                         <label tuiLabel>{{ 'settings.general.osuPath' | transloco }}</label>
                         <input
@@ -105,7 +69,7 @@
                 </section>
 
                 <section>
-                    <h3 tuiTitle="s">{{ 'settings.general.tools' | transloco }}</h3>
+                    <h3 appSectionTitle>{{ 'settings.general.tools' | transloco }}</h3>
                     @for (tool of tools; track tool.route) {
                         <label tuiCell>
                             <span tuiTitle>{{ tool.label | transloco }}</span>
@@ -122,7 +86,7 @@
 
             @case (1) {
                 <section>
-                    <h3 tuiTitle="s">{{ 'settings.downloader.account' | transloco }}</h3>
+                    <h3 appSectionTitle>{{ 'settings.downloader.account' | transloco }}</h3>
                     <label tuiCell>
                         <span tuiTitle>
                             {{ 'settings.downloader.saveCookie' | transloco }}
@@ -137,7 +101,7 @@
                 </section>
 
                 <section>
-                    <h3 tuiTitle="s">{{ 'settings.output' | transloco }}</h3>
+                    <h3 appSectionTitle>{{ 'settings.output' | transloco }}</h3>
                     <tui-textfield>
                         <label tuiLabel>{{ 'settings.downloader.outputPath' | transloco }}</label>
                         <input
@@ -169,7 +133,7 @@
                 </section>
 
                 <section>
-                    <h3 tuiTitle="s">{{ 'settings.downloader.behaviour' | transloco }}</h3>
+                    <h3 appSectionTitle>{{ 'settings.downloader.behaviour' | transloco }}</h3>
                     <label tuiCell>
                         <span tuiTitle>
                             {{ 'settings.downloader.skipVideo' | transloco }}
@@ -230,7 +194,7 @@
 
             @case (2) {
                 <section>
-                    <h3 tuiTitle="s">{{ 'settings.packs.createPacks' | transloco }}</h3>
+                    <h3 appSectionTitle>{{ 'settings.packs.createPacks' | transloco }}</h3>
                     <label tuiCell>
                         <span tuiTitle>
                             {{ 'settings.packs.keepBackgrounds' | transloco }}
@@ -254,7 +218,7 @@
                 </section>
 
                 <section>
-                    <h3 tuiTitle="s">{{ 'settings.difficultyName' | transloco }}</h3>
+                    <h3 appSectionTitle>{{ 'settings.difficultyName' | transloco }}</h3>
                     <app-name-format-field
                         exampleCommand="pack_name_example"
                         [fields]="packNameFields"
@@ -266,7 +230,7 @@
 
             @case (3) {
                 <section>
-                    <h3 tuiTitle="s">{{ 'settings.trainer.quality' | transloco }}</h3>
+                    <h3 appSectionTitle>{{ 'settings.trainer.quality' | transloco }}</h3>
                     <label tuiCell>
                         <span tuiTitle>
                             {{ 'settings.trainer.hqAudio' | transloco }}
@@ -292,7 +256,7 @@
                 </section>
 
                 <section>
-                    <h3 tuiTitle="s">{{ 'settings.trainer.skill' | transloco }}</h3>
+                    <h3 appSectionTitle>{{ 'settings.trainer.skill' | transloco }}</h3>
                     <app-option-group
                         [active]="skillDisplayIndex()"
                         [options]="skillDisplayOptions"
@@ -314,7 +278,7 @@
                 </section>
 
                 <section>
-                    <h3 tuiTitle="s">{{ 'settings.trainer.rateChange' | transloco }}</h3>
+                    <h3 appSectionTitle>{{ 'settings.trainer.rateChange' | transloco }}</h3>
                     <label tuiCell>
                         <span tuiTitle>
                             {{ 'settings.trainer.autoPitch' | transloco }}
@@ -329,7 +293,7 @@
                 </section>
 
                 <section>
-                    <h3 tuiTitle="s">{{ 'settings.output' | transloco }}</h3>
+                    <h3 appSectionTitle>{{ 'settings.output' | transloco }}</h3>
                     <label tuiCell>
                         <span tuiTitle>
                             {{ 'settings.trainer.openOsz' | transloco }}
@@ -344,7 +308,7 @@
                 </section>
 
                 <section>
-                    <h3 tuiTitle="s">{{ 'settings.trainer.shortcuts' | transloco }}</h3>
+                    <h3 appSectionTitle>{{ 'settings.trainer.shortcuts' | transloco }}</h3>
                     <label tuiCell>
                         <span tuiTitle>
                             {{ 'settings.trainer.runShortcuts' | transloco }}
@@ -364,7 +328,7 @@
                 </section>
 
                 <section>
-                    <h3 tuiTitle="s">{{ 'settings.difficultyName' | transloco }}</h3>
+                    <h3 appSectionTitle>{{ 'settings.difficultyName' | transloco }}</h3>
                     <app-name-format-field
                         exampleCommand="trainer_name_example"
                         [fields]="trainerNameFields"
@@ -376,7 +340,7 @@
 
             @case (4) {
                 <section>
-                    <h3 tuiTitle="s">{{ 'settings.replays.analysis' | transloco }}</h3>
+                    <h3 appSectionTitle>{{ 'settings.replays.analysis' | transloco }}</h3>
                     <label tuiCell>
                         <span tuiTitle>
                             {{ 'replays.follow' | transloco }}
@@ -387,7 +351,7 @@
                 </section>
 
                 <section>
-                    <h3 tuiTitle="s">{{ 'settings.replays.charts' | transloco }}</h3>
+                    <h3 appSectionTitle>{{ 'settings.replays.charts' | transloco }}</h3>
                     <label tuiCell>
                         <span tuiTitle>{{ 'replays.keys.title' | transloco }}</span>
                         <input appSwitch type="checkbox" [(ngModel)]="draft().replays.key_chart" />
@@ -406,22 +370,4 @@
         }
     </div>
 
-    <footer>
-        <button
-            appButton="secondary"
-            size="m"
-            type="button"
-            (click)="open.set(false)"
-        >
-            {{ 'settings.cancel' | transloco }}
-        </button>
-        <button
-            appButton="primary"
-            size="m"
-            type="button"
-            (click)="save()"
-        >
-            {{ 'settings.save' | transloco }}
-        </button>
-    </footer>
-</tui-drawer>
+</app-drawer>

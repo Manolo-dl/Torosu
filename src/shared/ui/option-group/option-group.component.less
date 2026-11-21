@@ -79,3 +79,34 @@ button {
     flex: 1;
   }
 }
+
+/* Tabs: on no track, the open one underlined in the accent. */
+:host([data-variant='tabs']) {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: var(--space-1);
+  padding: 0;
+  border: none;
+  border-block-end: 1px solid var(--line-subtle);
+  border-radius: 0;
+  background: none;
+  overflow-x: auto;
+  scrollbar-width: none;
+
+  .indicator {
+    border-radius: var(--radius-pill);
+    background: var(--accent);
+    box-shadow: 0 0 10px var(--accent-glow);
+  }
+
+  button {
+    block-size: 2.5rem;
+    padding: 0 var(--space-3);
+    font-size: var(--text-sm);
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+
+    &.active {
+      color: var(--text-1);
+    }
+  }
+}

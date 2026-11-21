@@ -134,7 +134,11 @@
         "inter": "Neutral and compact",
         "grotesk": "Technical, with character"
       }
-    }
+    },
+    "saved": "Settings saved",
+    "saving": "Saving…",
+    "autosave": "Saved on close",
+    "saveFailed": "The settings could not be saved"
   },
   "nav": {
     "home": "Home",

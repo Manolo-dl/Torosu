@@ -134,7 +134,11 @@
         "inter": "中性紧凑",
         "grotesk": "科技感，富有个性"
       }
-    }
+    },
+    "saved": "设置已保存",
+    "saving": "正在保存…",
+    "autosave": "关闭时保存",
+    "saveFailed": "无法保存设置"
   },
   "nav": {
     "home": "主页",
