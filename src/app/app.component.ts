@@ -9,7 +9,8 @@ import { MusicPulseDirective } from "@entities/osu-reader";
 import { AppearanceStore, PlatformStore } from "@shared/stores";
 import { ToastsComponent } from "@shared/ui";
 import { ConfigurationStore } from "@entities/configuration";
-import { TrainerShortcutsService } from "@features/trainer";
+// Not through the index: it would bring the whole trainer page into the first load.
+import { TrainerShortcutsService } from "@features/trainer/services/trainer-shortcuts.service";
 import { DEFAULT_LANGUAGE, isLanguage, LanguageService } from "@shared/i18n";
 
 @Component({
