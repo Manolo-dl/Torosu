@@ -74,7 +74,7 @@
     </button>
 
     @if (devMode()) {
-      <button appButton="ghost" size="s" type="button" icon="code" (click)="navStore.toggleMode()">
+      <button appButton="ghost" size="s" type="button" [icon]="navStore.isDevMode() ? 'code' : 'user'" (click)="switchMode()">
         {{ navStore.isDevMode() ? 'dev' : 'user' }}
       </button>
     }

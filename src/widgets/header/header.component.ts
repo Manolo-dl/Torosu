@@ -4,7 +4,7 @@ import { ApplicationRef, ChangeDetectionStrategy, Component, computed, DOCUMENT,
 import { Router, RouterLink } from '@angular/router';
 import { ConfigurationStore } from '@entities/configuration';
 import { UpdateStore } from '@entities/update';
-import { NavStore } from '@entities/nav-item';
+import { DEV_ITEMS, NavStore } from '@entities/nav-item';
 import { TUI_DARK_MODE, TuiDropdown, TuiTitle } from "@taiga-ui/core";
 import { AppearanceStore } from "@shared/stores";
 import { WindowControlsComponent } from "@widgets/window-controls/window-controls.component";
@@ -76,6 +76,12 @@ export class HeaderComponent {
       })
       .catch(() => {});
     transition.finished.finally(() => root.classList.remove('theme-transition'));
+  }
+
+  /** From the tools to the developer pages and back, opening the first of them. */
+  switchMode() {
+    this.navStore.toggleMode();
+    this.router.navigate([this.navStore.isDevMode() ? DEV_ITEMS[0].route : '/']);
   }
 
   constructor() {
