@@ -13,7 +13,9 @@
       "downloader": "Downloader",
       "packs": "Packs",
       "trainer": "Trainer",
-      "replays": "Replays"
+      "replays": "Replays",
+      "appearance": "Appearance",
+      "performance": "Performance"
     },
     "general": {
       "osu": "osu!",
@@ -135,12 +137,34 @@
         "grotesk": "Technical, with character"
       },
       "visualizer": "Music in the title bar",
-      "visualizerHint": "Bars that follow the song osu! is playing; osu! is read in the background for it"
+      "visualizerHint": "Bars that follow the song osu! is playing; osu! is read in the background for it",
+      "theme": "Theme",
+      "themes": {
+        "dark": "Dark",
+        "light": "Light"
+      }
     },
     "saved": "Settings saved",
     "saving": "Saving…",
     "autosave": "Saved on close",
-    "saveFailed": "The settings could not be saved"
+    "saveFailed": "The settings could not be saved",
+    "performance": {
+      "effects": "Effects",
+      "backgrounds": "Animated backgrounds",
+      "backgroundsHint": "Triangles, specks of light and the modes' orbit; they stand still when off",
+      "quality": "Effects quality",
+      "qualityHint": "Low draws fewer of them, at 30 frames a second: lighter on slower computers",
+      "qualities": {
+        "high": "High",
+        "low": "Low"
+      },
+      "transitions": "Page transitions",
+      "transitionsHint": "Pages and the theme change in an animation",
+      "music": "osu!'s music",
+      "reactive": "The app moves with the music",
+      "reactiveHint": "The logo beats with the bass and a light behind the pages follows the music",
+      "motion": "Motion"
+    }
   },
   "nav": {
     "home": "Home",

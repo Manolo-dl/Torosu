@@ -49,6 +49,26 @@ section {
   }
 }
 
-.tabs {
-  margin-inline: var(--space-5);
+:host {
+  --drawer-width: 52rem;
+}
+
+/* The sections, down the left of the drawer; only their icons when it is narrow. */
+.sections {
+  flex-shrink: 0;
+  inline-size: 12.5rem;
+  padding: var(--space-2) var(--space-3) var(--space-4) var(--space-4);
+  border-inline-end: 1px solid var(--line-subtle);
+  overflow-y: auto;
+}
+
+@container (max-width: 40rem) {
+  .sections {
+    inline-size: auto;
+    padding-inline: var(--space-2);
+
+    ::ng-deep .label {
+      display: none;
+    }
+  }
 }

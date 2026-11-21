@@ -6,14 +6,14 @@ import { ConfigurationStore } from '@entities/configuration';
 import { USER_ITEMS } from '@entities/nav-item';
 import { OsuPathStore } from '@entities/osu-path';
 import { BadgeComponent, CardComponent, IconComponent, ModeOrbitComponent, toolTransitionName, TrianglesComponent } from '@shared/ui';
-import { OsuReaderStore } from '@entities/osu-reader';
+import { MusicPulseDirective, OsuReaderStore } from '@entities/osu-reader';
 import { HomeLibraryComponent } from './ui/home-library.component';
 import { HomeSelectedComponent } from './ui/home-selected.component';
 import { HomeWordmarkComponent } from './ui/home-wordmark.component';
 
 @Component({
   selector: 'app-home',
-  imports: [BadgeComponent, CardComponent, HomeLibraryComponent, HomeSelectedComponent, HomeWordmarkComponent, IconComponent, ModeOrbitComponent, RouterLink, TrianglesComponent, TranslocoPipe],
+  imports: [BadgeComponent, CardComponent, HomeLibraryComponent, HomeSelectedComponent, HomeWordmarkComponent, IconComponent, ModeOrbitComponent, MusicPulseDirective, RouterLink, TrianglesComponent, TranslocoPipe],
   templateUrl: './home-page.component.html',
   styleUrl: './home-page.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,

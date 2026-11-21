@@ -44,6 +44,11 @@
   animation: drift 14s var(--ease-in-out) infinite alternate;
 }
 
+/* Still with the animated backgrounds turned off. */
+:host-context([data-effects='off']) .glow {
+  animation: none;
+}
+
 @keyframes drift {
   to {
     transform: translate(-2rem, 1.5rem) scale(1.08);
@@ -64,6 +69,11 @@
   display: flex;
   align-items: center;
   gap: var(--space-5);
+}
+
+.logo-pulse {
+  display: grid;
+  flex-shrink: 0;
 }
 
 .logo {

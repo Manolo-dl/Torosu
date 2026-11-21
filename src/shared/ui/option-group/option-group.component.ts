@@ -12,9 +12,12 @@ import {
   viewChildren,
 } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { IconComponent } from '../icon/icon.component';
 
 export interface OptionGroupItem {
   label: string;
+  /** Shown before the label, for the `nav` variant. */
+  icon?: string;
   /** `label` is a translation key. */
   translate?: boolean;
   disabled?: boolean;
@@ -28,27 +31,32 @@ export interface OptionGroupItem {
  */
 @Component({
   selector: 'app-option-group',
-  imports: [TranslocoPipe],
+  imports: [IconComponent, TranslocoPipe],
   template: `
     <span class="indicator" aria-hidden="true" #indicator></span>
     @for (option of options(); track $index) {
       <button
         #option
         type="button"
-        [attr.role]="variant() === 'tabs' ? 'tab' : 'radio'"
-        [attr.aria-checked]="variant() === 'tabs' ? null : $index === active()"
-        [attr.aria-selected]="variant() === 'tabs' ? $index === active() : null"
+        [attr.role]="variant() === 'pills' ? 'radio' : 'tab'"
+        [attr.title]="variant() === 'nav' ? (option.translate ? (option.label | transloco) : option.label) : null"
+        [attr.aria-checked]="variant() === 'pills' ? $index === active() : null"
+        [attr.aria-selected]="variant() === 'pills' ? null : $index === active()"
         [class.active]="$index === active()"
         [disabled]="option.disabled"
         (click)="pick($index)"
       >
-        {{ option.translate ? (option.label | transloco) : option.label }}
+        @if (option.icon) {
+          <app-icon [name]="option.icon" />
+        }
+        <span class="label">{{ option.translate ? (option.label | transloco) : option.label }}</span>
       </button>
     }
   `,
   styleUrl: './option-group.component.less',
   host: {
-    '[attr.role]': 'variant() === "tabs" ? "tablist" : "radiogroup"',
+    '[attr.role]': 'variant() === "pills" ? "radiogroup" : "tablist"',
+    '[attr.aria-orientation]': 'variant() === "nav" ? "vertical" : null',
     '[attr.data-size]': 'size()',
     '[attr.data-variant]': 'variant()',
     '[class.stretch]': 'stretch()',
@@ -60,8 +68,8 @@ export class OptionGroupComponent {
   /** Index of the option picked. */
   readonly active = input.required<number>();
   readonly size = input<'s' | 'm'>('m');
-  /** `tabs`: a row of tabs, the one open underlined. */
-  readonly variant = input<'pills' | 'tabs'>('pills');
+  /** `tabs`: a row of tabs, the one open underlined; `nav`: a column of them, with icons. */
+  readonly variant = input<'pills' | 'tabs' | 'nav'>('pills');
   /** As wide as where it is, its options sharing the width. */
   readonly stretch = input(false, { transform: booleanAttribute });
   readonly activeChange = output<number>();

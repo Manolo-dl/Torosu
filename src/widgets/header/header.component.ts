@@ -5,7 +5,7 @@ import { Router, RouterLink } from '@angular/router';
 import { ConfigurationStore } from '@entities/configuration';
 import { UpdateStore } from '@entities/update';
 import { DEV_ITEMS, NavStore } from '@entities/nav-item';
-import { OsuAudioService } from '@entities/osu-reader';
+import { MusicPulseDirective, OsuAudioService } from '@entities/osu-reader';
 import { VisualizerComponent } from './visualizer.component';
 import { TUI_DARK_MODE, TuiDropdown, TuiTitle } from "@taiga-ui/core";
 import { AppearanceStore } from "@shared/stores";
@@ -14,7 +14,7 @@ import { ConfigButtonComponent } from "@features/configuration";
 
 @Component({
   selector: 'app-header',
-  imports: [ProgressComponent, ButtonComponent, IconComponent, VisualizerComponent, RouterLink, WindowControlsComponent, TuiDropdown, TuiTitle, ConfigButtonComponent, TranslocoPipe, BadgeComponent],
+  imports: [ProgressComponent, ButtonComponent, IconComponent, VisualizerComponent, MusicPulseDirective, RouterLink, WindowControlsComponent, TuiDropdown, TuiTitle, ConfigButtonComponent, TranslocoPipe, BadgeComponent],
   templateUrl: './header.component.html',
   styleUrl: './header.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -44,7 +44,7 @@ export class HeaderComponent {
     };
     const reduced =
       this.appearance.reducedMotion() || matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (!document.startViewTransition || reduced) {
+    if (!document.startViewTransition || reduced || !this.appearance.transitions()) {
       this.appearance.toggleDark();
       return;
     }
@@ -87,10 +87,10 @@ export class HeaderComponent {
   }
 
   constructor() {
-    // The music osu! plays follows the setting (it starts the osu! reader).
+    // The music osu! plays, for the bars or what moves with it (it starts the osu! reader).
     const audio = inject(OsuAudioService);
     effect(() => {
-      const enabled = this.appearance.visualizer();
+      const enabled = this.appearance.visualizer() || this.appearance.musicReactive();
       untracked(() => audio.setEnabled(enabled));
     });
 

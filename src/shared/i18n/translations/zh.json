@@ -13,7 +13,9 @@
       "downloader": "下载器",
       "packs": "谱包",
       "trainer": "谱面生成器",
-      "replays": "回放"
+      "replays": "回放",
+      "appearance": "外观",
+      "performance": "性能"
     },
     "general": {
       "osu": "osu!",
@@ -135,12 +137,34 @@
         "grotesk": "科技感，富有个性"
       },
       "visualizer": "标题栏中的音乐",
-      "visualizerHint": "随 osu! 正在播放的歌曲跳动的条形；为此会在后台读取 osu!"
+      "visualizerHint": "随 osu! 正在播放的歌曲跳动的条形；为此会在后台读取 osu!",
+      "theme": "主题",
+      "themes": {
+        "dark": "深色",
+        "light": "浅色"
+      }
     },
     "saved": "设置已保存",
     "saving": "正在保存…",
     "autosave": "关闭时保存",
-    "saveFailed": "无法保存设置"
+    "saveFailed": "无法保存设置",
+    "performance": {
+      "effects": "效果",
+      "backgrounds": "动态背景",
+      "backgroundsHint": "三角形、光点和模式轨道；关闭后静止",
+      "quality": "效果质量",
+      "qualityHint": "低质量绘制更少、每秒 30 帧，在较慢的电脑上更流畅",
+      "qualities": {
+        "high": "高",
+        "low": "低"
+      },
+      "transitions": "页面过渡动画",
+      "transitionsHint": "页面和主题切换时显示动画",
+      "music": "osu! 音乐",
+      "reactive": "应用随音乐律动",
+      "reactiveHint": "标志随低音跳动，页面后方的光随音乐变化",
+      "motion": "动效"
+    }
   },
   "nav": {
     "home": "主页",

@@ -23,6 +23,8 @@ tui-root {
 }
 
 .app-content {
+  position: relative;
+  isolation: isolate;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -32,6 +34,19 @@ tui-root {
   border-radius: var(--radius-xl);
   background: var(--ambient), var(--surface-0);
   overflow: hidden;
+}
+
+/* Behind the pages: both accents rising from the top and the bottom as
+   osu!'s music gets loud (its opacity and scale, set by appMusicPulse). */
+.music-glow {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(60% 45% at 50% -5%, color-mix(in oklch, var(--accent) 22%, transparent), transparent 70%),
+    radial-gradient(55% 40% at 50% 105%, color-mix(in oklch, var(--accent-2) 18%, transparent), transparent 70%);
+  opacity: 0;
+  pointer-events: none;
 }
 
 .page-outlet {

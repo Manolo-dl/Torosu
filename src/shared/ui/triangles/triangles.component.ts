@@ -98,17 +98,28 @@ export class TrianglesComponent {
             this.appearance.palette();
             this.appearance.dark();
             this.appearance.reducedMotion();
+            this.appearance.effects();
+            this.appearance.quality();
             // After the attributes of <html> are set (another effect).
             requestAnimationFrame(() => {
                 this.readColors();
-                this.draw();
-                this.schedule();
+                this.resize();
             });
         });
     }
 
+    /** Drawn once and left still: with reduced motion, or the animated backgrounds off. */
     private get still(): boolean {
-        return this.appearance.reducedMotion() || matchMedia('(prefers-reduced-motion: reduce)').matches;
+        return (
+            !this.appearance.effects() ||
+            this.appearance.reducedMotion() ||
+            matchMedia('(prefers-reduced-motion: reduce)').matches
+        );
+    }
+
+    /** The low quality: half as many, at 30 frames a second, at one pixel per CSS pixel. */
+    private get low(): boolean {
+        return this.appearance.quality() === 'low';
     }
 
     private readColors() {
@@ -125,14 +136,14 @@ export class TrianglesComponent {
     private resize() {
         const canvas = this.canvas().nativeElement;
         const box = this.host.nativeElement.getBoundingClientRect();
-        const ratio = Math.min(devicePixelRatio || 1, 2);
+        const ratio = this.low ? 1 : Math.min(devicePixelRatio || 1, 2);
         this.width = box.width;
         this.height = box.height;
         canvas.width = Math.round(box.width * ratio);
         canvas.height = Math.round(box.height * ratio);
         canvas.getContext('2d')?.setTransform(ratio, 0, 0, ratio, 0, 0);
 
-        const count = Math.round(((box.width * box.height) / AREA_PER_TRIANGLE) * this.density());
+        const count = Math.round(((box.width * box.height) / AREA_PER_TRIANGLE) * this.density() * (this.low ? 0.5 : 1));
         while (this.triangles.length < count) this.triangles.push(this.spawn(true));
         this.triangles.length = count;
         this.draw();
@@ -158,7 +169,15 @@ export class TrianglesComponent {
         this.frame = requestAnimationFrame(now => this.tick(now));
     }
 
+    private skipped = false;
+
     private tick(now: number) {
+        // Every other frame only, at the low quality.
+        this.skipped = this.low && !this.skipped;
+        if (this.skipped) {
+            this.frame = requestAnimationFrame(next => this.tick(next));
+            return;
+        }
         // At most a tenth of a second at once: after a pause they don't jump.
         const seconds = Math.min((now - this.last) / 1000, 0.1);
         this.last = now;

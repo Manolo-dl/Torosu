@@ -4,7 +4,7 @@
 
   <div class="content">
   <div class="identity">
-    <img class="logo" src="assets/images/logo.png" alt="" />
+    <span class="logo-pulse" appMusicPulse [pulseStrength]="0.8"><img class="logo" src="assets/images/logo.png" alt="" /></span>
     <div class="titles">
       <h1>
         <app-home-wordmark />
@@ -29,7 +29,7 @@
   }
   </div>
 
-  <app-mode-orbit class="orbit" />
+  <app-mode-orbit class="orbit" appMusicPulse [pulseStrength]="0.4" />
 </header>
 
 @if (reader.connected() && reader.data()) {

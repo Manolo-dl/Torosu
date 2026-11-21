@@ -20,7 +20,18 @@ interface AppearanceState {
     sidebarCollapsed: boolean;
     /** Bars in the title bar following the music osu! plays. */
     visualizer: boolean;
+    /** The logo and the glow behind the pages move with that music. */
+    musicReactive: boolean;
+    /** Animated backgrounds: triangles, specks of light, the modes' orbit. */
+    effects: boolean;
+    /** `low`: fewer of them, drawn at 30 frames a second and at fewer pixels. */
+    quality: EffectsQuality;
+    /** Pages and the theme change in an animated transition. */
+    transitions: boolean;
 }
+
+export const EFFECTS_QUALITIES = ['high', 'low'] as const;
+export type EffectsQuality = (typeof EFFECTS_QUALITIES)[number];
 
 const initialState: AppearanceState = {
     palette: 'sakura',
@@ -29,6 +40,10 @@ const initialState: AppearanceState = {
     reducedMotion: false,
     sidebarCollapsed: false,
     visualizer: true,
+    musicReactive: true,
+    effects: true,
+    quality: 'high',
+    transitions: true,
 };
 
 /** Where it is kept: it is the window's look, not a setting of the tools. */
@@ -44,6 +59,10 @@ function saved(): AppearanceState {
             reducedMotion: value.reducedMotion === true,
             sidebarCollapsed: value.sidebarCollapsed === true,
             visualizer: value.visualizer !== false,
+            musicReactive: value.musicReactive !== false,
+            effects: value.effects !== false,
+            quality: EFFECTS_QUALITIES.includes(value.quality as EffectsQuality) ? (value.quality as EffectsQuality) : 'high',
+            transitions: value.transitions !== false,
         };
     } catch {
         return initialState;
@@ -66,6 +85,10 @@ export const AppearanceStore = signalStore(
         setReducedMotion: (reducedMotion: boolean) => patchState(store, { reducedMotion }),
         toggleSidebar: () => patchState(store, { sidebarCollapsed: !store.sidebarCollapsed() }),
         setVisualizer: (visualizer: boolean) => patchState(store, { visualizer }),
+        setMusicReactive: (musicReactive: boolean) => patchState(store, { musicReactive }),
+        setEffects: (effects: boolean) => patchState(store, { effects }),
+        setQuality: (quality: EffectsQuality) => patchState(store, { quality }),
+        setTransitions: (transitions: boolean) => patchState(store, { transitions }),
     })),
 
     withHooks({
@@ -78,12 +101,18 @@ export const AppearanceStore = signalStore(
                     reducedMotion: store.reducedMotion(),
                     sidebarCollapsed: store.sidebarCollapsed(),
                     visualizer: store.visualizer(),
+                    musicReactive: store.musicReactive(),
+                    effects: store.effects(),
+                    quality: store.quality(),
+                    transitions: store.transitions(),
                 };
                 const root = document.documentElement;
                 root.dataset['palette'] = state.palette;
                 root.dataset['font'] = state.font;
                 root.dataset['theme'] = state.dark ? 'dark' : 'light';
                 root.dataset['motion'] = state.reducedMotion ? 'reduced' : 'full';
+                root.dataset['effects'] = state.effects ? 'on' : 'off';
+                root.dataset['quality'] = state.quality;
                 taigaDark.set(state.dark);
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
             });

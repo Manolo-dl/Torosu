@@ -88,16 +88,27 @@ export class ParticlesComponent {
             this.appearance.palette();
             this.appearance.dark();
             this.appearance.reducedMotion();
+            this.appearance.effects();
+            this.appearance.quality();
             requestAnimationFrame(() => {
                 this.readColors();
-                this.draw();
-                this.schedule();
+                this.resize();
             });
         });
     }
 
+    /** Drawn once and left still: with reduced motion, or the animated backgrounds off. */
     private get still(): boolean {
-        return this.appearance.reducedMotion() || matchMedia('(prefers-reduced-motion: reduce)').matches;
+        return (
+            !this.appearance.effects() ||
+            this.appearance.reducedMotion() ||
+            matchMedia('(prefers-reduced-motion: reduce)').matches
+        );
+    }
+
+    /** The low quality: half as many, at 30 frames a second, at one pixel per CSS pixel. */
+    private get low(): boolean {
+        return this.appearance.quality() === 'low';
     }
 
     private readColors() {
@@ -115,14 +126,14 @@ export class ParticlesComponent {
         const canvas = this.canvas().nativeElement;
         const box = this.host.nativeElement.getBoundingClientRect();
         // Specks this small don't need every device pixel.
-        const ratio = Math.min(devicePixelRatio || 1, 1.5);
+        const ratio = this.low ? 1 : Math.min(devicePixelRatio || 1, 1.5);
         this.width = box.width;
         this.height = box.height;
         canvas.width = Math.round(box.width * ratio);
         canvas.height = Math.round(box.height * ratio);
         canvas.getContext('2d')?.setTransform(ratio, 0, 0, ratio, 0, 0);
 
-        const count = Math.min(Math.round(((box.width * box.height) / AREA_PER_PARTICLE) * this.density()), MAX_PARTICLES);
+        const count = Math.min(Math.round(((box.width * box.height) / AREA_PER_PARTICLE) * this.density() * (this.low ? 0.5 : 1)), MAX_PARTICLES);
         while (this.particles.length < count) this.particles.push(this.spawn(true));
         this.particles.length = count;
         this.draw();
@@ -153,7 +164,15 @@ export class ParticlesComponent {
         this.frame = requestAnimationFrame(now => this.tick(now));
     }
 
+    private skipped = false;
+
     private tick(now: number) {
+        // Every other frame only, at the low quality.
+        this.skipped = this.low && !this.skipped;
+        if (this.skipped) {
+            this.frame = requestAnimationFrame(next => this.tick(next));
+            return;
+        }
         const seconds = Math.min((now - this.last) / 1000, 0.1);
         this.last = now;
         this.time += seconds;

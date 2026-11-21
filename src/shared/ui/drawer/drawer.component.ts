@@ -40,8 +40,11 @@ import { IconComponent } from '../icon/icon.component';
                     </button>
                 </header>
                 <ng-content select="[appDrawerNav]" />
-                <div class="body">
-                    <ng-content />
+                <div class="main">
+                    <ng-content select="[appDrawerSide]" />
+                    <div class="body">
+                        <ng-content />
+                    </div>
                 </div>
             </aside>
         }

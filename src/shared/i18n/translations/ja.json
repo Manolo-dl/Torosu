@@ -13,7 +13,9 @@
       "downloader": "ダウンローダー",
       "packs": "パック",
       "trainer": "トレーナー",
-      "replays": "リプレイ"
+      "replays": "リプレイ",
+      "appearance": "外観",
+      "performance": "パフォーマンス"
     },
     "general": {
       "osu": "osu!",
@@ -135,12 +137,34 @@
         "grotesk": "テクニカルで個性的"
       },
       "visualizer": "タイトルバーの音楽",
-      "visualizerHint": "osu! で流れている曲に合わせて動くバー。そのために osu! をバックグラウンドで読み取ります"
+      "visualizerHint": "osu! で流れている曲に合わせて動くバー。そのために osu! をバックグラウンドで読み取ります",
+      "theme": "テーマ",
+      "themes": {
+        "dark": "ダーク",
+        "light": "ライト"
+      }
     },
     "saved": "設定を保存しました",
     "saving": "保存中…",
     "autosave": "閉じると保存されます",
-    "saveFailed": "設定を保存できませんでした"
+    "saveFailed": "設定を保存できませんでした",
+    "performance": {
+      "effects": "エフェクト",
+      "backgrounds": "アニメーション背景",
+      "backgroundsHint": "三角形、光の粒、モードの軌道。オフにすると静止します",
+      "quality": "エフェクトの品質",
+      "qualityHint": "低はより少なく、毎秒30フレームで描画します。遅いPCでも軽くなります",
+      "qualities": {
+        "high": "高",
+        "low": "低"
+      },
+      "transitions": "ページの切り替えアニメーション",
+      "transitionsHint": "ページとテーマをアニメーションで切り替えます",
+      "music": "osu! の音楽",
+      "reactive": "アプリが音楽に合わせて動く",
+      "reactiveHint": "ロゴが低音に合わせて脈打ち、ページの後ろの光が音楽に合わせて変化します",
+      "motion": "動き"
+    }
   },
   "nav": {
     "home": "ホーム",

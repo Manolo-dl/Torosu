@@ -119,7 +119,9 @@
   }
 }
 
-:host-context([data-motion='reduced']) {
+/* Still with reduced motion, or the animated backgrounds turned off. */
+:host-context([data-motion='reduced']),
+:host-context([data-effects='off']) {
   .orbit,
   .mode app-icon,
   .hit,

@@ -11,9 +11,9 @@
     </span>
 
     <app-option-group
-        appDrawerNav
-        variant="tabs"
-        class="tabs"
+        appDrawerSide
+        variant="nav"
+        class="sections"
         [options]="tabs"
         [active]="activeTab()"
         (activeChange)="activeTab.set($event)"
@@ -22,8 +22,7 @@
     <div class="content">
         @switch (activeTab()) {
             @case (0) {
-                <app-appearance-settings />
-
+                <!-- The language first: everything else reads in it. -->
                 <section>
                     <h3 appSectionTitle>{{ 'settings.general.language' | transloco }}</h3>
                     <app-option-group
@@ -85,6 +84,14 @@
             }
 
             @case (1) {
+                <app-appearance-settings />
+            }
+
+            @case (2) {
+                <app-performance-settings />
+            }
+
+            @case (3) {
                 <section>
                     <h3 appSectionTitle>{{ 'settings.downloader.account' | transloco }}</h3>
                     <label tuiCell>
@@ -192,7 +199,7 @@
                 </section>
             }
 
-            @case (2) {
+            @case (4) {
                 <section>
                     <h3 appSectionTitle>{{ 'settings.packs.createPacks' | transloco }}</h3>
                     <label tuiCell>
@@ -228,7 +235,7 @@
                 </section>
             }
 
-            @case (3) {
+            @case (5) {
                 <section>
                     <h3 appSectionTitle>{{ 'settings.trainer.quality' | transloco }}</h3>
                     <label tuiCell>
@@ -338,7 +345,7 @@
                 </section>
             }
 
-            @case (4) {
+            @case (6) {
                 <section>
                     <h3 appSectionTitle>{{ 'settings.replays.analysis' | transloco }}</h3>
                     <label tuiCell>

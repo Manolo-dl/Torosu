@@ -16,6 +16,7 @@ import { DEFAULT_LANGUAGE, errorText, LANGUAGES } from '@shared/i18n';
 import { ButtonComponent, DrawerComponent, IconComponent, OptionGroupComponent, OptionGroupItem, SectionTitleComponent, SwitchComponent } from '@shared/ui';
 import { NameFormatField, NameFormatFieldComponent, NameFormatPreset } from '../name-format-field/name-format-field.component';
 import { AppearanceSettingsComponent } from '../appearance-settings/appearance-settings.component';
+import { PerformanceSettingsComponent } from '../performance-settings/performance-settings.component';
 
 /** The names the trainer always gave (`DEFAULT_NAME_FORMAT` in trainer/naming.rs). */
 const DEFAULT_NAME_FORMAT = '{diff} {rate} ({bpm}bpm) ({pitch}) {tasks} {stats}';
@@ -71,7 +72,7 @@ function comparable(config: AppConfig): string {
 
 @Component({
   selector: 'app-config-drawer',
-  imports: [DrawerComponent, IconComponent, SectionTitleComponent, SwitchComponent, AppearanceSettingsComponent, FormsModule, TuiTitle, TuiInputNumber, TuiCell, TuiInput, TuiLabel, NameFormatFieldComponent, OptionGroupComponent, TranslocoPipe, ButtonComponent],
+  imports: [DrawerComponent, PerformanceSettingsComponent, IconComponent, SectionTitleComponent, SwitchComponent, AppearanceSettingsComponent, FormsModule, TuiTitle, TuiInputNumber, TuiCell, TuiInput, TuiLabel, NameFormatFieldComponent, OptionGroupComponent, TranslocoPipe, ButtonComponent],
   templateUrl: './config-drawer.component.html',
   styleUrl: './config-drawer.component.less',
 })
@@ -89,10 +90,16 @@ export class ConfigDrawerComponent {
   /** Opened by the settings button (`ConfigButtonComponent`), which loads the settings first. */
   readonly open = model.required<boolean>();
   readonly activeTab = signal(0);
-  readonly tabs: OptionGroupItem[] = ['general', 'downloader', 'packs', 'trainer', 'replays'].map(tab => ({
-    label: `settings.tabs.${tab}`,
-    translate: true,
-  }));
+  /** The sections of the settings, in the nav on the drawer's left. */
+  readonly tabs: OptionGroupItem[] = [
+    { tab: 'general', icon: 'settings-2' },
+    { tab: 'appearance', icon: 'palette' },
+    { tab: 'performance', icon: 'gauge' },
+    { tab: 'downloader', icon: 'download' },
+    { tab: 'packs', icon: 'package' },
+    { tab: 'trainer', icon: 'sliders-horizontal' },
+    { tab: 'replays', icon: 'activity' },
+  ].map(({ tab, icon }) => ({ label: `settings.tabs.${tab}`, icon, translate: true }));
   /** Being saved, as it closes. */
   readonly saving = signal(false);
   readonly tools = USER_ITEMS.filter(item => item.route !== '/');

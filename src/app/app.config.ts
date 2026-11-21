@@ -15,14 +15,16 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     // Pages change in a View Transition where the engine has them: only the
     // page's panel moves (styles.css), and a tool's icon flies from its card
-    // on the home to the page's header.
+    // on the home to the page's header. Not with reduced motion, nor with the
+    // transitions turned off in the settings.
     provideRouter(
       routes,
       withViewTransitions({
         skipInitialTransition: true,
         onViewTransitionCreated: ({ transition }) => {
           const appearance = inject(AppearanceStore);
-          if (appearance.reducedMotion() || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          const reduced = appearance.reducedMotion() || matchMedia('(prefers-reduced-motion: reduce)').matches;
+          if (reduced || !appearance.transitions()) {
             transition.skipTransition();
           }
         },

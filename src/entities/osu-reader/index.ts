@@ -5,3 +5,6 @@ export { SkillSummaryComponent } from './ui/skill-summary/skill-summary.componen
 export { DanEmblemComponent } from './ui/dan-emblem/dan-emblem.component';
 export type { SkillDisplay } from './ui/skill-summary/skill-summary.component';
 export { OsuAudioService } from './osu-audio.service';
+export { MusicService, MUSIC_BANDS } from './music.service';
+export type { Music } from './music.service';
+export { MusicPulseDirective } from './ui/music-pulse/music-pulse.directive';

@@ -8,6 +8,8 @@
   <div class="app-body">
     <app-sidebar />
     <main class="app-content">
+      <!-- A light of the accents that comes in with osu!'s music. -->
+      <div class="music-glow" appMusicPulse="glow" aria-hidden="true"></div>
       @if (osuPath.missing()) {
         <app-osu-path />
       }

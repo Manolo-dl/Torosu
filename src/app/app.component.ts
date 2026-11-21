@@ -5,6 +5,7 @@ import { HeaderComponent } from "@widgets/header";
 import { SidebarComponent } from "@widgets/sidebar";
 import { OsuPathComponent } from "@widgets/osu-path";
 import { OsuPathStore } from "@entities/osu-path";
+import { MusicPulseDirective } from "@entities/osu-reader";
 import { AppearanceStore, PlatformStore } from "@shared/stores";
 import { ToastsComponent } from "@shared/ui";
 import { ConfigurationStore } from "@entities/configuration";
@@ -13,7 +14,7 @@ import { DEFAULT_LANGUAGE, isLanguage, LanguageService } from "@shared/i18n";
 
 @Component({
   selector: "app-root",
-  imports: [RouterOutlet, HeaderComponent, SidebarComponent, OsuPathComponent, ToastsComponent, TuiRoot],
+  imports: [MusicPulseDirective, RouterOutlet, HeaderComponent, SidebarComponent, OsuPathComponent, ToastsComponent, TuiRoot],
   templateUrl: "./app.component.html",
   styleUrl: "./app.component.less",
 })

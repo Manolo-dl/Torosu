@@ -13,7 +13,9 @@
       "downloader": "Téléchargeur",
       "packs": "Packs",
       "trainer": "Trainer",
-      "replays": "Replays"
+      "replays": "Replays",
+      "appearance": "Apparence",
+      "performance": "Performances"
     },
     "general": {
       "osu": "osu!",
@@ -135,12 +137,34 @@
         "grotesk": "Technique, avec du caractère"
       },
       "visualizer": "Musique dans la barre de titre",
-      "visualizerHint": "Des barres qui suivent la musique jouée par osu! ; osu! est lu en arrière-plan pour cela"
+      "visualizerHint": "Des barres qui suivent la musique jouée par osu! ; osu! est lu en arrière-plan pour cela",
+      "theme": "Thème",
+      "themes": {
+        "dark": "Sombre",
+        "light": "Clair"
+      }
     },
     "saved": "Paramètres enregistrés",
     "saving": "Enregistrement…",
     "autosave": "Enregistré à la fermeture",
-    "saveFailed": "Impossible d'enregistrer les paramètres"
+    "saveFailed": "Impossible d'enregistrer les paramètres",
+    "performance": {
+      "effects": "Effets",
+      "backgrounds": "Arrière-plans animés",
+      "backgroundsHint": "Triangles, particules de lumière et l'orbite des modes ; immobiles si désactivé",
+      "quality": "Qualité des effets",
+      "qualityHint": "Basse en dessine moins, à 30 images par seconde : plus légère sur les ordinateurs lents",
+      "qualities": {
+        "high": "Haute",
+        "low": "Basse"
+      },
+      "transitions": "Transitions entre les pages",
+      "transitionsHint": "Les pages et le thème changent avec une animation",
+      "music": "Musique d'osu!",
+      "reactive": "L'app bouge avec la musique",
+      "reactiveHint": "Le logo bat avec les basses et une lumière derrière les pages suit la musique",
+      "motion": "Mouvement"
+    }
   },
   "nav": {
     "home": "Accueil",
