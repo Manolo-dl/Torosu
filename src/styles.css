@@ -190,10 +190,14 @@ tui-expand {
   animation-timing-function: cubic-bezier(0.3, 1.2, 0.4, 1);
 }
 
-/* While the theme changes (HeaderComponent.toggleTheme) the whole window is
-   one picture, revealed in a circle: no part of it apart. */
-:root.theme-transition .page-outlet {
-  view-transition-name: none;
+/* While the theme changes (HeaderComponent.toggleTheme) nothing moves: the
+   new theme is revealed in a circle, on the window and on the page's panel
+   alike (drawn from script), over the old one standing still. A class on
+   <html> only: no view-transition-name changes. */
+:root.theme-transition::view-transition-group(*),
+:root.theme-transition::view-transition-old(*),
+:root.theme-transition::view-transition-new(*) {
+  animation: none;
 }
 
 /* ============================================

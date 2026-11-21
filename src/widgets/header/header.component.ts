@@ -50,7 +50,11 @@ export class HeaderComponent {
     const x = event.clientX;
     const y = event.clientY;
     const radius = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
-    // One picture of the whole window (styles.css), the page's panel included.
+    // The page's panel is a picture of its own (its view-transition-name,
+    // for the pages' transitions): the same circle is drawn on it, in its
+    // own coordinates. Its name is never taken away for this: WebKitGTK then
+    // drew parts of the page out of place after the transition.
+    const panel = document.querySelector('.page-outlet')?.getBoundingClientRect();
     const root = document.documentElement;
     root.classList.add('theme-transition');
     const transition = document.startViewTransition(() => {
@@ -58,13 +62,18 @@ export class HeaderComponent {
       // The new theme on the page before the transition takes its picture.
       this.appRef.tick();
     });
+    const reveal = { duration: 520, easing: 'cubic-bezier(0.65, 0, 0.35, 1)' };
+    const circle = (cx: number, cy: number) => [`circle(0px at ${cx}px ${cy}px)`, `circle(${radius}px at ${cx}px ${cy}px)`];
     transition.ready
-      .then(() =>
-        document.documentElement.animate(
-          { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`] },
-          { duration: 520, easing: 'cubic-bezier(0.65, 0, 0.35, 1)', pseudoElement: '::view-transition-new(root)' },
-        ),
-      )
+      .then(() => {
+        root.animate({ clipPath: circle(x, y) }, { ...reveal, pseudoElement: '::view-transition-new(root)' });
+        if (panel) {
+          root.animate(
+            { clipPath: circle(x - panel.left, y - panel.top) },
+            { ...reveal, pseudoElement: '::view-transition-new(page)' },
+          );
+        }
+      })
       .catch(() => {});
     transition.finished.finally(() => root.classList.remove('theme-transition'));
   }
