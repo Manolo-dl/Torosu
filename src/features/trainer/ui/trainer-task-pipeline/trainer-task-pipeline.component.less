@@ -3,6 +3,7 @@
 
 :host {
   display: block;
+  container: convert / inline-size;
 }
 
 header {
@@ -15,7 +16,9 @@ header {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    min-inline-size: 0;
     margin: 0;
+    white-space: nowrap;
     font: var(--tui-typography-heading-h6);
     font-family: var(--font-display);
     letter-spacing: var(--tracking-display);
@@ -68,9 +71,12 @@ header {
 
 .task {
   position: relative;
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
+  display: grid;
+  // The icon, the name and the bin on a line; what the task takes under the
+  // name, out to the bin's edge: squeezed between them it had no room.
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
   padding: 0.75rem;
   border: 1px solid transparent;
   border-inline-start: 2px solid var(--task-color);
@@ -112,21 +118,32 @@ header {
   }
 
   > [appButton] {
-    flex-shrink: 0;
+    grid-row: 1;
+    grid-column: 3;
   }
 
   .content {
-    flex: 1;
-    min-inline-size: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+    display: contents;
+
+    > * {
+      grid-column: 2 / -1;
+      min-inline-size: 0;
+    }
+
+    > .label {
+      grid-row: 1;
+      grid-column: 2;
+    }
+
+    > .option {
+      justify-self: start;
+    }
 
     .label {
       display: flex;
       align-items: center;
       flex-wrap: wrap;
-      min-block-size: 2.25rem;
+      gap: 0.25rem 0.5rem;
       font: var(--tui-typography-body-m);
       font-weight: 700;
     }
@@ -135,7 +152,6 @@ header {
       display: inline-flex;
       align-items: center;
       gap: 0.25rem;
-      margin-left: 0.5rem;
       font-weight: 400;
       color: var(--tui-status-warning);
     }
@@ -239,4 +255,11 @@ header {
 // A task for another mode than the map's: kept, but not applied.
 .task.skipped .params {
   opacity: 0.5;
+}
+
+// A narrow card: what the task takes uses the whole width, under the icon too.
+@container convert (width < 26rem) {
+  .task .content > :not(.label) {
+    grid-column: 1 / -1;
+  }
 }

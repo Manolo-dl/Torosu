@@ -51,6 +51,7 @@
   </header>
 
   @if (convert().tasks.length > 0 && preview(); as skill) {
+    @if ((skill.dan && skillDisplay() !== 'msd') || (skill.msd && skillDisplay() !== 'dan')) {
     <div class="result" [class.stale]="stale()" [attr.aria-busy]="stale()">
       <span class="result-label">{{ 'trainer.skill.result' | transloco }}</span>
       <app-skill-summary
@@ -59,6 +60,7 @@
         [compareTo]="reader.skill()"
       />
     </div>
+    }
   }
 
   <div class="list" cdkDropList (cdkDropListDropped)="onDrop($event)">

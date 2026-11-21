@@ -5,7 +5,7 @@ import { TranslocoService } from '@jsverse/transloco';
 import { ConfigurationStore } from '@entities/configuration';
 import { PlatformStore } from '@shared/stores';
 import { FormsModule } from '@angular/forms';
-import { TuiInput, TuiLabel, TuiTitle } from '@taiga-ui/core';
+import { TuiInput, TuiTitle } from '@taiga-ui/core';
 import { BUILT_IN_PRESETS, TrainerPreset } from '../../models/trainer.model';
 import { isSafeShortcut, shortcutLabel, shortcutOf } from '../../models/shortcut';
 import { TrainerPresetsStore } from '../../stores/trainer-presets.store';
@@ -15,7 +15,7 @@ import { TrainerShortcutsService } from '../../services/trainer-shortcuts.servic
 /** Presets that replace the converts, and saving the current ones as one. */
 @Component({
   selector: 'app-trainer-presets',
-  imports: [FormsModule, TuiInput, TuiLabel, TuiTitle, TranslocoPipe, ButtonComponent, CardComponent, IconComponent],
+  imports: [FormsModule, TuiInput, TuiTitle, TranslocoPipe, ButtonComponent, CardComponent, IconComponent],
   templateUrl: './trainer-presets.component.html',
   styleUrl: './trainer-presets.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,

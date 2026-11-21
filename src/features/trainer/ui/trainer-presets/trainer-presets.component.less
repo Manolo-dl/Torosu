@@ -40,13 +40,54 @@
     color: var(--tui-status-negative);
   }
 
+  // The preset's name, and its keys in a field that takes them.
   .shortcut {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(6rem, 10rem) 1rem;
     align-items: center;
     gap: 0.5rem;
 
-    tui-textfield {
-      flex: 1;
+    .name {
+      overflow: hidden;
+      font: var(--tui-typography-body-s);
+      font-weight: 600;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .keys {
+      inline-size: 100%;
+      min-inline-size: 0;
+      padding: 0.3125rem 0.625rem;
+      border: 1px solid var(--tui-border-normal);
+      border-radius: var(--tui-radius-s);
+      background: var(--tui-background-neutral-1);
+      color: var(--tui-text-primary);
+      font: var(--tui-typography-body-s);
+      font-family: var(--font-mono);
+      text-align: center;
+      cursor: pointer;
+      transition: border-color var(--duration-1), box-shadow var(--duration-1);
+
+      &::placeholder {
+        color: var(--tui-text-tertiary);
+        font-family: var(--font-sans);
+      }
+
+      &.set {
+        border-bottom-width: 2px;
+      }
+
+      &:hover {
+        border-color: var(--tui-border-hover);
+      }
+
+      &:focus {
+        outline: none;
+        border-color: var(--tui-background-accent-1);
+        box-shadow: 0 0 0 3px color-mix(in oklch, var(--tui-background-accent-1) 25%, transparent);
+        cursor: text;
+      }
     }
 
     .active {
