@@ -163,7 +163,9 @@
       "music": "Música de osu!",
       "reactive": "La app se mueve con la música",
       "reactiveHint": "El logo late con los graves y una luz tras las páginas sigue la música",
-      "motion": "Movimiento"
+      "motion": "Movimiento",
+      "covers": "Portadas de los mapas",
+      "coversHint": "Hechas del fondo de cada mapa y guardadas en caché (hasta 32 MB); apagadas, no se lee ni procesa ninguna imagen"
     }
   },
   "nav": {

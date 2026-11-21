@@ -5,6 +5,7 @@ import { openUrl } from '@tauri-apps/plugin-opener';
 import { StarBadgeComponent, BadgeComponent, IconComponent } from '@shared/ui';
 import { beatmapsetUrl, modeColor, modeIcon, starBg } from '@shared/utils';
 import { BeatmapCoverService } from '../../beatmap-cover.service';
+import { AppearanceStore } from '@shared/stores';
 import { TuiExpand } from '@taiga-ui/core';
 
 /** Pips of each mode on the closed card; the rest are only counted. */
@@ -34,11 +35,13 @@ export class BeatmapSetCardComponent {
   readonly cover = signal<string | null>(null);
   readonly coverLoaded = signal(false);
   private readonly covers = inject(BeatmapCoverService);
+  private readonly appearance = inject(AppearanceStore);
 
   constructor() {
     // Again for each set: a virtual list gives a card another set as it scrolls.
     effect(onCleanup => {
       const set = this.set();
+      this.appearance.covers();
       this.cover.set(null);
       this.coverLoaded.set(false);
       const file = set.diffs[0]?.fileName;

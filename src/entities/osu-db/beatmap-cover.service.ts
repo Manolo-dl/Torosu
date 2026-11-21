@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
+import { AppearanceStore } from '@shared/stores';
 import { invoke } from '@tauri-apps/api/core';
 
 /** At most this many covers are made at once: each decodes a large image. */
@@ -10,16 +11,20 @@ const KEPT = 400;
  * The covers of the beatmap sets, made by the backend from each set's own
  * background (`beatmap_cover`), kept on disk there and here as blob: URLs.
  * A card asks for its own as it shows: with a virtual list, only those in
- * sight. `null` for a set with no background.
+ * sight. `null` for a set with no background, or with covers turned off in
+ * the settings (Performance).
  */
 @Injectable({ providedIn: 'root' })
 export class BeatmapCoverService {
+    private readonly appearance = inject(AppearanceStore);
     private readonly covers = new Map<string, Promise<string | null>>();
     private readonly waiting: (() => void)[] = [];
     private running = 0;
 
     /** The cover of the set in `folder`, from the background its `.osu` file `osuFile` names. */
     cover(folder: string, osuFile: string): Promise<string | null> {
+        // Turned off in the settings: no image is read nor made.
+        if (!this.appearance.covers()) return Promise.resolve(null);
         const key = `${folder}\u0000${osuFile}`;
         let cover = this.covers.get(key);
         if (cover) {

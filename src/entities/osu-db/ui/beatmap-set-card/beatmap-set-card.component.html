@@ -1,7 +1,9 @@
 <div class="card" [attr.data-status]="status()" [class.expanded]="expanded()" (click)="toggleExpand($event)">
-  <!-- Its cover, from its own background, behind the side of the card, fading toward the titles. -->
+  <!-- Its cover, from its own background, behind the side of the card; a
+       gradient over it fades it toward the titles. Nothing on it moves. -->
   @if (cover(); as url) {
     <img class="cover" alt="" [src]="url" [class.shown]="coverLoaded()" (load)="coverLoaded.set(true)" (error)="cover.set(null)" />
+    <span class="cover-fade"></span>
   }
   <div class="body">
     <div class="head">

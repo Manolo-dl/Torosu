@@ -14,29 +14,28 @@
 
 .card {
   --status-color: var(--text-4);
+  /* One background, hover or not: the cover's fade is drawn in it. */
+  --card-bg: color-mix(in oklch, var(--text-1) 4%, var(--surface-1));
 
   position: relative;
   display: flex;
   border: 1px solid var(--line-subtle);
   border-inline-start: 3px solid var(--status-color);
   border-radius: var(--radius-md);
-  background: color-mix(in oklch, var(--text-1) 4%, var(--surface-1));
+  background: var(--card-bg);
   overflow: hidden;
   cursor: pointer;
   transition:
-    background var(--duration-2) var(--ease-out),
-    border-color var(--duration-2) var(--ease-out);
+    border-color var(--duration-2) var(--ease-out),
+    box-shadow var(--duration-2) var(--ease-out);
 
+  // Only its frame changes on hover: nothing over the cover is animated
+  // (WebKitGTK drew an animated, masked image differently once it settled).
   &:hover,
   &.expanded {
-    border-color: color-mix(in srgb, var(--status-color) 35%, transparent);
+    border-color: color-mix(in srgb, var(--status-color) 40%, transparent);
     border-inline-start-color: var(--status-color);
-    background: color-mix(in oklch, var(--text-1) 7%, var(--surface-1));
-
-    .cover.shown {
-      opacity: 0.55;
-      transform: scale(1.04);
-    }
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--status-color) 14%, transparent);
   }
 
   &[data-status='ranked'] { --status-color: @ranked; }
@@ -46,26 +45,32 @@
   &[data-status='unranked'] { --status-color: @unranked; }
 }
 
-// The cover: on the right, fading toward the titles; in once it has loaded.
-// It comes first and the body after (positioned), so the body is over it.
-.cover {
+// The cover: on the right, shown once loaded, still. A gradient of the
+// card's own background over it fades it toward the titles: no mask, no
+// animation on the image. It comes first and the body after (positioned),
+// so the body is over both.
+.cover,
+.cover-fade {
   position: absolute;
-  inset-block: 0;
+  inset-block-start: 0;
   inset-inline-end: 0;
   inline-size: 62%;
   block-size: 54px;
-  object-fit: cover;
-  opacity: 0;
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 75%);
-  mask-image: linear-gradient(90deg, transparent, #000 75%);
   pointer-events: none;
-  transition:
-    opacity var(--duration-4) var(--ease-out),
-    transform var(--duration-4) var(--ease-out);
+}
+
+.cover {
+  object-fit: cover;
+  visibility: hidden;
+  opacity: 0.4;
 
   &.shown {
-    opacity: 0.38;
+    visibility: visible;
   }
+}
+
+.cover-fade {
+  background: linear-gradient(90deg, var(--card-bg) 0%, transparent 70%);
 }
 
 .body {

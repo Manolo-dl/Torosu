@@ -28,6 +28,8 @@ interface AppearanceState {
     quality: EffectsQuality;
     /** Pages and the theme change in an animated transition. */
     transitions: boolean;
+    /** The beatmap set cards show a cover, made from each map's background. */
+    covers: boolean;
 }
 
 export const EFFECTS_QUALITIES = ['high', 'low'] as const;
@@ -44,6 +46,7 @@ const initialState: AppearanceState = {
     effects: true,
     quality: 'high',
     transitions: true,
+    covers: true,
 };
 
 /** Where it is kept: it is the window's look, not a setting of the tools. */
@@ -63,6 +66,7 @@ function saved(): AppearanceState {
             effects: value.effects !== false,
             quality: EFFECTS_QUALITIES.includes(value.quality as EffectsQuality) ? (value.quality as EffectsQuality) : 'high',
             transitions: value.transitions !== false,
+            covers: value.covers !== false,
         };
     } catch {
         return initialState;
@@ -89,6 +93,7 @@ export const AppearanceStore = signalStore(
         setEffects: (effects: boolean) => patchState(store, { effects }),
         setQuality: (quality: EffectsQuality) => patchState(store, { quality }),
         setTransitions: (transitions: boolean) => patchState(store, { transitions }),
+        setCovers: (covers: boolean) => patchState(store, { covers }),
     })),
 
     withHooks({
@@ -105,6 +110,7 @@ export const AppearanceStore = signalStore(
                     effects: store.effects(),
                     quality: store.quality(),
                     transitions: store.transitions(),
+                    covers: store.covers(),
                 };
                 const root = document.documentElement;
                 root.dataset['palette'] = state.palette;

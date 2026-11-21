@@ -9,6 +9,14 @@
     <input appSwitch type="checkbox" [checked]="appearance.effects()" (change)="appearance.setEffects(checked($event))" />
   </label>
 
+  <label tuiCell>
+    <span tuiTitle>
+      {{ 'settings.performance.covers' | transloco }}
+      <span tuiSubtitle>{{ 'settings.performance.coversHint' | transloco }}</span>
+    </span>
+    <input appSwitch type="checkbox" [checked]="appearance.covers()" (change)="appearance.setCovers(checked($event))" />
+  </label>
+
   <div class="row">
     <span tuiTitle>
       {{ 'settings.performance.quality' | transloco }}

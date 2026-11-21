@@ -163,7 +163,9 @@
       "music": "osu!'s music",
       "reactive": "The app moves with the music",
       "reactiveHint": "The logo beats with the bass and a light behind the pages follows the music",
-      "motion": "Motion"
+      "motion": "Motion",
+      "covers": "Map covers",
+      "coversHint": "Made from each map's background and kept in the cache (up to 32 MB); off, no image is read or made"
     }
   },
   "nav": {

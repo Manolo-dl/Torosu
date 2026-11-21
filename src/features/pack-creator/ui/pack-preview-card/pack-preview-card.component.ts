@@ -1,6 +1,7 @@
 import { ButtonComponent, IconComponent, StarBadgeComponent, TooltipDirective } from '@shared/ui';
 import { BeatmapCoverService, OsuDbStore } from '@entities/osu-db';
 import { modeColor, modeIcon } from '@shared/utils';
+import { AppearanceStore } from '@shared/stores';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal } from '@angular/core';
 import { form, required, FormField } from '@angular/forms/signals';
@@ -29,6 +30,7 @@ export class PackPreviewCardComponent {
   /** Its cover, from its own background (`BeatmapCoverService`); its mode's icon without one. */
   readonly cover = signal<string | null>(null);
   private readonly covers = inject(BeatmapCoverService);
+  private readonly appearance = inject(AppearanceStore);
   readonly modeIcon = computed(() => modeIcon(this.original()?.mode ?? 3));
   readonly modeColor = computed(() => modeColor(this.original()?.mode ?? 3));
 
@@ -53,6 +55,7 @@ export class PackPreviewCardComponent {
   constructor() {
     effect(onCleanup => {
       const { folderName, fileName } = this.diff();
+      this.appearance.covers();
       this.cover.set(null);
       let current = true;
       onCleanup(() => (current = false));
