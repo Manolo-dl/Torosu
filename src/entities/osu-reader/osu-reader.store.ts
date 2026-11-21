@@ -41,10 +41,10 @@ export const OsuReaderStore = signalStore(
 
     withComputed((store) => ({
         connected: computed(() => store.status().state === 'connected'),
-        title: computed(() => store.data()?.beatmap.title ?? 'undefined'),
-        artist: computed(() => store.data()?.beatmap.artist ?? 'undefined'),
-        mapper: computed(() => store.data()?.beatmap.creator ?? 'undefined'),
-        version: computed(() => store.data()?.beatmap.difficulty ?? 'undefined'),
+        title: computed(() => store.data()?.beatmap.title ?? ''),
+        artist: computed(() => store.data()?.beatmap.artist ?? ''),
+        mapper: computed(() => store.data()?.beatmap.creator ?? ''),
+        version: computed(() => store.data()?.beatmap.difficulty ?? ''),
         stars: computed(() => store.data()?.attributes?.stars ?? 0),
         /** Mode the map was made for; `null` if its `.osu` file could not be read. */
         originalMode: computed(() => store.data()?.attributes?.originalMode ?? null),

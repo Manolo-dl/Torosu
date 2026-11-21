@@ -384,6 +384,13 @@
       "16_EZ2AC": "10K2S y 4 teclas centrales a las que va cualquiera de las manos.",
       "18_10K8K": "10K y 4 teclas más por mano para todos los dedos menos el pulgar (4K10K4K).",
       "18_9K9K": "9 teclas por mano en dos filas, como un DP para pop'n music."
+    },
+    "banner": {
+      "waiting": "Esperando a osu!",
+      "waitingHint": "Abre osu! stable: el mapa que selecciones aparecerá aquí, listo para cambiarlo.",
+      "select": "Selecciona un mapa en osu!",
+      "selectHint": "Elige uno en la selección de canciones y aparecerá aquí, listo para cambiarlo.",
+      "error": "No se puede leer osu!"
     }
   },
   "downloader": {

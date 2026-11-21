@@ -384,6 +384,13 @@
       "16_EZ2AC": "10K2S and 4 middle keys either hand moves to.",
       "18_10K8K": "10K and 4 more keys per hand for every finger but the thumb (4K10K4K).",
       "18_9K9K": "9 keys per hand in two rows, like a DP for pop'n music."
+    },
+    "banner": {
+      "waiting": "Waiting for osu!",
+      "waitingHint": "Open osu! stable: the map you select there shows up here, ready to change.",
+      "select": "Select a map in osu!",
+      "selectHint": "Pick one in song select and it shows up here, ready to change.",
+      "error": "Can't read osu!"
     }
   },
   "downloader": {

@@ -384,6 +384,13 @@
       "16_EZ2AC": "10K2S et 4 touches centrales vers lesquelles l’une ou l’autre main se déplace.",
       "18_10K8K": "10K et 4 touches de plus par main pour chaque doigt sauf le pouce (4K10K4K).",
       "18_9K9K": "9 touches par main sur deux rangées, comme un DP pour pop'n music."
+    },
+    "banner": {
+      "waiting": "En attente d'osu!",
+      "waitingHint": "Ouvre osu! stable : la map que tu y sélectionnes apparaît ici, prête à être modifiée.",
+      "select": "Sélectionne une map dans osu!",
+      "selectHint": "Choisis-en une dans la sélection des musiques et elle apparaît ici, prête à être modifiée.",
+      "error": "Impossible de lire osu!"
     }
   },
   "downloader": {

@@ -4,66 +4,94 @@
   display: block;
 }
 
-@keyframes fade-in {
-  from {
-    opacity: 0;
-  }
-}
-
-// The banner always sits on the beatmap background image (or a dark fallback),
-// so its text stays white in both themes.
+// The banner sits on the beatmap background (or the accents when it has
+// none), so its text stays white in both themes.
 .banner {
   position: relative;
   overflow: hidden;
+  isolation: isolate;
   aspect-ratio: 32 / 9;
   min-block-size: 10rem;
   max-block-size: 18rem;
   inline-size: 100%;
-  border-radius: var(--tui-radius-l);
-  box-shadow: var(--tui-shadow-small);
-  background: #1f1f24;
+  border: 1px solid var(--line-subtle);
+  border-radius: var(--radius-xl);
+  background:
+    radial-gradient(40rem 20rem at 85% 0%, color-mix(in oklch, var(--accent) 30%, transparent), transparent 70%),
+    radial-gradient(30rem 16rem at 0% 100%, color-mix(in oklch, var(--accent-2) 25%, transparent), transparent 70%),
+    oklch(0.18 0.03 var(--p-surface-h));
+  box-shadow: var(--shadow-2);
 
+  // Comes in with a slow settle, a new one for each map (a transform).
   .background {
     position: absolute;
     inset: 0;
+    z-index: -1;
     inline-size: 100%;
     block-size: 100%;
     object-fit: cover;
     // osu! backgrounds usually keep the subject a bit above the centre.
     object-position: center 35%;
-    animation: fade-in 300ms ease-out;
+    animation: background-in 1.2s var(--ease-out);
   }
 
-  // Only the bottom is darkened, behind the text; the rest of the image is
-  // left untouched.
+  // The bottom darkened behind the text, the rest of the image untouched.
   .overlay {
     position: absolute;
     inset: 0;
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
-    gap: 1rem;
-    padding: 1.25rem;
-    background: linear-gradient(0deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.35) 35%, rgba(0, 0, 0, 0) 65%);
+    gap: var(--space-4);
+    padding: var(--space-5);
+    background: linear-gradient(0deg, oklch(0 0 0 / 0.82) 0%, oklch(0 0 0 / 0.4) 40%, transparent 70%);
   }
 
   .info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
     min-inline-size: 0;
     color: #fff;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+    text-shadow: 0 1px 3px oklch(0 0 0 / 0.6);
+    animation: info-in var(--duration-4) var(--ease-out) backwards;
 
     .title {
       .ellipsis();
-      font-weight: 700;
+      font-family: var(--font-display);
+      font-size: clamp(var(--text-lg), 2.4vw, var(--text-2xl));
+      font-weight: var(--weight-black);
+      letter-spacing: var(--tracking-display);
+      line-height: 1.15;
     }
 
     .artist {
-      font-weight: 400;
-      color: rgba(255, 255, 255, 0.75);
+      .ellipsis();
+      color: oklch(1 0 0 / 0.78);
+      font-size: var(--text-md);
     }
 
-    [tuiSubtitle] {
-      color: rgba(255, 255, 255, 0.75);
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--space-2);
+      margin-block-start: var(--space-2);
+      font-size: var(--text-xs);
+    }
+
+    .version {
+      padding: 0.15rem 0.6rem;
+      border: 1px solid oklch(1 0 0 / 0.25);
+      border-radius: var(--radius-pill);
+      background: oklch(1 0 0 / 0.12);
+      font-weight: var(--weight-bold);
+      text-shadow: none;
+      backdrop-filter: blur(6px);
+    }
+
+    .mapper {
+      color: oklch(1 0 0 / 0.7);
     }
   }
 
@@ -72,29 +100,85 @@
     flex-wrap: wrap;
     align-items: center;
     justify-content: flex-end;
-    gap: 0.5rem;
-    max-inline-size: 65%;
+    gap: var(--space-2);
+    max-inline-size: 60%;
   }
 
   // Over the background image, like the text.
   .mode {
     font-size: 1.75rem;
-    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.6));
+    filter: drop-shadow(0 1px 3px oklch(0 0 0 / 0.6));
   }
 
   // The mods the skill next to it is rated with.
   .mods {
     padding: 0.125rem 0.5rem;
-    border-radius: var(--tui-radius-s);
-    background: rgba(0, 0, 0, 0.55);
+    border-radius: var(--radius-sm);
+    background: oklch(0 0 0 / 0.55);
     color: #fff;
-    font-weight: 700;
+    font-weight: var(--weight-bold);
     letter-spacing: 0.04em;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 1px 4px oklch(0 0 0 / 0.4);
   }
 
   .stars {
-    font-weight: 700;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+    font-weight: var(--weight-bold);
+    box-shadow: 0 1px 4px oklch(0 0 0 / 0.4);
+  }
+}
+
+// No map yet: the modes going round, and what to do. No image under it, so
+// in the theme's colours.
+.banner.empty {
+  background:
+    radial-gradient(40rem 20rem at 85% 0%, color-mix(in oklch, var(--accent) 16%, transparent), transparent 70%),
+    radial-gradient(30rem 16rem at 0% 100%, color-mix(in oklch, var(--accent-2) 14%, transparent), transparent 70%),
+    var(--surface-1);
+  box-shadow: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-5) var(--space-8);
+  container-type: inline-size;
+
+  .orbit {
+    --orbit-size: clamp(6rem, 16cqi, 9rem);
+  }
+
+  .message {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    max-inline-size: 30rem;
+    animation: info-in var(--duration-4) var(--ease-out) backwards;
+
+    strong {
+      color: var(--text-1);
+      font-family: var(--font-display);
+      font-size: var(--text-xl);
+      font-weight: var(--weight-black);
+      letter-spacing: var(--tracking-display);
+    }
+
+    p {
+      margin: 0;
+      color: var(--text-3);
+      font-size: var(--text-sm);
+      line-height: 1.5;
+    }
+  }
+}
+
+@keyframes background-in {
+  from {
+    opacity: 0;
+    transform: scale(1.08);
+  }
+}
+
+@keyframes info-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
   }
 }
