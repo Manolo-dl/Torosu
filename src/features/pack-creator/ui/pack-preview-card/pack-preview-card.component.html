@@ -1,8 +1,8 @@
 <div class="card" [class.invalid]="!!error()">
-  <!-- The set's cover, or its mode's icon. -->
+  <!-- Its cover, or its mode's icon. -->
   <span class="thumb" [style.--mode-color]="modeColor()">
     @if (cover(); as url) {
-      <img alt="" loading="lazy" [src]="url" (error)="coverFailed.set(true)" />
+      <img alt="" [src]="url" (error)="cover.set(null)" />
     } @else {
       <app-icon [name]="modeIcon()" />
     }

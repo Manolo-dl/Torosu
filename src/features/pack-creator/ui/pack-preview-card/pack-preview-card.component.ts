@@ -1,6 +1,6 @@
 import { ButtonComponent, IconComponent, StarBadgeComponent, TooltipDirective } from '@shared/ui';
-import { OsuDbStore } from '@entities/osu-db';
-import { beatmapsetCover, modeColor, modeIcon } from '@shared/utils';
+import { BeatmapCoverService, OsuDbStore } from '@entities/osu-db';
+import { modeColor, modeIcon } from '@shared/utils';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal } from '@angular/core';
 import { form, required, FormField } from '@angular/forms/signals';
@@ -26,9 +26,9 @@ export class PackPreviewCardComponent {
   readonly original = computed(() => this.osuDb.diffsByMd5().get(this.diff().md5) ?? null);
   readonly set = computed(() => this.osuDb.beatmapSetsByMd5().get(this.diff().md5) ?? null);
 
-  readonly coverFailed = signal(false);
-  /** The set's square cover from osu!, when it is on the website. */
-  readonly cover = computed(() => (this.coverFailed() ? null : beatmapsetCover(this.set()?.beatmapsetId ?? 0, 'list')));
+  /** Its cover, from its own background (`BeatmapCoverService`); its mode's icon without one. */
+  readonly cover = signal<string | null>(null);
+  private readonly covers = inject(BeatmapCoverService);
   readonly modeIcon = computed(() => modeIcon(this.original()?.mode ?? 3));
   readonly modeColor = computed(() => modeColor(this.original()?.mode ?? 3));
 
@@ -51,6 +51,14 @@ export class PackPreviewCardComponent {
   });
 
   constructor() {
+    effect(onCleanup => {
+      const { folderName, fileName } = this.diff();
+      this.cover.set(null);
+      let current = true;
+      onCleanup(() => (current = false));
+      this.covers.cover(folderName, fileName).then(url => current && this.cover.set(url));
+    });
+
     effect(() => {
       this.model.set({ newDiffName: this.diff().newDiffName });
     });

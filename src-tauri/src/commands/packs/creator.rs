@@ -247,7 +247,7 @@ impl FileEvent<'_> {
 }
 
 /// File name of the background image, as written in the `[Events]` section.
-fn background_filename(content: &str) -> Option<String> {
+pub(crate) fn background_filename(content: &str) -> Option<String> {
     let mut in_events_section = false;
 
     for line in content.lines() {

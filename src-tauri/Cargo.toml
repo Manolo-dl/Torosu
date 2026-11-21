@@ -40,6 +40,8 @@ osynic_osudb = "0.1.5"
 anyhow = "1.0.104"
 thiserror = "2"
 rosu-map = "0.2.1"
+# Small covers of the beatmap sets, from their backgrounds (commands/system/covers.rs).
+image = { version = "0.25", default-features = false, features = ["jpeg", "png"] }
 # Built from source and linked in: otherwise, on Linux, it links to the system
 # libSoundTouch, which the CI runner and most users don't have.
 soundtouch = { version = "0.5.4", features = ["bundled"] }

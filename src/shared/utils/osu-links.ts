@@ -11,11 +11,3 @@ export function beatmapsetIdFromUrl(text: string): number | null {
   const match = /beatmapsets\/(\d+)/.exec(text);
   return match ? Number(match[1]) : null;
 }
-
-/**
- * A beatmap set's cover on osu!'s servers: `card` is wide (400×140), `list`
- * square (150×150). `null` for a set that is not on the website.
- */
-export function beatmapsetCover(id: number, kind: 'card' | 'list' = 'card'): string | null {
-  return id > 0 ? `https://assets.ppy.sh/beatmaps/${id}/covers/${kind}.jpg` : null;
-}

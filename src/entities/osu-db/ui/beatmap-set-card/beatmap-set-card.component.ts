@@ -1,9 +1,10 @@
 import { NgTemplateOutlet } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, input, signal, TemplateRef } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, TemplateRef } from '@angular/core';
 import { OsuBeatmapSet, OsuDiff, setStatus } from '../../osu-db.model';
 import { openUrl } from '@tauri-apps/plugin-opener';
 import { StarBadgeComponent, BadgeComponent, IconComponent } from '@shared/ui';
-import { beatmapsetCover, beatmapsetUrl, modeColor, modeIcon, starBg } from '@shared/utils';
+import { beatmapsetUrl, modeColor, modeIcon, starBg } from '@shared/utils';
+import { BeatmapCoverService } from '../../beatmap-cover.service';
 import { TuiExpand } from '@taiga-ui/core';
 
 /** Pips of each mode on the closed card; the rest are only counted. */
@@ -29,10 +30,24 @@ export class BeatmapSetCardComponent {
 
   readonly expanded = signal(false);
 
-  /** Its cover on osu!'s servers; none for a set not on the website, or that has none. */
-  readonly coverFailed = signal(false);
+  /** Its cover, from its own background (`BeatmapCoverService`); none while it comes, or without one. */
+  readonly cover = signal<string | null>(null);
   readonly coverLoaded = signal(false);
-  readonly cover = computed(() => (this.coverFailed() ? null : beatmapsetCover(this.set().beatmapsetId)));
+  private readonly covers = inject(BeatmapCoverService);
+
+  constructor() {
+    // Again for each set: a virtual list gives a card another set as it scrolls.
+    effect(onCleanup => {
+      const set = this.set();
+      this.cover.set(null);
+      this.coverLoaded.set(false);
+      const file = set.diffs[0]?.fileName;
+      if (!file) return;
+      let current = true;
+      onCleanup(() => (current = false));
+      this.covers.cover(set.folderName, file).then(url => current && this.cover.set(url));
+    });
+  }
   readonly status = computed(() => setStatus(this.set()));
 
   /** By mode, then by stars. */
