@@ -200,6 +200,60 @@ tui-expand {
   animation: none;
 }
 
+/* appTooltip's card, put in <body>. */
+.app-tooltip {
+  position: fixed;
+  z-index: 2000;
+  max-inline-size: min(22rem, calc(100vw - 1rem));
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface-2);
+  box-shadow: var(--shadow-3);
+  color: var(--text-1);
+  font-size: var(--text-xs);
+  line-height: 1.45;
+  white-space: pre-line;
+  pointer-events: none;
+  animation: tooltip-in var(--duration-2) var(--ease-out);
+}
+
+/* Its arrow, toward its element. */
+.app-tooltip::after {
+  content: '';
+  position: absolute;
+  inset-inline-start: calc(var(--arrow-x, 50%) - 5px);
+  inline-size: 10px;
+  block-size: 10px;
+  border: inherit;
+  background: inherit;
+  transform: rotate(45deg);
+}
+
+.app-tooltip[data-side='top']::after {
+  inset-block-end: -6px;
+  border-block-start: none;
+  border-inline-start: none;
+}
+
+.app-tooltip[data-side='bottom']::after {
+  inset-block-start: -6px;
+  border-block-end: none;
+  border-inline-end: none;
+}
+
+.app-tooltip.leaving {
+  opacity: 0;
+  transition: opacity var(--duration-1) var(--ease-out);
+}
+
+@keyframes tooltip-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.97);
+  }
+}
+
 /* ============================================
    Base styles
    ============================================ */

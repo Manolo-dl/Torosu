@@ -265,10 +265,22 @@
     "mappedBy": "譜面作成: {{ mapper }}",
     "exportOsz": ".osz としてエクスポート",
     "dan": {
-      "hint": "Mania Tracker による推定段位（信頼度 {{ confidence }}%）"
+      "hint": "Mania Tracker による推定段位（信頼度 {{ confidence }}%）",
+      "confidence": "信頼度",
+      "lowConfidence": "信頼度が低め: 比較した段位コースとは傾向が異なるマップです。目安としてご覧ください。",
+      "source": "Mania Tracker の計算機による推定です。",
+      "keys": "{{ keys }}K コース",
+      "variants": {
+        "top": "{{ dan }} 段の最上位",
+        "high": "{{ dan }} 段の上位",
+        "mid": "ちょうど {{ dan }} 段",
+        "low": "{{ dan }} 段の下位",
+        "bottom": "{{ dan }} 段の最下位"
+      }
     },
     "msd": {
-      "hint": "総合 MSD（{{ calc }}）"
+      "hint": "総合 MSD（{{ calc }}）",
+      "skillsets": "スキルセット別"
     },
     "skill": {
       "dan": "段位",

@@ -265,10 +265,22 @@
     "mappedBy": "제작: {{ mapper }}",
     "exportOsz": ".osz로 내보내기",
     "dan": {
-      "hint": "Mania Tracker가 추정한 단위, 신뢰도 {{ confidence }}%"
+      "hint": "Mania Tracker가 추정한 단위, 신뢰도 {{ confidence }}%",
+      "confidence": "신뢰도",
+      "lowConfidence": "신뢰도 낮음: 비교한 단 코스와 성격이 다른 맵입니다. 참고용으로 보세요.",
+      "source": "Mania Tracker 계산기로 추정했습니다.",
+      "keys": "{{ keys }}K 코스",
+      "variants": {
+        "top": "{{ dan }}단의 최상위",
+        "high": "{{ dan }}단의 상위",
+        "mid": "딱 {{ dan }}단",
+        "low": "{{ dan }}단의 하위",
+        "bottom": "{{ dan }}단의 최하위"
+      }
     },
     "msd": {
-      "hint": "종합 MSD, {{ calc }} 기준"
+      "hint": "종합 MSD, {{ calc }} 기준",
+      "skillsets": "스킬셋별"
     },
     "skill": {
       "dan": "단위",

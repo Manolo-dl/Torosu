@@ -1,13 +1,13 @@
 @if (showDan()) {
   @for (dan of dans(); track dan.family) {
-    <div class="item" [attr.title]="danHint(dan)">
+    <div class="item" tabindex="0" [appTooltip]="danCard" [tooltipContext]="dan">
       <app-dan-emblem [dan]="dan" [size]="emblemSize()" [keyCount]="keyCount()" />
       <div class="text">
         <span class="caption">{{ (dan.family === 'ln' ? 'trainer.skill.lnDan' : 'trainer.skill.dan') | transloco }}</span>
         <span class="value">{{ dan.name }}</span>
       </div>
       @if (danDelta(dan); as change) {
-        <span class="delta" [class.up]="change.up" [attr.title]="deltaHint(change)">
+        <span class="delta" [class.up]="change.up" [appTooltip]="deltaHint(change)">
           {{ change.up ? '▲' : '▼' }} {{ change.text }}
         </span>
       }
@@ -16,16 +16,71 @@
 }
 
 @if (showMsd() && msd(); as msd) {
-  <div class="item" [attr.title]="msdHint()">
+  <div class="item" tabindex="0" [appTooltip]="msdCard">
     <span class="msd-value" [style.background]="msdBg()" [style.color]="msdFg()">{{ msd.overall | number: '1.2-2' }}</span>
     <div class="text">
       <span class="caption">MSD · {{ calculator() }}</span>
       <span class="value">{{ topSkillset() }}</span>
     </div>
     @if (msdDelta(); as change) {
-      <span class="delta" [class.up]="change.up" [attr.title]="deltaHint(change)">
+      <span class="delta" [class.up]="change.up" [appTooltip]="deltaHint(change)">
         {{ change.up ? '▲' : '▼' }} {{ change.text }}
       </span>
     }
   </div>
 }
+
+<!-- The cards over a dan and the MSD: what they mean, and how sure. -->
+<ng-template #danCard let-dan>
+  <div class="card">
+    <div class="card-head">
+      <app-dan-emblem [dan]="dan" [size]="56" [keyCount]="keyCount()" />
+      <div class="card-titles">
+        <span class="card-caption">
+          {{ (dan.family === 'ln' ? 'trainer.skill.lnDan' : 'trainer.skill.dan') | transloco }}
+          @if (keyCount(); as keys) {
+            · {{ 'trainer.dan.keys' | transloco: { keys } }}
+          }
+        </span>
+        <strong class="card-name">{{ dan.name }}</strong>
+        <span class="card-meaning">{{ variantText(dan) }}</span>
+      </div>
+    </div>
+
+    @let confidence = dan.confidence;
+    <div class="confidence" [attr.data-level]="confidence >= 0.75 ? 'high' : confidence >= 0.5 ? 'mid' : 'low'">
+      <span class="confidence-label">{{ 'trainer.dan.confidence' | transloco }}</span>
+      <span class="confidence-bar"><span class="confidence-fill" [style.transform]="'scaleX(' + confidence + ')'"></span></span>
+      <span class="confidence-value">{{ confidence * 100 | number: '1.0-0' }}%</span>
+    </div>
+    @if (confidence < 0.5) {
+      <p class="card-note warn">{{ 'trainer.dan.lowConfidence' | transloco }}</p>
+    }
+    <p class="card-note">{{ 'trainer.dan.source' | transloco }}</p>
+  </div>
+</ng-template>
+
+<ng-template #msdCard>
+  @if (msd(); as msd) {
+    <div class="card">
+      <div class="card-head">
+        <span class="msd-value big" [style.background]="msdBg()" [style.color]="msdFg()">{{ msd.overall | number: '1.2-2' }}</span>
+        <div class="card-titles">
+          <span class="card-caption">MSD · {{ calculator() }}</span>
+          <strong class="card-name">{{ topSkillset() }}</strong>
+        </div>
+      </div>
+      <span class="card-caption">{{ 'trainer.msd.skillsets' | transloco }}</span>
+      <div class="skillsets">
+        @for (skillset of skillsets(); track skillset.name) {
+          <span class="skillset-name" [class.top]="skillset.name === topSkillset()">{{ skillset.name }}</span>
+          <span class="confidence-bar">
+            <span class="confidence-fill" [style.transform]="'scaleX(' + skillset.share + ')'"></span>
+          </span>
+          <span class="skillset-value">{{ skillset.value | number: '1.2-2' }}</span>
+        }
+      </div>
+      <p class="card-note">{{ 'trainer.msd.hint' | transloco: { calc: calculator() } }}</p>
+    </div>
+  }
+</ng-template>

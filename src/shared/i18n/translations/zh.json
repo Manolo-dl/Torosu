@@ -265,10 +265,22 @@
     "mappedBy": "谱师：{{ mapper }}",
     "exportOsz": "导出为 .osz",
     "dan": {
-      "hint": "段位由 Mania Tracker 估算，置信度 {{ confidence }}%"
+      "hint": "段位由 Mania Tracker 估算，置信度 {{ confidence }}%",
+      "confidence": "置信度",
+      "lowConfidence": "置信度较低：该谱面与用于比较的段位课程差异较大，仅供参考。",
+      "source": "由 Mania Tracker 的计算器估算。",
+      "keys": "{{ keys }}K 课程",
+      "variants": {
+        "top": "处于 {{ dan }} 段的最高处",
+        "high": "处于 {{ dan }} 段的上段",
+        "mid": "正好是 {{ dan }} 段",
+        "low": "处于 {{ dan }} 段的下段",
+        "bottom": "处于 {{ dan }} 段的最低处"
+      }
     },
     "msd": {
-      "hint": "综合 MSD，来自 {{ calc }}"
+      "hint": "综合 MSD，来自 {{ calc }}",
+      "skillsets": "按技能类型"
     },
     "skill": {
       "dan": "段位",

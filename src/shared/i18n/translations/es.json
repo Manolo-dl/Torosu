@@ -265,10 +265,22 @@
     "mappedBy": "mapeado por {{ mapper }}",
     "exportOsz": "Exportar como .osz",
     "dan": {
-      "hint": "Dan estimado por Mania Tracker, {{ confidence }}% de confianza"
+      "hint": "Dan estimado por Mania Tracker, {{ confidence }}% de confianza",
+      "confidence": "Confianza",
+      "lowConfidence": "Confianza baja: el mapa no se parece a los cursos de dan con los que se comparó; tómalo como orientación.",
+      "source": "Estimado por la calculadora de Mania Tracker.",
+      "keys": "Curso de {{ keys }}K",
+      "variants": {
+        "top": "En lo más alto del dan {{ dan }}",
+        "high": "En la parte alta del dan {{ dan }}",
+        "mid": "Justo en el dan {{ dan }}",
+        "low": "En la parte baja del dan {{ dan }}",
+        "bottom": "En lo más bajo del dan {{ dan }}"
+      }
     },
     "msd": {
-      "hint": "MSD general, de {{ calc }}"
+      "hint": "MSD general, de {{ calc }}",
+      "skillsets": "Por skillset"
     },
     "skill": {
       "dan": "Dan",

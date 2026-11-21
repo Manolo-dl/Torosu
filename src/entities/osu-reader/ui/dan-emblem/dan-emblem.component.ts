@@ -42,7 +42,7 @@ let nextId = 0;
   template: `
     @if (image(); as src) {
       <!-- The drawings with marks are wider: the height is set, the width follows. -->
-      <img alt="" [src]="src" [style.height.px]="size()" [attr.title]="dan().name" (error)="failed.set(true)" />
+      <img alt="" [src]="src" [style.height.px]="size()" (error)="failed.set(true)" />
     } @else {
     <svg
       xmlns="http://www.w3.org/2000/svg"
