@@ -41,9 +41,10 @@ export type BadgeTone = 'neutral' | 'accent' | 'accent-2' | 'success' | 'warning
         :host(.live)::before {
             animation: live 1.6s var(--ease-out) infinite;
         }
+        /* The dot beating: a transform, nothing painted again. */
         @keyframes live {
-            0% { box-shadow: 0 0 0 0 currentColor; }
-            70%, 100% { box-shadow: 0 0 0 0.4em transparent; }
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(0.6); opacity: 0.5; }
         }
         :host([data-tone='accent']) { --badge-bg: var(--accent-soft); --badge-fg: var(--accent-text); }
         :host([data-tone='accent-2']) { --badge-bg: var(--accent-2-soft); --badge-fg: var(--accent-2-text); }

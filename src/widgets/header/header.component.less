@@ -56,44 +56,37 @@ header {
   background: var(--line);
 }
 
-/* A new version: in green, with a soft pulse until it is opened. */
+/* A new version: in green, a ring going out of it until it is opened (a
+   transform and an opacity: nothing is painted again). */
 .actions .update {
   --button-bg: var(--success-soft);
   --button-bg-hover: color-mix(in oklch, var(--success) 24%, transparent);
   --button-fg: var(--success);
 
   margin-inline-end: var(--space-2);
-  animation: update-pulse 2.4s var(--ease-out) infinite;
+  overflow: visible;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border: 2px solid var(--success);
+    border-radius: inherit;
+    opacity: 0;
+    pointer-events: none;
+    animation: update-pulse 2.4s var(--ease-out) infinite;
+  }
 }
 
 @keyframes update-pulse {
   0% {
-    box-shadow: 0 0 0 0 color-mix(in oklch, var(--success) 45%, transparent);
+    opacity: 0.6;
+    transform: scale(1);
   }
   70%,
   100% {
-    box-shadow: 0 0 0 8px transparent;
-  }
-}
-
-.update-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  inline-size: 20rem;
-  padding: 1rem;
-
-  .notes {
-    margin: 0;
-    max-block-size: 12rem;
-    overflow: auto;
-    white-space: pre-wrap;
-    color: var(--text-2);
-    font-size: var(--text-sm);
-  }
-
-  progress {
-    inline-size: 100%;
+    opacity: 0;
+    transform: scale(1.15, 1.4);
   }
 }
 

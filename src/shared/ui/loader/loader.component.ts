@@ -55,7 +55,7 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
         @keyframes press {
             0%, 100% { transform: scaleY(0.3); opacity: 0.45; }
-            40% { transform: scaleY(1); opacity: 1; box-shadow: 0 0 10px var(--accent-glow); }
+            40% { transform: scaleY(1); opacity: 1; }
         }
 
         .text:empty {
