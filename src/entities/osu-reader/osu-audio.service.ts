@@ -18,6 +18,8 @@ const LOW_HZ = 45;
 const HIGH_HZ = 10000;
 /** A selected map's song is read once the selection has rested this long. */
 const LOAD_DELAY_MS = 350;
+/** The levels span this many decibels under the loudest band lately. */
+const RANGE_DB = 42;
 /** osu!'s own spectrum (main menu) is trusted for this long after it came. */
 const SPECTRUM_FRESH_MS = 250;
 
@@ -49,6 +51,14 @@ export class OsuAudioService {
     private loading = 0;
 
     private readonly fft = new Fft(FFT_SIZE);
+    /**
+     * The loudest band lately, in dB: the levels are measured against it,
+     * as an automatic gain, so a loud mix doesn't fill every bar. It follows
+     * a louder peak at once and relaxes slowly.
+     */
+    private ceiling = -30;
+    private ceilingAt = 0;
+    private readonly db = new Float32Array(64);
 
     constructor() {
         // The song of the map selected, once the selection rests.
@@ -113,6 +123,8 @@ export class OsuAudioService {
         const magnitudes = this.fft.magnitudes(this.samples, start);
 
         const binHz = SAMPLE_RATE / FFT_SIZE;
+        const db = count <= this.db.length ? this.db : new Float32Array(count);
+        let loudest = -120;
         for (let i = 0; i < count; i++) {
             const low = LOW_HZ * Math.pow(HIGH_HZ / LOW_HZ, i / count);
             const high = LOW_HZ * Math.pow(HIGH_HZ / LOW_HZ, (i + 1) / count);
@@ -120,9 +132,20 @@ export class OsuAudioService {
             const to = Math.max(from + 1, Math.ceil(high / binHz));
             let peak = 0;
             for (let b = from; b < to && b < magnitudes.length; b++) peak = Math.max(peak, magnitudes[b]);
-            // To decibels, -62 dB the floor; the highs a little lifted, as they are quieter.
-            const db = 20 * Math.log10(peak + 1e-9) + (i / count) * 9;
-            levels[i] = Math.min(1, Math.max(0, (db + 62) / 52));
+            // In decibels, the highs lifted a little: they are quieter.
+            db[i] = 20 * Math.log10(peak + 1e-9) + (i / count) * 10;
+            loudest = Math.max(loudest, db[i]);
+        }
+
+        // The gain: up to a louder peak at once, down 4 dB a second, never below -45 dB.
+        const seconds = Math.min((now - this.ceilingAt) / 1000, 0.25);
+        this.ceilingAt = now;
+        this.ceiling = Math.max(loudest, this.ceiling - 4 * seconds, -45);
+        const floor = this.ceiling - RANGE_DB;
+        for (let i = 0; i < count; i++) {
+            const level = Math.min(1, Math.max(0, (db[i] - floor) / RANGE_DB));
+            // More contrast: the quiet bands fall away, the loud ones stand out.
+            levels[i] = level ** 1.8;
         }
         return levels;
     }
