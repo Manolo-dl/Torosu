@@ -1,9 +1,14 @@
 <header>
-  <h1 tuiTitle="l">
-    {{ heading() }}
+  @if (icon(); as icon) {
+    <span class="icon" aria-hidden="true"><app-icon [name]="icon" /></span>
+  }
+  <div class="titles">
+    <h1>{{ heading() }}</h1>
     @if (subtitle(); as subtitle) {
-      <span tuiSubtitle>{{ subtitle }}</span>
+      <p>{{ subtitle }}</p>
     }
-  </h1>
-  <ng-content />
+  </div>
+  <div class="end">
+    <ng-content />
+  </div>
 </header>

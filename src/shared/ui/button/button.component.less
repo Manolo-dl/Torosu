@@ -51,7 +51,16 @@
 
   &.loading {
     cursor: progress;
+    pointer-events: none;
   }
+}
+
+:host([data-size='xs']) {
+  --button-height: 1.5rem;
+  --button-padding: 0.5rem;
+  --button-font: var(--text-2xs);
+  gap: var(--space-1);
+  border-radius: var(--radius-sm);
 }
 
 :host([data-size='s']) {

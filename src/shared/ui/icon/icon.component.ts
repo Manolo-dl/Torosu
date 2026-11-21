@@ -3,7 +3,8 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 /**
  * An icon of the set the app ships (Lucide, in assets/taiga-ui/icons), drawn
  * in the text's colour and size: `<app-icon name="house" />`. Taiga's names
- * (`@tui.house`) work too.
+ * (`@tui.house`) work too, and so does the path of an SVG of the app's own
+ * (`assets/icons/modes/mania.svg`).
  */
 @Component({
     selector: 'app-icon',
@@ -31,12 +32,23 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
             -webkit-mask-repeat: no-repeat;
             mask-repeat: no-repeat;
         }
+
+        /* The app's own SVGs draw their strokes themselves: shown whole. */
+        :host(.file) {
+            -webkit-mask-size: contain;
+            mask-size: contain;
+        }
     `,
-    host: { 'aria-hidden': 'true', '[style.--icon]': 'url()' },
+    host: { 'aria-hidden': 'true', '[style.--icon]': 'url()', '[class.file]': 'isFile()' },
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IconComponent {
     readonly name = input.required<string>();
 
-    readonly url = computed(() => `url("assets/taiga-ui/icons/${this.name().replace(/^@tui\./, '')}.svg")`);
+    /** A path rather than a name of the set. */
+    readonly isFile = computed(() => this.name().includes('/'));
+
+    readonly url = computed(() =>
+        this.isFile() ? `url("${this.name()}")` : `url("assets/taiga-ui/icons/${this.name().replace(/^@tui\./, '')}.svg")`,
+    );
 }

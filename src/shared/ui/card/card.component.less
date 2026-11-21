@@ -1,6 +1,12 @@
+/* Its content stacked, like Taiga's large cards it replaces: a component
+   that wants something else sets its own display. */
 :host {
+  --card-gap: var(--space-5);
+
   position: relative;
-  display: block;
+  display: flex;
+  flex-direction: column;
+  gap: var(--card-gap);
   border: 1px solid var(--line-subtle);
   border-radius: var(--radius-lg);
   background: var(--surface-1);
@@ -8,7 +14,7 @@
   text-decoration: none;
 }
 
-:host([data-padding='s']) { padding: var(--space-3); }
+:host([data-padding='s']) { padding: var(--space-3); --card-gap: var(--space-3); }
 :host([data-padding='m']) { padding: var(--space-5); }
 :host([data-padding='l']) { padding: var(--space-8); }
 :host([data-padding='none']) { padding: 0; }

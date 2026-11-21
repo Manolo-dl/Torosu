@@ -14,3 +14,8 @@ export { BadgeComponent } from './badge/badge.component';
 export type { BadgeTone } from './badge/badge.component';
 export { CardComponent } from './card/card.component';
 export type { CardVariant } from './card/card.component';
+export { NoticeComponent } from './notice/notice.component';
+export type { NoticeTone } from './notice/notice.component';
+export { SectionTitleComponent } from './section-title/section-title.component';
+export { AccordionComponent, AccordionItemComponent } from './accordion/accordion.component';
+export { LoaderComponent } from './loader/loader.component';

@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, booleanAttribute, input } from '@an
 import { IconComponent } from '../icon/icon.component';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'soft' | 'ghost' | 'danger';
-export type ButtonSize = 's' | 'm' | 'l';
+export type ButtonSize = 'xs' | 's' | 'm' | 'l';
 
 /**
  * A button: `<button appButton="secondary" icon="download">…</button>`, also
