@@ -3,26 +3,29 @@
 @let hint = 'replays.views.' + view() + 'Hint' | transloco;
 
 <div appCard class="card">
-  <header class="head">
-    <div class="titles">
-      <span class="title">{{ entry().map?.artist }} - {{ entry().map?.title }}</span>
-      <span class="diff">[{{ entry().map?.diffName }}] · {{ a.keys }}K · OD {{ a.od }}@if (a.rate !== 1) { · {{ a.rate }}x }</span>
-    </div>
-    <span class="player">{{ a.playerName }}</span>
-  </header>
+  <app-analysis-hero [entry]="entry()" [analysis]="a" [accuracy]="accuracy().game" />
 
+  <!-- The timing: its spread, how early and how late, and how the hits split. -->
   <div class="tiles">
-    <div class="tile" [tuiHint]="hint">
-      <span class="label">{{ 'replays.error' | transloco }}</span>
-      <span class="value">{{ timing.earlyMean | number: '1.2-2' }} / {{ timing.lateMean | number: '1.2-2' }} ms</span>
-    </div>
-    <div class="tile" [tuiHint]="hint">
+    <div class="tile ur" tabindex="0" [appTooltip]="'replays.urHint' | transloco">
       <span class="label">UR</span>
       <span class="value">{{ timing.unstableRate | number: '1.2-2' }}</span>
     </div>
-    <div class="tile" [tuiHint]="hint">
+    <div class="tile early" tabindex="0" [appTooltip]="hint">
+      <span class="label">{{ 'replays.earlyMean' | transloco }}</span>
+      <span class="value">{{ timing.earlyMean | number: '1.2-2' }} <small>ms</small></span>
+    </div>
+    <div class="tile late" tabindex="0" [appTooltip]="hint">
+      <span class="label">{{ 'replays.lateMean' | transloco }}</span>
+      <span class="value">+{{ timing.lateMean | number: '1.2-2' }} <small>ms</small></span>
+    </div>
+    <div class="tile split" tabindex="0" [appTooltip]="hint">
       <span class="label">{{ 'replays.earlyLate' | transloco }}</span>
-      <span class="value">{{ timing.early }} / {{ timing.late }}</span>
+      <span class="value">{{ timing.early }} <small>/</small> {{ timing.late }}</span>
+      <span class="split-bar" [style.--early]="earlyShare()">
+        <span class="split-early"></span>
+        <span class="split-late"></span>
+      </span>
     </div>
   </div>
 
@@ -36,6 +39,20 @@
       } }}
     </p>
   }
+
+  <!-- How the judgements split, in their colours; their counts in the table under it. -->
+  <div class="judgement-bar" role="img" [attr.aria-label]="'replays.judgementsTitle' | transloco">
+    @for (j of judgements; track j) {
+      @if (a.gameCounts[j] > 0) {
+        <span
+          class="segment"
+          [attr.data-judgement]="j"
+          [style.flex-grow]="a.gameCounts[j]"
+          [appTooltip]="('replays.judgements.' + j | transloco) + ': ' + a.gameCounts[j]"
+        ></span>
+      }
+    }
+  </div>
 
   <table class="counts">
     <thead>

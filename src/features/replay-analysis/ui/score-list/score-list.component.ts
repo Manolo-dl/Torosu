@@ -3,16 +3,16 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { LanguageService } from '@shared/i18n';
-import { OptionGroupComponent, OptionGroupItem, BadgeComponent, CardComponent, SkeletonComponent, SwitchComponent } from '@shared/ui';
+import { OptionGroupComponent, OptionGroupItem, BadgeComponent, CardComponent, SkeletonComponent } from '@shared/ui';
 import { TuiInput, TuiScrollControls, TuiScrollRef } from '@taiga-ui/core';
 import { ReplayAnalysisStore, ScoreEntry } from '../../stores/replay-analysis.store';
-import { LocalScoresStore } from '@entities/local-scores';
+import { GradeComponent, LocalScoresStore } from '@entities/local-scores';
 import { OsuDbStore } from '@entities/osu-db';
 
 /** The local plays with a replay, to pick the one to analyse. */
 @Component({
     selector: 'app-score-list',
-    imports: [SkeletonComponent, SwitchComponent, DecimalPipe, OptionGroupComponent, ScrollingModule, TranslocoPipe, TuiInput, TuiScrollControls, TuiScrollRef, BadgeComponent, CardComponent],
+    imports: [GradeComponent, SkeletonComponent, DecimalPipe, OptionGroupComponent, ScrollingModule, TranslocoPipe, TuiInput, TuiScrollControls, TuiScrollRef, BadgeComponent, CardComponent],
     templateUrl: './score-list.component.html',
     styleUrl: './score-list.component.less',
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -41,10 +41,6 @@ export class ScoreListComponent {
 
     pickKeys(index: number) {
         this.store.setKeys(index === 0 ? null : this.store.keyCounts()[index - 1]);
-    }
-
-    follow(event: Event) {
-        this.store.setFollow((event.target as HTMLInputElement).checked);
     }
 
     search(event: Event) {

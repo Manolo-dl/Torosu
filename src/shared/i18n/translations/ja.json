@@ -701,7 +701,12 @@
     "followHint": "osu! を開いている間、クリアしたプレイを終了後すぐに分析します",
     "reconciled": "リプレイと一緒に保存される .osg から、osu! の判定 {{ total }} 件中 {{ matched }} 件を各ノーツに割り当てました。各ノーツはゲームが出した判定です。",
     "noGraph": "このリプレイには .osg がありません（osu! は 2026 年から保存）。判定は分析によるもので、一部のロングノーツはゲームと異なる場合があります。",
-    "realTime": "{{ rate }}x では osu! は上と同じく譜面上の ms で数えます。オフセットに関わる実時間では：{{ early }} / {{ late }} ms、UR {{ ur }}。"
+    "realTime": "{{ rate }}x では osu! は上と同じく譜面上の ms で数えます。オフセットに関わる実時間では：{{ early }} / {{ late }} ms、UR {{ ur }}。",
+    "earlyMean": "早押しの平均",
+    "lateMean": "遅押しの平均",
+    "urHint": "Unstable rate: osu! と同じ方法で数えたズレのばらつき。低いほど安定しています。",
+    "playedBy": "プレイヤー: {{ name }}",
+    "judgementsTitle": "判定"
   },
   "errors": {
     "io": "ファイルエラー: {{ detail }}",

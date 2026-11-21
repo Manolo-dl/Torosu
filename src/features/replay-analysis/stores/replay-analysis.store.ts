@@ -2,7 +2,7 @@ import { computed, effect, inject, untracked } from '@angular/core';
 import { TranslocoService } from '@jsverse/transloco';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withState } from '@ngrx/signals';
 import { invoke } from '@tauri-apps/api/core';
-import { LocalScore, LocalScoresStore, ReplayAnalysis, maniaAccuracy, modAcronyms } from '@entities/local-scores';
+import { Grade, LocalScore, LocalScoresStore, ReplayAnalysis, maniaAccuracy, maniaGrade, modAcronyms } from '@entities/local-scores';
 import { ConfigurationStore, ReplaysConfig } from '@entities/configuration';
 import { OsuDbStore } from '@entities/osu-db';
 import { OsuReaderStore } from '@entities/osu-reader';
@@ -29,6 +29,7 @@ export interface ScoreEntry {
      */
     map: ScoreMap | null;
     accuracy: number;
+    grade: Grade;
     mods: string[];
 }
 
@@ -93,7 +94,13 @@ export const ReplayAnalysisStore = signalStore(
                         path: `${set.folderName}/${diff.fileName}`,
                     }
                     : read[score.beatmapMd5] ?? null;
-                return { score, map, accuracy: maniaAccuracy(score.counts, score.mods), mods: modAcronyms(score.mods) };
+                return {
+                    score,
+                    map,
+                    accuracy: maniaAccuracy(score.counts, score.mods),
+                    grade: maniaGrade(score.counts, score.mods),
+                    mods: modAcronyms(score.mods),
+                };
             });
         });
 
@@ -132,11 +139,6 @@ export const ReplayAnalysisStore = signalStore(
 
         setView(view: TimingView) {
             patchState(store, { view });
-        },
-
-        /** Saved in the configuration, like the page's other settings. */
-        setFollow(follow: boolean) {
-            config.updateConfig({ replays: { ...store.settings(), follow } });
         },
 
         /** Analyses the replay of `entry`, unless it is the one shown. */

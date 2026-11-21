@@ -1,12 +1,4 @@
 <div appCard class="card">
-  <label class="follow">
-    <span class="follow-text">
-      {{ 'replays.follow' | transloco }}
-      <span class="hint">{{ 'replays.followHint' | transloco }}</span>
-    </span>
-    <input size="s" appSwitch type="checkbox" [checked]="store.settings().follow" (change)="follow($event)" />
-  </label>
-
   <tui-textfield iconStart="@tui.search" tuiTextfieldSize="s">
     <input
       [placeholder]="'replays.search' | transloco"
@@ -40,7 +32,8 @@
   } @else if (store.filtered().length === 0) {
     <div class="empty">{{ (store.entries().length ? 'replays.noMatch' : 'replays.none') | transloco }}</div>
   } @else {
-    <cdk-virtual-scroll-viewport itemSize="64" tuiScrollRef class="viewport">
+    <!-- As tall as its plays, up to what the window allows. -->
+    <cdk-virtual-scroll-viewport itemSize="64" tuiScrollRef class="viewport" [style.height.px]="store.filtered().length * 64">
       <tui-scroll-controls />
       <div *cdkVirtualFor="let entry of store.filtered(); trackBy: trackEntry" class="item">
         <button
@@ -51,6 +44,7 @@
           [title]="entry.map ? '' : ('replays.mapMissing' | transloco)"
           (click)="store.select(entry)"
         >
+          <app-grade [grade]="entry.grade" />
           <span class="titles">
             <span class="title">{{ entry.map?.title ?? ('replays.unknownMap' | transloco) }}</span>
             <span class="diff">{{ entry.map?.diffName ?? entry.score.beatmapMd5 }}</span>
