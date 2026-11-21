@@ -47,6 +47,6 @@
       {{ 'settings.appearance.reducedMotion' | transloco }}
       <span tuiSubtitle>{{ 'settings.appearance.reducedMotionHint' | transloco }}</span>
     </span>
-    <input tuiSwitch type="checkbox" [checked]="appearance.reducedMotion()" (change)="setReducedMotion($event)" />
+    <input appSwitch type="checkbox" [checked]="appearance.reducedMotion()" (change)="setReducedMotion($event)" />
   </label>
 </section>

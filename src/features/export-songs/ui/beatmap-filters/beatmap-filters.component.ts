@@ -1,10 +1,10 @@
-import { ButtonComponent, CardComponent, IconComponent } from '@shared/ui';
+import { ButtonComponent, CardComponent, IconComponent, SwitchComponent, OptionGroupComponent, OptionGroupItem } from '@shared/ui';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { BeatmapExporterStore, ModeFilters, emptyModeFilters } from '../../stores/beatmap-exporter.store';
 import { TuiExpand, TuiInput, TuiTitle } from '@taiga-ui/core';
-import { TuiChip, TuiSegmented, TuiSwitch } from '@taiga-ui/kit';
+import { TuiChip } from '@taiga-ui/kit';
 import { GAME_MODES } from '@shared/utils';
 
 export interface ModeConfig {
@@ -40,7 +40,7 @@ interface RangeField {
 
 @Component({
   selector: 'app-beatmap-filters',
-  imports: [FormsModule, TuiChip, TuiExpand, TuiInput, TuiSegmented, TuiSwitch, TuiTitle, TranslocoPipe, ButtonComponent, CardComponent, IconComponent],
+  imports: [OptionGroupComponent, SwitchComponent, FormsModule, TuiChip, TuiExpand, TuiInput, TuiTitle, TranslocoPipe, ButtonComponent, CardComponent, IconComponent],
   templateUrl: './beatmap-filters.component.html',
   styleUrl: './beatmap-filters.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -59,6 +59,11 @@ export class BeatmapFiltersComponent {
   readonly statuses = ['Ranked', 'Loved', 'Approved', 'Qualified', 'Unranked'];
   readonly keyCounts = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 18];
   readonly playedOptions: (boolean | null)[] = [null, true, false];
+  readonly playedLabels: OptionGroupItem[] = [
+    { label: 'exportSongs.all', translate: true },
+    { label: 'exportSongs.playedYes', translate: true },
+    { label: 'exportSongs.playedNo', translate: true },
+  ];
 
   private expandedModes = signal<number[]>([]);
 

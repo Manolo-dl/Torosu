@@ -1,0 +1,70 @@
+:host {
+  --checkbox-size: 1.125rem;
+  --icon-stroke: 0.2rem;
+
+  -webkit-appearance: none;
+  appearance: none;
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  inline-size: var(--checkbox-size);
+  block-size: var(--checkbox-size);
+  margin: 0;
+  border: 1.5px solid var(--text-4);
+  border-radius: calc(var(--checkbox-size) * 0.3);
+  background: transparent;
+  cursor: pointer;
+  transition:
+    background var(--duration-2) var(--ease-out),
+    border-color var(--duration-2) var(--ease-out);
+
+  /* The tick, drawn like app-icon, popping in. */
+  &::before {
+    content: '';
+    inline-size: 80%;
+    block-size: 80%;
+    background: var(--on-accent);
+    -webkit-mask: url('/assets/taiga-ui/icons/check.svg') center / calc(100% + 10 * var(--icon-stroke)) 100% no-repeat;
+    mask: url('/assets/taiga-ui/icons/check.svg') center / calc(100% + 10 * var(--icon-stroke)) 100% no-repeat;
+    transform: scale(0);
+    transition: transform var(--duration-3) var(--ease-spring);
+  }
+
+  &:hover:not(:disabled) {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+
+  &:checked,
+  &:indeterminate {
+    border-color: var(--accent);
+    background: var(--accent);
+
+    &::before {
+      transform: scale(1);
+    }
+
+    &:hover:not(:disabled) {
+      background: var(--accent-hover);
+    }
+  }
+
+  &:indeterminate::before {
+    -webkit-mask-image: url('/assets/taiga-ui/icons/minus.svg');
+    mask-image: url('/assets/taiga-ui/icons/minus.svg');
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    box-shadow: var(--focus-ring);
+  }
+}
+
+:host([data-size='s']) {
+  --checkbox-size: 1rem;
+}

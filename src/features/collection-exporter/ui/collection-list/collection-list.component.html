@@ -4,7 +4,7 @@
     <label tuiLabel>
       <input
         size="s"
-        tuiCheckbox
+        appCheckbox
         type="checkbox"
         [disabled]="store.collectionsWithBeatmaps().length === 0"
         [ngModel]="store.allSelected()"
@@ -29,7 +29,7 @@
         >
           <input
             size="s"
-            tuiCheckbox
+            appCheckbox
             type="checkbox"
             [ngModel]="store.selectedCollections().includes(col.name)"
             (ngModelChange)="store.toggleSelection(col.name)"

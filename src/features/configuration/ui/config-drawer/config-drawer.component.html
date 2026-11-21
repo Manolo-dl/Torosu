@@ -97,7 +97,7 @@
                             <span tuiSubtitle>{{ 'settings.general.devModeHint' | transloco }}</span>
                         </span>
                         <input
-                            tuiSwitch
+                            appSwitch
                             type="checkbox"
                             [(ngModel)]="draft().dev_mode"
                         />
@@ -110,7 +110,7 @@
                         <label tuiCell>
                             <span tuiTitle>{{ tool.label | transloco }}</span>
                             <input
-                                tuiSwitch
+                                appSwitch
                                 type="checkbox"
                                 [ngModel]="isToolEnabled(tool.route)"
                                 (ngModelChange)="setToolEnabled(tool.route, $event)"
@@ -129,7 +129,7 @@
                             <span tuiSubtitle>{{ 'settings.downloader.saveCookieHint' | transloco }}</span>
                         </span>
                         <input
-                            tuiSwitch
+                            appSwitch
                             type="checkbox"
                             [(ngModel)]="draft().downloader.save_session"
                         />
@@ -176,7 +176,7 @@
                             <span tuiSubtitle>{{ 'settings.downloader.skipVideoHint' | transloco }}</span>
                         </span>
                         <input
-                            tuiSwitch
+                            appSwitch
                             type="checkbox"
                             [(ngModel)]="draft().downloader.skip_video"
                         />
@@ -187,7 +187,7 @@
                             <span tuiSubtitle>{{ 'settings.downloader.openFileHint' | transloco }}</span>
                         </span>
                         <input
-                            tuiSwitch
+                            appSwitch
                             type="checkbox"
                             [(ngModel)]="draft().open_file"
                         />
@@ -198,7 +198,7 @@
                             <span tuiSubtitle>{{ 'settings.downloader.loadLibraryHint' | transloco }}</span>
                         </span>
                         <input
-                            tuiSwitch
+                            appSwitch
                             type="checkbox"
                             [(ngModel)]="draft().downloader.load_library"
                         />
@@ -209,7 +209,7 @@
                             <span tuiSubtitle>{{ 'settings.downloader.notifyHint' | transloco }}</span>
                         </span>
                         <input
-                            tuiSwitch
+                            appSwitch
                             type="checkbox"
                             [(ngModel)]="draft().downloader.notify"
                         />
@@ -220,7 +220,7 @@
                             <span tuiSubtitle>{{ 'settings.downloader.errorFileHint' | transloco }}</span>
                         </span>
                         <input
-                            tuiSwitch
+                            appSwitch
                             type="checkbox"
                             [(ngModel)]="draft().downloader.error_file"
                         />
@@ -237,7 +237,7 @@
                             <span tuiSubtitle>{{ 'settings.packs.keepBackgroundsHint' | transloco }}</span>
                         </span>
                         <input
-                            tuiSwitch
+                            appSwitch
                             type="checkbox"
                             [(ngModel)]="draft().packs.keep_background"
                         />
@@ -273,7 +273,7 @@
                             <span tuiSubtitle>{{ 'settings.trainer.hqAudioHint' | transloco }}</span>
                         </span>
                         <input
-                            tuiSwitch
+                            appSwitch
                             type="checkbox"
                             [(ngModel)]="draft().trainer.high_quality_audio"
                         />
@@ -284,7 +284,7 @@
                             <span tuiSubtitle>{{ 'settings.trainer.hqVideoHint' | transloco }}</span>
                         </span>
                         <input
-                            tuiSwitch
+                            appSwitch
                             type="checkbox"
                             [(ngModel)]="draft().trainer.high_quality_video"
                         />
@@ -305,7 +305,7 @@
                             <span tuiSubtitle>{{ 'settings.trainer.includeModsHint' | transloco }}</span>
                         </span>
                         <input
-                            tuiSwitch
+                            appSwitch
                             type="checkbox"
                             [disabled]="draft().trainer.skill_display === 'none'"
                             [(ngModel)]="draft().trainer.include_mods"
@@ -321,7 +321,7 @@
                             <span tuiSubtitle>{{ 'settings.trainer.autoPitchHint' | transloco }}</span>
                         </span>
                         <input
-                            tuiSwitch
+                            appSwitch
                             type="checkbox"
                             [(ngModel)]="draft().trainer.auto_pitch"
                         />
@@ -336,7 +336,7 @@
                             <span tuiSubtitle>{{ 'settings.trainer.openOszHint' | transloco }}</span>
                         </span>
                         <input
-                            tuiSwitch
+                            appSwitch
                             type="checkbox"
                             [(ngModel)]="draft().trainer.open_osz"
                         />
@@ -355,7 +355,7 @@
                             }
                         </span>
                         <input
-                            tuiSwitch
+                            appSwitch
                             type="checkbox"
                             [disabled]="platform.wayland() === true"
                             [(ngModel)]="draft().trainer.shortcuts_enabled"
@@ -382,7 +382,7 @@
                             {{ 'replays.follow' | transloco }}
                             <span tuiSubtitle>{{ 'replays.followHint' | transloco }}</span>
                         </span>
-                        <input tuiSwitch type="checkbox" [(ngModel)]="draft().replays.follow" />
+                        <input appSwitch type="checkbox" [(ngModel)]="draft().replays.follow" />
                     </label>
                 </section>
 
@@ -390,15 +390,15 @@
                     <h3 tuiTitle="s">{{ 'settings.replays.charts' | transloco }}</h3>
                     <label tuiCell>
                         <span tuiTitle>{{ 'replays.keys.title' | transloco }}</span>
-                        <input tuiSwitch type="checkbox" [(ngModel)]="draft().replays.key_chart" />
+                        <input appSwitch type="checkbox" [(ngModel)]="draft().replays.key_chart" />
                     </label>
                     <label tuiCell>
                         <span tuiTitle>{{ 'replays.histogram.title' | transloco }}</span>
-                        <input tuiSwitch type="checkbox" [(ngModel)]="draft().replays.histogram" />
+                        <input appSwitch type="checkbox" [(ngModel)]="draft().replays.histogram" />
                     </label>
                     <label tuiCell>
                         <span tuiTitle>{{ 'replays.timeline.title' | transloco }}</span>
-                        <input tuiSwitch type="checkbox" [(ngModel)]="draft().replays.timeline" />
+                        <input appSwitch type="checkbox" [(ngModel)]="draft().replays.timeline" />
                     </label>
                     <span class="hint">{{ 'settings.replays.chartsHint' | transloco }}</span>
                 </section>

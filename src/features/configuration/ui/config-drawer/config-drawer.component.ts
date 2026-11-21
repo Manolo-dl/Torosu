@@ -1,7 +1,7 @@
 import { Component, computed, inject, linkedSignal, model, signal, untracked } from '@angular/core';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { FormsModule } from '@angular/forms';
-import { TuiDrawer, TuiTabsHorizontal, TuiTab, TuiSwitch, TuiInputNumber } from "@taiga-ui/kit";
+import { TuiDrawer, TuiTabsHorizontal, TuiTab, TuiInputNumber } from "@taiga-ui/kit";
 import { open as openDialog } from '@tauri-apps/plugin-dialog';
 import { TuiHeader, TuiNavComponent } from "@taiga-ui/layout";
 import { TuiTitle, TuiPopup, TuiCell, TuiInput, TuiLabel } from "@taiga-ui/core";
@@ -14,7 +14,7 @@ import { OsuPathStore } from '@entities/osu-path';
 import { NotifyService } from '@shared/services';
 import { PlatformStore } from '@shared/stores';
 import { DEFAULT_LANGUAGE, errorText, LANGUAGES } from '@shared/i18n';
-import { OptionGroupComponent, OptionGroupItem, ButtonComponent } from '@shared/ui';
+import { OptionGroupComponent, OptionGroupItem, ButtonComponent, SwitchComponent } from '@shared/ui';
 import { NameFormatField, NameFormatFieldComponent, NameFormatPreset } from '../name-format-field/name-format-field.component';
 import { AppearanceSettingsComponent } from '../appearance-settings/appearance-settings.component';
 
@@ -62,7 +62,7 @@ const DEFAULT_CONFIG: AppConfig = {
 
 @Component({
   selector: 'app-config-drawer',
-  imports: [AppearanceSettingsComponent, FormsModule, TuiDrawer, TuiHeader, TuiTitle, TuiNavComponent, TuiTabsHorizontal, TuiTab, TuiSwitch, TuiInputNumber, TuiCell, TuiInput, TuiLabel, TuiPopup, NameFormatFieldComponent, OptionGroupComponent, TranslocoPipe, ButtonComponent],
+  imports: [SwitchComponent, AppearanceSettingsComponent, FormsModule, TuiDrawer, TuiHeader, TuiTitle, TuiNavComponent, TuiTabsHorizontal, TuiTab, TuiInputNumber, TuiCell, TuiInput, TuiLabel, TuiPopup, NameFormatFieldComponent, OptionGroupComponent, TranslocoPipe, ButtonComponent],
   templateUrl: './config-drawer.component.html',
   styleUrl: './config-drawer.component.less',
 })

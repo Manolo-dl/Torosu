@@ -24,7 +24,7 @@
         <span class="mode-label">{{ m.label }}</span>
         <input
           size="s"
-          tuiSwitch
+          appSwitch
           type="checkbox"
           [attr.aria-label]="(isModeExcluded(m.value) ? 'exportSongs.enable' : 'exportSongs.disable') | transloco: { mode: m.label }"
           [ngModel]="!isModeExcluded(m.value)"
@@ -130,14 +130,12 @@
 
   <div class="filter-group other">
     <span class="label">{{ 'exportSongs.played' | transloco }}</span>
-    <tui-segmented
+    <app-option-group
       size="s"
-      [activeItemIndex]="playedOptions.indexOf(store.filters().lastPlayed)"
-      (activeItemIndexChange)="setLastPlayed(playedOptions[$event])"
-    >
-      <button type="button">{{ 'exportSongs.all' | transloco }}</button>
-      <button type="button">{{ 'exportSongs.playedYes' | transloco }}</button>
-      <button type="button">{{ 'exportSongs.playedNo' | transloco }}</button>
-    </tui-segmented>
+      stretch
+      [options]="playedLabels"
+      [active]="playedOptions.indexOf(store.filters().lastPlayed)"
+      (activeChange)="setLastPlayed(playedOptions[$event])"
+    />
   </div>
 </div>
