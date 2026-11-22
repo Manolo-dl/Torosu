@@ -3,7 +3,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { ApplicationRef, ChangeDetectionStrategy, Component, computed, DOCUMENT, effect, inject, signal, untracked } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { ConfigurationStore } from '@entities/configuration';
-import { UpdateStore } from '@entities/update';
+import { releaseNotes, UpdateStore } from '@entities/update';
 import { DEV_ITEMS, NavStore } from '@entities/nav-item';
 import { MusicPulseDirective, OsuAudioService } from '@entities/osu-reader';
 import { VisualizerComponent } from './visualizer.component';
@@ -26,6 +26,8 @@ export class HeaderComponent {
   readonly icon = computed(() => this.appearance.dark() ? 'moon' : 'sun');
   readonly update = inject(UpdateStore);
   readonly updateOpen = signal(false);
+  /** The new version's notes, without what is only for the website. */
+  readonly notes = computed(() => releaseNotes(this.update.available()?.notes ?? null));
   private readonly config = inject(ConfigurationStore);
   private readonly router = inject(Router);
   private readonly document = inject(DOCUMENT);

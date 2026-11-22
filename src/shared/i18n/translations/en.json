@@ -201,6 +201,7 @@
     "updateTo": "Update to {{ version }}",
     "new": "New",
     "youHave": "You have {{ version }}. Torosu restarts once it is installed.",
+    "seeOnGitHub": "See on GitHub",
     "updateFailed": "Torosu could not install it itself, as with the Arch Linux package. Download it from the releases page and install it as you did the first time.",
     "openReleases": "Open the releases page",
     "updateAndRestart": "Update and restart"

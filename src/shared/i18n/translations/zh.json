@@ -201,6 +201,7 @@
     "updateTo": "更新到 {{ version }}",
     "new": "新版本",
     "youHave": "当前版本为 {{ version }}。安装完成后 Torosu 会重启。",
+    "seeOnGitHub": "在 GitHub 上查看",
     "updateFailed": "Torosu 无法自行安装（例如 Arch Linux 软件包）。请从发布页面下载，并按首次安装的方式安装。",
     "openReleases": "打开发布页面",
     "updateAndRestart": "更新并重启"

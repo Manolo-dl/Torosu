@@ -201,6 +201,7 @@
     "updateTo": "Mettre à jour vers {{ version }}",
     "new": "Nouveau",
     "youHave": "Vous avez la version {{ version }}. Torosu redémarre une fois la mise à jour installée.",
+    "seeOnGitHub": "Voir sur GitHub",
     "updateFailed": "Torosu n’a pas pu l’installer lui-même, comme avec le paquet Arch Linux. Téléchargez-la depuis la page des versions et installez-la comme la première fois.",
     "openReleases": "Ouvrir la page des versions",
     "updateAndRestart": "Mettre à jour et redémarrer"

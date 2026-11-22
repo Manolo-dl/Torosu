@@ -36,9 +36,26 @@
             <span tuiSubtitle>{{ 'header.youHave' | transloco: { version: available.currentVersion } }}</span>
           </div>
 
-          @if (available.notes) {
-            <p class="notes">{{ available.notes }}</p>
+          @if (notes().length > 0) {
+            <div class="notes">
+              @for (block of notes(); track $index) {
+                <p [class]="block.kind">
+                  @for (part of block.parts; track $index) {
+                    @if (part.strong) {
+                      <strong>{{ part.text }}</strong>
+                    } @else if (part.code) {
+                      <code>{{ part.text }}</code>
+                    } @else {
+                      {{ part.text }}
+                    }
+                  }
+                </p>
+              }
+            </div>
           }
+          <button class="whats-new" type="button" (click)="update.openReleases()">
+            <app-icon name="external-link" /> {{ 'header.seeOnGitHub' | transloco }}
+          </button>
 
           @if (update.installing()) {
             <progress
@@ -50,7 +67,7 @@
           }
 
           @if (update.failed()) {
-            <p class="notes">
+            <p class="failed">
               {{ 'header.updateFailed' | transloco }}
             </p>
             <button appButton="primary" icon="@tui.external-link" size="m" type="button" (click)="update.openReleases()">
