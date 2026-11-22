@@ -14,7 +14,9 @@ use serde::Serialize;
 use tauri::{AppHandle, Emitter, Manager, Runtime};
 
 /// How often the song's position is read: the frontend fills in between.
-const AUDIO_INTERVAL: Duration = Duration::from_millis(50);
+/// Each reading is an event the window's main thread hands to the page: at
+/// 50 ms they cost it ~1.5% more of a core, with no difference in the bars.
+const AUDIO_INTERVAL: Duration = Duration::from_millis(100);
 /// While the song stands still (paused, or no song), how often to say so anyway.
 const STILL_INTERVAL: Duration = Duration::from_millis(500);
 /// How often to look for osu! while it is closed.

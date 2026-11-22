@@ -22,6 +22,14 @@ const FALL = 7;
 const BEAT_FALL = 5;
 /** While nothing plays and everything rests, how often to look again. */
 const IDLE_MS = 300;
+/**
+ * Frames a second at the low quality, or while another window is active
+ * (osu!, mostly): every frame costs WebKit the same whatever moves in it,
+ * about a fifth of a core at 60 a second between the page and the window.
+ * Both: fewer still.
+ */
+const REDUCED_FPS = 30;
+const LEAST_FPS = 20;
 
 /**
  * One loop for everything that moves with osu!'s music (the bars, the logo,
@@ -39,12 +47,21 @@ export class MusicService {
     private frame = 0;
     private idle: ReturnType<typeof setTimeout> | undefined;
     private last = 0;
-    private skip = false;
-    /** At most 30 frames a second, for the low quality setting. */
-    halfRate = false;
+    /** When the last frame was drawn, to keep to the rate. */
+    private drawn = 0;
+    /** The low quality setting: fewer frames. */
+    lowQuality = false;
 
     constructor() {
         document.addEventListener('visibilitychange', () => this.wake());
+    }
+
+    /** The least time between two frames drawn, in ms; 0 for every frame. */
+    private get frameMs(): number {
+        // Wayland doesn't tell a window it is out of sight, but it does tell it lost the focus.
+        const reduced = this.lowQuality || !document.hasFocus();
+        if (!reduced) return 0;
+        return 1000 / (this.lowQuality && !document.hasFocus() ? LEAST_FPS : REDUCED_FPS);
     }
 
     /** Called every frame with the music; returns a function that stops it. */
@@ -71,12 +88,14 @@ export class MusicService {
     }
 
     private tick(now: number) {
-        // Every other frame only, at the low quality.
-        this.skip = this.halfRate && !this.skip;
-        if (this.skip) {
+        // Fewer frames at the low quality or without the focus: skipped,
+        // nothing changes on the page and WebKit draws nothing. A little
+        // early is on time: frames don't come exactly every 1/60 s.
+        if (now - this.drawn < this.frameMs - 4) {
             this.frame = requestAnimationFrame(next => this.tick(next));
             return;
         }
+        this.drawn = now;
 
         const seconds = Math.min((now - this.last) / 1000, 0.1);
         this.last = now;

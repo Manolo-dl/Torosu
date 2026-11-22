@@ -65,9 +65,9 @@ export class VisualizerComponent {
             this.appearance.dark();
             requestAnimationFrame(() => this.readColors());
         });
-        // Waking when osu! opens; 30 frames a second at the low quality.
+        // Waking when osu! opens; fewer frames a second at the low quality.
         effect(() => {
-            this.music.halfRate = this.appearance.quality() === 'low';
+            this.music.lowQuality = this.appearance.quality() === 'low';
             if (this.reader.connected()) this.music.wake();
         });
     }
