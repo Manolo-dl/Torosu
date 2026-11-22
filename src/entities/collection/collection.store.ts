@@ -81,5 +81,10 @@ export const CollectionStore = signalStore(
         clearSelection() {
             patchState(store, { selectedCollections: [] });
         },
+
+        /** collection.db as it is after Torosu wrote it (an import), without telling it was loaded. */
+        setCollections(collections: OsuCollection[]) {
+            patchState(store, { collections });
+        },
     })),
 );

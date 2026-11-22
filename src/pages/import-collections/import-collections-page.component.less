@@ -1,21 +1,13 @@
 @import 'shared/styles/mixins';
 
 :host {
+  display: block;
+}
+
+.page-container {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: var(--space-8);
 }
 
-.layout {
-  .sidebar-layout();
-
-  .upload {
-    .sticky();
-  }
-
-  .preview {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-}
+.numbered-steps();

@@ -1,36 +1,96 @@
-<div appCard>
-  <h3 tuiTitle>{{ 'collections.import.preview' | transloco }}</h3>
-
-  @if (store.previewGroups().length === 0) {
-    <p class="empty">{{ 'collections.import.empty' | transloco }}</p>
-  } @else {
-    <tui-scrollbar class="groups">
-      <app-accordion size="s">
-        @for (group of store.previewGroups(); track group.name; let first = $first) {
-          <app-accordion-item [open]="first">
-            <span appAccordionHeading class="group-header">
-              <span class="name">{{ group.name }}</span>
-              <span
-                appBadge
-                [tone]="group.isExisting ? 'warning' : 'success'"
-                size="s"
-              >
-                {{ (group.isExisting ? 'collections.import.merge' : 'collections.import.new') | transloco }}
-              </span>
-              <span appBadge tone="neutral" size="s">{{ 'collections.import.sets' | transloco: { count: group.sets.length } }}</span>
-            </span>
-            <ng-template appAccordionContent>
-              <div class="sets">
-                @for (set of group.sets; track set.folderName) {
-                  <app-beatmap-set-card [set]="set" />
-                } @empty {
-                  <p class="empty">{{ 'collections.import.noInstalled' | transloco }}</p>
-                }
-              </div>
-            </ng-template>
-          </app-accordion-item>
-        }
-      </app-accordion>
-    </tui-scrollbar>
+@if (osuDb.isLoading()) {
+  <div class="rows">
+    @for (_ of [1, 2, 3]; track $index) {
+      <app-skeleton class="row-skeleton" />
+    }
+  </div>
+} @else {
+  @if (!osuDb.isLoaded()) {
+    <div appNotice="info" size="s">
+      <p class="notice-title">{{ 'collections.import.libraryNotLoaded' | transloco }}</p>
+      <p>{{ 'collections.import.libraryHint' | transloco }}</p>
+      <div class="notice-actions">
+        <button appButton="soft" type="button" size="s" icon="library-big" (click)="osuDb.load()">
+          {{ 'collections.import.loadLibrary' | transloco }}
+        </button>
+      </div>
+    </div>
   }
-</div>
+
+  <div class="toolbar">
+    <span class="summary">
+      {{ 'collections.import.picked' | transloco: { count: store.selectedGroups().length, total: store.importable() } }}
+    </span>
+    @if (store.importable() > 1) {
+      <button appButton="ghost" size="s" type="button" [icon]="allPicked() ? 'square' : 'square-check'" [disabled]="store.isImporting()" (click)="store.toggleAll()">
+        {{ (allPicked() ? 'collections.import.pickNone' : 'collections.import.pickAll') | transloco }}
+      </button>
+    }
+  </div>
+
+  <ul class="rows">
+    @for (group of store.groups(); track group.name) {
+      @let open = expanded().has(group.name);
+      @let empty = group.md5s.length === 0;
+      <li class="row" [class.off]="!group.selected" [class.open]="open">
+        <div class="head">
+          <label class="pick">
+            <input
+              type="checkbox"
+              appCheckbox
+              size="s"
+              [checked]="group.selected"
+              [disabled]="empty || store.isImporting()"
+              (change)="store.toggle(group.name)"
+            />
+            <span class="name">{{ group.name }}</span>
+          </label>
+
+          @if (empty) {
+            <span appBadge tone="neutral" size="s"><app-icon name="check" />{{ 'collections.import.upToDate' | transloco }}</span>
+          } @else {
+            <span appBadge [tone]="group.isExisting ? 'info' : 'success'" size="s">
+              {{ (group.isExisting ? 'collections.import.merge' : 'collections.import.new') | transloco }}
+            </span>
+          }
+
+          <button
+            class="expand"
+            type="button"
+            [attr.aria-expanded]="open"
+            [attr.aria-label]="'collections.import.showSets' | transloco"
+            [disabled]="empty"
+            (click)="toggleExpanded(group.name)"
+          >
+            <app-icon name="chevron-down" />
+          </button>
+        </div>
+
+        <p class="counts">
+          @if (!empty) {
+            <span class="count add">{{ 'collections.import.toAdd' | transloco: { count: group.md5s.length } }}</span>
+          }
+          @if (group.already > 0) {
+            <span class="count">{{ 'collections.import.already' | transloco: { count: group.already } }}</span>
+          }
+          @if (group.notInstalled > 0) {
+            <span class="count warn">{{ 'collections.import.notInstalled' | transloco: { count: group.notInstalled } }}</span>
+          }
+          @if (group.unresolvedSets > 0) {
+            <span class="count warn">{{ 'collections.import.unresolved' | transloco: { count: group.unresolvedSets } }}</span>
+          }
+        </p>
+
+        @if (open) {
+          <div class="sets">
+            @for (set of store.setsOf(group); track set.folderName) {
+              <app-beatmap-set-card [set]="set" />
+            } @empty {
+              <p class="no-sets">{{ 'collections.import.noInstalled' | transloco }}</p>
+            }
+          </div>
+        }
+      </li>
+    }
+  </ul>
+}

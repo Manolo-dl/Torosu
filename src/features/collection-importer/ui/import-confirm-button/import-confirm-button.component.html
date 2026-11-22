@@ -1,20 +1,39 @@
-<button
-  appButton="primary"
-  icon="@tui.download"
-  size="m"
-  type="button"
-  [disabled]="store.totalMaps() === 0"
-  [loading]="store.isImporting()"
-  (click)="onImport()"
->
-  {{ 'collections.import.importMaps' | transloco: { count: store.totalMaps() } }}
-</button>
-<button
-  appButton="secondary"
-  size="m"
-  type="button"
-  [disabled]="store.isImporting() || store.parsedImports().length === 0"
-  (click)="store.clear()"
->
-  {{ 'collections.import.clear' | transloco }}
-</button>
+@let result = store.result();
+@if (result) {
+  <div class="done">
+    <span class="done-icon"><app-icon name="circle-check" /></span>
+    <div class="done-text">
+      @if (result.maps > 0) {
+        <p class="done-title">{{ 'collections.import.doneMaps' | transloco: { count: result.maps } }}</p>
+        <p>{{ 'collections.import.doneCollections' | transloco: { created: result.created, merged: result.merged } }}</p>
+      } @else {
+        <p class="done-title">{{ 'collections.import.doneNothing' | transloco }}</p>
+      }
+      <p class="backup">{{ 'collections.import.backup' | transloco }}</p>
+    </div>
+  </div>
+} @else {
+  @switch (store.osuRunning()) {
+    @case (true) {
+      <div appNotice="warning" size="s">
+        <p class="notice-title">{{ 'collections.import.osuOpen' | transloco }}</p>
+        <p>{{ 'collections.import.osuOpenHint' | transloco }}</p>
+      </div>
+    }
+    @case (false) {
+      <p class="osu-closed"><app-icon name="circle-check" /> {{ 'collections.import.osuClosed' | transloco }}</p>
+    }
+  }
+
+  <button
+    appButton="primary"
+    icon="folder-input"
+    type="button"
+    class="import"
+    [disabled]="!store.canImport()"
+    [loading]="store.isImporting()"
+    (click)="store.importCollections()"
+  >
+    {{ 'collections.import.importMaps' | transloco: { count: store.totalMaps(), collections: store.selectedGroups().length } }}
+  </button>
+}

@@ -1,7 +1,40 @@
-<div appCard>
-  <h3 tuiTitle>
-    {{ 'collections.import.file' | transloco }}
-    <span tuiSubtitle>{{ 'collections.import.fileHint' | transloco }}</span>
-  </h3>
-  <app-txt-dropzone (fileContent)="onFileContent($event)" />
-</div>
+@if (store.parsedImports().length > 0) {
+  <div class="loaded">
+    <span class="loaded-icon"><app-icon name="file-check" /></span>
+    <span class="loaded-text">
+      <span class="loaded-title">{{ 'collections.import.loaded' | transloco: { count: store.groups().length } }}</span>
+      <span class="loaded-maps">{{ 'collections.import.loadedMaps' | transloco: { count: store.fileMaps() } }}</span>
+    </span>
+    <button appButton="ghost" size="s" icon="x" type="button" [disabled]="store.isImporting()" (click)="store.clear()">
+      {{ 'collections.import.remove' | transloco }}
+    </button>
+  </div>
+} @else {
+  <app-option-group size="s" [options]="modes" [active]="mode()" (activeChange)="mode.set($event)" />
+
+  @if (mode() === 0) {
+    <app-txt-dropzone (fileContent)="load($event)" />
+  } @else {
+    <div class="paste">
+      <textarea
+        class="text"
+        rows="6"
+        spellcheck="false"
+        [placeholder]="'collections.import.pastePlaceholder' | transloco"
+        [value]="text()"
+        (input)="text.set($any($event.target).value)"
+      ></textarea>
+      <div class="paste-foot">
+        <span class="found" [class.some]="found() > 0">
+          <app-icon [name]="found() > 0 ? 'circle-check' : 'folder-heart'" />
+          {{ 'collections.import.found' | transloco: { count: found() } }}
+        </span>
+        <button appButton="primary" size="s" icon="arrow-down" type="button" [disabled]="found() === 0" (click)="load(text())">
+          {{ 'collections.import.use' | transloco }}
+        </button>
+      </div>
+    </div>
+  }
+
+  <p class="format">{{ 'collections.import.format' | transloco }}</p>
+}

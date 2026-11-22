@@ -1,9 +1,35 @@
-<app-page-header icon="file-input" [heading]="'nav.importCollections' | transloco" [subtitle]="'collections.import.subtitle' | transloco" />
+<div class="page-container">
+  <app-page-header icon="file-input" [heading]="'nav.importCollections' | transloco" [subtitle]="'collections.import.subtitle' | transloco" />
 
-<div class="layout">
-  <app-import-file-dropzone class="upload" />
-  <section class="preview">
-    <app-import-preview />
-    <app-import-confirm-button />
-  </section>
+  @let loaded = store.parsedImports().length > 0;
+  @let done = !!store.result();
+
+  <!-- Three steps, one after another: the file, its collections, the import. -->
+  <ol class="steps">
+    <li class="step" [class.done]="loaded">
+      <span class="number">@if (loaded) { <app-icon name="check" /> } @else { 1 }</span>
+      <h2 appSectionTitle>{{ 'collections.import.steps.file' | transloco }}</h2>
+      <app-import-file-dropzone />
+    </li>
+
+    <li class="step" [class.done]="loaded && store.selectedGroups().length > 0" [class.locked]="!loaded">
+      <span class="number">@if (loaded && store.selectedGroups().length > 0) { <app-icon name="check" /> } @else { 2 }</span>
+      <h2 appSectionTitle>{{ 'collections.import.steps.collections' | transloco }}</h2>
+      @if (loaded) {
+        <app-import-preview />
+      } @else {
+        <p class="locked-hint"><app-icon name="lock" /> {{ 'collections.import.steps.needFile' | transloco }}</p>
+      }
+    </li>
+
+    <li class="step" [class.done]="done" [class.locked]="!loaded && !done">
+      <span class="number">@if (done) { <app-icon name="check" /> } @else { 3 }</span>
+      <h2 appSectionTitle>{{ 'collections.import.steps.import' | transloco }}</h2>
+      @if (loaded || done) {
+        <app-import-confirm-button />
+      } @else {
+        <p class="locked-hint"><app-icon name="circle-alert" /> {{ 'collections.import.steps.closeOsu' | transloco }}</p>
+      }
+    </li>
+  </ol>
 </div>
