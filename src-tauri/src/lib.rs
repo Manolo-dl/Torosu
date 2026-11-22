@@ -137,6 +137,7 @@ pub fn run() {
             commands::system::osu_path::save_osu_path,
             commands::system::osu_path::clear_osu_path,
             commands::system::songs_file::read_songs_file,
+            commands::system::songs_file::read_song_samples,
             commands::system::covers::beatmap_cover,
             commands::system::update::check_update,
             commands::system::update::install_update,

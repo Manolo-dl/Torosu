@@ -10,7 +10,7 @@ interface AudioFrame {
     spectrum?: number[];
 }
 
-/** The decoded song is kept at this rate, in one channel: enough up to 11 kHz. */
+/** The decoded song is kept at this rate, in one channel: enough up to 11 kHz. `VISUALIZER_RATE` in songs_file.rs. */
 const SAMPLE_RATE = 22050;
 const FFT_SIZE = 1024;
 /** The bars go from here to there, on a log scale. */
@@ -167,19 +167,24 @@ export class OsuAudioService {
         this.readAt = now;
     }
 
-    /** Reads and decodes the song `path`; a newer request wins. */
+    /**
+     * The song `path`, decoded by the backend (read_song_samples): one channel
+     * at SAMPLE_RATE, as 16-bit samples. Not with decodeAudioData: WebKitGTK
+     * decodes with the system's GStreamer plugins, which often can't read Ogg.
+     * A newer request wins.
+     */
     private async loadSong(path: string | null) {
         this.audioPath = path;
         this.samples = null;
         if (!path || !this.enabled) return;
         const request = ++this.loading;
         try {
-            const bytes = await invoke<ArrayBuffer>('read_songs_file', { path });
+            const bytes = await invoke<ArrayBuffer>('read_song_samples', { path });
             if (request !== this.loading) return;
-            const context = new OfflineAudioContext(1, 1, SAMPLE_RATE);
-            const buffer = await context.decodeAudioData(bytes);
-            if (request !== this.loading) return;
-            this.samples = buffer.getChannelData(0);
+            const pcm = new Int16Array(bytes);
+            const samples = new Float32Array(pcm.length);
+            for (let i = 0; i < pcm.length; i++) samples[i] = pcm[i] / 32768;
+            this.samples = samples;
         } catch (error) {
             console.warn('could not decode the song for the visualizer', error);
         }
