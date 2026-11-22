@@ -138,3 +138,161 @@
     font-size: var(--text-sm);
   }
 }
+
+// Collections in rows, each picked or not with a checkbox, what it holds
+// under its name and its sets below once opened. A .toolbar (a .summary and
+// buttons) over ul.rows of <li class="row" [class.off] [class.open]>, each
+// with a .head (a label.pick with the checkbox and the .name, badges, a
+// button.expand), p.counts of span.count (.add, .warn) and .sets;
+// .row-skeleton while they load.
+.collection-rows() {
+  .toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    min-block-size: 2rem;
+  }
+
+  .summary {
+    color: var(--text-3);
+    font-size: var(--text-sm);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .rows {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .row-skeleton {
+    block-size: 4.25rem;
+    border-radius: var(--radius-lg);
+  }
+
+  .row {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    background: var(--surface-1);
+    transition:
+      border-color var(--duration-2) var(--ease-out),
+      opacity var(--duration-2) var(--ease-out);
+
+    &:not(.off) {
+      border-color: color-mix(in oklch, var(--accent) 35%, var(--line));
+    }
+
+    &.off {
+      opacity: 0.65;
+    }
+  }
+
+  .head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .pick {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    gap: var(--space-3);
+    min-inline-size: 0;
+    cursor: pointer;
+  }
+
+  .name {
+    overflow: hidden;
+    color: var(--text-1);
+    font-weight: var(--weight-bold);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .expand {
+    display: grid;
+    place-items: center;
+    inline-size: 2rem;
+    block-size: 2rem;
+    flex-shrink: 0;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--text-3);
+    cursor: pointer;
+    transition:
+      background var(--duration-2) var(--ease-out),
+      color var(--duration-2) var(--ease-out);
+
+    app-icon {
+      transition: transform var(--duration-3) var(--ease-out);
+    }
+
+    &:hover:not(:disabled) {
+      background: color-mix(in oklch, var(--text-1) 6%, transparent);
+      color: var(--text-1);
+    }
+
+    &:disabled {
+      opacity: 0.35;
+      cursor: default;
+    }
+
+    .open & app-icon {
+      transform: rotate(180deg);
+    }
+  }
+
+  // Under the name, aligned with it (past the checkbox).
+  .counts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1) var(--space-3);
+    margin: 0;
+    padding-inline-start: 1.75rem;
+    color: var(--text-3);
+    font-size: var(--text-xs);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .count {
+    &.add {
+      color: var(--text-2);
+    }
+
+    &.warn {
+      color: var(--warning);
+    }
+  }
+
+  .sets {
+    display: flex;
+    flex-direction: column;
+    margin-block-start: var(--space-2);
+    animation: rows-rise-in var(--duration-3) var(--ease-out);
+  }
+
+  .no-sets {
+    margin: 0;
+    padding: var(--space-3) 0;
+    color: var(--text-3);
+    font-size: var(--text-sm);
+  }
+
+  @keyframes rows-rise-in {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+  }
+}
