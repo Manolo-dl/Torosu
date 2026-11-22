@@ -1,6 +1,6 @@
 [package]
 name = "torosu"
-version = "1.3.0"
+version = "2.0.0"
 description = "osu! stable tools in one app: beatmap downloader, collections, packs and a map trainer"
 license = "MIT"
 authors = ["Manolo-dl"]
