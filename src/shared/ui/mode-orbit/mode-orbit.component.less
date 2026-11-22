@@ -119,6 +119,16 @@
   }
 }
 
+/* Paused while osu! plays a map (OsuReaderStore). */
+:host-context([data-playing='on']) {
+  .orbit,
+  .mode app-icon,
+  .hit,
+  .approach {
+    animation-play-state: paused;
+  }
+}
+
 /* Still with reduced motion, or the animated backgrounds turned off. */
 :host-context([data-motion='reduced']),
 :host-context([data-effects='off']) {

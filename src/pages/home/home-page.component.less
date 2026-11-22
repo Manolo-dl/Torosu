@@ -44,9 +44,13 @@
   animation: drift 14s var(--ease-in-out) infinite alternate;
 }
 
-/* Still with the animated backgrounds turned off. */
+/* Still with the animated backgrounds turned off, paused while osu! plays a map (OsuReaderStore). */
 :host-context([data-effects='off']) .glow {
   animation: none;
+}
+
+:host-context([data-playing='on']) .glow {
+  animation-play-state: paused;
 }
 
 @keyframes drift {

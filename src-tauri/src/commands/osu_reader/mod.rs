@@ -72,11 +72,15 @@ pub enum ReaderStatus {
 pub struct ReaderSnapshot {
     pub status: ReaderStatus,
     pub beatmap: Option<SelectedBeatmap>,
+    /// osu! is playing a map (or a replay): sent as `osu-in-play` when it
+    /// changes. The window's ornaments rest meanwhile.
+    #[serde(rename = "inPlay")]
+    pub in_play: bool,
 }
 
 impl ReaderSnapshot {
     pub fn new() -> Self {
-        Self { status: ReaderStatus::Waiting, beatmap: None }
+        Self { status: ReaderStatus::Waiting, beatmap: None, in_play: false }
     }
 }
 
@@ -156,13 +160,18 @@ fn run<R: Runtime>(app: AppHandle<R>) {
                     played_for = Some(key);
                 }
             }
-            if let (Some(watch), Ok(status)) = (replays.as_mut(), reader.status()) {
-                announce_new_replays(&app, watch, status == GameState::Play);
+            // A failed read (osu! changing screens) leaves things as they were.
+            if let Ok(status) = reader.status() {
+                set_in_play(&app, status == GameState::Play);
+                if let Some(watch) = replays.as_mut() {
+                    announce_new_replays(&app, watch, status == GameState::Play);
+                }
             }
             thread::sleep(POLL_INTERVAL);
         }
 
         log::info!("osu! closed, waiting for it to start again");
+        set_in_play(&app, false);
         set_status(&app, ReaderStatus::Waiting);
     }
 }
@@ -272,6 +281,15 @@ fn set_status<R: Runtime>(app: &AppHandle<R>, status: ReaderStatus) {
     }
     snapshot.status = status.clone();
     let _ = app.emit("osu-reader-status", status);
+}
+
+fn set_in_play<R: Runtime>(app: &AppHandle<R>, in_play: bool) {
+    let state = app.state::<OsuReaderState>();
+    let mut snapshot = state.snapshot.lock().unwrap();
+    if snapshot.in_play != in_play {
+        snapshot.in_play = in_play;
+        let _ = app.emit("osu-in-play", in_play);
+    }
 }
 
 fn set_beatmap<R: Runtime>(app: &AppHandle<R>, beatmap: SelectedBeatmap) {

@@ -139,4 +139,6 @@ export type OsuReaderStatus =
 export interface OsuReaderSnapshot {
     status: OsuReaderStatus;
     beatmap: SelectedBeatmap | null;
+    /** osu! is playing a map (or a replay). */
+    inPlay: boolean;
 }

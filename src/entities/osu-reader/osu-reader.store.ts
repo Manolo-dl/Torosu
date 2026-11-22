@@ -86,6 +86,16 @@ export const OsuReaderStore = signalStore(
             if (previous) URL.revokeObjectURL(previous);
         }
 
+        /**
+         * data-playing on <html> while osu! plays a map: the looping ornaments
+         * (the home's orbit and glow, the invite's modes...) stand still then,
+         * as no one looks at Torosu and osu! wants the CPU (each costs a tenth
+         * of a core while it moves).
+         */
+        function setInPlay(inPlay: boolean) {
+            document.documentElement.dataset['playing'] = inPlay ? 'on' : 'off';
+        }
+
         function setBeatmap(data: SelectedBeatmap | null) {
             patchState(store, { data });
             loadBackground(data?.paths?.background ?? null);
@@ -164,10 +174,12 @@ export const OsuReaderStore = signalStore(
                     await listen<SelectedBeatmap>('osu-beatmap', event => setBeatmap(event.payload));
                     await listen<SkillUpdate>('osu-beatmap-skill', event => setSkill(event.payload));
                     await listen<PlayedSkillUpdate>('osu-beatmap-played-skill', event => setPlayed(event.payload));
+                    await listen<boolean>('osu-in-play', event => setInPlay(event.payload));
 
                     // An event that arrived meanwhile is newer than the snapshot.
                     const snapshot = await invoke<OsuReaderSnapshot>('connect_osu_reader');
                     if (snapshot.beatmap && !store.data()) setBeatmap(snapshot.beatmap);
+                    setInPlay(snapshot.inPlay);
                     if (store.status().state === 'waiting') {
                         if (snapshot.status.state === 'waiting') {
                             notify.info(transloco.translate('osuReader.looking'));
