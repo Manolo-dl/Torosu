@@ -2,6 +2,9 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
+    // Before any thread: large blocks given back when freed (see allocator.rs).
+    torosu_lib::allocator::give_memory_back();
+
     // WebKitGTK's DMABUF renderer left the window blank on Wayland with
     // NVIDIA's driver before it had explicit sync (555). Turned off only
     // there: off, WebKit draws in software and animations stutter. A value

@@ -5,6 +5,7 @@ use tauri_plugin_log::{Target, TargetKind};
 use crate::commands::osu_reader::ReaderSnapshot;
 use crate::state::{AppConfigState, OsuReaderState, SessionState, UpdateState};
 
+pub mod allocator;
 mod commands;
 mod error;
 mod name_format;

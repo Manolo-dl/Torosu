@@ -1,4 +1,5 @@
 import { inject, Injectable } from '@angular/core';
+import { FramePace } from '@shared/services';
 import { OsuAudioService } from './osu-audio.service';
 
 /** What the music is doing, this frame. */
@@ -32,6 +33,7 @@ const IDLE_MS = 300;
 @Injectable({ providedIn: 'root' })
 export class MusicService {
     private readonly audio = inject(OsuAudioService);
+    private readonly pace = inject(FramePace);
     private readonly listeners = new Set<MusicListener>();
     private readonly music: Music = { levels: new Float32Array(MUSIC_BANDS), energy: 0, beat: 0 };
     /** The bass, averaged slowly: a beat is the bass going well over it. */
@@ -39,13 +41,11 @@ export class MusicService {
     private frame = 0;
     private idle: ReturnType<typeof setTimeout> | undefined;
     private last = 0;
-    private skip = false;
-    /** At most 30 frames a second, for the low quality setting. */
-    halfRate = false;
 
     constructor() {
         document.addEventListener('visibilitychange', () => this.wake());
     }
+
 
     /** Called every frame with the music; returns a function that stops it. */
     listen(listener: MusicListener): () => void {
@@ -71,9 +71,10 @@ export class MusicService {
     }
 
     private tick(now: number) {
-        // Every other frame only, at the low quality.
-        this.skip = this.halfRate && !this.skip;
-        if (this.skip) {
+        // Fewer frames at the low quality or without the focus, the same
+        // ones as the canvases and the ornaments (FramePace): on those
+        // skipped nothing changes and WebKit draws nothing.
+        if (!this.pace.isFrame(now)) {
             this.frame = requestAnimationFrame(next => this.tick(next));
             return;
         }

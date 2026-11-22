@@ -101,6 +101,11 @@ header {
   }
 }
 
+/* Paused while osu! plays a map (OsuReaderStore). */
+:host-context([data-playing='on']) .actions .update::after {
+  animation-play-state: paused;
+}
+
 @keyframes update-pulse {
   0% {
     opacity: 0.6;

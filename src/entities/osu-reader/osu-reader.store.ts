@@ -5,6 +5,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { computed, inject } from "@angular/core";
 import { NotifyService } from '@shared/services';
+import { OsuPlayState } from '@shared/stores';
 import { TranslocoService } from '@jsverse/transloco';
 import { save } from '@tauri-apps/plugin-dialog';
 
@@ -54,7 +55,7 @@ export const OsuReaderStore = signalStore(
         played: computed(() => store.data()?.played ?? null),
     })),
 
-    withMethods((store, notify = inject(NotifyService), transloco = inject(TranslocoService), language = inject(LanguageService)) => {
+    withMethods((store, notify = inject(NotifyService), transloco = inject(TranslocoService), language = inject(LanguageService), playState = inject(OsuPlayState)) => {
         // Path of the background being shown (or loading), to skip reloading it
         // and to drop responses that arrive late.
         let backgroundPath: string | null = null;
@@ -84,6 +85,11 @@ export const OsuReaderStore = signalStore(
             const previous = store.backgroundUrl();
             patchState(store, { backgroundUrl: url });
             if (previous) URL.revokeObjectURL(previous);
+        }
+
+        /** While osu! plays a map the looping ornaments stand still (see OsuPlayState). */
+        function setInPlay(inPlay: boolean) {
+            playState.inPlay.set(inPlay);
         }
 
         function setBeatmap(data: SelectedBeatmap | null) {
@@ -164,10 +170,12 @@ export const OsuReaderStore = signalStore(
                     await listen<SelectedBeatmap>('osu-beatmap', event => setBeatmap(event.payload));
                     await listen<SkillUpdate>('osu-beatmap-skill', event => setSkill(event.payload));
                     await listen<PlayedSkillUpdate>('osu-beatmap-played-skill', event => setPlayed(event.payload));
+                    await listen<boolean>('osu-in-play', event => setInPlay(event.payload));
 
                     // An event that arrived meanwhile is newer than the snapshot.
                     const snapshot = await invoke<OsuReaderSnapshot>('connect_osu_reader');
                     if (snapshot.beatmap && !store.data()) setBeatmap(snapshot.beatmap);
+                    setInPlay(snapshot.inPlay);
                     if (store.status().state === 'waiting') {
                         if (snapshot.status.state === 'waiting') {
                             notify.info(transloco.translate('osuReader.looking'));

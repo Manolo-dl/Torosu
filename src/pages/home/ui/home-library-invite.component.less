@@ -46,6 +46,12 @@
   }
 }
 
-:host-context([data-motion='reduced']) .float {
+:host-context([data-motion='reduced']) .float,
+:host-context([data-effects='off']) .float {
   animation: none;
+}
+
+/* Paused while osu! plays a map (OsuReaderStore). */
+:host-context([data-playing='on']) .float {
+  animation-play-state: paused;
 }

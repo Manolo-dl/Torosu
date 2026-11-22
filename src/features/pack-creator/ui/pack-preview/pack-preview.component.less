@@ -113,3 +113,13 @@ header {
     transform: translateY(-4px);
   }
 }
+
+/* Still with reduced motion or the animated backgrounds off, paused while osu! plays a map (OsuReaderStore). */
+:host-context([data-motion='reduced']) .empty-icon,
+:host-context([data-effects='off']) .empty-icon {
+  animation: none;
+}
+
+:host-context([data-playing='on']) .empty-icon {
+  animation-play-state: paused;
+}
