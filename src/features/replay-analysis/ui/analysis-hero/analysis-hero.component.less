@@ -1,0 +1,82 @@
+@import 'shared/styles/mixins';
+
+:host {
+  display: block;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+
+  .titles {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-inline-size: 0;
+  }
+
+  .title {
+    .ellipsis();
+    color: var(--text-1);
+    font-family: var(--font-display);
+    font-size: var(--text-xl);
+    font-weight: var(--weight-black);
+    letter-spacing: var(--tracking-display);
+    line-height: 1.15;
+  }
+
+  .artist {
+    .ellipsis();
+    color: var(--text-2);
+    font-size: var(--text-sm);
+  }
+
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    margin-block-start: var(--space-1);
+    color: var(--text-3);
+    font-size: var(--text-xs);
+  }
+
+  .pill {
+    padding: 0.1rem 0.55rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-pill);
+    color: var(--text-1);
+    font-weight: var(--weight-bold);
+  }
+
+  .player {
+    color: var(--text-3);
+  }
+}
+
+.score-accuracy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex-shrink: 0;
+
+  strong {
+    color: var(--text-1);
+    font-family: var(--font-display);
+    font-size: var(--text-2xl);
+    font-weight: var(--weight-black);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+  }
+
+  span {
+    color: var(--text-3);
+    font-size: var(--text-2xs);
+    font-weight: var(--weight-bold);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+}
+

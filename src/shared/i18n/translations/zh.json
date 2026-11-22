@@ -13,12 +13,14 @@
       "downloader": "下载器",
       "packs": "谱包",
       "trainer": "谱面生成器",
-      "replays": "回放"
+      "replays": "回放",
+      "appearance": "外观",
+      "performance": "性能"
     },
     "general": {
       "osu": "osu!",
       "osuPath": "osu! 文件夹路径",
-      "osuPathPlaceholder": "C:\\Users\\you\\AppData\\Local\\osu!",
+      "osuPathPlaceholder": "C:\\Users\\用户名\\AppData\\Local\\osu!",
       "pickOsuPath": "选择 osu! 文件夹",
       "language": "语言",
       "languageHint": "Torosu 的界面语言",
@@ -114,6 +116,57 @@
       "analysis": "分析",
       "charts": "图表",
       "chartsHint": "关闭的图表不会绘制"
+    },
+    "appearance": {
+      "title": "外观",
+      "palette": "配色",
+      "font": "字体",
+      "reducedMotion": "减少动画",
+      "reducedMotionHint": "减少动画和过渡；系统要求时也会生效",
+      "palettes": {
+        "sakura": "樱花",
+        "nebula": "星云",
+        "aurora": "极光",
+        "ember": "余烬",
+        "mono": "单色"
+      },
+      "fonts": {
+        "outfit": "几何风格，与 osu! 相似",
+        "nunito": "圆润柔和",
+        "inter": "中性紧凑",
+        "grotesk": "科技感，富有个性"
+      },
+      "visualizer": "标题栏中的音乐",
+      "visualizerHint": "随 osu! 正在播放的歌曲跳动的条形；为此会在后台读取 osu!",
+      "theme": "主题",
+      "themes": {
+        "system": "跟随系统",
+        "dark": "深色",
+        "light": "浅色"
+      }
+    },
+    "saved": "设置已保存",
+    "saving": "正在保存…",
+    "autosave": "关闭时保存",
+    "saveFailed": "无法保存设置",
+    "performance": {
+      "effects": "效果",
+      "backgrounds": "动态背景",
+      "backgroundsHint": "三角形、光点和模式轨道；关闭后静止",
+      "quality": "效果质量",
+      "qualityHint": "低质量绘制更少、每秒 30 帧，在较慢的电脑上更流畅",
+      "qualities": {
+        "high": "高",
+        "low": "低"
+      },
+      "transitions": "页面过渡动画",
+      "transitionsHint": "页面和主题切换时显示动画",
+      "music": "osu! 音乐",
+      "reactive": "应用随音乐律动",
+      "reactiveHint": "标志随低音跳动，页面后方的光随音乐变化",
+      "motion": "动效",
+      "covers": "谱面封面",
+      "coversHint": "由每张谱面的背景生成并保存在缓存中（最多 32 MB）；关闭后不读取也不处理任何图片"
     }
   },
   "nav": {
@@ -121,7 +174,7 @@
     "downloader": "下载器",
     "downloaderDescription": "从链接列表直接下载谱面集到 Songs 文件夹，跳过已有的谱面。",
     "exportCollections": "导出收藏夹",
-    "exportCollectionsDescription": "将收藏夹保存为谱面链接，或保存为可在其他安装中导入的列表。",
+    "exportCollectionsDescription": "保存或复制你的收藏夹，用于在 Torosu 中导入或下载其谱面集。",
     "importCollections": "导入收藏夹",
     "importCollectionsDescription": "从文件将收藏夹导入 osu!，并与已有的收藏夹合并。",
     "exportLibrary": "导出曲库",
@@ -137,7 +190,10 @@
     "issues": "问题反馈",
     "support": "支持",
     "replays": "回放分析",
-    "replaysDescription": "查看你本地成绩的游玩情况：逐键的时机、提前或延后的按键与松键。"
+    "replaysDescription": "查看你本地成绩的游玩情况：逐键的时机、提前或延后的按键与松键。",
+    "tools": "工具",
+    "collapse": "收起侧边栏",
+    "expand": "展开侧边栏"
   },
   "header": {
     "toggleTheme": "切换主题",
@@ -160,7 +216,24 @@
     "noLazer": "不支持 osu!lazer：这些工具读写的是 osu! stable 的文件。",
     "changeFolder": "在设置中修改",
     "tools": "工具",
-    "noTools": "所有工具都已关闭。请在设置的“通用”中启用。"
+    "noTools": "所有工具都已关闭。请在设置的“通用”中启用。",
+    "library": {
+      "title": "你的曲库",
+      "hint": "读取 osu!.db 即可查看 Songs 文件夹的内容：各模式的谱面、Ranked 与 Loved 的数量，以及你玩过的数量。",
+      "read": "读取 osu!.db",
+      "diffs": "难度",
+      "inSets": "共 {{ count }} 个图组",
+      "sets": "{{ count }} 个图组",
+      "ranked": "上架",
+      "loved": "社区喜爱",
+      "unsubmitted": "未上传",
+      "played": "已玩过"
+    },
+    "selected": {
+      "title": "osu! 中选中的谱面",
+      "by": "作图者 {{ mapper }}",
+      "trainer": "在训练器中打开"
+    }
   },
   "osuPath": {
     "notFound": "未找到 osu! 文件夹",
@@ -182,7 +255,12 @@
     "exported": "已导出 {{ name }}",
     "exportFailed": "导出谱面失败：{{ error }}",
     "looking": "正在寻找 osu!……",
-    "startFailed": "无法启动 osu! 读取器。"
+    "startFailed": "无法启动 osu! 读取器。",
+    "badge": {
+      "connected": "已连接",
+      "waiting": "正在等待 osu!",
+      "error": "无法读取 osu!"
+    }
   },
   "trainer": {
     "subtitle": "在生成新谱面前，微调难度属性并串联各项修改。",
@@ -190,10 +268,22 @@
     "mappedBy": "谱师：{{ mapper }}",
     "exportOsz": "导出为 .osz",
     "dan": {
-      "hint": "段位由 Mania Tracker 估算，置信度 {{ confidence }}%"
+      "hint": "段位由 Mania Tracker 估算，置信度 {{ confidence }}%",
+      "confidence": "置信度",
+      "lowConfidence": "置信度较低：该谱面与用于比较的段位课程差异较大，仅供参考。",
+      "source": "由 Mania Tracker 的计算器估算。",
+      "keys": "{{ keys }}K 课程",
+      "variants": {
+        "top": "处于 {{ dan }} 段的最高处",
+        "high": "处于 {{ dan }} 段的上段",
+        "mid": "正好是 {{ dan }} 段",
+        "low": "处于 {{ dan }} 段的下段",
+        "bottom": "处于 {{ dan }} 段的最低处"
+      }
     },
     "msd": {
-      "hint": "综合 MSD，来自 {{ calc }}"
+      "hint": "综合 MSD，来自 {{ calc }}",
+      "skillsets": "按技能类型"
     },
     "skill": {
       "dan": "段位",
@@ -207,7 +297,9 @@
       "lock": "锁定",
       "unlock": "解锁",
       "lockStat": "锁定 {{ stat }}",
-      "unlockStat": "解锁 {{ stat }}"
+      "unlockStat": "解锁 {{ stat }}",
+      "restoreAll": "恢复谱面数值",
+      "backTo": "恢复为谱面的 {{ value }}"
     },
     "actions": {
       "reset": "重置",
@@ -268,7 +360,7 @@
     "tasks": {
       "RateChange": "倍速调整器",
       "SVNormalizer": "SV 标准化器",
-      "FlnConverter": "Full LN",
+      "FlnConverter": "全LN",
       "NoLn": "去除 LN",
       "ShortLn": "短长条",
       "KeyConverter": "键数转换器"
@@ -280,7 +372,8 @@
       "scaleVideo": "缩放视频",
       "noFfmpeg": "缩放视频需要 <strong>ffmpeg</strong>，但未找到。请安装并确保它在 PATH 中，然后重启应用。",
       "videoSlow": "视频会按新速度重新编码，长视频可能需要一些时间。",
-      "storyboard": "如果谱面集有共享的 <strong>.osb</strong> 故事板，则每个难度都会使用它，因此该难度将导出为<strong>新的谱面集</strong>（曲名以 <strong>({{ rate }}x SB)</strong> 结尾），以免与原谱面集重叠。"
+      "storyboard": "如果谱面集有共享的 <strong>.osb</strong> 故事板，则每个难度都会使用它，因此该难度将导出为<strong>新的谱面集</strong>（曲名以 <strong>({{ rate }}x SB)</strong> 结尾），以免与原谱面集重叠。",
+      "quick": "快捷倍速"
     },
     "sv": {
       "description": "移除原有的 SV 变化，并在每个 BPM 变化处设置 SV，使滚动速度保持主 BPM 的速度。BPM 变化、Kiai 和打击音都会保留。"
@@ -340,6 +433,24 @@
       "16_EZ2AC": "10K2S 加 4 个中间键，左右手都可移动过去。",
       "18_10K8K": "10K 加每手 4 个键，除拇指外每根手指各一个（4K10K4K）。",
       "18_9K9K": "每手 9 个键，分两排，类似 pop'n music 的 DP。"
+    },
+    "banner": {
+      "waiting": "正在等待 osu!",
+      "waitingHint": "打开 osu! stable：你在其中选中的谱面会显示在这里，随时可以修改。",
+      "select": "在 osu! 中选择一张谱面",
+      "selectHint": "在选歌界面选中一张谱面，它就会显示在这里，随时可以修改。",
+      "error": "无法读取 osu!"
+    },
+    "oneTask": "1 个任务",
+    "tasksCount": "{{ count }} 个任务",
+    "dragTask": "拖动以调整顺序",
+    "taskHints": {
+      "RateChange": "连同 BPM 和音频一起变快或变慢",
+      "SVNormalizer": "全程使用同一流速",
+      "FlnConverter": "每个音符都按住到下一个",
+      "NoLn": "把长条变成普通音符",
+      "ShortLn": "把长条限制在一定长度内",
+      "KeyConverter": "把谱面转换为其他键数"
     }
   },
   "downloader": {
@@ -389,7 +500,12 @@
       "isRequired": "需要 Cookie",
       "tooShort": "Cookie 太短",
       "tooLong": "Cookie 太长",
-      "failed": "无法使用该 Cookie"
+      "failed": "无法使用该 Cookie",
+      "updated": "Cookie 已启用：现在可以下载了",
+      "activeHint": "下载会使用你的 osu! 账号。",
+      "change": "更换",
+      "show": "显示 Cookie",
+      "hide": "隐藏 Cookie"
     },
     "queue": {
       "queued": "排队 {{ count }} 个",
@@ -400,7 +516,12 @@
       "failedFile": "失败的谱面会保存到 osu! 文件夹中的 <strong>failed_downloads.txt</strong>。",
       "clear": "清空队列",
       "start": "开始下载",
-      "downloadFailed": "下载失败"
+      "downloadFailed": "下载失败",
+      "setNumber": "谱面集 #{{ id }}",
+      "openPage": "在 osu! 上打开页面",
+      "remove": "从队列中移除",
+      "overall": "{{ finished }} / {{ total }}",
+      "nameSoon": "开始下载时显示名称"
     },
     "status": {
       "pending": "待处理",
@@ -411,6 +532,24 @@
     "notification": {
       "title": "下载器",
       "body": "成功 {{ succeeded }} 个，失败 {{ failed }} 个"
+    },
+    "importer": {
+      "file": "文件",
+      "paste": "粘贴链接",
+      "pastePlaceholder": "每行一个链接或谱面集 ID：\nhttps://osu.ppy.sh/beatmapsets/39804\n39804",
+      "found": "找到 {{ count }} 个图组",
+      "add": "加入队列",
+      "added": "已将 {{ count }} 个图组加入队列",
+      "addedSkipped": "已将 {{ count }} 个图组加入队列；{{ skipped }} 个已在队列或曲库中",
+      "nothing": "未找到谱面链接或 ID"
+    },
+    "steps": {
+      "session": "会话",
+      "import": "要下载的谱面",
+      "queue": "队列",
+      "help": "帮助",
+      "needSession": "请先设置会话：osu! 只允许登录账号下载谱面。",
+      "queueEmpty": "添加的谱面会显示在这里，随时可以下载。"
     }
   },
   "dropzone": {
@@ -453,7 +592,15 @@
     "search": "按曲名、艺术家或文件名搜索……",
     "created": "谱包 {{ title }} 已创建！",
     "createdParts": "谱包 {{ title }} 已创建，共 {{ parts }} 部分！",
-    "createFailed": "创建谱包失败：{{ error }}"
+    "createFailed": "创建谱包失败：{{ error }}",
+    "stats": {
+      "diffs": "难度",
+      "sets": "图组",
+      "packs": "曲包",
+      "stars": "星数",
+      "packsHint": "按设置中每个曲包的最大图组数拆分"
+    },
+    "emptyHint": "从谱面中挑选难度，或整个添加一个收藏夹。"
   },
   "beatmaps": {
     "none": "没有谱面"
@@ -468,38 +615,92 @@
     "logs": "正在加载日志，请稍候……",
     "logsFailed": "加载日志失败",
     "localScores": "正在读取本地成绩，请稍候...",
-    "localScoresFailed": "无法读取 scores.db"
+    "localScoresFailed": "无法读取 scores.db",
+    "retry": "重试"
   },
   "collections": {
     "export": {
-      "list": "收藏夹",
-      "selectAll": "全选",
-      "notLoaded": "打开一个收藏夹以开始",
-      "none": "未找到收藏夹",
-      "summary": "摘要",
-      "selected": "已选择",
-      "totalSets": "谱面集总数",
-      "format": "格式",
-      "links": "下载链接",
-      "importFormat": "导入格式",
-      "preview": "预览",
+      "steps": {
+        "collections": "收藏夹",
+        "format": "格式",
+        "export": "导出",
+        "pickFirst": "请至少选择一个收藏夹",
+        "textHere": "要保存或复制的文本会显示在这里"
+      },
+      "notLoaded": "无法读取你的收藏夹",
+      "retry": "重试",
+      "none": "你在 osu! 中没有收藏夹",
+      "libraryNotLoaded": "谱面库尚未加载",
+      "libraryHint": "没有谱面库也能导出 MD5，但无法导出谱面集链接，也不知道已安装多少谱面。",
+      "loadLibrary": "加载谱面库",
+      "search": "查找收藏夹",
+      "picked": "已选 {{ count }} / {{ total }}",
+      "pickAll": "全选",
+      "pickNone": "全不选",
+      "noMatch": "没有叫这个名字的收藏夹",
+      "empty": "空",
+      "showSets": "查看谱面集",
+      "maps": "{{ count }} 个谱面",
       "sets": "{{ count }} 个谱面集",
-      "empty": "选择一个收藏夹以预览"
+      "md5": "用于在 Torosu 中导入",
+      "md5Hint": "按 MD5 写出每个谱面，包括你没有的：导入的人会得到相同的难度。",
+      "links": "谱面集链接",
+      "linksHint": "每个谱面集一个链接，用于在下载器或官网下载。会包含谱面集的所有难度。",
+      "linkCount": "{{ count }} 个链接",
+      "unsubmitted": "{{ count }} 个谱面集未上传到 osu! 官网，因此没有链接：如需保留，请以 MD5 导出",
+      "notInLibrary": "{{ count }} 个谱面不在你的谱面库中，无法得知其谱面集：如需保留，请以 MD5 导出",
+      "moreLines": "还有 {{ count }} 行",
+      "save": "保存为 .txt",
+      "copy": "复制",
+      "nothing": "所选收藏夹在此格式下没有可写的内容",
+      "saved": "收藏夹已保存",
+      "failed": "无法保存收藏夹：{{ error }}",
+      "copied": "已复制到剪贴板",
+      "copyFailed": "无法复制到剪贴板"
     },
     "import": {
-      "subtitle": "使用谱面哈希从文本文件导入收藏夹。",
-      "file": "文件",
-      "fileHint": "每个区块一个收藏夹，包含谱面哈希或链接。",
-      "preview": "预览",
-      "empty": "上传 .txt 文件以预览要导入的收藏夹",
-      "merge": "将合并",
+      "subtitle": "将导出工具写出的文本文件中的收藏夹添加到 osu! 的收藏夹中。",
+      "steps": {
+        "file": "要导入的收藏夹",
+        "collections": "收藏夹",
+        "import": "导入",
+        "needFile": "加载文件或粘贴收藏夹后会显示在这里",
+        "closeOsu": "导入前必须关闭 osu!：它把收藏夹保存在内存中，关闭时会覆盖写入"
+      },
+      "fromFile": "文件",
+      "fromPaste": "粘贴",
+      "pastePlaceholder": "- 收藏夹名称\n谱面 MD5 或谱面集链接，每行一个\nhttps://osu.ppy.sh/beatmapsets/39804",
+      "found": "找到 {{ count }} 个收藏夹",
+      "use": "使用",
+      "nothing": "未找到收藏夹：每个收藏夹以“- 名称”这样的一行开头",
+      "format": "每块一个收藏夹：一行“- 名称”，然后每行一个谱面，写它的 MD5 或谱面集链接。",
+      "loaded": "{{ count }} 个收藏夹",
+      "loadedMaps": "{{ count }} 个谱面",
+      "remove": "移除",
+      "libraryNotLoaded": "谱面库尚未加载",
+      "libraryHint": "没有谱面库，谱面集链接无法转换为谱面，也无法显示谱面集。",
+      "loadLibrary": "加载谱面库",
+      "picked": "已选 {{ count }} / {{ total }} 个收藏夹",
+      "pickAll": "全选",
+      "pickNone": "全不选",
+      "upToDate": "已是最新",
+      "merge": "并入已有",
       "new": "新建",
-      "sets": "{{ count }} 个谱面集",
-      "noInstalled": "未找到已安装的谱面",
-      "importMaps": "导入 {{ count }} 张谱面",
-      "clear": "清除",
-      "done": "收藏夹已导入",
-      "failed": "导入收藏夹失败：{{ error }}"
+      "showSets": "查看谱面集",
+      "toAdd": "将添加 {{ count }} 个谱面",
+      "already": "{{ count }} 个已存在",
+      "notInstalled": "{{ count }} 个未安装",
+      "unresolved": "{{ count }} 个谱面集链接不在你的谱面库中",
+      "noInstalled": "这些谱面都没有安装：osu! 会将它们显示为缺失",
+      "osuOpen": "请关闭 osu! 再导入",
+      "osuOpenHint": "osu! 把收藏夹保存在内存中，关闭时会覆盖 collection.db：在它打开时导入的内容会丢失。关闭后这里会自动更新。",
+      "osuClosed": "osu! 已关闭",
+      "importMaps": "将 {{ count }} 个谱面导入 {{ collections }} 个收藏夹",
+      "doneMaps": "已导入 {{ count }} 个谱面",
+      "doneCollections": "新建 {{ created }} 个收藏夹，补充了 {{ merged }} 个已有收藏夹。打开 osu! 即可查看。",
+      "doneNothing": "没有需要导入的内容：所有谱面都已在其收藏夹中",
+      "backup": "之前的 collection.db 已保存为 collection.db.torosu-backup。",
+      "failed": "无法导入收藏夹：{{ error }}"
     }
   },
   "export": {
@@ -534,7 +735,14 @@
     "filtered": "筛选后的谱面集",
     "export": "导出",
     "preview": "预览",
-    "empty": "没有谱面符合当前筛选条件"
+    "empty": "没有谱面符合当前筛选条件",
+    "statuses": {
+      "ranked": "上架",
+      "loved": "社区喜爱",
+      "approved": "批准",
+      "qualified": "过审",
+      "unranked": "未上架"
+    }
   },
   "replays": {
     "subtitle": "根据 osu! 保存的回放分析你的游玩",
@@ -560,13 +768,13 @@
       "n200": "200",
       "n100": "100",
       "n50": "50",
-      "miss": "Miss"
+      "miss": "失误"
     },
     "early": "提前",
     "late": "延后",
     "views": {
       "all": "全部",
-      "rice": "Rice",
+      "rice": "米",
       "ln": "LN",
       "allHint": "所有按键与长条松键，与 osu! 结算画面的计算方式相同。",
       "riceHint": "仅普通音符：每个音符的按下时机。",
@@ -600,7 +808,12 @@
     "followHint": "osu! 打开时，每次通过的游玩结束后立即分析",
     "reconciled": "根据随回放保存的 .osg，已将 osu! 的 {{ total }} 个判定中的 {{ matched }} 个对应到音符：每个音符都是游戏给出的判定。",
     "noGraph": "此回放没有 .osg（osu! 自 2026 年起保存）：判定来自分析，部分长条可能与游戏不同。",
-    "realTime": "在 {{ rate }}x 下，osu! 按谱面的毫秒计算，如上所示。按实际时间（偏移量取决于此）：{{ early }} / {{ late }} ms，UR {{ ur }}。"
+    "realTime": "在 {{ rate }}x 下，osu! 按谱面的毫秒计算，如上所示。按实际时间（偏移量取决于此）：{{ early }} / {{ late }} ms，UR {{ ur }}。",
+    "earlyMean": "偏早平均",
+    "lateMean": "偏晚平均",
+    "urHint": "Unstable rate：按 osu! 的方式计算的偏差离散程度，越低越稳定。",
+    "playedBy": "玩家：{{ name }}",
+    "judgementsTitle": "判定"
   },
   "errors": {
     "io": "文件错误：{{ detail }}",
@@ -639,6 +852,24 @@
     "convertReplay": "暂时无法分析转谱的回放，仅支持 osu!mania 谱面",
     "randomReplay": "无法分析带 Random 的回放：osu! 会打乱其音符",
     "replayUnreadable": "{{ file }} 不是 Torosu 能读取的 osu!mania 回放",
+    "osuRunning": "请先关闭 osu!：它把收藏夹保存在内存中，关闭时会覆盖 collection.db",
     "noUpdate": "没有可安装的更新"
+  },
+  "modes": {
+    "standard": "标准",
+    "taiko": "太鼓",
+    "catch": "接水果",
+    "mania": "下落式"
+  },
+  "dev": {
+    "osuData": {
+      "subtitle": "从 osu! 内存中读取的选中谱面",
+      "empty": "尚未收到任何数据。"
+    },
+    "logs": {
+      "subtitle": "应用日志，按级别和模块分组",
+      "entries": "{{ count }} 条",
+      "empty": "没有条目"
+    }
   }
 }

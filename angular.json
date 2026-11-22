@@ -40,7 +40,12 @@
             },
             "styles": [
               "@taiga-ui/styles/taiga-ui-theme.less",
-              "@taiga-ui/styles/taiga-ui-fonts.less",
+              "node_modules/@fontsource-variable/nunito/index.css",
+              "node_modules/@fontsource-variable/outfit/index.css",
+              "node_modules/@fontsource-variable/inter/index.css",
+              "node_modules/@fontsource-variable/space-grotesk/index.css",
+              "node_modules/@fontsource-variable/jetbrains-mono/index.css",
+              "src/shared/styles/theme.css",
               "src/styles.css"
             ]
           },

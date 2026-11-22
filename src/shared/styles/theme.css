@@ -1,0 +1,358 @@
+/* ============================================================================
+   Torosu's design tokens.
+
+   A palette sets only hues and chromas (OKLCH): every surface, text, border
+   and accent below is derived from them, in a dark and a light version, so a
+   palette is a few numbers and changing it recolours the whole app evenly.
+   The palette, the font and the theme are attributes of <html>, set by
+   `AppearanceStore`: data-palette, data-font and data-theme.
+
+   Components use these tokens; Taiga's variables point at them too
+   (styles.css), so what is left of Taiga follows the same look.
+   ========================================================================= */
+
+/* ---- Palettes ------------------------------------------------------------ */
+/* On <html> for the app, and on any element that previews one (the settings). */
+
+:root,
+[data-palette='sakura'] {
+  /* Pink on plum: the colours Torosu always had, refined. */
+  --p-surface-h: 300;
+  --p-surface-c: 0.03;
+  --p-accent-h: 355;
+  --p-accent-c: 0.17;
+  --p-accent2-h: 295;
+  --p-accent2-c: 0.16;
+}
+
+[data-palette='nebula'] {
+  /* Violet on deep indigo. */
+  --p-surface-h: 275;
+  --p-surface-c: 0.035;
+  --p-accent-h: 292;
+  --p-accent-c: 0.17;
+  --p-accent2-h: 235;
+  --p-accent2-c: 0.13;
+}
+
+[data-palette='aurora'] {
+  /* Mint on blue slate. */
+  --p-surface-h: 245;
+  --p-surface-c: 0.025;
+  --p-accent-h: 170;
+  --p-accent-c: 0.13;
+  --p-accent2-h: 220;
+  --p-accent2-c: 0.12;
+}
+
+[data-palette='ember'] {
+  /* Orange on warm grey. */
+  --p-surface-h: 40;
+  --p-surface-c: 0.012;
+  --p-accent-h: 45;
+  --p-accent-c: 0.17;
+  --p-accent2-h: 355;
+  --p-accent2-c: 0.15;
+}
+
+[data-palette='mono'] {
+  /* Neutral greys, a pink accent: the most minimal. */
+  --p-surface-h: 280;
+  --p-surface-c: 0.004;
+  --p-accent-h: 0;
+  --p-accent-c: 0.16;
+  --p-accent2-h: 290;
+  --p-accent2-c: 0.1;
+}
+
+/* ---- Fonts --------------------------------------------------------------- */
+/* Four, each a different voice, used whole: text and titles in the same one.
+   The numbers and paths are in JetBrains Mono whatever the choice. */
+
+:root {
+  /* After the chosen one, the system's, then fonts for Japanese, Korean and
+     Chinese, which the bundled fonts don't cover. */
+  --font-fallback: system-ui, -apple-system, 'Segoe UI', 'Noto Sans', 'Hiragino Sans', 'Noto Sans CJK JP',
+    'Noto Sans CJK KR', 'Noto Sans CJK SC', 'Yu Gothic UI', 'Malgun Gothic', 'Microsoft YaHei UI', sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, 'Cascadia Code', monospace;
+
+  /* Outfit, geometric like osu!'s own Torus: the default. */
+  --font-sans: 'Outfit Variable', var(--font-fallback);
+  --font-display: var(--font-sans);
+  /* How much tighter the titles are set than the text. */
+  --tracking-display: -0.015em;
+}
+
+/* Rounded and soft. */
+:root[data-font='nunito'] {
+  --font-sans: 'Nunito Variable', var(--font-fallback);
+  --tracking-display: -0.01em;
+}
+
+/* Neutral and compact, for the most information in the least room. */
+:root[data-font='inter'] {
+  --font-sans: 'Inter Variable', var(--font-fallback);
+  --tracking-display: -0.025em;
+}
+
+/* Technical, with the quirks of a grotesque. */
+:root[data-font='grotesk'] {
+  --font-sans: 'Space Grotesk Variable', var(--font-fallback);
+  --tracking-display: -0.02em;
+}
+
+/* Taiga's fonts. On :root, where Taiga composes its `font` shorthands
+   (--tui-typography-body-s and the rest) out of these two: set lower down,
+   on <tui-root>, they came too late, the shorthands kept Taiga's own font
+   (Manrope, which isn't bundled) and the whole app fell back to the
+   system's, whatever font was picked. */
+:root {
+  --tui-typography-family-text: var(--font-sans);
+  --tui-typography-family-display: var(--font-display);
+}
+
+/* ---- Scales shared by every palette -------------------------------------- */
+
+:root {
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-pill: 999px;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+
+  /* On the 14px of <html> (styles.css), which Taiga's sizes rely on. */
+  --text-2xs: 0.75rem;
+  --text-xs: 0.8125rem;
+  --text-sm: 0.9rem;
+  --text-md: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: 2.25rem;
+
+  --weight-regular: 450;
+  --weight-medium: 560;
+  --weight-bold: 700;
+  --weight-black: 820;
+
+  /* Motion: quick and soft by default, a little bounce for what pops in. */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --duration-1: 120ms;
+  --duration-2: 200ms;
+  --duration-3: 320ms;
+  --duration-4: 480ms;
+  /* Between the items of a list that comes in one after another. */
+  --stagger: 35ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-1: 0ms;
+    --duration-2: 0ms;
+    --duration-3: 0ms;
+    --duration-4: 0ms;
+    --stagger: 0ms;
+  }
+}
+
+/* The setting does the same (data-motion="reduced" on <html>). */
+:root[data-motion='reduced'] {
+  --duration-1: 0ms;
+  --duration-2: 0ms;
+  --duration-3: 0ms;
+  --duration-4: 0ms;
+  --stagger: 0ms;
+}
+
+/* ---- Dark ------------------------------------------------------------------ */
+
+:root,
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  /* Surfaces, from the app's background up to what floats over the rest. */
+  --surface-inset: oklch(0.135 var(--p-surface-c) var(--p-surface-h));
+  --surface-0: oklch(0.16 var(--p-surface-c) var(--p-surface-h));
+  --surface-1: oklch(0.195 var(--p-surface-c) var(--p-surface-h));
+  --surface-2: oklch(0.23 var(--p-surface-c) var(--p-surface-h));
+  --surface-3: oklch(0.27 var(--p-surface-c) var(--p-surface-h));
+  --surface-4: oklch(0.315 var(--p-surface-c) var(--p-surface-h));
+  --surface-overlay: oklch(0.21 var(--p-surface-c) var(--p-surface-h) / 0.92);
+  --backdrop: oklch(0.08 0.02 var(--p-surface-h) / 0.7);
+
+  /* The frame around the pages (title bar, sidebar), and the soft glow of
+     both accents behind the content. */
+  --chrome: oklch(0.13 var(--p-surface-c) var(--p-surface-h));
+  --ambient:
+    radial-gradient(60rem 40rem at 100% -10%, oklch(0.72 var(--p-accent-c) var(--p-accent-h) / 0.09), transparent 70%),
+    radial-gradient(50rem 36rem at -10% 110%, oklch(0.7 var(--p-accent2-c) var(--p-accent2-h) / 0.08), transparent 70%);
+
+  /* Lines: hairlines between areas, borders of controls, and the strong one. */
+  --line-subtle: oklch(0.95 0.02 var(--p-surface-h) / 0.06);
+  --line: oklch(0.95 0.02 var(--p-surface-h) / 0.11);
+  --line-strong: oklch(0.95 0.02 var(--p-surface-h) / 0.2);
+
+  /* Text, from titles down to what barely shows. */
+  --text-1: oklch(0.97 0.008 var(--p-surface-h));
+  --text-2: oklch(0.82 0.02 var(--p-surface-h));
+  --text-3: oklch(0.66 0.025 var(--p-surface-h));
+  --text-4: oklch(0.5 0.025 var(--p-surface-h));
+
+  /* The accent: buttons, the active item, focus. `soft` behind it, `text` to write in it. */
+  --accent: oklch(0.72 var(--p-accent-c) var(--p-accent-h));
+  --accent-hover: oklch(0.78 var(--p-accent-c) var(--p-accent-h));
+  --accent-pressed: oklch(0.65 var(--p-accent-c) var(--p-accent-h));
+  --accent-soft: oklch(0.72 var(--p-accent-c) var(--p-accent-h) / 0.14);
+  --accent-soft-hover: oklch(0.72 var(--p-accent-c) var(--p-accent-h) / 0.22);
+  --accent-text: oklch(0.82 calc(var(--p-accent-c) * 0.85) var(--p-accent-h));
+  --on-accent: oklch(0.17 0.03 var(--p-accent-h));
+  --accent-glow: oklch(0.72 var(--p-accent-c) var(--p-accent-h) / 0.35);
+
+  --accent-2: oklch(0.7 var(--p-accent2-c) var(--p-accent2-h));
+  --accent-2-soft: oklch(0.7 var(--p-accent2-c) var(--p-accent2-h) / 0.16);
+  --accent-2-text: oklch(0.82 calc(var(--p-accent2-c) * 0.85) var(--p-accent2-h));
+
+  /* A gradient from one accent to the other, for what stands out the most. */
+  --accent-gradient: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+
+  --success: oklch(0.76 0.16 150);
+  --success-soft: oklch(0.76 0.16 150 / 0.15);
+  --warning: oklch(0.83 0.15 85);
+  --warning-soft: oklch(0.83 0.15 85 / 0.15);
+  --danger: oklch(0.69 0.19 25);
+  --danger-soft: oklch(0.69 0.19 25 / 0.15);
+  --info: oklch(0.75 0.12 235);
+  --info-soft: oklch(0.75 0.12 235 / 0.15);
+
+  --shadow-1: 0 1px 2px oklch(0 0 0 / 0.3);
+  --shadow-2: 0 4px 14px oklch(0 0 0 / 0.32), 0 1px 3px oklch(0 0 0 / 0.25);
+  --shadow-3: 0 14px 40px oklch(0 0 0 / 0.45), 0 4px 10px oklch(0 0 0 / 0.3);
+  --focus-ring: 0 0 0 2px var(--surface-0), 0 0 0 4px var(--accent);
+}
+
+/* ---- Light ----------------------------------------------------------------- */
+/* Pastel, not white: every surface carries the palette's hue, the frame the
+   most, the cards the least; accents a quarter less vivid than in the dark,
+   since they glare on a light background. */
+
+:root[data-theme='light'] {
+  color-scheme: light;
+
+  --surface-inset: oklch(0.875 calc(var(--p-surface-c) * 1.4 + 0.016) var(--p-surface-h));
+  --surface-0: oklch(0.925 calc(var(--p-surface-c) * 1.1 + 0.012) var(--p-surface-h));
+  --surface-1: oklch(0.95 calc(var(--p-surface-c) * 0.8 + 0.008) var(--p-surface-h));
+  --surface-2: oklch(0.97 calc(var(--p-surface-c) * 0.6 + 0.006) var(--p-surface-h));
+  --surface-3: oklch(0.935 calc(var(--p-surface-c) * 1 + 0.012) var(--p-surface-h));
+  --surface-4: oklch(0.905 calc(var(--p-surface-c) * 1.2 + 0.014) var(--p-surface-h));
+  --surface-overlay: oklch(0.97 calc(var(--p-surface-c) * 0.6 + 0.006) var(--p-surface-h) / 0.96);
+  --backdrop: oklch(0.25 0.03 var(--p-surface-h) / 0.3);
+
+  --chrome: oklch(0.865 calc(var(--p-surface-c) * 1.6 + 0.022) var(--p-surface-h));
+  --ambient:
+    radial-gradient(60rem 40rem at 100% -10%, oklch(0.8 calc(var(--p-accent-c) * 0.8) var(--p-accent-h) / 0.22), transparent 70%),
+    radial-gradient(50rem 36rem at -10% 110%, oklch(0.78 calc(var(--p-accent2-c) * 0.8) var(--p-accent2-h) / 0.18), transparent 70%);
+
+  --line-subtle: oklch(0.35 0.04 var(--p-surface-h) / 0.08);
+  --line: oklch(0.35 0.04 var(--p-surface-h) / 0.14);
+  --line-strong: oklch(0.35 0.04 var(--p-surface-h) / 0.24);
+
+  --text-1: oklch(0.25 0.03 var(--p-surface-h));
+  --text-2: oklch(0.4 0.035 var(--p-surface-h));
+  --text-3: oklch(0.52 0.035 var(--p-surface-h));
+  --text-4: oklch(0.63 0.03 var(--p-surface-h));
+
+  --accent: oklch(0.6 calc(var(--p-accent-c) * 0.85) var(--p-accent-h));
+  --accent-hover: oklch(0.56 calc(var(--p-accent-c) * 0.85) var(--p-accent-h));
+  --accent-pressed: oklch(0.52 calc(var(--p-accent-c) * 0.85) var(--p-accent-h));
+  --accent-soft: oklch(0.6 calc(var(--p-accent-c) * 0.85) var(--p-accent-h) / 0.13);
+  --accent-soft-hover: oklch(0.6 calc(var(--p-accent-c) * 0.85) var(--p-accent-h) / 0.2);
+  --accent-text: oklch(0.5 calc(var(--p-accent-c) * 0.8) var(--p-accent-h));
+  --on-accent: oklch(0.98 0.01 var(--p-accent-h));
+  --accent-glow: oklch(0.6 calc(var(--p-accent-c) * 0.85) var(--p-accent-h) / 0.25);
+
+  --accent-2: oklch(0.58 calc(var(--p-accent2-c) * 0.85) var(--p-accent2-h));
+  --accent-2-soft: oklch(0.58 calc(var(--p-accent2-c) * 0.85) var(--p-accent2-h) / 0.13);
+  --accent-2-text: oklch(0.48 calc(var(--p-accent2-c) * 0.8) var(--p-accent2-h));
+
+  --success: oklch(0.57 0.12 150);
+  --success-soft: oklch(0.57 0.12 150 / 0.13);
+  --warning: oklch(0.66 0.12 75);
+  --warning-soft: oklch(0.66 0.12 75 / 0.15);
+  --danger: oklch(0.56 0.15 25);
+  --danger-soft: oklch(0.56 0.15 25 / 0.12);
+  --info: oklch(0.57 0.1 240);
+  --info-soft: oklch(0.57 0.1 240 / 0.12);
+
+  --shadow-1: 0 1px 2px oklch(0.3 0.04 var(--p-surface-h) / 0.1);
+  --shadow-2: 0 4px 14px oklch(0.3 0.04 var(--p-surface-h) / 0.1), 0 1px 3px oklch(0.3 0.04 var(--p-surface-h) / 0.08);
+  --shadow-3: 0 14px 40px oklch(0.3 0.04 var(--p-surface-h) / 0.16), 0 4px 10px oklch(0.3 0.04 var(--p-surface-h) / 0.08);
+}
+
+/* ---- The base every page starts from --------------------------------------- */
+
+html {
+  background: var(--surface-0);
+  color: var(--text-1);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--accent-soft-hover);
+  color: var(--text-1);
+}
+
+:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* Thin scrollbars tinted with the accent. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklch, var(--accent) 35%, transparent) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: color-mix(in oklch, var(--accent) 30%, transparent);
+  border: 3px solid transparent;
+  border-radius: var(--radius-pill);
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in oklch, var(--accent) 55%, transparent);
+}
+
+/* Numbers that line up in columns. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Paths, hashes, numbers read digit by digit. */
+.mono {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+}

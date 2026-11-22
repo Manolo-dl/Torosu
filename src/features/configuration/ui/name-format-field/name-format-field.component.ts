@@ -1,7 +1,8 @@
+import { ButtonComponent } from '@shared/ui';
 import { ChangeDetectionStrategy, Component, effect, input, model, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { TuiButton, TuiInput, TuiLabel } from '@taiga-ui/core';
+import { TuiInput, TuiLabel } from '@taiga-ui/core';
 import { invoke } from '@tauri-apps/api/core';
 
 export interface NameFormatPreset {
@@ -22,7 +23,7 @@ export interface NameFormatField {
  */
 @Component({
   selector: 'app-name-format-field',
-  imports: [FormsModule, TuiButton, TuiInput, TuiLabel, TranslocoPipe],
+  imports: [FormsModule, TuiInput, TuiLabel, TranslocoPipe, ButtonComponent],
   templateUrl: './name-format-field.component.html',
   styleUrl: './name-format-field.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,

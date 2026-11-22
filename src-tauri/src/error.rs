@@ -118,6 +118,9 @@ pub enum Error {
     #[error("{file} is not an osu!mania replay that can be read")]
     ReplayUnreadable { file: String },
 
+    #[error("close osu! first: it keeps the collections in memory and writes collection.db over when it closes")]
+    OsuRunning,
+
     // ── App ─────────────────────────────────────────────────────────────────
     #[error("no update to install")]
     NoUpdate,
@@ -132,7 +135,7 @@ impl Error {
         "internal", "message", "osuFolderNotFound", "notOsuFolder", "osuDbCorrupted", "collectionDbRead",
         "collectionDbWrite", "noBeatmapSelected", "noSession", "outputFolderNotFound", "httpStatus", "setTooLarge",
         "createFolder", "readDiff", "nothingToConvert", "sameDifficulty", "convert", "maniaOnly", "lnTasksTogether", "unsupportedKeys",
-        "onePlayer", "noAudio", "video", "convertReplay", "randomReplay", "replayUnreadable", "noUpdate",
+        "onePlayer", "noAudio", "video", "convertReplay", "randomReplay", "replayUnreadable", "osuRunning", "noUpdate",
     ];
 }
 
@@ -183,6 +186,7 @@ impl Error {
             Error::ConvertReplay => ("convertReplay", Map::new()),
             Error::RandomReplay => ("randomReplay", Map::new()),
             Error::ReplayUnreadable { file } => ("replayUnreadable", params(json!({ "file": file }))),
+            Error::OsuRunning => ("osuRunning", Map::new()),
             Error::NoUpdate => ("noUpdate", Map::new()),
         }
     }

@@ -13,12 +13,14 @@
       "downloader": "ダウンローダー",
       "packs": "パック",
       "trainer": "トレーナー",
-      "replays": "リプレイ"
+      "replays": "リプレイ",
+      "appearance": "外観",
+      "performance": "パフォーマンス"
     },
     "general": {
       "osu": "osu!",
       "osuPath": "osu! フォルダのパス",
-      "osuPathPlaceholder": "C:\\Users\\you\\AppData\\Local\\osu!",
+      "osuPathPlaceholder": "C:\\Users\\ユーザー名\\AppData\\Local\\osu!",
       "pickOsuPath": "osu! フォルダを選択",
       "language": "言語",
       "languageHint": "Torosu の表示言語",
@@ -114,6 +116,57 @@
       "analysis": "分析",
       "charts": "グラフ",
       "chartsHint": "オフにしたグラフは描画されません"
+    },
+    "appearance": {
+      "title": "外観",
+      "palette": "パレット",
+      "font": "フォント",
+      "reducedMotion": "アニメーションを減らす",
+      "reducedMotionHint": "アニメーションとトランジションを減らします。システムの設定でも有効になります",
+      "palettes": {
+        "sakura": "桜",
+        "nebula": "星雲",
+        "aurora": "オーロラ",
+        "ember": "残り火",
+        "mono": "モノクロ"
+      },
+      "fonts": {
+        "outfit": "osu! のような幾何学的な書体",
+        "nunito": "丸みのある柔らかな書体",
+        "inter": "ニュートラルでコンパクト",
+        "grotesk": "テクニカルで個性的"
+      },
+      "visualizer": "タイトルバーの音楽",
+      "visualizerHint": "osu! で流れている曲に合わせて動くバー。そのために osu! をバックグラウンドで読み取ります",
+      "theme": "テーマ",
+      "themes": {
+        "system": "システム",
+        "dark": "ダーク",
+        "light": "ライト"
+      }
+    },
+    "saved": "設定を保存しました",
+    "saving": "保存中…",
+    "autosave": "閉じると保存されます",
+    "saveFailed": "設定を保存できませんでした",
+    "performance": {
+      "effects": "エフェクト",
+      "backgrounds": "アニメーション背景",
+      "backgroundsHint": "三角形、光の粒、モードの軌道。オフにすると静止します",
+      "quality": "エフェクトの品質",
+      "qualityHint": "低はより少なく、毎秒30フレームで描画します。遅いPCでも軽くなります",
+      "qualities": {
+        "high": "高",
+        "low": "低"
+      },
+      "transitions": "ページの切り替えアニメーション",
+      "transitionsHint": "ページとテーマをアニメーションで切り替えます",
+      "music": "osu! の音楽",
+      "reactive": "アプリが音楽に合わせて動く",
+      "reactiveHint": "ロゴが低音に合わせて脈打ち、ページの後ろの光が音楽に合わせて変化します",
+      "motion": "動き",
+      "covers": "マップのカバー",
+      "coversHint": "各マップの背景から作成してキャッシュに保存します (最大 32 MB)。オフにすると画像を読み込み・処理しません"
     }
   },
   "nav": {
@@ -121,7 +174,7 @@
     "downloader": "ダウンローダー",
     "downloaderDescription": "リンクの一覧からビートマップセットを Songs フォルダに直接ダウンロードします。持っているものはスキップします。",
     "exportCollections": "コレクションのエクスポート",
-    "exportCollectionsDescription": "コレクションをビートマップのリンクとして、または別の環境でインポートできる一覧として保存します。",
+    "exportCollectionsDescription": "コレクションを保存またはコピーして、Torosu でインポートしたり、セットをダウンロードしたりできます。",
     "importCollections": "コレクションのインポート",
     "importCollectionsDescription": "ファイルのコレクションを osu! に取り込み、今あるコレクションと統合します。",
     "exportLibrary": "ライブラリのエクスポート",
@@ -133,11 +186,14 @@
     "logs": "ログ",
     "osuData": "osu-data",
     "changelog": "更新履歴",
-    "github": "Github",
-    "issues": "Issues",
+    "github": "GitHub",
+    "issues": "不具合報告",
     "support": "サポート",
     "replays": "リプレイ分析",
-    "replaysDescription": "ローカルスコアのプレイを分析：タイミング、早押し・遅押しやリリースをキーごとに確認できます。"
+    "replaysDescription": "ローカルスコアのプレイを分析：タイミング、早押し・遅押しやリリースをキーごとに確認できます。",
+    "tools": "ツール",
+    "collapse": "サイドバーを折りたたむ",
+    "expand": "サイドバーを展開"
   },
   "header": {
     "toggleTheme": "テーマを切り替え",
@@ -160,7 +216,24 @@
     "noLazer": "Lazer には対応していません: 各ツールは osu! stable のファイルを読み書きします。",
     "changeFolder": "設定で変更できます",
     "tools": "ツール",
-    "noTools": "すべてのツールがオフになっています。設定の「一般」でオンにしてください。"
+    "noTools": "すべてのツールがオフになっています。設定の「一般」でオンにしてください。",
+    "library": {
+      "title": "ライブラリ",
+      "hint": "osu!.db を読み込むと、Songs フォルダの内容が見られます: モードごとのマップ数、Ranked と Loved の数、プレイした数。",
+      "read": "osu!.db を読み込む",
+      "diffs": "難易度",
+      "inSets": "{{ count }} セット",
+      "sets": "{{ count }} セット",
+      "ranked": "ランク済み",
+      "loved": "ラブド",
+      "unsubmitted": "未投稿",
+      "played": "プレイ済み"
+    },
+    "selected": {
+      "title": "osu! で選択中",
+      "by": "マッパー: {{ mapper }}",
+      "trainer": "トレーナーで開く"
+    }
   },
   "osuPath": {
     "notFound": "osu! フォルダが見つかりません",
@@ -182,7 +255,12 @@
     "exported": "{{ name }} をエクスポートしました",
     "exportFailed": "ビートマップのエクスポートに失敗しました: {{ error }}",
     "looking": "osu! を探しています...",
-    "startFailed": "osu! リーダーを起動できませんでした。"
+    "startFailed": "osu! リーダーを起動できませんでした。",
+    "badge": {
+      "connected": "接続中",
+      "waiting": "osu! を待っています",
+      "error": "osu! を読み取れません"
+    }
   },
   "trainer": {
     "subtitle": "新しいマップを作る前に、難易度のステータスを調整し、変更を組み合わせます。",
@@ -190,10 +268,22 @@
     "mappedBy": "譜面作成: {{ mapper }}",
     "exportOsz": ".osz としてエクスポート",
     "dan": {
-      "hint": "Mania Tracker による推定段位（信頼度 {{ confidence }}%）"
+      "hint": "Mania Tracker による推定段位（信頼度 {{ confidence }}%）",
+      "confidence": "信頼度",
+      "lowConfidence": "信頼度が低め: 比較した段位コースとは傾向が異なるマップです。目安としてご覧ください。",
+      "source": "Mania Tracker の計算機による推定です。",
+      "keys": "{{ keys }}K コース",
+      "variants": {
+        "top": "{{ dan }} 段の最上位",
+        "high": "{{ dan }} 段の上位",
+        "mid": "ちょうど {{ dan }} 段",
+        "low": "{{ dan }} 段の下位",
+        "bottom": "{{ dan }} 段の最下位"
+      }
     },
     "msd": {
-      "hint": "総合 MSD（{{ calc }}）"
+      "hint": "総合 MSD（{{ calc }}）",
+      "skillsets": "スキルセット別"
     },
     "skill": {
       "dan": "段位",
@@ -207,7 +297,9 @@
       "lock": "ロック",
       "unlock": "ロック解除",
       "lockStat": "{{ stat }} をロック",
-      "unlockStat": "{{ stat }} のロックを解除"
+      "unlockStat": "{{ stat }} のロックを解除",
+      "restoreAll": "マップの値",
+      "backTo": "マップの {{ value }} に戻す"
     },
     "actions": {
       "reset": "リセット",
@@ -268,7 +360,7 @@
     "tasks": {
       "RateChange": "レートチェンジャー",
       "SVNormalizer": "SV 正規化",
-      "FlnConverter": "Full LN",
+      "FlnConverter": "フルLN",
       "NoLn": "LN なし",
       "ShortLn": "短い LN",
       "KeyConverter": "キー変換"
@@ -280,7 +372,8 @@
       "scaleVideo": "動画を合わせる",
       "noFfmpeg": "動画の速度変更には <strong>ffmpeg</strong> が必要ですが、見つかりませんでした。インストールして PATH に入っていることを確認し、アプリを再起動してください。",
       "videoSlow": "動画は新しい速度で再エンコードされるため、長い動画では時間がかかることがあります。",
-      "storyboard": "セットに共有の <strong>.osb</strong> ストーリーボードがある場合、すべての難易度で使われるため、元のセットと重ならないよう、この難易度は<strong>新しいビートマップセット</strong>（タイトルの末尾が <strong>({{ rate }}x SB)</strong>）としてエクスポートされます。"
+      "storyboard": "セットに共有の <strong>.osb</strong> ストーリーボードがある場合、すべての難易度で使われるため、元のセットと重ならないよう、この難易度は<strong>新しいビートマップセット</strong>（タイトルの末尾が <strong>({{ rate }}x SB)</strong>）としてエクスポートされます。",
+      "quick": "クイックレート"
     },
     "sv": {
       "description": "元の SV 変化を取り除き、BPM が変わるたびに SV を設定して、スクロール速度をメイン BPM のものに保ちます。BPM 変化、キアイ、ヒットサウンドは残ります。"
@@ -340,6 +433,24 @@
       "16_EZ2AC": "10K2S と、どちらの手でも押す中央の 4 キー。",
       "18_10K8K": "10K に、親指以外の各指用のキーを片手 4 つずつ追加（4K10K4K）。",
       "18_9K9K": "片手 9 キーを 2 段で。pop'n music の DP のような配置。"
+    },
+    "banner": {
+      "waiting": "osu! を待っています",
+      "waitingHint": "osu! stable を開くと、そこで選んだマップがここに表示され、すぐに変更できます。",
+      "select": "osu! でマップを選んでください",
+      "selectHint": "曲選択画面でマップを選ぶと、ここに表示され、すぐに変更できます。",
+      "error": "osu! を読み取れません"
+    },
+    "oneTask": "1 タスク",
+    "tasksCount": "{{ count }} タスク",
+    "dragTask": "ドラッグで順番を変更",
+    "taskHints": {
+      "RateChange": "BPM と音声ごと速く・遅くする",
+      "SVNormalizer": "最初から最後まで同じスクロール速度",
+      "FlnConverter": "すべてのノーツを次のノーツまで伸ばす",
+      "NoLn": "ロングノーツを通常ノーツに変換",
+      "ShortLn": "ロングノーツを一定の長さに収める",
+      "KeyConverter": "別のキー数のマップに変換"
     }
   },
   "downloader": {
@@ -389,7 +500,12 @@
       "isRequired": "Cookie は必須です",
       "tooShort": "Cookie が短すぎます",
       "tooLong": "Cookie が長すぎます",
-      "failed": "Cookie を使用できませんでした"
+      "failed": "Cookie を使用できませんでした",
+      "updated": "Cookie を使用中: ダウンロードできます",
+      "activeHint": "ダウンロードには osu! アカウントを使います。",
+      "change": "変更",
+      "show": "Cookie を表示",
+      "hide": "Cookie を隠す"
     },
     "queue": {
       "queued": "{{ count }} 件待機中",
@@ -400,7 +516,12 @@
       "failedFile": "失敗したマップは osu! フォルダの <strong>failed_downloads.txt</strong> に保存されます。",
       "clear": "キューを消去",
       "start": "ダウンロード開始",
-      "downloadFailed": "ダウンロード失敗"
+      "downloadFailed": "ダウンロード失敗",
+      "setNumber": "ビートマップセット #{{ id }}",
+      "openPage": "osu! でページを開く",
+      "remove": "キューから削除",
+      "overall": "{{ total }} 件中 {{ finished }} 件",
+      "nameSoon": "開始すると名前が表示されます"
     },
     "status": {
       "pending": "保留",
@@ -411,6 +532,24 @@
     "notification": {
       "title": "ダウンローダー",
       "body": "{{ succeeded }} 件ダウンロード、{{ failed }} 件失敗"
+    },
+    "importer": {
+      "file": "ファイル",
+      "paste": "リンクを貼り付け",
+      "pastePlaceholder": "1 行に 1 つのリンクまたはセット ID:\nhttps://osu.ppy.sh/beatmapsets/39804\n39804",
+      "found": "{{ count }} セット見つかりました",
+      "add": "キューに追加",
+      "added": "{{ count }} セットをキューに追加しました",
+      "addedSkipped": "{{ count }} セットをキューに追加しました。{{ skipped }} セットはすでにキューかライブラリにあります",
+      "nothing": "マップのリンクや ID が見つかりません"
+    },
+    "steps": {
+      "session": "セッション",
+      "import": "ダウンロードするマップ",
+      "queue": "キュー",
+      "help": "ヘルプ",
+      "needSession": "先にセッションを設定してください。osu! はアカウントでのみマップをダウンロードできます。",
+      "queueEmpty": "追加したマップがここに表示され、ダウンロードできます。"
     }
   },
   "dropzone": {
@@ -453,7 +592,15 @@
     "search": "タイトル、アーティスト、ファイル名で検索...",
     "created": "パック {{ title }} を作成しました！",
     "createdParts": "パック {{ title }} を {{ parts }} 個に分けて作成しました！",
-    "createFailed": "パックの作成に失敗しました: {{ error }}"
+    "createFailed": "パックの作成に失敗しました: {{ error }}",
+    "stats": {
+      "diffs": "難易度",
+      "sets": "セット",
+      "packs": "パック",
+      "stars": "スター",
+      "packsHint": "設定のパックあたり最大セット数で分割されます"
+    },
+    "emptyHint": "マップから難易度を選ぶか、コレクションを丸ごと追加してください。"
   },
   "beatmaps": {
     "none": "ビートマップがありません"
@@ -468,38 +615,92 @@
     "logs": "ログを読み込み中です。お待ちください...",
     "logsFailed": "ログの読み込みに失敗しました",
     "localScores": "ローカルスコアを読み込んでいます。お待ちください...",
-    "localScoresFailed": "scores.db を読み込めませんでした"
+    "localScoresFailed": "scores.db を読み込めませんでした",
+    "retry": "再試行"
   },
   "collections": {
     "export": {
-      "list": "コレクション",
-      "selectAll": "すべて選択",
-      "notLoaded": "コレクションを開いて始めましょう",
-      "none": "コレクションが見つかりません",
-      "summary": "概要",
-      "selected": "選択中",
-      "totalSets": "ビートマップセットの合計",
-      "format": "形式",
-      "links": "ダウンロードリンク",
-      "importFormat": "インポート形式",
-      "preview": "プレビュー",
-      "sets": "{{ count }} セット",
-      "empty": "コレクションを選ぶとプレビューが表示されます"
+      "steps": {
+        "collections": "コレクション",
+        "format": "形式",
+        "export": "エクスポート",
+        "pickFirst": "コレクションを 1 つ以上選んでください",
+        "textHere": "保存またはコピーするテキストがここに表示されます"
+      },
+      "notLoaded": "コレクションを読み込めませんでした",
+      "retry": "再試行",
+      "none": "osu! にコレクションがありません",
+      "libraryNotLoaded": "ライブラリが読み込まれていません",
+      "libraryHint": "MD5 はライブラリなしでもエクスポートできますが、セットのリンクやインストール済みマップの数はわかりません。",
+      "loadLibrary": "ライブラリを読み込む",
+      "search": "コレクションを検索",
+      "picked": "{{ total }} 個中 {{ count }} 個を選択",
+      "pickAll": "すべて選択",
+      "pickNone": "選択を解除",
+      "noMatch": "その名前のコレクションはありません",
+      "empty": "空",
+      "showSets": "セットを表示",
+      "maps": "マップ {{ count }} 個",
+      "sets": "セット {{ count }} 個",
+      "md5": "Torosu でインポートする",
+      "md5Hint": "各マップを MD5 で書き出します（持っていないマップも含む）。インポートした人は同じ難易度を得られます。",
+      "links": "セットのリンク",
+      "linksHint": "セットごとに 1 つのリンク。ダウンローダーやウェブサイトでダウンロードするためのものです。セットのすべての難易度が含まれます。",
+      "linkCount": "リンク {{ count }} 個",
+      "unsubmitted": "{{ count }} 個のセットは osu! のウェブサイトにアップロードされていないため、リンクがありません。残すには MD5 でエクスポートしてください",
+      "notInLibrary": "{{ count }} 個のマップはライブラリにないため、セットがわかりません。残すには MD5 でエクスポートしてください",
+      "moreLines": "ほか {{ count }} 行",
+      "save": ".txt で保存",
+      "copy": "コピー",
+      "nothing": "選んだコレクションには、この形式で書き出せるものがありません",
+      "saved": "コレクションを保存しました",
+      "failed": "コレクションを保存できませんでした: {{ error }}",
+      "copied": "クリップボードにコピーしました",
+      "copyFailed": "クリップボードにコピーできませんでした"
     },
     "import": {
-      "subtitle": "ビートマップのハッシュを使って、テキストファイルからコレクションをインポートします。",
-      "file": "ファイル",
-      "fileHint": "1 ブロックに 1 コレクション。ビートマップのハッシュかリンクを書きます。",
-      "preview": "プレビュー",
-      "empty": ".txt ファイルをアップロードすると、インポートするコレクションのプレビューが表示されます",
-      "merge": "統合",
+      "subtitle": "エクスポーターが書き出したテキストファイルのコレクションを osu! のコレクションに追加します。",
+      "steps": {
+        "file": "インポートするコレクション",
+        "collections": "コレクション",
+        "import": "インポート",
+        "needFile": "ファイルを読み込むか、コレクションを貼り付けるとここに表示されます",
+        "closeOsu": "インポートするには osu! を閉じる必要があります。osu! はコレクションをメモリに保持し、終了時に上書きします"
+      },
+      "fromFile": "ファイル",
+      "fromPaste": "貼り付け",
+      "pastePlaceholder": "- コレクション名\nマップの MD5 またはセットのリンク（1 行に 1 つ）\nhttps://osu.ppy.sh/beatmapsets/39804",
+      "found": "{{ count }} 個のコレクションが見つかりました",
+      "use": "使う",
+      "nothing": "コレクションが見つかりません。各コレクションは「- 名前」のような行で始まります",
+      "format": "1 ブロックに 1 コレクション：「- 名前」の行のあとに、1 行に 1 つずつマップの MD5 またはセットへのリンク。",
+      "loaded": "{{ count }} 個のコレクション",
+      "loadedMaps": "{{ count }} 個のマップ",
+      "remove": "取り除く",
+      "libraryNotLoaded": "ライブラリが読み込まれていません",
+      "libraryHint": "ライブラリがないと、セットのリンクをマップに変換できず、セットも表示できません。",
+      "loadLibrary": "ライブラリを読み込む",
+      "picked": "{{ total }} 個中 {{ count }} 個のコレクションを選択",
+      "pickAll": "すべて選択",
+      "pickNone": "選択を解除",
+      "upToDate": "最新",
+      "merge": "既存に追加",
       "new": "新規",
-      "sets": "{{ count }} セット",
-      "noInstalled": "インストール済みのビートマップが見つかりません",
-      "importMaps": "{{ count }} 個のマップをインポート",
-      "clear": "消去",
-      "done": "コレクションをインポートしました",
-      "failed": "コレクションのインポートに失敗しました: {{ error }}"
+      "showSets": "セットを表示",
+      "toAdd": "追加するマップ {{ count }} 個",
+      "already": "{{ count }} 個は追加済み",
+      "notInstalled": "{{ count }} 個は未インストール",
+      "unresolved": "ライブラリにないセットのリンク {{ count }} 個",
+      "noInstalled": "これらのマップはどれもインストールされていません。osu! では見つからないマップとして表示されます",
+      "osuOpen": "インポートするには osu! を閉じてください",
+      "osuOpenHint": "osu! はコレクションをメモリに保持し、終了時に collection.db を上書きします。osu! を開いたままインポートした内容は失われます。閉じるとこの表示は自動で更新されます。",
+      "osuClosed": "osu! は閉じています",
+      "importMaps": "{{ count }} 個のマップを {{ collections }} 個のコレクションにインポート",
+      "doneMaps": "{{ count }} 個のマップをインポートしました",
+      "doneCollections": "新しいコレクション {{ created }} 個、既存のコレクション {{ merged }} 個に追加しました。osu! を開いて確認してください。",
+      "doneNothing": "インポートするものはありません。すべてのマップはすでにコレクションに入っています",
+      "backup": "以前の collection.db は collection.db.torosu-backup として保存されています。",
+      "failed": "コレクションをインポートできませんでした: {{ error }}"
     }
   },
   "export": {
@@ -534,7 +735,14 @@
     "filtered": "絞り込んだビートマップセット",
     "export": "エクスポート",
     "preview": "プレビュー",
-    "empty": "現在のフィルターに合うビートマップはありません"
+    "empty": "現在のフィルターに合うビートマップはありません",
+    "statuses": {
+      "ranked": "ランク済み",
+      "loved": "ラブド",
+      "approved": "承認済み",
+      "qualified": "クオリファイド",
+      "unranked": "未ランク"
+    }
   },
   "replays": {
     "subtitle": "osu! が保存しているリプレイからあなたのプレイを分析",
@@ -560,13 +768,13 @@
       "n200": "200",
       "n100": "100",
       "n50": "50",
-      "miss": "Miss"
+      "miss": "ミス"
     },
     "early": "早い",
     "late": "遅い",
     "views": {
       "all": "すべて",
-      "rice": "Rice",
+      "rice": "通常ノーツ",
       "ln": "LN",
       "allHint": "すべての押下とロングノーツのリリース。osu! のリザルト画面と同じ数え方です。",
       "riceHint": "通常ノーツのみ：それぞれを押したタイミング。",
@@ -600,7 +808,12 @@
     "followHint": "osu! を開いている間、クリアしたプレイを終了後すぐに分析します",
     "reconciled": "リプレイと一緒に保存される .osg から、osu! の判定 {{ total }} 件中 {{ matched }} 件を各ノーツに割り当てました。各ノーツはゲームが出した判定です。",
     "noGraph": "このリプレイには .osg がありません（osu! は 2026 年から保存）。判定は分析によるもので、一部のロングノーツはゲームと異なる場合があります。",
-    "realTime": "{{ rate }}x では osu! は上と同じく譜面上の ms で数えます。オフセットに関わる実時間では：{{ early }} / {{ late }} ms、UR {{ ur }}。"
+    "realTime": "{{ rate }}x では osu! は上と同じく譜面上の ms で数えます。オフセットに関わる実時間では：{{ early }} / {{ late }} ms、UR {{ ur }}。",
+    "earlyMean": "早押しの平均",
+    "lateMean": "遅押しの平均",
+    "urHint": "Unstable rate: osu! と同じ方法で数えたズレのばらつき。低いほど安定しています。",
+    "playedBy": "プレイヤー: {{ name }}",
+    "judgementsTitle": "判定"
   },
   "errors": {
     "io": "ファイルエラー: {{ detail }}",
@@ -639,6 +852,24 @@
     "convertReplay": "コンバート譜面のリプレイはまだ分析できません。osu!mania 譜面のみ対応しています",
     "randomReplay": "Random 付きのリプレイは分析できません：osu! がノーツを並べ替えるためです",
     "replayUnreadable": "{{ file }} は Torosu が読み込める osu!mania のリプレイではありません",
+    "osuRunning": "先に osu! を閉じてください。osu! はコレクションをメモリに保持し、終了時に collection.db を上書きします",
     "noUpdate": "インストールする更新がありません"
+  },
+  "modes": {
+    "standard": "スタンダード",
+    "taiko": "太鼓",
+    "catch": "キャッチ",
+    "mania": "マニア"
+  },
+  "dev": {
+    "osuData": {
+      "subtitle": "osu! のメモリから読み取った選択中のマップ",
+      "empty": "まだ何も受信していません。"
+    },
+    "logs": {
+      "subtitle": "アプリのログ (レベル・モジュール別)",
+      "entries": "{{ count }} 件",
+      "empty": "エントリーなし"
+    }
   }
 }

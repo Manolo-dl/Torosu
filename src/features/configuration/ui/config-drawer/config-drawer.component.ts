@@ -1,10 +1,9 @@
 import { Component, computed, inject, linkedSignal, model, signal, untracked } from '@angular/core';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { FormsModule } from '@angular/forms';
-import { TuiDrawer, TuiTabsHorizontal, TuiTab, TuiSwitch, TuiInputNumber } from "@taiga-ui/kit";
+import { TuiInputNumber } from "@taiga-ui/kit";
 import { open as openDialog } from '@tauri-apps/plugin-dialog';
-import { TuiHeader, TuiNavComponent } from "@taiga-ui/layout";
-import { TuiTitle, TuiPopup, TuiButton, TuiCell, TuiInput, TuiLabel } from "@taiga-ui/core";
+import { TuiTitle, TuiCell, TuiInput, TuiLabel } from "@taiga-ui/core";
 import { Router } from '@angular/router';
 import { AppConfig, ConfigurationStore } from '@entities/configuration';
 import { USER_ITEMS } from '@entities/nav-item';
@@ -14,8 +13,10 @@ import { OsuPathStore } from '@entities/osu-path';
 import { NotifyService } from '@shared/services';
 import { PlatformStore } from '@shared/stores';
 import { DEFAULT_LANGUAGE, errorText, LANGUAGES } from '@shared/i18n';
-import { OptionGroupComponent, OptionGroupItem } from '@shared/ui';
+import { ButtonComponent, DrawerComponent, IconComponent, OptionGroupComponent, OptionGroupItem, SectionTitleComponent, SwitchComponent } from '@shared/ui';
 import { NameFormatField, NameFormatFieldComponent, NameFormatPreset } from '../name-format-field/name-format-field.component';
+import { AppearanceSettingsComponent } from '../appearance-settings/appearance-settings.component';
+import { PerformanceSettingsComponent } from '../performance-settings/performance-settings.component';
 
 /** The names the trainer always gave (`DEFAULT_NAME_FORMAT` in trainer/naming.rs). */
 const DEFAULT_NAME_FORMAT = '{diff} {rate} ({bpm}bpm) ({pitch}) {tasks} {stats}';
@@ -59,9 +60,19 @@ const DEFAULT_CONFIG: AppConfig = {
   dev_mode: false,
 };
 
+/** The settings as text to compare, without the osu! folder (saved apart), keys in order. */
+function comparable(config: AppConfig): string {
+  const { osu_path: _, ...settings } = config;
+  return JSON.stringify(settings, (_key, value) =>
+    value && typeof value === 'object' && !Array.isArray(value)
+      ? Object.fromEntries(Object.entries(value).sort(([a], [b]) => a.localeCompare(b)))
+      : value,
+  );
+}
+
 @Component({
   selector: 'app-config-drawer',
-  imports: [FormsModule, TuiDrawer, TuiHeader, TuiTitle, TuiNavComponent, TuiTabsHorizontal, TuiTab, TuiSwitch, TuiInputNumber, TuiCell, TuiInput, TuiLabel, TuiPopup, TuiButton, NameFormatFieldComponent, OptionGroupComponent, TranslocoPipe],
+  imports: [DrawerComponent, PerformanceSettingsComponent, IconComponent, SectionTitleComponent, SwitchComponent, AppearanceSettingsComponent, FormsModule, TuiTitle, TuiInputNumber, TuiCell, TuiInput, TuiLabel, NameFormatFieldComponent, OptionGroupComponent, TranslocoPipe, ButtonComponent],
   templateUrl: './config-drawer.component.html',
   styleUrl: './config-drawer.component.less',
 })
@@ -79,14 +90,25 @@ export class ConfigDrawerComponent {
   /** Opened by the settings button (`ConfigButtonComponent`), which loads the settings first. */
   readonly open = model.required<boolean>();
   readonly activeTab = signal(0);
+  /** The sections of the settings, in the nav on the drawer's left. */
+  readonly tabs: OptionGroupItem[] = [
+    { tab: 'general', icon: 'settings-2' },
+    { tab: 'appearance', icon: 'palette' },
+    { tab: 'performance', icon: 'gauge' },
+    { tab: 'downloader', icon: 'download' },
+    { tab: 'packs', icon: 'package' },
+    { tab: 'trainer', icon: 'sliders-horizontal' },
+    { tab: 'replays', icon: 'activity' },
+  ].map(({ tab, icon }) => ({ label: `settings.tabs.${tab}`, icon, translate: true }));
+  /** Being saved, as it closes. */
+  readonly saving = signal(false);
   readonly tools = USER_ITEMS.filter(item => item.route !== '/');
 
   /**
-   * Local copy edited by the form; sent to the backend on save. Copied again
-   * from the saved settings each time the drawer opens, so what was not saved
-   * is dropped; but not when those change while it is open. The osu! folder
-   * is the one in use, empty without one: it may have been detected or chosen
-   * after the settings were read.
+   * Local copy edited by the form; saved as the drawer closes. Copied again
+   * from the saved settings each time it opens; but not when those change
+   * while it is open. The osu! folder is the one in use, empty without one:
+   * it may have been detected or chosen after the settings were read.
    */
   readonly draft = linkedSignal({
     source: this.open,
@@ -155,10 +177,27 @@ export class ConfigDrawerComponent {
     { field: '{keys}', meaning: 'settings.nameFormat.packs.keys' },
   ];
 
-  async save() {
+  /**
+   * Saves what changed and closes; there is no cancelling. If the osu!
+   * folder given is not osu!'s it stays open, saying so, to correct it.
+   */
+  async close() {
+    if (this.saving()) return;
+    this.saving.set(true);
+    try {
+      if (await this.save()) this.open.set(false);
+    } finally {
+      this.saving.set(false);
+    }
+  }
+
+  /** Whether it was saved (or nothing had changed). */
+  private async save(): Promise<boolean> {
+    const draft = this.draft();
+    const path = draft.osu_path;
+
     // A new osu! folder is checked first: nothing is saved if it is not osu!'s.
     // Emptied, it is forgotten and the app asks for one again.
-    const path = this.draft().osu_path;
     const pathChanged = (path ?? null) !== this.osuPath.path();
     if (pathChanged) {
       try {
@@ -166,12 +205,19 @@ export class ConfigDrawerComponent {
         else await this.osuPath.clearPath();
       } catch (e) {
         this.notify.error(errorText(this.transloco, e));
-        return;
+        return false;
       }
     }
 
-    await this.store.updateConfig(this.draft());
-    this.open.set(false);
+    const saved = this.store.config() ?? DEFAULT_CONFIG;
+    const settingsChanged = comparable(draft) !== comparable(saved);
+    if (!settingsChanged && !pathChanged) return true;
+
+    if (!(await this.store.updateConfig(draft))) {
+      this.notify.error(this.transloco.translate('settings.saveFailed'));
+      return false;
+    }
+    this.notify.success(this.transloco.translate('settings.saved'));
 
     // The library and collections loaded are the old folder's.
     if (pathChanged) {
@@ -185,6 +231,7 @@ export class ConfigDrawerComponent {
     if (turnedOff || (!this.osuPath.path() && url.startsWith('/user/'))) {
       await this.router.navigate(['/']);
     }
+    return true;
   }
 
   // Set with `update`, which redraws the form: after the dialog nothing else

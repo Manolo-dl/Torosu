@@ -17,6 +17,8 @@ interface DownloadProgress {
   beatmapSetId: number;
   progress: number;
   status: 'downloading' | 'done' | 'failed';
+  /** "Artist - Title", once osu! has said it. */
+  name?: string;
 }
 
 @Injectable({
@@ -43,8 +45,8 @@ export class BeatmapDownloadService implements OnDestroy {
     this.downloadQueue.setDownloading(true);
 
     this.unlisten = await listen<DownloadProgress>('download:progress', (event) => {
-      const { beatmapSetId, progress, status } = event.payload;
-      this.downloadQueue.updateStatus(beatmapSetId, status, progress);
+      const { beatmapSetId, progress, status, name } = event.payload;
+      this.downloadQueue.updateStatus(beatmapSetId, status, progress, name);
     });
 
     try {

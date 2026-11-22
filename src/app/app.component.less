@@ -5,13 +5,15 @@ tui-root {
   overflow: hidden;
 }
 
+/* The frame (title bar and sidebar) on the chrome colour, and the pages on a
+   rounded panel inside it, with the accents' glow behind. */
 .app-shell {
   display: flex;
   flex-direction: column;
   flex: 1;
   overflow: hidden;
-  background: var(--tui-background-base);
-  color: var(--tui-text-primary);
+  background: var(--chrome);
+  color: var(--text-1);
 }
 
 .app-body {
@@ -21,15 +23,35 @@ tui-root {
 }
 
 .app-content {
+  position: relative;
   flex: 1;
-  overflow-y: auto;
   display: flex;
   flex-direction: column;
+  min-inline-size: 0;
+  margin: 0 var(--space-2) var(--space-2) 0;
+  border: 1px solid var(--line-subtle);
+  border-radius: var(--radius-xl);
+  background: var(--ambient), var(--surface-0);
+  overflow: hidden;
+}
+
+/* Behind the pages: both accents rising from the top and the bottom as
+   osu!'s music gets loud (its opacity and scale, set by appMusicPulse).
+   Under the pages by coming first, no negative z-index: see .app-content. */
+.music-glow {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(60% 45% at 50% -5%, color-mix(in oklch, var(--accent) 22%, transparent), transparent 70%),
+    radial-gradient(55% 40% at 50% 105%, color-mix(in oklch, var(--accent-2) 18%, transparent), transparent 70%);
+  opacity: 0;
+  pointer-events: none;
 }
 
 .page-outlet {
+  position: relative;
   flex: 1;
-  padding: 1.8rem;
+  padding: var(--space-8);
   overflow-y: auto;
-  background: var(--tui-background-base);
+  /* How each page comes in: styles.css, since the pages are not in this template. */
 }

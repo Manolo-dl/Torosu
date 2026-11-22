@@ -161,3 +161,25 @@ export function maniaAccuracy(counts: ManiaCounts, mods = 0): number {
     const points = counts.max * max + counts.n300 * 300 + counts.n200 * 200 + counts.n100 * 100 + counts.n50 * 50;
     return (points / (total * max)) * 100;
 }
+
+export type GradeLetter = 'SS' | 'S' | 'A' | 'B' | 'C' | 'D';
+
+/** A play's grade, as osu!mania gives it: silver with HD, FI or FL. */
+export interface Grade {
+    letter: GradeLetter;
+    silver: boolean;
+}
+
+/** HD, FL, FI: the mods that make SS and S silver. */
+const SILVER_MODS = (1 << 3) | (1 << 10) | (1 << 20);
+
+/**
+ * The grade osu! stable gives a mania play, from its accuracy alone: SS at
+ * 100%, then S from 95%, A from 90%, B from 80%, C from 70%, D below.
+ */
+export function maniaGrade(counts: ManiaCounts, mods = 0): Grade {
+    const accuracy = maniaAccuracy(counts, mods);
+    const letter: GradeLetter =
+        accuracy >= 100 ? 'SS' : accuracy >= 95 ? 'S' : accuracy >= 90 ? 'A' : accuracy >= 80 ? 'B' : accuracy >= 70 ? 'C' : 'D';
+    return { letter, silver: (letter === 'SS' || letter === 'S') && (mods & SILVER_MODS) !== 0 };
+}

@@ -2,6 +2,7 @@ import { DecimalPipe } from '@angular/common';
 import { booleanAttribute, ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { msdColor, textOn } from '@shared/utils';
+import { TooltipDirective } from '@shared/ui';
 import { Dan, Skill } from '../../osu-reader.model';
 import { DanEmblemComponent } from '../dan-emblem/dan-emblem.component';
 
@@ -23,7 +24,7 @@ interface Delta {
  */
 @Component({
   selector: 'app-skill-summary',
-  imports: [DanEmblemComponent, DecimalPipe, TranslocoPipe],
+  imports: [DanEmblemComponent, DecimalPipe, TooltipDirective, TranslocoPipe],
   templateUrl: './skill-summary.component.html',
   styleUrl: './skill-summary.component.less',
   host: {
@@ -70,11 +71,11 @@ export class SkillSummaryComponent {
   /** `MinaCalc` or `Prism`. */
   readonly calculator = computed(() => (this.msd()?.calculator === 'prism' ? 'Prism' : 'MinaCalc'));
 
-  readonly msdHint = computed(() => {
-    const msd = this.msd();
-    if (!msd) return '';
-    const lines = msd.skillsets.map(s => `${s.name}: ${s.value.toFixed(2)}`);
-    return [this.transloco.translate('trainer.msd.hint', { calc: this.calculator() }), ...lines].join('\n');
+  /** Each skillset, with its share of the highest, for the MSD's card. */
+  readonly skillsets = computed(() => {
+    const skillsets = this.msd()?.skillsets ?? [];
+    const top = Math.max(...skillsets.map(s => s.value), 1);
+    return skillsets.map(s => ({ ...s, share: Math.max(0, Math.min(1, s.value / top)) }));
   });
 
   /** Only against an MSD on the same scale (see `sameMsdScale`). */
@@ -84,8 +85,10 @@ export class SkillSummaryComponent {
     return delta(skill.msd.overall - other.msd.overall, 2);
   });
 
-  danHint(dan: Dan): string {
-    return this.transloco.translate('trainer.dan.hint', { confidence: Math.round(dan.confidence * 100) });
+  /** What its variant (`++` ... `--`) says about where in its dan the map is. */
+  variantText(dan: Dan): string {
+    const place = { '++': 'top', '+': 'high', '-': 'low', '--': 'bottom' }[dan.variant ?? ''] ?? 'mid';
+    return this.transloco.translate(`trainer.dan.variants.${place}`, { dan: dan.label });
   }
 
   /**

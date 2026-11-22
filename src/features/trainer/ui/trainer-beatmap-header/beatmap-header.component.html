@@ -1,50 +1,84 @@
-<div class="banner">
-  @if (reader.backgroundUrl(); as url) {
-    <img alt="" class="background" [src]="url" />
-  }
+@if (reader.data()) {
+  <div class="banner">
+    @if (reader.backgroundUrl(); as url) {
+      <!-- Tracked by its URL: a new map's background comes in anew. -->
+      @for (background of [url]; track background) {
+        <img alt="" class="background" [src]="background" />
+      }
+    } @else {
+      <app-triangles class="fallback" />
+    }
+    <app-particles />
 
-  <div class="overlay">
-    <div tuiTitle="m" class="info">
-      <span class="title">
-        {{ reader.title() }} <span class="artist">— {{ reader.artist() }}</span>
-      </span>
-      <span tuiSubtitle>{{ reader.version() }} · {{ 'trainer.mappedBy' | transloco: { mapper: reader.mapper() } }}</span>
-    </div>
+    <div class="overlay">
+      <div class="info">
+        <span class="title">{{ reader.title() }}</span>
+        <span class="artist">{{ reader.artist() }}</span>
+        <span class="meta">
+          <span class="version">{{ reader.version() }}</span>
+          <span class="mapper">{{ 'trainer.mappedBy' | transloco: { mapper: reader.mapper() } }}</span>
+        </span>
+      </div>
 
-    <div class="side">
-      @if (played(); as played) {
-        @if (skillDisplay() !== 'none') {
-          <span class="mods" [title]="'trainer.skill.withMods' | transloco: { mods: played.mods.name, rate: played.mods.rate }">
-            {{ played.mods.name }}
-          </span>
+      <div class="side">
+        @if (played(); as played) {
+          @if (skillDisplay() !== 'none') {
+            <span class="mods" [title]="'trainer.skill.withMods' | transloco: { mods: played.mods.name, rate: played.mods.rate }">
+              {{ played.mods.name }}
+            </span>
+          }
         }
-      }
-      <app-skill-summary size="l" onImage [skill]="shownSkill()" [display]="skillDisplay()" />
-      @let current = mode();
-      @if (current !== null) {
-        <tui-icon
-          class="mode"
-          [icon]="modeIcon(current)"
-          [style.color]="modeColor(current)"
-          [attr.title]="modeName()"
-          [attr.aria-label]="modeName()"
-        />
-      }
-      <app-star-badge size="l" class="stars" [stars]="reader.stars()" />
-      @if (reader.data()?.paths) {
-        <button
-          appearance="floating"
-          iconStart="@tui.download"
-          size="s"
-          tuiIconButton
-          type="button"
-          [title]="'trainer.exportOsz' | transloco"
-          [loading]="reader.exporting()"
-          (click)="reader.exportOsz()"
-        >
-          {{ 'trainer.exportOsz' | transloco }}
-        </button>
+        <app-skill-summary size="l" onImage [skill]="shownSkill()" [display]="skillDisplay()" />
+        @let current = mode();
+        @if (current !== null) {
+          <app-icon
+            class="mode"
+            [name]="modeIcon(current)"
+            [style.color]="modeColor(current)"
+            [attr.title]="modeName()"
+            [attr.aria-label]="modeName()"
+          />
+        }
+        <app-star-badge size="l" class="stars" [stars]="reader.stars()" />
+        @if (reader.data()?.paths) {
+          <button
+            appButton="secondary"
+            iconOnly
+            icon="@tui.download"
+            size="s"
+            type="button"
+            [title]="'trainer.exportOsz' | transloco"
+            [loading]="reader.exporting()"
+            (click)="reader.exportOsz()"
+          >
+            {{ 'trainer.exportOsz' | transloco }}
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+} @else {
+  <!-- No map yet: what osu! is doing, and what to do. -->
+  @let status = reader.status();
+  <div class="banner empty" role="status">
+    <app-triangles />
+    <app-particles [density]="0.6" />
+    <app-mode-orbit class="orbit" />
+    <div class="message">
+      @switch (status.state) {
+        @case ('error') {
+          <strong>{{ 'trainer.banner.error' | transloco }}</strong>
+          <p>{{ status.message }}</p>
+        }
+        @case ('connected') {
+          <strong>{{ 'trainer.banner.select' | transloco }}</strong>
+          <p>{{ 'trainer.banner.selectHint' | transloco }}</p>
+        }
+        @default {
+          <strong>{{ 'trainer.banner.waiting' | transloco }}</strong>
+          <p>{{ 'trainer.banner.waitingHint' | transloco }}</p>
+        }
       }
     </div>
   </div>
-</div>
+}

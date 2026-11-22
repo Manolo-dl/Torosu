@@ -1,17 +1,17 @@
 @switch (store.status().state) {
   @case ('connected') {
-    <span appearance="positive" size="l" tuiBadge tuiStatus="var(--tui-status-positive)" class="connected">
-      Connected
+    <span appBadge tone="success" size="l" class="connected" dot>
+      {{ 'osuReader.badge.connected' | transloco }}
     </span>
   }
   @case ('waiting') {
-    <span appearance="neutral" size="l" tuiBadge tuiStatus="var(--tui-text-tertiary)">
-      Waiting for osu!
+    <span appBadge tone="neutral" size="l" dot>
+      {{ 'osuReader.badge.waiting' | transloco }}
     </span>
   }
   @case ('error') {
-    <span appearance="negative" size="l" tuiBadge tuiStatus="var(--tui-status-negative)">
-      Can't read osu!
+    <span appBadge tone="danger" size="l" dot>
+      {{ 'osuReader.badge.error' | transloco }}
     </span>
   }
 }

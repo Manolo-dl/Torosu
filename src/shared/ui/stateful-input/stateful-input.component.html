@@ -12,7 +12,7 @@
             [disabled]="disabled()"
             [readonly]="readonly()"
             (input)="value.set($any($event.target).value)"
-            (blur)="touched.set(true)"
+            (blur)="touch.emit()"
         />
     </tui-textfield>
 

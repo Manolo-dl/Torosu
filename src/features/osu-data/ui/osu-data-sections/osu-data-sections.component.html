@@ -1,22 +1,22 @@
 @if (store.data()) {
-  <div appearance="floating" tuiCardLarge="compact">
-    <tui-accordion size="s" [closeOthers]="false">
+  <div appCard>
+    <app-accordion size="s" [closeOthers]="false">
       @for (section of sections(); track section[0]) {
-        <button type="button" [tuiAccordion]="false">
-          <span class="section">
+        <app-accordion-item>
+          <span appAccordionHeading class="section">
             <span class="name">{{ section[0] }}</span>
-            <span appearance="neutral" size="s" tuiBadge>{{ typeLabel(section[1]) }}</span>
+            <span appBadge tone="neutral" size="s">{{ typeLabel(section[1]) }}</span>
           </span>
-        </button>
-        <!-- Rendered only while open, so big sections cost nothing while closed -->
-        <tui-expand>
-          <app-osu-field-tree *tuiItem [value]="section[1]" />
-        </tui-expand>
+          <!-- Made only while open, so big sections cost nothing while closed -->
+          <ng-template appAccordionContent>
+            <app-osu-field-tree [value]="section[1]" />
+          </ng-template>
+        </app-accordion-item>
       }
-    </tui-accordion>
+    </app-accordion>
   </div>
 } @else {
-  <div appearance="floating" tuiCardLarge="compact">
-    <p class="empty">No data received yet.</p>
+  <div appCard>
+    <p class="empty">{{ 'dev.osuData.empty' | transloco }}</p>
   </div>
 }

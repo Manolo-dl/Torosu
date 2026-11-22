@@ -1,11 +1,19 @@
-<div appearance="floating" tuiCardLarge="compact">
+<div appCard>
   <header>
-    <h3 tuiTitle>{{ 'trainer.convert' | transloco: { number: number() } }}</h3>
+    <h3 class="title">
+      <span class="number">{{ number() }}</span>
+      {{ 'trainer.convert' | transloco: { number: number() } }}
+      @if (convert().tasks.length > 0) {
+        <span appBadge size="s">
+          {{ convert().tasks.length === 1 ? ('trainer.oneTask' | transloco) : ('trainer.tasksCount' | transloco: { count: convert().tasks.length }) }}
+        </span>
+      }
+    </h3>
     <div class="actions">
       <button
-        iconStart="@tui.plus"
+        appButton="primary"
+        icon="@tui.plus"
         size="s"
-        tuiButton
         type="button"
         [disabled]="availableTasksFiltered().length === 0"
         [tuiDropdown]="taskMenu"
@@ -14,10 +22,10 @@
         {{ 'trainer.addTask' | transloco }}
       </button>
       <button
-        appearance="flat"
-        iconStart="@tui.copy"
+        appButton="ghost"
+        iconOnly
+        icon="@tui.copy"
         size="s"
-        tuiIconButton
         type="button"
         [title]="'trainer.duplicateTitle' | transloco"
         (click)="trainer.duplicateConvert(convert().id)"
@@ -25,10 +33,10 @@
         {{ 'trainer.duplicate' | transloco }}
       </button>
       <button
-        appearance="flat"
-        iconStart="@tui.x"
+        appButton="ghost"
+        iconOnly
+        icon="@tui.x"
         size="s"
-        tuiIconButton
         type="button"
         [title]="'trainer.removeTitle' | transloco"
         [disabled]="trainer.converts().length === 1"
@@ -38,17 +46,12 @@
       </button>
     </div>
     <ng-template #taskMenu>
-      <tui-data-list>
-        @for (type of availableTasksFiltered(); track type) {
-          <button tuiOption type="button" (click)="addTask(type)">
-            {{ taskLabels[type] | transloco }}
-          </button>
-        }
-      </tui-data-list>
+      <app-trainer-task-menu [types]="availableTasksFiltered()" (pick)="addTask($event)" />
     </ng-template>
   </header>
 
   @if (convert().tasks.length > 0 && preview(); as skill) {
+    @if ((skill.dan && skillDisplay() !== 'msd') || (skill.msd && skillDisplay() !== 'dan')) {
     <div class="result" [class.stale]="stale()" [attr.aria-busy]="stale()">
       <span class="result-label">{{ 'trainer.skill.result' | transloco }}</span>
       <app-skill-summary
@@ -57,19 +60,29 @@
         [compareTo]="reader.skill()"
       />
     </div>
+    }
   }
 
   <div class="list" cdkDropList (cdkDropListDropped)="onDrop($event)">
     @for (entry of convert().tasks; track entry.id) {
-      <div class="task" cdkDrag [class.skipped]="isSkipped(entry.task.type)">
-        <tui-icon icon="@tui.grip-vertical" class="handle" cdkDragHandle />
+      <div
+        class="task"
+        cdkDrag
+        animate.enter="task-in"
+        [class.skipped]="isSkipped(entry.task.type)"
+        [style.--task-hue]="looks[entry.task.type].hue"
+      >
+        <span class="tile" cdkDragHandle [appTooltip]="'trainer.dragTask' | transloco">
+          <app-icon class="kind" [name]="looks[entry.task.type].icon" />
+          <app-icon class="grip" name="@tui.grip-vertical" />
+        </span>
 
         <div class="content">
           <span class="label">
             {{ taskLabels[entry.task.type] | transloco }}
             @if (isSkipped(entry.task.type)) {
               <span class="skipped-note">
-                <tui-icon icon="@tui.ban" />
+                <app-icon name="@tui.ban" />
                 {{ skippedReason(entry.task.type) }}
               </span>
             }
@@ -107,11 +120,17 @@
                 />
               </tui-textfield>
 
+              <app-trainer-quick-rates
+                class="quick"
+                [rate]="entry.task.params.rate"
+                (rateChange)="onRateInput(entry.id, '' + $event, entry.task.params)"
+              />
+
               @if (!autoPitch()) {
                 <label tuiLabel class="option">
                   <input
                     size="s"
-                    tuiCheckbox
+                    appCheckbox
                     type="checkbox"
                     [ngModel]="entry.task.params.adjustPitch"
                     (ngModelChange)="onRateOptionChange(entry.id, entry.task.params, { adjustPitch: $event })"
@@ -123,7 +142,7 @@
               <label tuiLabel class="option">
                 <input
                   size="s"
-                  tuiCheckbox
+                  appCheckbox
                   type="checkbox"
                   [ngModel]="entry.task.params.scaleStoryboard"
                   (ngModelChange)="onRateOptionChange(entry.id, entry.task.params, { scaleStoryboard: $event })"
@@ -134,7 +153,7 @@
               <label tuiLabel class="option">
                 <input
                   size="s"
-                  tuiCheckbox
+                  appCheckbox
                   type="checkbox"
                   [disabled]="!trainer.ffmpegAvailable()"
                   [ngModel]="entry.task.params.scaleVideo && trainer.ffmpegAvailable()"
@@ -145,27 +164,26 @@
             </div>
 
             @if (!trainer.ffmpegAvailable()) {
-              <div appearance="neutral" size="s" tuiNotification [innerHTML]="'trainer.rate.noFfmpeg' | transloco"></div>
+              <div appNotice="neutral" size="s" [innerHTML]="'trainer.rate.noFfmpeg' | transloco"></div>
             } @else if (entry.task.params.scaleVideo) {
-              <div appearance="info" size="s" tuiNotification>{{ 'trainer.rate.videoSlow' | transloco }}</div>
+              <div appNotice="info" size="s">{{ 'trainer.rate.videoSlow' | transloco }}</div>
             }
 
             @if (entry.task.params.scaleStoryboard) {
               <div
-                appearance="info"
+                appNotice="info"
                 size="s"
-                tuiNotification
                 [innerHTML]="'trainer.rate.storyboard' | transloco: { rate: entry.task.params.rate }"
               ></div>
             }
           }
 
           @if (entry.task.type === 'SVNormalizer') {
-            <div appearance="info" size="s" tuiNotification>{{ 'trainer.sv.description' | transloco }}</div>
+            <div appNotice="info" size="s">{{ 'trainer.sv.description' | transloco }}</div>
           }
 
           @if (entry.task.type === 'NoLn') {
-            <div appearance="info" size="s" tuiNotification>{{ 'trainer.noLn.description' | transloco }}</div>
+            <div appNotice="info" size="s">{{ 'trainer.noLn.description' | transloco }}</div>
           }
 
           @if (entry.task.type === 'ShortLn') {
@@ -210,7 +228,7 @@
             <label tuiLabel class="option">
               <input
                 size="s"
-                tuiCheckbox
+                appCheckbox
                 type="checkbox"
                 [ngModel]="entry.task.params.reworkExistingLn"
                 (ngModelChange)="onFlnChange(entry.id, entry.task.params, { reworkExistingLn: $event })"
@@ -276,7 +294,7 @@
             <label tuiLabel class="option">
               <input
                 size="s"
-                tuiCheckbox
+                appCheckbox
                 type="checkbox"
                 [ngModel]="entry.task.params.keepJacks"
                 (ngModelChange)="onKeyChange(entry.id, entry.task.params, { keepJacks: $event })"
@@ -287,10 +305,10 @@
         </div>
 
         <button
-          appearance="flat"
-          iconStart="@tui.trash-2"
+          appButton="ghost"
+          iconOnly
+          icon="@tui.trash-2"
           size="s"
-          tuiIconButton
           type="button"
           (click)="trainer.removeTask(convert().id, entry.id)"
         >
@@ -298,7 +316,10 @@
         </button>
       </div>
     } @empty {
-      <p class="empty">{{ 'trainer.noTasks' | transloco }}</p>
+      <div class="empty">
+        <app-icon name="@tui.layers" />
+        <p>{{ 'trainer.noTasks' | transloco }}</p>
+      </div>
     }
   </div>
 </div>

@@ -1,5 +1,5 @@
 import { TranslocoPipe } from '@jsverse/transloco';
-import { ChangeDetectionStrategy, Component, input, model } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, model, output } from '@angular/core';
 import { TuiError, TuiInput } from '@taiga-ui/core';
 import { DisabledReason, ValidationError, WithOptionalFieldTree } from '@angular/forms/signals';
 
@@ -13,7 +13,13 @@ import { DisabledReason, ValidationError, WithOptionalFieldTree } from '@angular
 export class StatefulInputComponent {
   value = model<string>('');
 
-  touched = model<boolean>(false);
+  /**
+   * From the form (`[formField]`); the input only says it was left with
+   * `touch`. Kept here as a model before, it stayed true after the form was
+   * reset, and an emptied field showed it was required.
+   */
+  touched = input<boolean>(false);
+  readonly touch = output<void>();
 
   disabled = input<boolean>(false);
   disabledReasons = input<readonly DisabledReason[]>([]);

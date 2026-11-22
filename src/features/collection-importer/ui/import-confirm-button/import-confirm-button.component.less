@@ -1,8 +1,65 @@
 :host {
   display: flex;
-  gap: 0.5rem;
+  flex-direction: column;
+  gap: var(--space-3);
+}
 
-  [tuiButton]:first-child {
-    flex: 1;
+.import {
+  align-self: flex-start;
+}
+
+.osu-closed {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--success);
+  font-size: var(--text-sm);
+  animation: rise-in var(--duration-3) var(--ease-out);
+}
+
+// What the import changed.
+.done {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid color-mix(in oklch, var(--success) 40%, var(--line));
+  border-radius: var(--radius-lg);
+  background: color-mix(in oklch, var(--success) 7%, transparent);
+  animation: rise-in var(--duration-3) var(--ease-out);
+}
+
+.done-icon {
+  color: var(--success);
+  font-size: 1.375rem;
+  line-height: 1;
+}
+
+.done-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+
+  p {
+    margin: 0;
+    color: var(--text-2);
+    font-size: var(--text-sm);
+  }
+
+  .done-title {
+    color: var(--text-1);
+    font-weight: var(--weight-bold);
+  }
+
+  .backup {
+    color: var(--text-3);
+    font-size: var(--text-xs);
+  }
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
   }
 }

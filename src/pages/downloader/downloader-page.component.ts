@@ -1,11 +1,9 @@
 import { TranslocoPipe } from '@jsverse/transloco';
 import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
-import { BeatmapImportComponent, BeatmapQueueComponent, OsuCookieInputComponent, UserStore } from '@features/downloader';
+import { BeatmapImportComponent, BeatmapQueueComponent, DownloadQueueStore, OsuCookieInputComponent, UserStore } from '@features/downloader';
 import { OsuDbStore } from '@entities/osu-db';
 import { ConfigurationStore } from '@entities/configuration';
-import { TuiTitle, TuiNotificationDirective, TuiButton } from "@taiga-ui/core";
-import { PageHeaderComponent } from '@shared/ui';
-import { TuiAccordion } from '@taiga-ui/kit';
+import { AccordionComponent, AccordionItemComponent, ButtonComponent, IconComponent, NoticeComponent, PageHeaderComponent, SectionTitleComponent } from '@shared/ui';
 
 interface PageInfo {
   title: string,
@@ -19,7 +17,7 @@ interface Step {
 
 @Component({
   selector: 'app-downloader',
-  imports: [PageHeaderComponent, BeatmapImportComponent, BeatmapQueueComponent, OsuCookieInputComponent, TuiTitle, TuiNotificationDirective, TuiButton, TuiAccordion, TranslocoPipe],
+  imports: [IconComponent, PageHeaderComponent, SectionTitleComponent, AccordionComponent, AccordionItemComponent, NoticeComponent, ButtonComponent, BeatmapImportComponent, BeatmapQueueComponent, OsuCookieInputComponent, TranslocoPipe],
   templateUrl: './downloader-page.component.html',
   styleUrl: './downloader-page.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -27,6 +25,7 @@ interface Step {
 export class DownloaderPageComponent implements OnInit {
   readonly osuDb = inject(OsuDbStore);
   readonly userStore = inject(UserStore);
+  readonly downloadQueue = inject(DownloadQueueStore);
   private readonly config = inject(ConfigurationStore);
 
   /** With `load_library` on, the library loads by itself to skip maps already owned. */

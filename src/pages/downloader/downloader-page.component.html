@@ -1,74 +1,76 @@
 <div class="page-container">
-  <app-page-header [heading]="'nav.downloader' | transloco" [subtitle]="'downloader.subtitle' | transloco" />
+  <app-page-header icon="download" [heading]="'nav.downloader' | transloco" [subtitle]="'downloader.subtitle' | transloco" />
 
-  <section>
-    <tui-accordion>
-      @for (item of downloaderInfo; track $index) {
-        <button
-          type="button"
-          [tuiAccordion]="false"
-        >
-        {{ item.title | transloco }}
-        </button>
-        <tui-expand>
-          <div class="step-container">
-            @for (step of item.steps; track $index) {
-              <div class="step">
-                <span><strong>{{ $index + 1 }}.</strong> {{ step.desc | transloco }}</span>
-                @if (step.image) {
-                  <img [src]="step.image" [alt]="'downloader.stepImage' | transloco: { number: $index + 1 }" />
-                }
-              </div>
-            }
+  @let session = !!userStore.user()?.osuSession;
+  @let queued = downloadQueue.queue().length > 0;
+
+  <!-- Three steps, one after another: the session, the maps, the queue. -->
+  <ol class="steps">
+    <li class="step" [class.done]="session">
+      <span class="number">@if (session) { <app-icon name="check" /> } @else { 1 }</span>
+      <h2 appSectionTitle>{{ 'downloader.steps.session' | transloco }}</h2>
+      <app-osu-cookie-input />
+    </li>
+
+    <li class="step" [class.done]="queued" [class.locked]="!session">
+      <span class="number">@if (queued) { <app-icon name="check" /> } @else { 2 }</span>
+      <h2 appSectionTitle>{{ 'downloader.steps.import' | transloco }}</h2>
+      @if (session) {
+        @if (!osuDb.isLoaded()) {
+          <div appNotice="info" size="s" class="library">
+            <p class="notice-title">{{ 'downloader.libraryNotLoaded' | transloco }}</p>
+            <p>{{ 'downloader.libraryHint' | transloco }}</p>
+            <div class="notice-actions">
+              <button
+                appButton="soft"
+                type="button"
+                size="s"
+                icon="library-big"
+                [loading]="osuDb.isLoading()"
+                (click)="loadLibrary()"
+              >
+                {{ (osuDb.isLoading() ? 'downloader.loading' : 'downloader.loadLibrary') | transloco }}
+              </button>
+            </div>
           </div>
-        </tui-expand>
+        }
+        <app-beatmap-import />
+      } @else {
+        <p class="locked-hint"><app-icon name="lock" /> {{ 'downloader.steps.needSession' | transloco }}</p>
       }
-    </tui-accordion>
-  </section>
+    </li>
+
+    <li class="step" [class.locked]="!queued">
+      <span class="number">3</span>
+      <h2 appSectionTitle>{{ 'downloader.steps.queue' | transloco }}</h2>
+      @if (queued || downloadQueue.skippedCount() > 0) {
+        <app-beatmap-queue />
+      } @else {
+        <p class="locked-hint"><app-icon name="inbox" /> {{ 'downloader.steps.queueEmpty' | transloco }}</p>
+      }
+    </li>
+  </ol>
 
   <section>
-    <h2 tuiTitle="m">{{ 'downloader.session' | transloco }}</h2>
-    <app-osu-cookie-input />
+    <h2 appSectionTitle>{{ 'downloader.steps.help' | transloco }}</h2>
+    <app-accordion>
+      @for (item of downloaderInfo; track $index) {
+        <app-accordion-item [heading]="item.title | transloco">
+          <ol class="guide">
+            @for (step of item.steps; track $index) {
+              <li class="guide-step">
+                <span class="guide-number">{{ $index + 1 }}</span>
+                <div class="body">
+                  <span>{{ step.desc | transloco }}</span>
+                  @if (step.image) {
+                    <img [src]="step.image" [alt]="'downloader.stepImage' | transloco: { number: $index + 1 }" loading="lazy" />
+                  }
+                </div>
+              </li>
+            }
+          </ol>
+        </app-accordion-item>
+      }
+    </app-accordion>
   </section>
-
-  @if (!osuDb.isLoaded()) {
-    <div
-      size="l"
-      tuiNotification
-    >
-      <div
-        tuiTitle="m"
-        [style.padding-inline-end.rem]="2"
-      >
-        {{ 'downloader.libraryNotLoaded' | transloco }}
-        <div tuiSubtitle>{{ 'downloader.libraryHint' | transloco }}</div>
-        <div>
-          <button
-          type="button"
-            appearance="primary"
-            size="m"
-            tuiButton
-            [disabled]="osuDb.isLoading()"
-            (click)="loadLibrary()"
-          >
-            {{ (osuDb.isLoading() ? 'downloader.loading' : 'downloader.loadLibrary') | transloco }}
-          </button>
-        </div>
-      </div>
-    </div>
-  }
-
-  <!-- Nothing can be downloaded without the cookie. -->
-  @if (userStore.user()?.osuSession) {
-    <section>
-      <h2 tuiTitle="m">{{ 'downloader.import' | transloco }}</h2>
-      <app-beatmap-import />
-    </section>
-
-    <section>
-      <h2 tuiTitle="m">{{ 'downloader.queueTitle' | transloco }}</h2>
-      <app-beatmap-queue />
-    </section>
-  }
-
 </div>

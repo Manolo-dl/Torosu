@@ -1,24 +1,47 @@
-<tui-textfield [invalid]="!!error()">
-  <input
-    [placeholder]="'packs.diffName' | transloco"
-    tuiInput
-    [formField]="nameForm.newDiffName"
-  />
-</tui-textfield>
-@if (error(); as message) {
-  <tui-icon
-    icon="@tui.circle-alert"
-    class="error"
-    [tuiHint]="message | transloco"
-  />
-}
-<button
-  appearance="flat"
-  iconStart="@tui.trash-2"
-  size="s"
-  tuiIconButton
-  type="button"
-  (click)="onRemove()"
->
-  {{ 'packs.remove' | transloco }}
-</button>
+<div class="card" [class.invalid]="!!error()">
+  <!-- Its cover, or its mode's icon. -->
+  <span class="thumb" [style.--mode-color]="modeColor()">
+    @if (cover(); as url) {
+      <img alt="" [src]="url" (error)="cover.set(null)" />
+    } @else {
+      <app-icon [name]="modeIcon()" />
+    }
+  </span>
+
+  <div class="text">
+    <!-- Where it comes from: its stars, its map and its own name. -->
+    <span class="source">
+      @if (original(); as diff) {
+        <app-star-badge size="s" class="stars" [stars]="diff.stars" />
+      }
+      <span class="title">{{ set()?.title ?? diff().folderName }}</span>
+      @if (original(); as diff) {
+        <span class="from">[{{ diff.diffName }}]</span>
+      }
+    </span>
+    <div class="name-row">
+      <tui-textfield [invalid]="!!error()">
+        <input
+          [placeholder]="'packs.diffName' | transloco"
+          tuiInput
+          [formField]="nameForm.newDiffName"
+        />
+      </tui-textfield>
+      @if (error(); as message) {
+        <app-icon name="circle-alert" class="error" tabindex="0" [appTooltip]="message | transloco" />
+      }
+    </div>
+  </div>
+
+  <button
+    appButton="ghost"
+    iconOnly
+    icon="trash-2"
+    size="s"
+    type="button"
+    class="remove"
+    (click)="onRemove()"
+  >
+    {{ 'packs.remove' | transloco }}
+  </button>
+</div>

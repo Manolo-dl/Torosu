@@ -1,0 +1,18 @@
+// A task's colour, from its --task-hue, and its icon on a tint of it.
+.task-colors() {
+  --task-l: 0.74;
+  --task-color: oklch(var(--task-l) 0.14 var(--task-hue));
+  --task-tint: oklch(0.74 0.14 var(--task-hue) / 0.16);
+}
+
+.task-tile(@size) {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  inline-size: @size;
+  block-size: @size;
+  border-radius: var(--tui-radius-m);
+  background: var(--task-tint);
+  color: var(--task-color);
+  font-size: calc(@size / 2);
+}

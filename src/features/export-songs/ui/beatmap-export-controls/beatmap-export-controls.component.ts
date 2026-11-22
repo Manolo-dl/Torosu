@@ -2,9 +2,8 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { BeatmapExporterStore } from '../../stores/beatmap-exporter.store';
 import { BeatmapsetExportService } from '@shared/services';
-import { ExportControlsComponent, ExportFormat } from '@shared/ui';
+import { ExportControlsComponent, ExportFormat, CardComponent } from '@shared/ui';
 import { TuiTitle } from '@taiga-ui/core';
-import { TuiCardLarge } from '@taiga-ui/layout';
 
 const FORMATS: ExportFormat[] = [
   { value: 'urls', label: 'export.urls' },
@@ -12,7 +11,7 @@ const FORMATS: ExportFormat[] = [
 
 @Component({
   selector: 'app-beatmap-export-controls',
-  imports: [ExportControlsComponent, TuiCardLarge, TuiTitle, TranslocoPipe],
+  imports: [ExportControlsComponent, TuiTitle, TranslocoPipe, CardComponent],
   templateUrl: './beatmap-export-controls.component.html',
   styleUrl: './beatmap-export-controls.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,

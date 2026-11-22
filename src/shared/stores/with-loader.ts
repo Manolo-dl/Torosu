@@ -22,10 +22,7 @@ export interface LoaderOptions<State, Data> {
    */
   success?: (data: Data) => { key: string; params?: Record<string, unknown> };
   failure?: string;
-  /**
-   * Whether `load()` rejects when the read fails (the default), which makes
-   * a resolver stay on the page it was on.
-   */
+  /** Whether `load()` rejects when the read fails (the default). */
   rethrow?: boolean;
 }
 
@@ -110,16 +107,18 @@ export function withLoader<State extends object, Data>(initialState: State, opti
 
 interface Loader {
   isLoaded: Signal<boolean>;
-  load(): Promise<void>;
+  ensureLoaded(): Promise<void>;
 }
 
-/** Resolver that loads a `withLoader` store before its page opens, saying so (`message` is a translation key). */
-export function loaderResolver(store: ProviderToken<Loader>, message: string): ResolveFn<void> {
-  return async () => {
-    const loader = inject(store);
-    if (loader.isLoaded()) return;
-
-    inject(NotifyService).info(inject(TranslocoService).translate(message));
-    await loader.load();
+/**
+ * Resolver that starts loading a `withLoader` store as its page opens,
+ * without waiting for it: the page opens at once and shows the shapes of
+ * what is on its way (skeletons), as `isLoading` says. If it fails, the
+ * store says so and the page offers to try again.
+ */
+export function loaderResolver(store: ProviderToken<Loader>): ResolveFn<void> {
+  return () => {
+    // Failures are told by the store (`failure`); nothing to do here.
+    inject(store).ensureLoaded().catch(() => {});
   };
 }

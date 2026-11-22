@@ -1,32 +1,10 @@
 @import 'shared/styles/mixins';
 
 :host {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
 }
 
-.groups {
-  max-block-size: calc(100vh - 24rem);
-
-  .group-header {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    inline-size: 100%;
-
-    .name {
-      flex: 1;
-      min-inline-size: 0;
-      text-align: start;
-      .ellipsis();
-    }
-  }
-
-  .sets {
-    display: flex;
-    flex-direction: column;
-  }
-}
-
-.empty {
-  .empty-state(2rem 1rem);
-}
+// A collection: picked or not, what it adds, its sets below once opened.
+.collection-rows();

@@ -15,7 +15,7 @@ export const NavStore = signalStore(
 
     withComputed((store) => ({
         isUserMode: computed(() => store.mode() === 'user'),
-        isDevMode: computed(() => store.mode() === 'dev' ? 'Dev Mode' : 'User Mode'),
+        isDevMode: computed(() => store.mode() === 'dev'),
     })),
 
     withMethods((store) => ({

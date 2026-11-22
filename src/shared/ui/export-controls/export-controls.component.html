@@ -1,17 +1,15 @@
-<tui-segmented
+<app-option-group
   size="s"
-  [activeItemIndex]="selectedIndex()"
-  (activeItemIndexChange)="selectedIndex.set($event)"
->
-  @for (fmt of formats; track fmt.value) {
-    <button type="button">{{ fmt.label | transloco }}</button>
-  }
-</tui-segmented>
+  stretch
+  [options]="options"
+  [active]="selectedIndex()"
+  (activeChange)="selectedIndex.set($event)"
+/>
 
 <button
-  iconStart="@tui.download"
+  appButton="primary"
+  icon="@tui.download"
   size="m"
-  tuiButton
   type="button"
   [disabled]="disabled || count === 0"
   (click)="export()"

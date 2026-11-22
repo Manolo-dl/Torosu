@@ -1,10 +1,10 @@
-<app-page-header heading="osu! Data" subtitle="Selected beatmap, read from the osu! memory">
+<app-page-header icon="network" [heading]="'nav.osuData' | transloco" [subtitle]="'dev.osuData.subtitle' | transloco">
   <app-osu-reader-status />
 </app-page-header>
 
 @let status = store.status();
 @if (status.state === 'error') {
-  <div appearance="negative" tuiNotification>
+  <div appNotice="danger">
     {{ status.message }}
   </div>
 }

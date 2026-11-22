@@ -2,32 +2,90 @@
   display: block;
 }
 
-label[tuiInputFiles] {
+.zone {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
   min-block-size: var(--txt-dropzone-height, 8rem);
+  padding: var(--space-5);
+  border: 1.5px dashed var(--line-strong);
+  border-radius: var(--radius-lg);
+  background: color-mix(in oklch, var(--text-1) 3%, transparent);
+  color: var(--text-2);
+  text-align: center;
+  cursor: pointer;
+  transition:
+    border-color var(--duration-2) var(--ease-out),
+    background var(--duration-2) var(--ease-out),
+    box-shadow var(--duration-2) var(--ease-out);
 
-  &.drag-over input {
-    background: var(--tui-background-neutral-1);
-    border-color: var(--tui-text-action-hover);
+  &:hover,
+  &:focus-within {
+    border-color: color-mix(in oklch, var(--accent) 60%, transparent);
+    background: color-mix(in oklch, var(--accent) 6%, transparent);
+
+    .icon {
+      transform: translateY(-3px);
+    }
   }
 
-  .content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
-    color: var(--tui-text-secondary);
+  // A file over the window: the zone calls for it.
+  &.drag-over {
+    border-style: solid;
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    box-shadow: 0 0 0 4px color-mix(in oklch, var(--accent) 18%, transparent);
 
-    tui-icon {
-      font-size: 2rem;
-      color: var(--tui-text-action);
+    .icon {
+      animation: bob 0.9s var(--ease-in-out) infinite;
     }
+  }
+}
 
-    code {
-      font-family: monospace;
-      color: var(--tui-text-primary);
-      background: var(--tui-background-neutral-1);
-      padding: 0 0.3rem;
-      border-radius: var(--tui-radius-xs);
-    }
+// The real input covers the zone, invisible: a click anywhere picks a file.
+.file {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.icon {
+  display: grid;
+  place-items: center;
+  inline-size: 3rem;
+  block-size: 3rem;
+  border-radius: var(--radius-lg);
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-size: 1.5rem;
+  transition: transform var(--duration-3) var(--ease-spring);
+}
+
+.title {
+  font-size: var(--text-sm);
+
+  ::ng-deep code {
+    padding: 0 0.3rem;
+    border-radius: var(--radius-xs);
+    background: color-mix(in oklch, var(--text-1) 10%, transparent);
+    color: var(--text-1);
+    font-family: var(--font-mono);
+  }
+}
+
+.browse {
+  color: var(--accent-text);
+  font-weight: var(--weight-bold);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+@keyframes bob {
+  50% {
+    transform: translateY(-5px);
   }
 }

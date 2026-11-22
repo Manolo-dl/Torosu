@@ -1,0 +1,19 @@
+<header>
+  <app-grade size="l" [grade]="entry().grade" />
+  <div class="titles">
+    <span class="title">{{ entry().map?.title }}</span>
+    <span class="artist">{{ entry().map?.artist }}</span>
+    <span class="meta">
+      <span class="pill">{{ entry().map?.diffName }}</span>
+      <span>{{ analysis().keys }}K · OD {{ analysis().od }}@if (analysis().rate !== 1) { · {{ analysis().rate }}x }</span>
+      @for (mod of entry().mods; track mod) {
+        <span appBadge tone="info" size="s">{{ mod }}</span>
+      }
+      <span class="player">{{ 'replays.playedBy' | transloco: { name: analysis().playerName } }}</span>
+    </span>
+  </div>
+  <div class="score-accuracy">
+    <strong>{{ accuracy() | number: '1.2-2' }}%</strong>
+    <span>{{ 'replays.accuracy' | transloco }}</span>
+  </div>
+</header>

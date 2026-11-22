@@ -146,6 +146,19 @@ export const TASK_LABELS: Record<TrainerTaskType, string> = {
     KeyConverter: 'trainer.tasks.KeyConverter',
 };
 
+/** Each task's icon and hue (OKLCH), so the list tells them apart at a glance. */
+export const TASK_LOOKS: Record<TrainerTaskType, { icon: string; hue: number }> = {
+    RateChange: { icon: '@tui.gauge', hue: 350 },
+    SVNormalizer: { icon: '@tui.waves', hue: 220 },
+    FlnConverter: { icon: '@tui.stretch-vertical', hue: 300 },
+    NoLn: { icon: '@tui.fold-vertical', hue: 55 },
+    ShortLn: { icon: '@tui.scissors', hue: 85 },
+    KeyConverter: { icon: '@tui.piano', hue: 155 },
+};
+
+/** Rates one click away, besides typing one. */
+export const QUICK_RATES = [0.75, 0.8, 0.9, 1.1, 1.2, 1.3, 1.4, 1.5] as const;
+
 /** Modes each task works on. The map's own mode counts, not osu!'s automatic converts. */
 export const TASK_MODES: Record<TrainerTaskType, readonly Ruleset[] | 'all'> = {
     RateChange: 'all',

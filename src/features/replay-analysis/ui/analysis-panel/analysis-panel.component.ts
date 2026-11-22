@@ -1,9 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { ReplayAnalysis } from '@entities/local-scores';
-import { OptionGroupComponent, OptionGroupItem } from '@shared/ui';
+import { OptionGroupComponent, OptionGroupItem, CardComponent } from '@shared/ui';
 import { TuiTitle } from '@taiga-ui/core';
-import { TuiCardLarge } from '@taiga-ui/layout';
 import { ReplayAnalysisStore, ScoreEntry, TimingView } from '../../stores/replay-analysis.store';
 import { AnalysisSummaryComponent } from '../analysis-summary/analysis-summary.component';
 import { HitHistogramComponent } from '../hit-histogram/hit-histogram.component';
@@ -15,7 +14,7 @@ const VIEWS: TimingView[] = ['all', 'rice', 'ln'];
 /** Everything about the analysed play: the summary, then the charts of the view picked. */
 @Component({
     selector: 'app-analysis-panel',
-    imports: [AnalysisSummaryComponent, HitHistogramComponent, KeyStatsComponent, OptionGroupComponent, TimelineComponent, TranslocoPipe, TuiCardLarge, TuiTitle],
+    imports: [AnalysisSummaryComponent, HitHistogramComponent, KeyStatsComponent, OptionGroupComponent, TimelineComponent, TranslocoPipe, TuiTitle, CardComponent],
     templateUrl: './analysis-panel.component.html',
     styleUrl: './analysis-panel.component.less',
     changeDetection: ChangeDetectionStrategy.OnPush,

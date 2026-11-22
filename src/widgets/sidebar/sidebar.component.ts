@@ -1,23 +1,35 @@
 import { TranslocoPipe } from '@jsverse/transloco';
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { filter, map, startWith } from 'rxjs';
+import { getVersion } from '@tauri-apps/api/app';
 import { APP_ITEMS, DEV_ITEMS, NavItem, NavStore, USER_ITEMS } from '@entities/nav-item';
-import { RouterLink, RouterLinkActive } from "@angular/router";
-import { getVersion } from "@tauri-apps/api/app";
 import { ConfigurationStore } from '@entities/configuration';
-import { TuiIcon } from '@taiga-ui/core';
+import { IconComponent } from '@shared/ui';
+import { AppearanceStore } from '@shared/stores';
 
 @Component({
   selector: 'app-sidebar',
-  imports: [RouterLink, RouterLinkActive, TuiIcon, TranslocoPipe],
+  imports: [IconComponent, RouterLink, RouterLinkActive, TranslocoPipe],
   templateUrl: './sidebar.component.html',
   styleUrl: './sidebar.component.less',
+  host: { '[class.collapsed]': 'collapsed()' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SidebarComponent {
-
   readonly navStore = inject(NavStore);
+  readonly appearance = inject(AppearanceStore);
+  /** Only the icons show. */
+  readonly collapsed = this.appearance.sidebarCollapsed;
   private readonly config = inject(ConfigurationStore);
-  readonly version = getVersion()
+  private readonly router = inject(Router);
+
+  readonly version = signal<string | null>(null);
+
+  constructor() {
+    getVersion().then(version => this.version.set(version)).catch(() => {});
+  }
 
   /** The tools, without the ones turned off in the configuration. */
   readonly userItems = computed<NavItem[]>(() => USER_ITEMS.filter(item => !this.config.excludedTools().has(item.route)));
@@ -25,4 +37,21 @@ export class SidebarComponent {
   readonly appItems: NavItem[] = APP_ITEMS;
   /** Changelog, Github, Issues and Support: hidden for now, they have no pages yet. */
   readonly showAppItems = false;
+
+  readonly items = computed(() => (this.navStore.isUserMode() ? this.userItems() : this.devItems));
+
+  private readonly url = toSignal(
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd),
+      map(() => this.router.url),
+      startWith(this.router.url),
+    ),
+    { initialValue: this.router.url },
+  );
+
+  /** Where the indicator sits: the item of the page open, -1 for none. */
+  readonly activeIndex = computed(() => {
+    const url = this.url().split(/[?#]/)[0];
+    return this.items().findIndex(item => (item.route === '/' ? url === '/' : url === item.route || url.startsWith(item.route + '/')));
+  });
 }

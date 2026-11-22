@@ -1,0 +1,102 @@
+.app-notice {
+  --notice-color: var(--info);
+  --notice-icon: url('/assets/taiga-ui/icons/info.svg');
+  --icon-stroke: 0.125rem;
+
+  position: relative;
+  display: block;
+  padding: var(--space-3) var(--space-4) var(--space-3) calc(var(--space-4) + 1.5rem);
+  border: 1px solid color-mix(in oklch, var(--notice-color) 28%, transparent);
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(90deg, color-mix(in oklch, var(--notice-color) 14%, transparent), color-mix(in oklch, var(--notice-color) 6%, transparent));
+  color: var(--text-2);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  animation: notice-in var(--duration-3) var(--ease-out) backwards;
+
+  /* The tone's icon, drawn like app-icon (a mask wider than tall: see there). */
+  &::before {
+    content: '';
+    position: absolute;
+    inset-inline-start: var(--space-4);
+    inset-block-start: calc(var(--space-3) + 0.1rem);
+    inline-size: 1.1rem;
+    block-size: 1.1rem;
+    background: var(--notice-color);
+    -webkit-mask: var(--notice-icon) center / calc(100% + 10 * var(--icon-stroke)) 100% no-repeat;
+    mask: var(--notice-icon) center / calc(100% + 10 * var(--icon-stroke)) 100% no-repeat;
+  }
+
+  b,
+  strong {
+    color: var(--text-1);
+    font-weight: var(--weight-bold);
+  }
+
+  .notice-title {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    margin: 0 0 0.15rem;
+    color: var(--text-1);
+    font-size: var(--text-md);
+    font-weight: var(--weight-bold);
+  }
+
+  .notice-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-block-start: var(--space-3);
+  }
+
+  p {
+    margin: 0;
+  }
+}
+
+.app-notice[data-size='s'] {
+  padding-block: var(--space-2);
+  padding-inline-end: var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: var(--text-xs);
+
+  &::before {
+    inset-block-start: calc(var(--space-2) + 0.1rem);
+    inline-size: 1rem;
+    block-size: 1rem;
+  }
+}
+
+.app-notice[data-tone='success'] {
+  --notice-color: var(--success);
+  --notice-icon: url('/assets/taiga-ui/icons/circle-check.svg');
+}
+
+.app-notice[data-tone='warning'] {
+  --notice-color: var(--warning);
+  --notice-icon: url('/assets/taiga-ui/icons/triangle-alert.svg');
+}
+
+.app-notice[data-tone='danger'] {
+  --notice-color: var(--danger);
+  --notice-icon: url('/assets/taiga-ui/icons/circle-x.svg');
+}
+
+.app-notice[data-tone='neutral'] {
+  --notice-color: var(--text-3);
+}
+
+.app-notice[data-tone='accent'] {
+  --notice-color: var(--accent);
+  --notice-icon: url('/assets/taiga-ui/icons/sparkles.svg');
+}
+
+@keyframes notice-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}

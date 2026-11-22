@@ -1,4 +1,4 @@
 import { loaderResolver } from '@shared/stores';
 import { LocalScoresStore } from './local-scores.store';
 
-export const localScoresResolver = loaderResolver(LocalScoresStore, 'loading.localScores');
+export const localScoresResolver = loaderResolver(LocalScoresStore);

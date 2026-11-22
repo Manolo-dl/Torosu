@@ -1,25 +1,39 @@
 import { DecimalPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { ScrollingModule } from '@angular/cdk/scrolling';
+import { afterRenderEffect, ChangeDetectionStrategy, Component, computed, inject, viewChild } from '@angular/core';
+import { CdkVirtualScrollViewport, ScrollingModule } from '@angular/cdk/scrolling';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { LanguageService } from '@shared/i18n';
-import { OptionGroupComponent, OptionGroupItem } from '@shared/ui';
+import { OptionGroupComponent, OptionGroupItem, BadgeComponent, CardComponent, SkeletonComponent } from '@shared/ui';
 import { TuiInput, TuiScrollControls, TuiScrollRef } from '@taiga-ui/core';
-import { TuiBadge, TuiSwitch } from '@taiga-ui/kit';
-import { TuiCardLarge } from '@taiga-ui/layout';
 import { ReplayAnalysisStore, ScoreEntry } from '../../stores/replay-analysis.store';
+import { GradeComponent, LocalScoresStore } from '@entities/local-scores';
+import { OsuDbStore } from '@entities/osu-db';
 
 /** The local plays with a replay, to pick the one to analyse. */
 @Component({
     selector: 'app-score-list',
-    imports: [DecimalPipe, OptionGroupComponent, ScrollingModule, TranslocoPipe, TuiBadge, TuiCardLarge, TuiInput, TuiScrollControls, TuiScrollRef, TuiSwitch],
+    imports: [GradeComponent, SkeletonComponent, DecimalPipe, OptionGroupComponent, ScrollingModule, TranslocoPipe, TuiInput, TuiScrollControls, TuiScrollRef, BadgeComponent, CardComponent],
     templateUrl: './score-list.component.html',
     styleUrl: './score-list.component.less',
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ScoreListComponent {
     readonly store = inject(ReplayAnalysisStore);
+    private readonly viewport = viewChild(CdkVirtualScrollViewport);
+    private readonly scores = inject(LocalScoresStore);
+    private readonly osuDb = inject(OsuDbStore);
+    /** The plays, and their maps from osu!.db, are being read. */
+    readonly loading = computed(() => this.scores.isLoading() || this.osuDb.isLoading());
     private readonly language = inject(LanguageService).current;
+
+    constructor() {
+        // The list is as tall as its plays: told to the virtual scroll, which
+        // otherwise keeps rendering for the height it measured first.
+        afterRenderEffect(() => {
+            this.store.filtered().length;
+            this.viewport()?.checkViewportSize();
+        });
+    }
 
     /** Dates in the language in use (Angular has no locale data but English's). */
     private readonly dates = computed(() => new Intl.DateTimeFormat(this.language(), { dateStyle: 'medium', timeStyle: 'short' }));
@@ -37,10 +51,6 @@ export class ScoreListComponent {
 
     pickKeys(index: number) {
         this.store.setKeys(index === 0 ? null : this.store.keyCounts()[index - 1]);
-    }
-
-    follow(event: Event) {
-        this.store.setFollow((event.target as HTMLInputElement).checked);
     }
 
     search(event: Event) {

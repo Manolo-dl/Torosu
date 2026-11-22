@@ -31,17 +31,20 @@ export const ConfigurationStore = signalStore(
     })),
 
     withMethods((store) => ({
-        async updateConfig(partial: Partial<AppConfig>) {
+        /** Whether it was saved: the settings stay as they were if not. */
+        async updateConfig(partial: Partial<AppConfig>): Promise<boolean> {
             const current = store.config();
-            if (!current) return;
+            if (!current) return false;
 
             const updated: AppConfig = { ...current, ...partial };
 
             try {
                 await invoke('update_config', { config: updated });
                 patchState(store, { config: updated });
-            } catch {
-                // Handle error if needed
+                return true;
+            } catch (error) {
+                console.error('update_config failed', error);
+                return false;
             }
         },
     })),

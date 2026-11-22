@@ -1,45 +1,69 @@
-<div
-  size="m"
-  tuiNotification
-  [appearance]="userStore.user()?.osuSession ? 'info' : 'warning'"
->
-  <div tuiTitle>
-    <span>
-      {{ 'downloader.session' | transloco }}
-      @if (userStore.user()?.osuSession) {
-        <span appearance="positive" size="s" tuiBadge>{{ 'downloader.cookie.active' | transloco }}</span>
-      } @else {
-        <span appearance="warning" size="s" tuiBadge>{{ 'downloader.cookie.none' | transloco }}</span>
-      }
-    </span>
-    <div tuiSubtitle>
-      <span [innerHTML]="'downloader.cookie.required' | transloco"></span>
-      <span
-        [innerHTML]="(config.config()?.downloader?.save_session ? 'downloader.cookie.saved' : 'downloader.cookie.sessionOnly') | transloco"
-      ></span>
+@if (userStore.user()?.osuSession && !editing()) {
+  <!-- A session in use: a row saying so, to change or remove it. -->
+  <div class="active">
+    <span class="key"><app-icon name="key-round" /></span>
+    <div class="text">
+      <span class="title">
+        {{ 'downloader.cookie.active' | transloco }}
+        <span appBadge tone="success" size="s" live>osu_session</span>
+      </span>
+      <span class="hint">
+        {{ 'downloader.cookie.activeHint' | transloco }}
+        <span [innerHTML]="(config.config()?.downloader?.save_session ? 'downloader.cookie.saved' : 'downloader.cookie.sessionOnly') | transloco"></span>
+      </span>
     </div>
-  </div>
-</div>
-
-<form [formRoot]="osuCookieForm">
-  <app-stateful-input
-    label="downloader.cookie.label"
-    [id]="'osuCookie'"
-    [formField]="osuCookieForm.osuSession"
-    placeholder="downloader.cookie.placeholder" />
-
-  <div class="button-group">
-    <button size="m" tuiButton type="submit">{{ 'downloader.cookie.use' | transloco }}</button>
-    @if (userStore.user()?.osuSession) {
-      <button
-        appearance="negative"
-        size="m"
-        tuiButton
-        type="button"
-        (click)="clearSession()"
-      >
+    <div class="actions">
+      <button appButton="secondary" size="s" icon="pencil" type="button" (click)="editing.set(true)">
+        {{ 'downloader.cookie.change' | transloco }}
+      </button>
+      <button appButton="danger" size="s" icon="trash-2" iconOnly type="button" (click)="clearSession()">
         {{ 'downloader.cookie.clear' | transloco }}
       </button>
-    }
+    </div>
   </div>
-</form>
+} @else {
+  @if (!userStore.user()?.osuSession) {
+    <div appNotice="warning">
+      <p class="notice-title">
+        {{ 'downloader.session' | transloco }}
+        <span appBadge tone="warning" size="s">{{ 'downloader.cookie.none' | transloco }}</span>
+      </p>
+      <p>
+        <span [innerHTML]="'downloader.cookie.required' | transloco"></span>
+        &ngsp;
+        <span
+          [innerHTML]="(config.config()?.downloader?.save_session ? 'downloader.cookie.saved' : 'downloader.cookie.sessionOnly') | transloco"
+        ></span>
+      </p>
+    </div>
+  }
+
+  <form [formRoot]="osuCookieForm">
+    <!-- Hidden as it is typed, as a password: it gives access to the account. -->
+    <app-stateful-input
+      label="downloader.cookie.label"
+      [id]="'osuCookie'"
+      [type]="revealed() ? 'text' : 'password'"
+      [formField]="osuCookieForm.osuSession"
+      placeholder="downloader.cookie.placeholder" />
+
+    <div class="button-group">
+      <button appButton="primary" size="m" type="submit" icon="key-round">{{ 'downloader.cookie.use' | transloco }}</button>
+      <button
+        appButton="ghost"
+        size="m"
+        iconOnly
+        type="button"
+        [icon]="revealed() ? 'eye-off' : 'eye'"
+        (click)="revealed.set(!revealed())"
+      >
+        {{ (revealed() ? 'downloader.cookie.hide' : 'downloader.cookie.show') | transloco }}
+      </button>
+      @if (userStore.user()?.osuSession) {
+        <button appButton="ghost" size="m" type="button" (click)="editing.set(false)">
+          {{ 'settings.cancel' | transloco }}
+        </button>
+      }
+    </div>
+  </form>
+}

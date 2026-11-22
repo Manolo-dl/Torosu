@@ -1,0 +1,116 @@
+:host {
+  position: fixed;
+  inset-block-end: var(--space-5);
+  inset-inline-end: var(--space-5);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-2);
+  max-inline-size: min(24rem, calc(100vw - 2 * var(--space-5)));
+  pointer-events: none;
+}
+
+.toast {
+  --toast-color: var(--info);
+
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  inline-size: 100%;
+  padding: var(--space-3) var(--space-2) var(--space-3) var(--space-4);
+  border: 1px solid color-mix(in oklch, var(--toast-color) 30%, var(--line));
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(90deg, color-mix(in oklch, var(--toast-color) 12%, transparent), transparent 70%),
+    var(--surface-2);
+  box-shadow: var(--shadow-3);
+  color: var(--text-1);
+  overflow: hidden;
+  pointer-events: auto;
+  /* Its own layer, so moving it repaints nothing. */
+  will-change: transform, opacity;
+
+  &[data-tone='success'] { --toast-color: var(--success); }
+  &[data-tone='danger'] { --toast-color: var(--danger); }
+
+  &:hover .timer {
+    animation-play-state: paused;
+  }
+}
+
+.icon {
+  margin-block-start: 0.1rem;
+  color: var(--toast-color);
+  font-size: 1.15rem;
+}
+
+.message {
+  flex: 1;
+  min-inline-size: 0;
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.close {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+  border-radius: var(--radius-sm);
+  color: var(--text-3);
+  font-size: 0.95rem;
+  transition:
+    background var(--duration-1) var(--ease-out),
+    color var(--duration-1) var(--ease-out);
+
+  &:hover {
+    background: color-mix(in oklch, var(--text-1) 8%, transparent);
+    color: var(--text-1);
+  }
+}
+
+/* The time left: shrinks (a transform) for 4.5s, then the toast leaves.
+   Not on the motion tokens: it is a timer, not an animation to reduce. */
+.timer {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  block-size: 2px;
+  background: var(--toast-color);
+  opacity: 0.6;
+  transform-origin: left;
+  animation: time-left 4.5s linear forwards;
+}
+
+@keyframes time-left {
+  to {
+    transform: scaleX(0);
+  }
+}
+
+.toast-enter {
+  animation: toast-in var(--duration-3) var(--ease-spring);
+}
+
+.toast-leave {
+  animation: toast-out var(--duration-2) var(--ease-out) forwards;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.96);
+  }
+}
+
+@keyframes toast-out {
+  to {
+    opacity: 0;
+    transform: translateX(24px) scale(0.98);
+  }
+}

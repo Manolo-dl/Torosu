@@ -1,17 +1,74 @@
 .content {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-    padding-block: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
 }
 
 section {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+
+  [appSectionTitle] {
+    margin-block-end: var(--space-1);
+  }
 }
 
 .hint {
-  font: var(--tui-typography-body-xs);
-  color: var(--tui-text-tertiary);
+  font-size: var(--text-2xs);
+  color: var(--text-3);
+}
+
+/* Under the title: saved on close, or being saved. */
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  align-self: center;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-pill);
+  background: var(--success-soft);
+  color: var(--success);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-bold);
+  white-space: nowrap;
+
+  &.saving {
+    background: var(--accent-soft);
+    color: var(--accent-text);
+
+    app-icon {
+      animation: spin 0.8s linear infinite;
+    }
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+:host {
+  --drawer-width: 52rem;
+}
+
+/* The sections, down the left of the drawer; only their icons when it is narrow. */
+.sections {
+  flex-shrink: 0;
+  inline-size: 12.5rem;
+  padding: var(--space-2) var(--space-3) var(--space-4) var(--space-4);
+  border-inline-end: 1px solid var(--line-subtle);
+  overflow-y: auto;
+}
+
+@container (max-width: 40rem) {
+  .sections {
+    inline-size: auto;
+    padding-inline: var(--space-2);
+
+    ::ng-deep .label {
+      display: none;
+    }
+  }
 }

@@ -1,12 +1,4 @@
-<div appearance="floating" tuiCardLarge="compact" class="card">
-  <label class="follow">
-    <span class="follow-text">
-      {{ 'replays.follow' | transloco }}
-      <span class="hint">{{ 'replays.followHint' | transloco }}</span>
-    </span>
-    <input size="s" tuiSwitch type="checkbox" [checked]="store.settings().follow" (change)="follow($event)" />
-  </label>
-
+<div appCard class="card">
   <tui-textfield iconStart="@tui.search" tuiTextfieldSize="s">
     <input
       [placeholder]="'replays.search' | transloco"
@@ -21,10 +13,27 @@
     <app-option-group [options]="keyOptions()" [active]="keyIndex()" (activeChange)="pickKeys($event)" />
   }
 
-  @if (store.filtered().length === 0) {
+  @if (loading()) {
+    <div class="skeletons" aria-busy="true">
+      @for (row of [0, 1, 2, 3, 4, 5]; track row) {
+        <div class="skeleton-score" [style.--skeleton-delay]="row * 0.08 + 's'">
+          <span class="titles">
+            <app-skeleton [width]="row % 2 === 0 ? '75%' : '60%'" height="0.8rem" />
+            <app-skeleton [width]="row % 3 === 0 ? '45%' : '35%'" height="0.65rem" />
+            <app-skeleton width="30%" height="0.55rem" />
+          </span>
+          <span class="side">
+            <app-skeleton width="3rem" height="0.8rem" />
+            <app-skeleton width="2.25rem" height="1rem" radius="pill" />
+          </span>
+        </div>
+      }
+    </div>
+  } @else if (store.filtered().length === 0) {
     <div class="empty">{{ (store.entries().length ? 'replays.noMatch' : 'replays.none') | transloco }}</div>
   } @else {
-    <cdk-virtual-scroll-viewport itemSize="64" tuiScrollRef class="viewport">
+    <!-- As tall as its plays, up to what the window allows. -->
+    <cdk-virtual-scroll-viewport itemSize="64" tuiScrollRef class="viewport" [style.height.px]="store.filtered().length * 64">
       <tui-scroll-controls />
       <div *cdkVirtualFor="let entry of store.filtered(); trackBy: trackEntry" class="item">
         <button
@@ -35,6 +44,7 @@
           [title]="entry.map ? '' : ('replays.mapMissing' | transloco)"
           (click)="store.select(entry)"
         >
+          <app-grade [grade]="entry.grade" />
           <span class="titles">
             <span class="title">{{ entry.map?.title ?? ('replays.unknownMap' | transloco) }}</span>
             <span class="diff">{{ entry.map?.diffName ?? entry.score.beatmapMd5 }}</span>
@@ -44,10 +54,10 @@
             <span class="accuracy">{{ entry.accuracy | number: '1.2-2' }}%</span>
             <span class="badges">
               @if (entry.map) {
-                <span appearance="neutral" size="s" tuiBadge>{{ entry.map.keys }}K</span>
+                <span appBadge tone="neutral" size="s">{{ entry.map.keys }}K</span>
               }
               @for (mod of entry.mods; track mod) {
-                <span appearance="info" size="s" tuiBadge>{{ mod }}</span>
+                <span appBadge tone="info" size="s">{{ mod }}</span>
               }
             </span>
           </span>

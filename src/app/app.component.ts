@@ -5,21 +5,25 @@ import { HeaderComponent } from "@widgets/header";
 import { SidebarComponent } from "@widgets/sidebar";
 import { OsuPathComponent } from "@widgets/osu-path";
 import { OsuPathStore } from "@entities/osu-path";
-import { PlatformStore } from "@shared/stores";
+import { MusicPulseDirective } from "@entities/osu-reader";
+import { AppearanceStore, PlatformStore } from "@shared/stores";
+import { ToastsComponent } from "@shared/ui";
 import { ConfigurationStore } from "@entities/configuration";
-import { WindowControlsComponent } from "@widgets/window-controls/window-controls.component";
-import { TrainerShortcutsService } from "@features/trainer";
+// Not through the index: it would bring the whole trainer page into the first load.
+import { TrainerShortcutsService } from "@features/trainer/services/trainer-shortcuts.service";
 import { DEFAULT_LANGUAGE, isLanguage, LanguageService } from "@shared/i18n";
 
 @Component({
   selector: "app-root",
-  imports: [RouterOutlet, HeaderComponent, SidebarComponent, OsuPathComponent, TuiRoot, WindowControlsComponent],
+  imports: [MusicPulseDirective, RouterOutlet, HeaderComponent, SidebarComponent, OsuPathComponent, ToastsComponent, TuiRoot],
   templateUrl: "./app.component.html",
   styleUrl: "./app.component.less",
 })
 export class AppComponent implements OnInit {
 
   readonly darkMode = inject(TUI_DARK_MODE);
+  // Applies the saved look (palette, font, theme) before anything shows.
+  private readonly appearance = inject(AppearanceStore);
   readonly platformStore = inject(PlatformStore);
   private readonly config = inject(ConfigurationStore);
   readonly osuPath = inject(OsuPathStore);
@@ -51,7 +55,6 @@ export class AppComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.darkMode.set(true);
     this.platformStore.setOs();
     // The sidebar and the tools read it (e.g. which tools are turned off).
     this.config.load().finally(() => this.settingsRead.set(true));
