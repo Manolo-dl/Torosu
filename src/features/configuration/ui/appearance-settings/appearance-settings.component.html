@@ -41,5 +41,5 @@
   </div>
 
   <span class="label">{{ 'settings.appearance.theme' | transloco }}</span>
-  <app-option-group [options]="themes" [active]="appearance.dark() ? 0 : 1" (activeChange)="appearance.setDark($event === 0)" />
+  <app-option-group [options]="themes" [active]="themeIndex()" (activeChange)="appearance.setTheme(THEMES[$event])" />
 </section>

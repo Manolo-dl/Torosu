@@ -1,5 +1,5 @@
-import { DOCUMENT, effect, inject } from '@angular/core';
-import { patchState, signalStore, withHooks, withMethods, withState } from '@ngrx/signals';
+import { computed, DOCUMENT, effect, inject, signal } from '@angular/core';
+import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
 import { TUI_DARK_MODE } from '@taiga-ui/core';
 
 /** The palettes of shared/styles/theme.css. */
@@ -10,10 +10,14 @@ export type Palette = (typeof PALETTES)[number];
 export const FONTS = ['outfit', 'nunito', 'inter', 'grotesk'] as const;
 export type Font = (typeof FONTS)[number];
 
+/** `system`: dark or light as the system is (GTK's theme, Windows' app mode). */
+export const THEMES = ['system', 'dark', 'light'] as const;
+export type Theme = (typeof THEMES)[number];
+
 interface AppearanceState {
     palette: Palette;
     font: Font;
-    dark: boolean;
+    theme: Theme;
     /** Fewer animations, besides the system's own setting. */
     reducedMotion: boolean;
     /** The sidebar shows only its icons. */
@@ -38,7 +42,7 @@ export type EffectsQuality = (typeof EFFECTS_QUALITIES)[number];
 const initialState: AppearanceState = {
     palette: 'sakura',
     font: 'outfit',
-    dark: true,
+    theme: 'system',
     reducedMotion: false,
     sidebarCollapsed: false,
     visualizer: true,
@@ -52,13 +56,21 @@ const initialState: AppearanceState = {
 /** Where it is kept: it is the window's look, not a setting of the tools. */
 const STORAGE_KEY = 'torosu.appearance';
 
+/**
+ * Before the system's theme, a `dark` of true or false was kept from the
+ * first start: those who had Torosu keep the theme they saw.
+ */
+function legacyTheme(value: { dark?: unknown }): Theme {
+    return typeof value.dark === 'boolean' ? (value.dark ? 'dark' : 'light') : initialState.theme;
+}
+
 function saved(): AppearanceState {
     try {
-        const value = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}') as Partial<AppearanceState>;
+        const value = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}') as Partial<AppearanceState> & { dark?: unknown };
         return {
             palette: PALETTES.includes(value.palette as Palette) ? (value.palette as Palette) : initialState.palette,
             font: FONTS.includes(value.font as Font) ? (value.font as Font) : initialState.font,
-            dark: typeof value.dark === 'boolean' ? value.dark : initialState.dark,
+            theme: THEMES.includes(value.theme as Theme) ? (value.theme as Theme) : legacyTheme(value),
             reducedMotion: value.reducedMotion === true,
             sidebarCollapsed: value.sidebarCollapsed === true,
             visualizer: value.visualizer !== false,
@@ -81,11 +93,23 @@ export const AppearanceStore = signalStore(
     { providedIn: 'root' },
     withState(saved),
 
+    // Whether the system is in dark mode, kept up to date in onInit.
+    withProps(() => ({
+        systemDarkQuery: typeof matchMedia === 'function' ? matchMedia('(prefers-color-scheme: dark)') : null,
+    })),
+    withProps(({ systemDarkQuery }) => ({ systemDark: signal(systemDarkQuery?.matches ?? false) })),
+
+    withComputed(store => ({
+        /** The theme shown: the chosen one, or the system's. */
+        dark: computed(() => (store.theme() === 'system' ? store.systemDark() : store.theme() === 'dark')),
+    })),
+
     withMethods(store => ({
         setPalette: (palette: Palette) => patchState(store, { palette }),
         setFont: (font: Font) => patchState(store, { font }),
-        setDark: (dark: boolean) => patchState(store, { dark }),
-        toggleDark: () => patchState(store, { dark: !store.dark() }),
+        setTheme: (theme: Theme) => patchState(store, { theme }),
+        /** The other theme from the one shown, from now on whatever the system's. */
+        toggleDark: () => patchState(store, { theme: store.dark() ? 'light' : 'dark' }),
         setReducedMotion: (reducedMotion: boolean) => patchState(store, { reducedMotion }),
         toggleSidebar: () => patchState(store, { sidebarCollapsed: !store.sidebarCollapsed() }),
         setVisualizer: (visualizer: boolean) => patchState(store, { visualizer }),
@@ -98,11 +122,12 @@ export const AppearanceStore = signalStore(
 
     withHooks({
         onInit(store, document = inject(DOCUMENT), taigaDark = inject(TUI_DARK_MODE)) {
+            store.systemDarkQuery?.addEventListener('change', event => store.systemDark.set(event.matches));
             effect(() => {
                 const state: AppearanceState = {
                     palette: store.palette(),
                     font: store.font(),
-                    dark: store.dark(),
+                    theme: store.theme(),
                     reducedMotion: store.reducedMotion(),
                     sidebarCollapsed: store.sidebarCollapsed(),
                     visualizer: store.visualizer(),
@@ -115,12 +140,12 @@ export const AppearanceStore = signalStore(
                 const root = document.documentElement;
                 root.dataset['palette'] = state.palette;
                 root.dataset['font'] = state.font;
-                root.dataset['theme'] = state.dark ? 'dark' : 'light';
+                root.dataset['theme'] = store.dark() ? 'dark' : 'light';
                 root.dataset['motion'] = state.reducedMotion ? 'reduced' : 'full';
                 root.dataset['effects'] = state.effects ? 'on' : 'off';
                 root.dataset['quality'] = state.quality;
                 root.dataset['transitions'] = state.transitions ? 'on' : 'off';
-                taigaDark.set(state.dark);
+                taigaDark.set(store.dark());
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
             });
         },

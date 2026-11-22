@@ -140,6 +140,7 @@
       "visualizerHint": "Des barres qui suivent la musique jouée par osu! ; osu! est lu en arrière-plan pour cela",
       "theme": "Thème",
       "themes": {
+        "system": "Système",
         "dark": "Sombre",
         "light": "Clair"
       }

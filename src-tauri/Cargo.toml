@@ -23,7 +23,9 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "2", default-features = false, features = ["wry", "compression", "common-controls-v6", "x11", "protocol-asset"] }
+# `dbus`: on Linux the window follows the system's dark or light mode (the
+# freedesktop portal's color-scheme), and with it the page's prefers-color-scheme.
+tauri = { version = "2", default-features = false, features = ["wry", "compression", "common-controls-v6", "x11", "dbus", "protocol-asset"] }
 tauri-plugin-opener = "2"
 tauri-plugin-updater = { version = "2.14.0", default-features = false, features = ["rustls-tls"] }
 tauri-plugin-log = "2.10.1"

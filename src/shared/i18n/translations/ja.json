@@ -140,6 +140,7 @@
       "visualizerHint": "osu! で流れている曲に合わせて動くバー。そのために osu! をバックグラウンドで読み取ります",
       "theme": "テーマ",
       "themes": {
+        "system": "システム",
         "dark": "ダーク",
         "light": "ライト"
       }

@@ -1,7 +1,7 @@
 import { OptionGroupComponent, OptionGroupItem } from '@shared/ui';
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { AppearanceStore, Font, FONTS, PALETTES } from '@shared/stores';
+import { AppearanceStore, Font, FONTS, PALETTES, THEMES } from '@shared/stores';
 
 /** How each font is named, in its own letters. */
 const FONT_NAMES: Record<Font, string> = { outfit: 'Outfit', nunito: 'Nunito', inter: 'Inter', grotesk: 'Space Grotesk' };
@@ -26,9 +26,13 @@ export class AppearanceSettingsComponent {
     readonly fonts = FONTS;
     readonly fontNames = FONT_NAMES;
     readonly fontFamilies = FONT_FAMILIES;
+    readonly THEMES = THEMES;
 
+    /** In the order of THEMES. */
     readonly themes: OptionGroupItem[] = [
+        { label: 'settings.appearance.themes.system', icon: 'sun-moon', translate: true },
         { label: 'settings.appearance.themes.dark', icon: 'moon', translate: true },
         { label: 'settings.appearance.themes.light', icon: 'sun', translate: true },
     ];
+    readonly themeIndex = computed(() => THEMES.indexOf(this.appearance.theme()));
 }

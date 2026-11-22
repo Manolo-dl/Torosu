@@ -140,6 +140,7 @@
       "visualizerHint": "随 osu! 正在播放的歌曲跳动的条形；为此会在后台读取 osu!",
       "theme": "主题",
       "themes": {
+        "system": "跟随系统",
         "dark": "深色",
         "light": "浅色"
       }

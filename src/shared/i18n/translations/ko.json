@@ -140,6 +140,7 @@
       "visualizerHint": "osu!에서 재생 중인 곡을 따라 움직이는 막대. 이를 위해 백그라운드에서 osu!를 읽습니다",
       "theme": "테마",
       "themes": {
+        "system": "시스템",
         "dark": "다크",
         "light": "라이트"
       }

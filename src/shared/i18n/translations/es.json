@@ -140,6 +140,7 @@
       "visualizerHint": "Barras que siguen la canción que suena en osu!; para ello se lee osu! en segundo plano",
       "theme": "Tema",
       "themes": {
+        "system": "Sistema",
         "dark": "Oscuro",
         "light": "Claro"
       }

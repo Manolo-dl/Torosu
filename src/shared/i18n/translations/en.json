@@ -140,6 +140,7 @@
       "visualizerHint": "Bars that follow the song osu! is playing; osu! is read in the background for it",
       "theme": "Theme",
       "themes": {
+        "system": "System",
         "dark": "Dark",
         "light": "Light"
       }
