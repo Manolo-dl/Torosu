@@ -4,7 +4,7 @@ export { ExportControlsComponent } from './export-controls/export-controls.compo
 export type { ExportFormat } from './export-controls/export-controls.component';
 export { TxtDropzoneComponent } from './txt-dropzone/txt-dropzone.component';
 export { StarBadgeComponent } from './star-badge/star-badge.component';
-export { PageHeaderComponent, toolTransitionName } from './page-header/page-header.component';
+export { PageHeaderComponent } from './page-header/page-header.component';
 export { OptionGroupComponent } from './option-group/option-group.component';
 export type { OptionGroupItem } from './option-group/option-group.component';
 export { IconComponent } from './icon/icon.component';

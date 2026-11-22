@@ -1,7 +1,6 @@
 import { DOCUMENT, effect, inject } from '@angular/core';
 import { patchState, signalStore, withHooks, withMethods, withState } from '@ngrx/signals';
 import { TUI_DARK_MODE } from '@taiga-ui/core';
-import { VIEW_TRANSITIONS } from '../utils/view-transitions';
 
 /** The palettes of shared/styles/theme.css. */
 export const PALETTES = ['sakura', 'nebula', 'aurora', 'ember', 'mono'] as const;
@@ -121,7 +120,6 @@ export const AppearanceStore = signalStore(
                 root.dataset['effects'] = state.effects ? 'on' : 'off';
                 root.dataset['quality'] = state.quality;
                 root.dataset['transitions'] = state.transitions ? 'on' : 'off';
-                root.dataset['viewTransitions'] = VIEW_TRANSITIONS ? 'on' : 'off';
                 taigaDark.set(state.dark);
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
             });

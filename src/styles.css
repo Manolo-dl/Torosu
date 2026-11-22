@@ -92,7 +92,9 @@ tui-expand {
 }
 
 /* The theme changing (HeaderComponent.toggleTheme): the new one is revealed
-   in a circle drawn from script, the old one stays still underneath. */
+   in a circle drawn from script, the old one stays still underneath. The only
+   View Transition: one now and then, so WebKitGTK's snapshots do not pile up
+   as they do going from page to page (see .page-outlet below). */
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation: none;
@@ -126,59 +128,11 @@ tui-expand {
 .page-outlet > :not(router-outlet) > :nth-child(4) { animation-delay: calc(var(--stagger) * 6); }
 .page-outlet > :not(router-outlet) > :nth-child(n + 5) { animation-delay: calc(var(--stagger) * 8); }
 
-/* Without View Transitions (none in the engine, or they leak: see
-   VIEW_TRANSITIONS), the page rises into place by itself. */
-@supports not (view-transition-name: page) {
-  .page-outlet > :not(router-outlet) {
-    animation: page-in var(--duration-3) var(--ease-out) backwards;
-  }
-}
-
-:root[data-view-transitions='off'][data-transitions='on'] .page-outlet > :not(router-outlet) {
+/* The page itself rises into place. Not in a View Transition: WebKitGTK
+   keeps each one's snapshots until it is idle, gigabytes after a while of
+   going from tool to tool (https://bugs.webkit.org/show_bug.cgi?id=330112). */
+:root[data-transitions='on'] .page-outlet > :not(router-outlet) {
   animation: page-in-rise var(--duration-4) var(--ease-out) backwards;
-}
-
-@keyframes page-in {
-  from {
-    opacity: 0;
-  }
-}
-
-@keyframes part-in {
-  from {
-    opacity: 0;
-    transform: translateY(14px);
-  }
-}
-
-/* ---- View Transitions -------------------------------------------------------
-   Between pages (app.config.ts) only the page's panel moves: the title bar
-   and the sidebar are the same before and after, so stay still. The page
-   that leaves lifts and fades, the new one rises into place. */
-
-.page-outlet {
-  view-transition-name: page;
-}
-
-::view-transition-group(page) {
-  animation-duration: var(--duration-4);
-  animation-timing-function: var(--ease-out);
-}
-
-::view-transition-old(page) {
-  animation: page-out var(--duration-2) var(--ease-out) both;
-}
-
-::view-transition-new(page) {
-  animation: page-in-rise var(--duration-4) var(--ease-out) both;
-  animation-delay: 60ms;
-}
-
-@keyframes page-out {
-  to {
-    opacity: 0;
-    transform: translateY(-10px) scale(0.99);
-  }
 }
 
 @keyframes page-in-rise {
@@ -188,21 +142,11 @@ tui-expand {
   }
 }
 
-/* A tool's icon (view-transition-name tool-…, on the home's cards and the
-   page headers) flies from one to the other. */
-::view-transition-group(*.tool-icon) {
-  animation-duration: var(--duration-4);
-  animation-timing-function: cubic-bezier(0.3, 1.2, 0.4, 1);
-}
-
-/* While the theme changes (HeaderComponent.toggleTheme) nothing moves: the
-   new theme is revealed in a circle, on the window and on the page's panel
-   alike (drawn from script), over the old one standing still. A class on
-   <html> only: no view-transition-name changes. */
-:root.theme-transition::view-transition-group(*),
-:root.theme-transition::view-transition-old(*),
-:root.theme-transition::view-transition-new(*) {
-  animation: none;
+@keyframes part-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
 }
 
 /* appTooltip's card, put in <body>. */

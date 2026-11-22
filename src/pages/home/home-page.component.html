@@ -44,7 +44,7 @@
   <div class="tools">
     @for (tool of tools(); track tool.route; let i = $index) {
       <a appCard interactive class="tool" [routerLink]="tool.route" [style.--i]="i">
-        <span class="icon" [style.view-transition-name]="transitionName(tool.icon)"><app-icon [name]="tool.icon" /></span>
+        <span class="icon"><app-icon [name]="tool.icon" /></span>
         <span class="text">
           <span class="name">{{ tool.label | transloco }}</span>
           <span class="description">{{ tool.description ?? '' | transloco }}</span>
