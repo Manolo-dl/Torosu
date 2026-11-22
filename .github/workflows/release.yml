@@ -46,6 +46,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             libwebkit2gtk-4.1-dev \
+            libdbus-1-dev \
             build-essential \
             curl \
             wget \
@@ -59,11 +60,15 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build and release
+        id: tauri
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          # Where the AppImage's updates are, for AppImageUpdate and the like:
+          # linuxdeploy embeds it and writes the .zsync next to the AppImage.
+          LDAI_UPDATE_INFORMATION: gh-releases-zsync|Manolo-dl|Torosu|latest|torosu_*_amd64.AppImage.zsync
         with:
           tagName: ${{ github.ref_name }}
           releaseName: Torosu ${{ github.ref_name }}
@@ -77,3 +82,23 @@ jobs:
             Torosu updates itself from the app.
           releaseDraft: true
           prerelease: false
+
+      # tauri-action uploads only the files it knows: the .zsync goes up here,
+      # to the same draft release (by id: a draft can't be found by its tag).
+      - name: Upload the AppImage's zsync
+        if: matrix.platform == 'ubuntu-22.04'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          shopt -s nullglob
+          # linuxdeploy writes it where it runs (src-tauri), not next to the AppImage.
+          files=(src-tauri/*.AppImage.zsync src-tauri/target/release/bundle/appimage/*.AppImage.zsync)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "No .zsync next to the AppImage: was LDAI_UPDATE_INFORMATION passed to linuxdeploy?"
+            exit 1
+          fi
+          for file in "${files[@]}"; do
+            gh api --method POST -H "Content-Type: application/octet-stream" \
+              "https://uploads.github.com/repos/${{ github.repository }}/releases/${{ steps.tauri.outputs.releaseId }}/assets?name=$(basename "$file")" \
+              --input "$file" > /dev/null
+          done

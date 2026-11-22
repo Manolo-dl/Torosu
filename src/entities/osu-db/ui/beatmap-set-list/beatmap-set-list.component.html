@@ -1,4 +1,27 @@
-@if (sets().length === 0) {
+@if (loading()) {
+  <!-- The shape of the cards to come while osu!.db is read. -->
+  <div class="skeletons" [style.height]="listHeight()">
+    @for (row of skeletonRows; track row) {
+      <div class="skeleton-card" [style.--skeleton-delay]="row * 0.08 + 's'">
+        <div class="titles">
+          <app-skeleton [width]="row % 3 === 0 ? '55%' : row % 3 === 1 ? '70%' : '45%'" height="0.85rem" />
+          <app-skeleton [width]="row % 2 === 0 ? '30%' : '38%'" height="0.65rem" />
+        </div>
+        <div class="side">
+          <app-skeleton width="3.5rem" height="1.1rem" radius="pill" />
+          <app-skeleton width="4.5rem" height="0.5rem" radius="pill" />
+        </div>
+      </div>
+    }
+  </div>
+} @else if (failed()) {
+  <div class="empty">
+    <p>{{ 'loading.osuDbFailed' | transloco }}</p>
+    <button appButton="secondary" size="s" icon="rotate-cw" type="button" (click)="osuDb.load()">
+      {{ 'loading.retry' | transloco }}
+    </button>
+  </div>
+} @else if (sets().length === 0) {
   <div class="empty">{{ emptyText() | transloco }}</div>
 } @else {
   <cdk-virtual-scroll-viewport

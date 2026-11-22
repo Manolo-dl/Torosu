@@ -2,46 +2,229 @@
   display: block;
 }
 
+/* The title bar: the window is dragged by its empty parts, which show the
+   open hand (Tauri drags only from elements with data-tauri-drag-region). */
+[data-tauri-drag-region] {
+  cursor: grab;
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
 header {
+  /* The visualizer fills it from behind; its contents come after, so over it. */
+  position: relative;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  background: var(--tui-background-elevation-1);
-  padding: 0 2rem;
+  gap: var(--space-3);
+  block-size: 3.25rem;
+  padding-inline: var(--space-4) var(--space-2);
+  user-select: none;
+}
 
-  h1 {
-    font-size: 2.5rem;
-    margin: 0;
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-1);
+  text-decoration: none;
+
+  .logo-pulse {
+    display: grid;
   }
 
-  .actions {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+  img {
+    inline-size: 1.75rem;
+    block-size: 1.75rem;
+    border-radius: var(--radius-sm);
+    transition: transform var(--duration-3) var(--ease-spring);
+  }
+
+  .wordmark {
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    font-weight: var(--weight-black);
+    letter-spacing: var(--tracking-display);
+  }
+
+  &:hover img {
+    transform: rotate(-8deg) scale(1.08);
   }
 }
 
-.update {
-  color: var(--tui-status-positive);
+.brand,
+.drag,
+.actions {
+  position: relative;
 }
+
+.drag {
+  flex: 1;
+  align-self: stretch;
+}
+
+.actions {
+  /* Not draggable between its buttons. */
+  cursor: default;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.divider {
+  inline-size: 1px;
+  block-size: 1.25rem;
+  margin-inline: var(--space-1);
+  background: var(--line);
+}
+
+/* A new version: in green, a ring going out of it until it is opened (a
+   transform and an opacity: nothing is painted again). */
+.actions .update {
+  --button-bg: var(--success-soft);
+  --button-bg-hover: color-mix(in oklch, var(--success) 24%, transparent);
+  --button-fg: var(--success);
+
+  margin-inline-end: var(--space-2);
+  overflow: visible;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border: 2px solid var(--success);
+    border-radius: inherit;
+    opacity: 0;
+    pointer-events: none;
+    animation: update-pulse 2.4s var(--ease-out) infinite;
+  }
+}
+
+/* Paused while osu! plays a map (OsuReaderStore). */
+:host-context([data-playing='on']) .actions .update::after {
+  animation-play-state: paused;
+}
+
+@keyframes update-pulse {
+  0% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  70%,
+  100% {
+    opacity: 0;
+    transform: scale(1.15, 1.4);
+  }
+}
+
+/* The theme button: square, its icon turning in when it changes. */
+.actions .theme {
+  inline-size: 2.375rem;
+  padding: 0;
+}
+
+.theme-icon {
+  font-size: 1.15rem;
+  animation: theme-icon-in var(--duration-4) var(--ease-spring);
+}
+
+@keyframes theme-icon-in {
+  from {
+    opacity: 0;
+    transform: rotate(-120deg) scale(0.4);
+  }
+}
+
+// ---- The update's panel ----
 
 .update-panel {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  inline-size: 20rem;
-  padding: 1rem;
+  gap: var(--space-3);
+  inline-size: min(22rem, calc(100vw - 2rem));
+  padding: var(--space-1);
+}
 
-  .notes {
+// The release notes, without the downloads: a heading, items, lines.
+.notes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  max-block-size: 14rem;
+  overflow-y: auto;
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: color-mix(in oklch, var(--text-1) 3%, transparent);
+
+  p {
     margin: 0;
-    max-block-size: 12rem;
-    overflow: auto;
-    white-space: pre-wrap;
-    color: var(--tui-text-secondary);
-    font: var(--tui-font-text-s);
+    color: var(--text-2);
+    font-size: var(--text-xs);
+    line-height: 1.5;
   }
 
-  progress {
-    inline-size: 100%;
+  .heading {
+    color: var(--text-1);
+    font-weight: var(--weight-bold);
+
+    &:not(:first-child) {
+      margin-block-start: var(--space-2);
+    }
   }
+
+  .item {
+    position: relative;
+    padding-inline-start: 0.9rem;
+
+    &::before {
+      content: '';
+      position: absolute;
+      inset-block-start: 0.6em;
+      inset-inline-start: 0.2rem;
+      inline-size: 0.3rem;
+      block-size: 0.3rem;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+  }
+
+  strong {
+    color: var(--text-1);
+    font-weight: var(--weight-bold);
+  }
+
+  code {
+    padding: 0 0.3em;
+    border-radius: var(--radius-sm, 4px);
+    background: color-mix(in oklch, var(--text-1) 8%, transparent);
+    font-family: var(--font-mono);
+    font-size: 0.95em;
+  }
+}
+
+.whats-new {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent-text);
+  font: inherit;
+  font-size: var(--text-xs);
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.failed {
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--text-xs);
+  line-height: 1.5;
 }

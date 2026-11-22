@@ -1,10 +1,14 @@
 :host {
+  /* Over the music's glow, which comes before it. */
+  position: relative;
   display: block;
-  padding: 0.75rem 1rem 0;
+  padding: var(--space-3) var(--space-3) 0;
+  animation: slide-down var(--duration-3) var(--ease-out) backwards;
 }
 
-.actions {
-  display: flex;
-  gap: 0.5rem;
-  margin-block-start: 0.5rem;
+@keyframes slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
 }

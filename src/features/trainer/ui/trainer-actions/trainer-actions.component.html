@@ -1,8 +1,7 @@
 <div class="buttons">
   <button
-    appearance="secondary"
+    appButton="secondary"
     size="m"
-    tuiButton
     type="button"
     [disabled]="trainer.creating()"
     (click)="trainer.reset()"
@@ -10,9 +9,9 @@
     {{ 'trainer.actions.reset' | transloco }}
   </button>
   <button
-    iconStart="@tui.wand-sparkles"
+    appButton="primary"
+    icon="@tui.wand-sparkles"
     size="m"
-    tuiButton
     type="button"
     [loading]="trainer.creating()"
     (click)="trainer.createMaps()"
@@ -30,7 +29,7 @@
     <progress
       max="100"
       size="m"
-      tuiProgressBar
+      appProgress
       [value]="trainer.progress()"
     ></progress>
     <span class="percent">{{ trainer.progress() }}%</span>

@@ -12,7 +12,10 @@
       "general": "General",
       "downloader": "Downloader",
       "packs": "Packs",
-      "trainer": "Trainer"
+      "trainer": "Trainer",
+      "replays": "Replays",
+      "appearance": "Appearance",
+      "performance": "Performance"
     },
     "general": {
       "osu": "osu!",
@@ -108,6 +111,62 @@
         "mode": "osu!mania",
         "keys": "7K, only in mania"
       }
+    },
+    "replays": {
+      "analysis": "Analysis",
+      "charts": "Charts",
+      "chartsHint": "Charts turned off are not drawn at all"
+    },
+    "appearance": {
+      "title": "Appearance",
+      "palette": "Palette",
+      "font": "Font",
+      "reducedMotion": "Reduce motion",
+      "reducedMotionHint": "Fewer animations and transitions; also when the system asks for it",
+      "palettes": {
+        "sakura": "Sakura",
+        "nebula": "Nebula",
+        "aurora": "Aurora",
+        "ember": "Ember",
+        "mono": "Mono"
+      },
+      "fonts": {
+        "outfit": "Geometric, like osu!'s",
+        "nunito": "Rounded and soft",
+        "inter": "Neutral and compact",
+        "grotesk": "Technical, with character"
+      },
+      "visualizer": "Music in the title bar",
+      "visualizerHint": "Bars that follow the song osu! is playing; osu! is read in the background for it",
+      "theme": "Theme",
+      "themes": {
+        "system": "System",
+        "dark": "Dark",
+        "light": "Light"
+      }
+    },
+    "saved": "Settings saved",
+    "saving": "Saving…",
+    "autosave": "Saved on close",
+    "saveFailed": "The settings could not be saved",
+    "performance": {
+      "effects": "Effects",
+      "backgrounds": "Animated backgrounds",
+      "backgroundsHint": "Triangles, specks of light and the modes' orbit; they stand still when off",
+      "quality": "Effects quality",
+      "qualityHint": "Low draws fewer of them, at 30 frames a second: lighter on slower computers",
+      "qualities": {
+        "high": "High",
+        "low": "Low"
+      },
+      "transitions": "Page transitions",
+      "transitionsHint": "Pages and the theme change in an animation",
+      "music": "osu!'s music",
+      "reactive": "The app moves with the music",
+      "reactiveHint": "The logo beats with the bass and a light behind the pages follows the music",
+      "motion": "Motion",
+      "covers": "Map covers",
+      "coversHint": "Made from each map's background and kept in the cache (up to 32 MB); off, no image is read or made"
     }
   },
   "nav": {
@@ -115,7 +174,7 @@
     "downloader": "Downloader",
     "downloaderDescription": "Download beatmap sets from a list of links straight into your Songs folder, skipping the ones you have.",
     "exportCollections": "Export Collections",
-    "exportCollectionsDescription": "Save your collections as beatmap links, or as a list to import on another install.",
+    "exportCollectionsDescription": "Save your collections or copy them, to import them in Torosu or download their sets.",
     "importCollections": "Import Collections",
     "importCollectionsDescription": "Bring collections from a file into osu!, merged with the ones you already have.",
     "exportLibrary": "Export Library",
@@ -127,9 +186,14 @@
     "logs": "logs",
     "osuData": "osu-data",
     "changelog": "Changelog",
-    "github": "Github",
+    "github": "GitHub",
     "issues": "Issues",
-    "support": "Support"
+    "support": "Support",
+    "replays": "Replay Analysis",
+    "replaysDescription": "See how you played your local scores: timing, early or late hits and releases, key by key.",
+    "tools": "Tools",
+    "collapse": "Collapse the sidebar",
+    "expand": "Expand the sidebar"
   },
   "header": {
     "toggleTheme": "Toggle theme",
@@ -137,6 +201,7 @@
     "updateTo": "Update to {{ version }}",
     "new": "New",
     "youHave": "You have {{ version }}. Torosu restarts once it is installed.",
+    "seeOnGitHub": "See on GitHub",
     "updateFailed": "Torosu could not install it itself, as with the Arch Linux package. Download it from the releases page and install it as you did the first time.",
     "openReleases": "Open the releases page",
     "updateAndRestart": "Update and restart"
@@ -152,7 +217,24 @@
     "noLazer": "Lazer is not supported: the tools read and write osu! stable's files.",
     "changeFolder": "Change it in the settings",
     "tools": "Tools",
-    "noTools": "Every tool is turned off. Turn them on in the settings, under General."
+    "noTools": "Every tool is turned off. Turn them on in the settings, under General.",
+    "library": {
+      "title": "Your library",
+      "hint": "Read osu!.db to see what is in your Songs folder: the maps of each mode, how many are ranked or loved, and how many you have played.",
+      "read": "Read osu!.db",
+      "diffs": "diffs",
+      "inSets": "in {{ count }} sets",
+      "sets": "{{ count }} sets",
+      "ranked": "Ranked",
+      "loved": "Loved",
+      "unsubmitted": "Not uploaded",
+      "played": "Played"
+    },
+    "selected": {
+      "title": "Selected in osu!",
+      "by": "mapped by {{ mapper }}",
+      "trainer": "Open in the trainer"
+    }
   },
   "osuPath": {
     "notFound": "osu! folder not found",
@@ -174,7 +256,12 @@
     "exported": "Exported {{ name }}",
     "exportFailed": "Failed to export the beatmap: {{ error }}",
     "looking": "Looking for osu!...",
-    "startFailed": "Failed to start the osu! reader."
+    "startFailed": "Failed to start the osu! reader.",
+    "badge": {
+      "connected": "Connected",
+      "waiting": "Waiting for osu!",
+      "error": "Can't read osu!"
+    }
   },
   "trainer": {
     "subtitle": "Fine-tune difficulty stats and chain modifiers before generating a new map.",
@@ -182,10 +269,22 @@
     "mappedBy": "mapped by {{ mapper }}",
     "exportOsz": "Export as .osz",
     "dan": {
-      "hint": "Dan estimated by Mania Tracker, {{ confidence }}% confidence"
+      "hint": "Dan estimated by Mania Tracker, {{ confidence }}% confidence",
+      "confidence": "Confidence",
+      "lowConfidence": "Low confidence: the map is unlike the dan courses it was compared with; take it as a guide.",
+      "source": "Estimated by Mania Tracker's calculator.",
+      "keys": "{{ keys }}K course",
+      "variants": {
+        "top": "At the very top of dan {{ dan }}",
+        "high": "In the upper part of dan {{ dan }}",
+        "mid": "Right in dan {{ dan }}",
+        "low": "In the lower part of dan {{ dan }}",
+        "bottom": "At the very bottom of dan {{ dan }}"
+      }
     },
     "msd": {
-      "hint": "Overall MSD, from {{ calc }}"
+      "hint": "Overall MSD, from {{ calc }}",
+      "skillsets": "By skillset"
     },
     "skill": {
       "dan": "Dan",
@@ -199,7 +298,9 @@
       "lock": "Lock",
       "unlock": "Unlock",
       "lockStat": "Lock {{ stat }}",
-      "unlockStat": "Unlock {{ stat }}"
+      "unlockStat": "Unlock {{ stat }}",
+      "restoreAll": "Map values",
+      "backTo": "Back to the map's {{ value }}"
     },
     "actions": {
       "reset": "Reset",
@@ -272,7 +373,8 @@
       "scaleVideo": "Scale video",
       "noFfmpeg": "Scaling the video needs <strong>ffmpeg</strong>, which was not found. Install it and make sure it is in the PATH, then restart the app.",
       "videoSlow": "The video is re-encoded at the new speed, which can take a while for long videos.",
-      "storyboard": "If the set has a shared <strong>.osb</strong> storyboard, it is used by every difficulty, so this difficulty will be exported to a <strong>new beatmap set</strong> (title ending in <strong>({{ rate }}x SB)</strong>) to avoid overlapping with the original one."
+      "storyboard": "If the set has a shared <strong>.osb</strong> storyboard, it is used by every difficulty, so this difficulty will be exported to a <strong>new beatmap set</strong> (title ending in <strong>({{ rate }}x SB)</strong>) to avoid overlapping with the original one.",
+      "quick": "Quick rates"
     },
     "sv": {
       "description": "The original SV changes are removed and an SV is set on every BPM change, so the scroll speed stays the one of the main BPM. BPM changes, kiai and hitsounds are kept."
@@ -332,6 +434,24 @@
       "16_EZ2AC": "10K2S and 4 middle keys either hand moves to.",
       "18_10K8K": "10K and 4 more keys per hand for every finger but the thumb (4K10K4K).",
       "18_9K9K": "9 keys per hand in two rows, like a DP for pop'n music."
+    },
+    "banner": {
+      "waiting": "Waiting for osu!",
+      "waitingHint": "Open osu! stable: the map you select there shows up here, ready to change.",
+      "select": "Select a map in osu!",
+      "selectHint": "Pick one in song select and it shows up here, ready to change.",
+      "error": "Can't read osu!"
+    },
+    "oneTask": "1 task",
+    "tasksCount": "{{ count }} tasks",
+    "dragTask": "Drag to change the order",
+    "taskHints": {
+      "RateChange": "Faster or slower, with the BPM and the audio",
+      "SVNormalizer": "One scroll speed all the way through",
+      "FlnConverter": "Every note held until the next one",
+      "NoLn": "Long notes turned into normal notes",
+      "ShortLn": "Long notes kept within a length",
+      "KeyConverter": "The map on another key count"
     }
   },
   "downloader": {
@@ -381,7 +501,12 @@
       "isRequired": "The cookie is required",
       "tooShort": "The cookie is too short",
       "tooLong": "The cookie is too long",
-      "failed": "Could not use the cookie"
+      "failed": "Could not use the cookie",
+      "updated": "Cookie in use: you can download now",
+      "activeHint": "Downloads use your osu! account.",
+      "change": "Change",
+      "show": "Show the cookie",
+      "hide": "Hide the cookie"
     },
     "queue": {
       "queued": "{{ count }} queued",
@@ -392,7 +517,12 @@
       "failedFile": "Failed maps are saved to <strong>failed_downloads.txt</strong> in your osu! folder.",
       "clear": "Clear queue",
       "start": "Start download",
-      "downloadFailed": "Download failed"
+      "downloadFailed": "Download failed",
+      "setNumber": "Beatmap set #{{ id }}",
+      "openPage": "Open its page on osu!",
+      "remove": "Remove from the queue",
+      "overall": "{{ finished }} of {{ total }}",
+      "nameSoon": "its name shows as it starts"
     },
     "status": {
       "pending": "pending",
@@ -403,6 +533,24 @@
     "notification": {
       "title": "Downloader",
       "body": "{{ succeeded }} downloaded, {{ failed }} failed"
+    },
+    "importer": {
+      "file": "File",
+      "paste": "Paste links",
+      "pastePlaceholder": "One link or beatmap set ID per line:\nhttps://osu.ppy.sh/beatmapsets/39804\n39804",
+      "found": "{{ count }} sets found",
+      "add": "Add to the queue",
+      "added": "{{ count }} sets added to the queue",
+      "addedSkipped": "{{ count }} sets added to the queue; {{ skipped }} were already in it or in your library",
+      "nothing": "No beatmap links or IDs found"
+    },
+    "steps": {
+      "session": "Session",
+      "import": "Maps to download",
+      "queue": "Queue",
+      "help": "Help",
+      "needSession": "Set the session first: osu! lets only an account download maps.",
+      "queueEmpty": "The maps you add show up here, ready to download."
     }
   },
   "dropzone": {
@@ -445,7 +593,15 @@
     "search": "Search by title, artist or file name...",
     "created": "Pack {{ title }} created!",
     "createdParts": "Pack {{ title }} created in {{ parts }} parts!",
-    "createFailed": "Failed to create the pack: {{ error }}"
+    "createFailed": "Failed to create the pack: {{ error }}",
+    "stats": {
+      "diffs": "Diffs",
+      "sets": "Sets",
+      "packs": "Packs",
+      "stars": "Stars",
+      "packsHint": "Split by the most sets per pack in the settings"
+    },
+    "emptyHint": "Pick diffs from the maps, or add a whole collection."
   },
   "beatmaps": {
     "none": "No beatmaps"
@@ -458,38 +614,94 @@
     "collectionsDone": "Loaded {{ count }} collections",
     "collectionsFailed": "Failed to load collections",
     "logs": "Loading logs, please wait...",
-    "logsFailed": "Failed to load logs"
+    "logsFailed": "Failed to load logs",
+    "localScores": "Reading your local scores, please wait...",
+    "localScoresFailed": "Failed to read scores.db",
+    "retry": "Try again"
   },
   "collections": {
     "export": {
-      "list": "Collections",
-      "selectAll": "Select all",
-      "notLoaded": "Open a collection to get started",
-      "none": "No collections found",
-      "summary": "Summary",
-      "selected": "Selected",
-      "totalSets": "Total beatmap sets",
-      "format": "Format",
-      "links": "Download links",
-      "importFormat": "Import format",
-      "preview": "Preview",
+      "steps": {
+        "collections": "Collections",
+        "format": "Format",
+        "export": "Export",
+        "pickFirst": "Pick at least one collection",
+        "textHere": "The text to save or copy will show here"
+      },
+      "notLoaded": "Your collections couldn't be read",
+      "retry": "Try again",
+      "none": "You have no collections in osu!",
+      "libraryNotLoaded": "Your library isn't loaded",
+      "libraryHint": "The MD5s can be exported without it, but not the set links, nor how many maps you have installed.",
+      "loadLibrary": "Load library",
+      "search": "Find a collection",
+      "picked": "{{ count }} of {{ total }} picked",
+      "pickAll": "Pick all",
+      "pickNone": "Pick none",
+      "noMatch": "No collection has that name",
+      "empty": "Empty",
+      "showSets": "Show the sets",
+      "maps": "{{ count }} maps",
       "sets": "{{ count }} sets",
-      "empty": "Select a collection to preview"
+      "md5": "To import in Torosu",
+      "md5Hint": "Each map by its MD5, also those you don't have: whoever imports it gets the same diffs.",
+      "links": "Set links",
+      "linksHint": "A link per set, to download them with the downloader or on the website. Every diff of the set comes with it.",
+      "linkCount": "{{ count }} links",
+      "unsubmitted": "{{ count }} sets aren't uploaded to the osu! website, so they have no link: export them as MD5 to keep them",
+      "notInLibrary": "{{ count }} maps aren't in your library, so their set can't be known: export them as MD5 to keep them",
+      "moreLines": "and {{ count }} more lines",
+      "save": "Save .txt",
+      "copy": "Copy",
+      "nothing": "None of the collections picked has anything to write in this format",
+      "saved": "Collections saved",
+      "failed": "Couldn't save the collections: {{ error }}",
+      "copied": "Copied to the clipboard",
+      "copyFailed": "Couldn't copy to the clipboard"
     },
     "import": {
-      "subtitle": "Import collections from a text file using beatmap hashes.",
-      "file": "File",
-      "fileHint": "One collection per block, with beatmap hashes or links.",
-      "preview": "Preview",
-      "empty": "Upload a .txt file to preview collections to import",
-      "merge": "Will merge",
+      "subtitle": "Add collections from a text file, as the exporter writes them, to osu!'s.",
+      "steps": {
+        "file": "Collections to import",
+        "collections": "Collections",
+        "import": "Import",
+        "needFile": "Load a file or paste some collections to see them here",
+        "closeOsu": "osu! has to be closed to import: it keeps the collections in memory and writes them over when it closes"
+      },
+      "fromFile": "File",
+      "fromPaste": "Paste",
+      "pastePlaceholder": "- Collection name\nmap MD5 or set link, one per line\nhttps://osu.ppy.sh/beatmapsets/39804",
+      "found": "{{ count }} collections found",
+      "use": "Use",
+      "nothing": "No collection found: each one starts with a line like \"- Name\"",
+      "format": "One collection per block: a line \"- Name\", then a map per line, as its MD5 or a link to its set.",
+      "loaded": "{{ count }} collections",
+      "loadedMaps": "{{ count }} maps",
+      "remove": "Remove",
+      "libraryNotLoaded": "Your library isn't loaded",
+      "libraryHint": "Without it, set links can't be turned into maps and the sets can't be shown.",
+      "loadLibrary": "Load library",
+      "picked": "{{ count }} of {{ total }} collections picked",
+      "pickAll": "Pick all",
+      "pickNone": "Pick none",
+      "upToDate": "Up to date",
+      "merge": "Into yours",
       "new": "New",
-      "sets": "{{ count }} sets",
-      "noInstalled": "No installed beatmaps found",
-      "importMaps": "Import {{ count }} maps",
-      "clear": "Clear",
-      "done": "Collections imported",
-      "failed": "Failed to import the collections: {{ error }}"
+      "showSets": "Show the sets",
+      "toAdd": "{{ count }} maps to add",
+      "already": "{{ count }} there already",
+      "notInstalled": "{{ count }} not installed",
+      "unresolved": "{{ count }} set links not in your library",
+      "noInstalled": "None of these maps is installed: osu! will list them as missing",
+      "osuOpen": "Close osu! to import",
+      "osuOpenHint": "osu! keeps the collections in memory and writes collection.db over when it closes: what is imported while it is open would be lost. This updates by itself once it is closed.",
+      "osuClosed": "osu! is closed",
+      "importMaps": "Import {{ count }} maps into {{ collections }} collections",
+      "doneMaps": "{{ count }} maps imported",
+      "doneCollections": "{{ created }} new collections, {{ merged }} of yours completed. Open osu! to see them.",
+      "doneNothing": "Nothing to import: every map was in its collection already",
+      "backup": "The collection.db from before is kept as collection.db.torosu-backup.",
+      "failed": "Couldn't import the collections: {{ error }}"
     }
   },
   "export": {
@@ -524,7 +736,85 @@
     "filtered": "Filtered beatmap sets",
     "export": "Export",
     "preview": "Preview",
-    "empty": "No beatmaps match the current filters"
+    "empty": "No beatmaps match the current filters",
+    "statuses": {
+      "ranked": "Ranked",
+      "loved": "Loved",
+      "approved": "Approved",
+      "qualified": "Qualified",
+      "unranked": "Unranked"
+    }
+  },
+  "replays": {
+    "subtitle": "Your plays, from the replays osu! keeps",
+    "search": "Search by title, artist, difficulty or mapper",
+    "allKeys": "All",
+    "none": "No local mania scores with a replay",
+    "noMatch": "No scores match the search",
+    "mapMissing": "The map of this score is not in osu!.db: select it in osu! (osu! adds new maps to osu!.db only when it closes)",
+    "unknownMap": "Unknown map",
+    "pick": "Pick a score to analyse its replay",
+    "analyzing": "Analysing the replay...",
+    "mean": "Mean",
+    "median": "Median",
+    "error": "Error (early / late avg)",
+    "earlyLate": "Early / late",
+    "accuracy": "Accuracy",
+    "game": "Game",
+    "analysis": "Analysis",
+    "countsDiffer": "Some judgements could not be matched to their note and stay as the analysis judged them.",
+    "judgements": {
+      "max": "MAX",
+      "n300": "300",
+      "n200": "200",
+      "n100": "100",
+      "n50": "50",
+      "miss": "Miss"
+    },
+    "early": "Early",
+    "late": "Late",
+    "views": {
+      "all": "All",
+      "rice": "Rice",
+      "ln": "LN",
+      "allHint": "Every press and every long note release, as osu!'s results screen counts them.",
+      "riceHint": "Only the normal notes: when each was pressed.",
+      "lnHint": "Only the long notes: when each was pressed and when it was let go."
+    },
+    "keys": {
+      "title": "By key",
+      "subtitle": "Mean offset of each key: below zero is early, above is late",
+      "chartLabel": "Mean offset of each key",
+      "key": "Key {{ key }}",
+      "nothing": "Nothing timed on this key",
+      "column": "Key",
+      "notes": "Notes",
+      "letGoEarly": "Let go early",
+      "heldLong": "Held too long"
+    },
+    "histogram": {
+      "title": "Distribution",
+      "subtitle": "How many came at each offset, against the judgement windows",
+      "label": "Histogram of the offsets",
+      "count": "{{ count }} notes"
+    },
+    "timeline": {
+      "title": "Along the song",
+      "subtitle": "Every offset in time, to see where you drift or tire",
+      "label": "Offsets along the song",
+      "movingMean": "Mean of {{ count }} notes",
+      "misses": "Misses ({{ count }})"
+    },
+    "follow": "Analyse new plays",
+    "followHint": "While osu! is open, each play you pass is analysed as soon as it ends",
+    "reconciled": "{{ matched }} of {{ total }} of osu!'s judgements put on their note, from the .osg it saves with the replay: each note has the judgement the game gave it.",
+    "noGraph": "This replay has no .osg (osu! saves one since 2026): the judgements are the analysis' own, and a few long notes may differ from the game.",
+    "realTime": "At {{ rate }}x, osu! counts the map's ms, as shown above. In real time, which is what the offset depends on: {{ early }} / {{ late }} ms, UR {{ ur }}.",
+    "earlyMean": "Early, on average",
+    "lateMean": "Late, on average",
+    "urHint": "Unstable rate: how spread the offsets are, as osu! counts it. Lower is steadier.",
+    "playedBy": "Played by {{ name }}",
+    "judgementsTitle": "Judgements"
   },
   "errors": {
     "io": "File error: {{ detail }}",
@@ -560,6 +850,27 @@
     "onePlayer": "The key converter maps for one player, not {{ layout }}",
     "noAudio": "The map's audio has no supported track",
     "video": "Could not re-encode the video: {{ detail }}",
+    "convertReplay": "Replays of converted maps can't be analysed yet, only those of osu!mania maps",
+    "randomReplay": "Replays with Random can't be analysed: osu! shuffles their notes",
+    "replayUnreadable": "{{ file }} is not an osu!mania replay Torosu can read",
+    "osuRunning": "Close osu! first: it keeps the collections in memory and writes collection.db over when it closes",
     "noUpdate": "There is no update to install"
+  },
+  "modes": {
+    "standard": "Standard",
+    "taiko": "Taiko",
+    "catch": "Catch",
+    "mania": "Mania"
+  },
+  "dev": {
+    "osuData": {
+      "subtitle": "The selected beatmap, read from osu!'s memory",
+      "empty": "Nothing received yet."
+    },
+    "logs": {
+      "subtitle": "The app's log, by level and module",
+      "entries": "{{ count }} entries",
+      "empty": "No entries"
+    }
   }
 }

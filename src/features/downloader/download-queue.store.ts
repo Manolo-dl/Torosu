@@ -1,11 +1,11 @@
 import { patchState, signalStore, withComputed, withMethods, withState } from "@ngrx/signals";
-import { DownloadStatus } from "./download-queue.model";
+import { DownloadItem, DownloadStatus } from "./download-queue.model";
 import { computed, inject } from "@angular/core";
 import { OsuDbStore } from "@entities/osu-db";
 
 interface DownloadQueueState {
     rawQueue: number[];
-    statusMap: Record<number, { status: DownloadStatus; progress: number }>;
+    statusMap: Record<number, Omit<DownloadItem, 'beatmapSetId'>>;
     isDownloading: boolean;
 }
 
@@ -25,7 +25,7 @@ export const DownloadQueueStore = signalStore(
             const localIds = osuDb.localSubmittedSetIds();
             return store.rawQueue()
                 .filter(id => !localIds.has(id))
-                .map(id => ({
+                .map((id): DownloadItem => ({
                     beatmapSetId: id,
                     ...(store.statusMap()[id] ?? { status: 'pending' as DownloadStatus, progress: 0 })
                 }));
@@ -60,11 +60,13 @@ export const DownloadQueueStore = signalStore(
             });
         },
 
-        updateStatus(beatmapSetId: number, status: DownloadStatus, progress = 0) {
+        /** Its name is kept from the reports that brought it. */
+        updateStatus(beatmapSetId: number, status: DownloadStatus, progress = 0, name?: string) {
+            const previous = store.statusMap()[beatmapSetId];
             patchState(store, {
                 statusMap: {
                     ...store.statusMap(),
-                    [beatmapSetId]: { status, progress }
+                    [beatmapSetId]: { status, progress, name: name ?? previous?.name }
                 }
             });
         },

@@ -1,0 +1,27 @@
+<app-page-header icon="activity" [heading]="'nav.replays' | transloco" [subtitle]="'replays.subtitle' | transloco">
+  <app-osu-reader-status />
+</app-page-header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <app-score-list />
+  </aside>
+
+  <section class="main">
+    @if (store.error(); as error) {
+      <div appNotice="danger">{{ error }}</div>
+    } @else if (store.analyzing()) {
+      <div appCard class="placeholder">
+        <app-loader size="l">{{ 'replays.analyzing' | transloco }}</app-loader>
+      </div>
+    } @else if (store.analysis(); as analysis) {
+      @if (store.selectedEntry(); as entry) {
+        <app-analysis-panel [entry]="entry" [analysis]="analysis" />
+      }
+    } @else {
+      <div appCard class="placeholder">
+        <p class="empty">{{ 'replays.pick' | transloco }}</p>
+      </div>
+    }
+  </section>
+</div>

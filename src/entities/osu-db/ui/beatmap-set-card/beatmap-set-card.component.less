@@ -1,35 +1,146 @@
-@import '../osu-card';
+@import 'shared/styles/mixins';
+
+// The colours of osu!'s statuses.
+@ranked: #6699ff;
+@approved: #33dd99;
+@loved: #ff66ab;
+@qualified: #aaaaff;
+@unranked: #ffaa44;
 
 :host {
   display: block;
   margin-bottom: 2px;
 }
 
-.osu-card();
+.card {
+  --status-color: var(--text-4);
+  /* One background, hover or not: the cover's fade is drawn in it. */
+  --card-bg: color-mix(in oklch, var(--text-1) 4%, var(--surface-1));
+
+  position: relative;
+  display: flex;
+  border: 1px solid var(--line-subtle);
+  border-inline-start: 3px solid var(--status-color);
+  border-radius: var(--radius-md);
+  background: var(--card-bg);
+  overflow: hidden;
+  cursor: pointer;
+  transition:
+    border-color var(--duration-2) var(--ease-out),
+    box-shadow var(--duration-2) var(--ease-out);
+
+  // Only its frame changes on hover: nothing over the cover is animated
+  // (WebKitGTK drew an animated, masked image differently once it settled).
+  &:hover,
+  &.expanded {
+    border-color: color-mix(in srgb, var(--status-color) 40%, transparent);
+    border-inline-start-color: var(--status-color);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--status-color) 14%, transparent);
+  }
+
+  &[data-status='ranked'] { --status-color: @ranked; }
+  &[data-status='approved'] { --status-color: @approved; }
+  &[data-status='loved'] { --status-color: @loved; }
+  &[data-status='qualified'] { --status-color: @qualified; }
+  &[data-status='unranked'] { --status-color: @unranked; }
+}
+
+// The cover: on the right, shown once loaded, still. A gradient of the
+// card's own background over it fades it toward the titles: no mask, no
+// animation on the image. It comes first and the body after (positioned),
+// so the body is over both.
+.cover,
+.cover-fade {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-end: 0;
+  inline-size: 62%;
+  block-size: 54px;
+  pointer-events: none;
+}
+
+.cover {
+  object-fit: cover;
+  visibility: hidden;
+  opacity: 0.4;
+
+  &.shown {
+    visibility: visible;
+  }
+}
+
+.cover-fade {
+  background: linear-gradient(90deg, var(--card-bg) 0%, transparent 70%);
+}
+
+.body {
+  position: relative;
+  flex: 1;
+  min-inline-size: 0;
+  padding: 0.45rem 0.75rem;
+}
 
 .head {
-  // The link to the set's page is the title's text, not the whole row: a
-  // column of flex items stretches them by default.
-  .titles .title {
-    align-self: flex-start;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
 
-    &:hover {
-      color: var(--tui-text-action);
+  .titles {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 2px;
+    min-inline-size: 0;
+  }
+
+  // The link to the set's page is the title's text, not the whole row.
+  .title {
+    .ellipsis();
+    align-self: flex-start;
+    max-inline-size: 100%;
+    color: var(--text-1);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-bold);
+    text-align: start;
+    transition: color var(--duration-1) var(--ease-out);
+
+    &:hover:not(:disabled) {
+      color: var(--accent-text);
+      text-decoration: underline;
+      text-underline-offset: 0.2em;
     }
+
+    &:disabled {
+      cursor: inherit;
+    }
+  }
+
+  .artist {
+    .ellipsis();
+    color: var(--text-3);
+    font-size: var(--text-2xs);
   }
 
   .side {
     display: flex;
     flex-direction: column;
+    flex-shrink: 0;
     align-items: flex-end;
     gap: 0.3rem;
-    flex-shrink: 0;
+  }
 
-    .side-bottom {
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-    }
+  .side-bottom {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  // Over the cover: on an opaque ground, to stay readable.
+  .status {
+    background: color-mix(in srgb, var(--status-color) 22%, var(--surface-1));
+    color: var(--status-color);
+    text-transform: uppercase;
   }
 }
 
@@ -39,25 +150,86 @@
   gap: 2px;
 
   .pip-mode {
-    font-size: 16px;
     margin-inline: 4px 2px;
+    font-size: 16px;
   }
 
   .pip {
     inline-size: 6px;
     block-size: 6px;
     border-radius: 50%;
-    opacity: 0.85;
+    box-shadow: 0 0 0 1px oklch(0 0 0 / 0.25);
   }
 
   .pip-extra {
-    font-size: 9px;
-    color: var(--tui-text-tertiary);
     margin-inline-start: 1px;
+    color: var(--text-3);
+    font-size: 9px;
   }
 }
 
-.diffs .diff .mode {
-  font-size: 18px;
-  flex-shrink: 0;
+.chevron {
+  color: var(--text-3);
+  font-size: 0.875rem;
+  transition:
+    transform var(--duration-3) var(--ease-out),
+    color var(--duration-2) var(--ease-out);
+
+  &.open {
+    transform: rotate(180deg);
+    color: var(--accent-text);
+  }
+}
+
+// ---- Its diffs, once opened ----
+
+.diffs {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-block-start: 0.45rem;
+  padding-block-start: 0.4rem;
+  border-top: 1px solid var(--line-subtle);
+}
+
+.diff {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  min-inline-size: 0;
+  padding: 0.2rem 0.35rem;
+  border-radius: var(--radius-sm);
+  transition: background var(--duration-1) var(--ease-out);
+
+  &:hover {
+    background: color-mix(in oklch, var(--text-1) 6%, transparent);
+  }
+
+  .mode {
+    flex-shrink: 0;
+    font-size: 18px;
+  }
+
+  .stars {
+    flex-shrink: 0;
+    justify-content: center;
+    min-inline-size: 3.25rem;
+    font-weight: var(--weight-bold);
+  }
+
+  // At least this wide before what follows it goes to a second line.
+  .name {
+    .ellipsis();
+    flex: 1 1 6rem;
+    min-inline-size: 0;
+    color: var(--text-2);
+    font-size: var(--text-xs);
+  }
+
+  // On the right, also when it is on a line of its own.
+  .action {
+    display: flex;
+    margin-inline-start: auto;
+  }
 }

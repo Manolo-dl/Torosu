@@ -1,0 +1,72 @@
+<section>
+  <h3 appSectionTitle>{{ 'settings.performance.effects' | transloco }}</h3>
+
+  <label tuiCell>
+    <span tuiTitle>
+      {{ 'settings.performance.backgrounds' | transloco }}
+      <span tuiSubtitle>{{ 'settings.performance.backgroundsHint' | transloco }}</span>
+    </span>
+    <input appSwitch type="checkbox" [checked]="appearance.effects()" (change)="appearance.setEffects(checked($event))" />
+  </label>
+
+  <label tuiCell>
+    <span tuiTitle>
+      {{ 'settings.performance.covers' | transloco }}
+      <span tuiSubtitle>{{ 'settings.performance.coversHint' | transloco }}</span>
+    </span>
+    <input appSwitch type="checkbox" [checked]="appearance.covers()" (change)="appearance.setCovers(checked($event))" />
+  </label>
+
+  <div class="row">
+    <span tuiTitle>
+      {{ 'settings.performance.quality' | transloco }}
+      <span tuiSubtitle>{{ 'settings.performance.qualityHint' | transloco }}</span>
+    </span>
+    <app-option-group
+      size="s"
+      [options]="qualities"
+      [active]="qualityIndex()"
+      (activeChange)="setQuality($event)"
+    />
+  </div>
+</section>
+
+<section>
+  <h3 appSectionTitle>{{ 'settings.performance.motion' | transloco }}</h3>
+
+  <label tuiCell>
+    <span tuiTitle>
+      {{ 'settings.performance.transitions' | transloco }}
+      <span tuiSubtitle>{{ 'settings.performance.transitionsHint' | transloco }}</span>
+    </span>
+    <input appSwitch type="checkbox" [checked]="appearance.transitions()" (change)="appearance.setTransitions(checked($event))" />
+  </label>
+
+  <label tuiCell>
+    <span tuiTitle>
+      {{ 'settings.appearance.reducedMotion' | transloco }}
+      <span tuiSubtitle>{{ 'settings.appearance.reducedMotionHint' | transloco }}</span>
+    </span>
+    <input appSwitch type="checkbox" [checked]="appearance.reducedMotion()" (change)="appearance.setReducedMotion(checked($event))" />
+  </label>
+</section>
+
+<section>
+  <h3 appSectionTitle>{{ 'settings.performance.music' | transloco }}</h3>
+
+  <label tuiCell>
+    <span tuiTitle>
+      {{ 'settings.appearance.visualizer' | transloco }}
+      <span tuiSubtitle>{{ 'settings.appearance.visualizerHint' | transloco }}</span>
+    </span>
+    <input appSwitch type="checkbox" [checked]="appearance.visualizer()" (change)="appearance.setVisualizer(checked($event))" />
+  </label>
+
+  <label tuiCell>
+    <span tuiTitle>
+      {{ 'settings.performance.reactive' | transloco }}
+      <span tuiSubtitle>{{ 'settings.performance.reactiveHint' | transloco }}</span>
+    </span>
+    <input appSwitch type="checkbox" [checked]="appearance.musicReactive()" (change)="appearance.setMusicReactive(checked($event))" />
+  </label>
+</section>

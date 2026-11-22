@@ -1,10 +1,11 @@
-import { errorText } from '@shared/i18n';
+import { errorText, LanguageService } from '@shared/i18n';
 import { patchState, signalStore, withComputed, withMethods, withState } from "@ngrx/signals";
 import { OsuReaderSnapshot, OsuReaderStatus, PlayedSkillUpdate, SelectedBeatmap, SkillUpdate } from "./osu-reader.model";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { computed, inject } from "@angular/core";
 import { NotifyService } from '@shared/services';
+import { OsuPlayState } from '@shared/stores';
 import { TranslocoService } from '@jsverse/transloco';
 import { save } from '@tauri-apps/plugin-dialog';
 
@@ -41,10 +42,10 @@ export const OsuReaderStore = signalStore(
 
     withComputed((store) => ({
         connected: computed(() => store.status().state === 'connected'),
-        title: computed(() => store.data()?.beatmap.title ?? 'undefined'),
-        artist: computed(() => store.data()?.beatmap.artist ?? 'undefined'),
-        mapper: computed(() => store.data()?.beatmap.creator ?? 'undefined'),
-        version: computed(() => store.data()?.beatmap.difficulty ?? 'undefined'),
+        title: computed(() => store.data()?.beatmap.title ?? ''),
+        artist: computed(() => store.data()?.beatmap.artist ?? ''),
+        mapper: computed(() => store.data()?.beatmap.creator ?? ''),
+        version: computed(() => store.data()?.beatmap.difficulty ?? ''),
         stars: computed(() => store.data()?.attributes?.stars ?? 0),
         /** Mode the map was made for; `null` if its `.osu` file could not be read. */
         originalMode: computed(() => store.data()?.attributes?.originalMode ?? null),
@@ -54,7 +55,7 @@ export const OsuReaderStore = signalStore(
         played: computed(() => store.data()?.played ?? null),
     })),
 
-    withMethods((store, notify = inject(NotifyService), transloco = inject(TranslocoService)) => {
+    withMethods((store, notify = inject(NotifyService), transloco = inject(TranslocoService), language = inject(LanguageService), playState = inject(OsuPlayState)) => {
         // Path of the background being shown (or loading), to skip reloading it
         // and to drop responses that arrive late.
         let backgroundPath: string | null = null;
@@ -86,6 +87,11 @@ export const OsuReaderStore = signalStore(
             if (previous) URL.revokeObjectURL(previous);
         }
 
+        /** While osu! plays a map the looping ornaments stand still (see OsuPlayState). */
+        function setInPlay(inPlay: boolean) {
+            playState.inPlay.set(inPlay);
+        }
+
         function setBeatmap(data: SelectedBeatmap | null) {
             patchState(store, { data });
             loadBackground(data?.paths?.background ?? null);
@@ -107,6 +113,11 @@ export const OsuReaderStore = signalStore(
         function setStatus(status: OsuReaderStatus) {
             const previous = store.status();
             patchState(store, { status });
+            // Said in the language in use: at startup, once it is loaded.
+            language.ready.then(() => announce(status, previous));
+        }
+
+        function announce(status: OsuReaderStatus, previous: OsuReaderStatus) {
             switch (status.state) {
                 case 'waiting':
                     if (previous.state === 'connected') {
@@ -159,10 +170,12 @@ export const OsuReaderStore = signalStore(
                     await listen<SelectedBeatmap>('osu-beatmap', event => setBeatmap(event.payload));
                     await listen<SkillUpdate>('osu-beatmap-skill', event => setSkill(event.payload));
                     await listen<PlayedSkillUpdate>('osu-beatmap-played-skill', event => setPlayed(event.payload));
+                    await listen<boolean>('osu-in-play', event => setInPlay(event.payload));
 
                     // An event that arrived meanwhile is newer than the snapshot.
                     const snapshot = await invoke<OsuReaderSnapshot>('connect_osu_reader');
                     if (snapshot.beatmap && !store.data()) setBeatmap(snapshot.beatmap);
+                    setInPlay(snapshot.inPlay);
                     if (store.status().state === 'waiting') {
                         if (snapshot.status.state === 'waiting') {
                             notify.info(transloco.translate('osuReader.looking'));
@@ -172,7 +185,7 @@ export const OsuReaderStore = signalStore(
                     }
                 } catch (e) {
                     console.error('connect_osu_reader failed', e);
-                    notify.error(transloco.translate('osuReader.startFailed'));
+                    language.ready.then(() => notify.error(transloco.translate('osuReader.startFailed')));
                     patchState(store, { started: false });
                 }
             },

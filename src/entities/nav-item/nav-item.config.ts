@@ -26,6 +26,10 @@ export const USER_ITEMS: NavItem[] = [
         label: 'nav.trainer', route: '/user/trainer', icon: '@tui.sliders-horizontal',
         description: 'nav.trainerDescription',
     },
+    {
+        label: 'nav.replays', route: '/user/replays', icon: '@tui.activity',
+        description: 'nav.replaysDescription',
+    },
 ];
 
 export const DEV_ITEMS: NavItem[] = [

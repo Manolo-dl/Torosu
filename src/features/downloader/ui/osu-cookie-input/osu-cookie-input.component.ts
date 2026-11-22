@@ -1,16 +1,16 @@
+import { ButtonComponent, BadgeComponent, IconComponent, NoticeComponent, StatefulInputComponent } from '@shared/ui';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { form, maxLength, minLength, required, FormRoot, FormField } from '@angular/forms/signals';
 import { signal } from '@angular/core';
 import { UserStore } from '../../user.store';
 import { ConfigurationStore } from '@entities/configuration';
-import { StatefulInputComponent } from "@shared/ui";
-import { TuiButton, TuiNotificationDirective, TuiTitle } from '@taiga-ui/core';
-import { TuiBadge } from '@taiga-ui/kit';
+import { NotifyService } from '@shared/services';
+import { TranslocoService } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-osu-cookie-input',
-  imports: [FormRoot, StatefulInputComponent, FormField, TuiButton, TuiNotificationDirective, TuiTitle, TuiBadge, TranslocoPipe],
+  imports: [FormRoot, StatefulInputComponent, FormField, TranslocoPipe, ButtonComponent, BadgeComponent, IconComponent, NoticeComponent],
   templateUrl: './osu-cookie-input.component.html',
   styleUrl: './osu-cookie-input.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -18,6 +18,13 @@ import { TuiBadge } from '@taiga-ui/kit';
 export class OsuCookieInputComponent {
   readonly userStore = inject(UserStore);
   readonly config = inject(ConfigurationStore);
+  private readonly notify = inject(NotifyService);
+  private readonly transloco = inject(TranslocoService);
+
+  /** Changing the cookie in use: its form shows instead of the row. */
+  readonly editing = signal(false);
+  /** The cookie typed is shown instead of hidden. */
+  readonly revealed = signal(false);
 
   /** The messages are translation keys, shown by `StatefulInputComponent`. */
   readonly osuCookieForm = form(
@@ -33,8 +40,12 @@ export class OsuCookieInputComponent {
           const previous = this.userStore.user()?.osuSession ?? '';
           try {
             this.userStore.updateUser({ osuSession: field().value().osuSession });
+            // Emptied, not to leave the cookie on screen; the badge above says it is in use.
             field().value.set({ osuSession: '' });
             field().reset();
+            this.notify.success(this.transloco.translate('downloader.cookie.updated'));
+            this.editing.set(false);
+            this.revealed.set(false);
             return null;
           } catch {
             if (previous) field().value.set({ osuSession: previous });

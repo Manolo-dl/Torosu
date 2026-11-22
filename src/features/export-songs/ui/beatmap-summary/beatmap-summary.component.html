@@ -1,7 +1,11 @@
-<div appearance="floating" tuiCardLarge="compact">
+<div appCard>
   <div tuiTitle>
     <span tuiSubtitle>{{ 'exportSongs.filtered' | transloco }}</span>
-    <strong>{{ store.totalFiltered() }}</strong>
+    @if (osuDb.isLoading()) {
+      <app-skeleton width="4rem" height="1.5rem" />
+    } @else {
+      <strong>{{ store.totalFiltered() }}</strong>
+    }
   </div>
 </div>
 

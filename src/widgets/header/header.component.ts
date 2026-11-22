@@ -1,33 +1,88 @@
+import { BadgeComponent, ButtonComponent, IconComponent, ProgressComponent } from '@shared/ui';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked } from '@angular/core';
-import { Router } from '@angular/router';
+import { ApplicationRef, ChangeDetectionStrategy, Component, computed, DOCUMENT, effect, inject, signal, untracked } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 import { ConfigurationStore } from '@entities/configuration';
-import { UpdateStore } from '@entities/update';
-import { NavStore } from '@entities/nav-item';
-import { TUI_DARK_MODE, TuiButton, TuiDropdown, TuiTitle } from "@taiga-ui/core";
-import { TuiBadge, TuiButtonLoading, TuiProgress } from '@taiga-ui/kit';
+import { releaseNotes, UpdateStore } from '@entities/update';
+import { DEV_ITEMS, NavStore } from '@entities/nav-item';
+import { MusicPulseDirective, OsuAudioService } from '@entities/osu-reader';
+import { VisualizerComponent } from './visualizer.component';
+import { TUI_DARK_MODE, TuiDropdown, TuiTitle } from "@taiga-ui/core";
+import { AppearanceStore } from "@shared/stores";
+import { WindowControlsComponent } from "@widgets/window-controls/window-controls.component";
 import { ConfigButtonComponent } from "@features/configuration";
 
 @Component({
   selector: 'app-header',
-  imports: [TuiButton, TuiButtonLoading, TuiDropdown, TuiTitle, TuiBadge, TuiProgress, ConfigButtonComponent, TranslocoPipe],
+  imports: [ProgressComponent, ButtonComponent, IconComponent, VisualizerComponent, MusicPulseDirective, RouterLink, WindowControlsComponent, TuiDropdown, TuiTitle, ConfigButtonComponent, TranslocoPipe, BadgeComponent],
   templateUrl: './header.component.html',
   styleUrl: './header.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HeaderComponent {
   readonly darkMode = inject(TUI_DARK_MODE);
+  readonly appearance = inject(AppearanceStore);
   readonly navStore = inject(NavStore);
-  readonly icon = computed(() => this.darkMode() ? '@tui.moon' : '@tui.sun');
+  readonly icon = computed(() => this.appearance.dark() ? 'moon' : 'sun');
   readonly update = inject(UpdateStore);
   readonly updateOpen = signal(false);
+  /** The new version's notes, without what is only for the website. */
+  readonly notes = computed(() => releaseNotes(this.update.available()?.notes ?? null));
   private readonly config = inject(ConfigurationStore);
   private readonly router = inject(Router);
+  private readonly document = inject(DOCUMENT);
+  private readonly appRef = inject(ApplicationRef);
 
   /** Developer mode is turned on in the settings. */
   readonly devMode = computed(() => this.config.config()?.dev_mode ?? false);
 
+  /**
+   * The other theme, spreading in a circle from the button where the engine
+   * can (View Transitions), at once where it can't or motion is reduced.
+   */
+  toggleTheme(event: MouseEvent) {
+    const document = this.document as Document & {
+      startViewTransition?: (update: () => void) => { ready: Promise<void>; finished: Promise<void> };
+    };
+    const reduced =
+      this.appearance.reducedMotion() || matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!document.startViewTransition || reduced || !this.appearance.transitions()) {
+      this.appearance.toggleDark();
+      return;
+    }
+
+    const x = event.clientX;
+    const y = event.clientY;
+    const radius = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+    const transition = document.startViewTransition(() => {
+      this.appearance.toggleDark();
+      // The new theme on the page before the transition takes its picture.
+      this.appRef.tick();
+    });
+    transition.ready
+      .then(() => {
+        document.documentElement.animate(
+          { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`] },
+          { duration: 520, easing: 'cubic-bezier(0.65, 0, 0.35, 1)', pseudoElement: '::view-transition-new(root)' },
+        );
+      })
+      .catch(() => {});
+  }
+
+  /** From the tools to the developer pages and back, opening the first of them. */
+  switchMode() {
+    this.navStore.toggleMode();
+    this.router.navigate([this.navStore.isDevMode() ? DEV_ITEMS[0].route : '/']);
+  }
+
   constructor() {
+    // The music osu! plays, for the bars or what moves with it (it starts the osu! reader).
+    const audio = inject(OsuAudioService);
+    effect(() => {
+      const enabled = this.appearance.visualizer() || this.appearance.musicReactive();
+      untracked(() => audio.setEnabled(enabled));
+    });
+
     // Turned off while on the developer pages: back to the tools.
     effect(() => {
       if (this.devMode()) return;

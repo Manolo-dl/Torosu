@@ -1,7 +1,7 @@
-<div appearance="floating" tuiCardLarge="compact">
+<div appCard>
   <header>
     <h3 tuiTitle>{{ 'packs.browse' | transloco }}</h3>
-    <span appearance="neutral" tuiBadge>{{ 'packs.sets' | transloco: { count: store.filteredSets().length } }}</span>
+    <span appBadge tone="neutral">{{ 'packs.sets' | transloco: { count: store.filteredSets().length } }}</span>
   </header>
 
   <app-beatmap-set-list
@@ -14,13 +14,13 @@
 
 <ng-template #addButton let-diff let-set="set">
   @if (store.addedMd5s().has(diff.md5)) {
-    <tui-icon icon="@tui.check" class="added" />
+    <app-icon name="@tui.check" class="added" />
   } @else {
     <button
-      appearance="secondary"
-      iconStart="@tui.plus"
+      appButton="secondary"
+      iconOnly
+      icon="@tui.plus"
       size="xs"
-      tuiIconButton
       type="button"
       (click)="addDiff(set, diff, $event)"
     >

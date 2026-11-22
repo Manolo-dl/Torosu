@@ -1,4 +1,4 @@
-import { provideTaiga, tuiNotificationOptionsProvider } from "@taiga-ui/core";
+import { provideTaiga } from "@taiga-ui/core";
 import {
   ApplicationConfig,
   provideBrowserGlobalErrorListeners
@@ -11,11 +11,10 @@ import { routes } from "./app.routes";
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
+    // A page comes in by itself as it opens (styles.css).
     provideRouter(routes),
     provideTaiga(),
     // After Taiga, whose language it sets.
     provideI18n(),
-    // Defaults for every TuiNotificationService.open() call in the app
-    tuiNotificationOptionsProvider({ autoClose: 4000, closable: true }),
   ],
 };

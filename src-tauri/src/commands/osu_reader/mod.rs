@@ -1,11 +1,13 @@
+pub mod audio;
 pub mod export;
 
-use std::{sync::atomic::Ordering, thread, time::Duration};
+use std::{sync::atomic::Ordering, thread, time::{Duration, Instant}};
 
-use osu_memory_reader::{Beatmap, BeatmapAttributes, BeatmapPaths, Error, OsuReader};
+use osu_memory_reader::{Beatmap, BeatmapAttributes, BeatmapPaths, Error, GameState, OsuReader};
 use serde::Serialize;
 use tauri::{AppHandle, Emitter, Manager, Runtime};
 
+use crate::commands::replays::{live::ReplayWatch, scores};
 use crate::skill::{self, PlayedMods, Skill};
 use crate::state::{AppConfigState, OsuReaderState};
 
@@ -70,11 +72,15 @@ pub enum ReaderStatus {
 pub struct ReaderSnapshot {
     pub status: ReaderStatus,
     pub beatmap: Option<SelectedBeatmap>,
+    /// osu! is playing a map (or a replay): sent as `osu-in-play` when it
+    /// changes. The window's ornaments rest meanwhile.
+    #[serde(rename = "inPlay")]
+    pub in_play: bool,
 }
 
 impl ReaderSnapshot {
     pub fn new() -> Self {
-        Self { status: ReaderStatus::Waiting, beatmap: None }
+        Self { status: ReaderStatus::Waiting, beatmap: None, in_play: false }
     }
 }
 
@@ -122,6 +128,7 @@ fn run<R: Runtime>(app: AppHandle<R>) {
         let mut rated = String::new();
         // The beatmap and mods its skill with mods was estimated for (or tried).
         let mut played_for: Option<(String, Option<PlayedMods>)> = None;
+        let mut replays = replay_watch(&app);
         while reader.is_running() {
             // Isolated read errors are normal while osu! swaps beatmaps or screens
             // (`ReadMemory`, or `Inconsistent` for a beatmap read while it moved
@@ -153,11 +160,36 @@ fn run<R: Runtime>(app: AppHandle<R>) {
                     played_for = Some(key);
                 }
             }
+            // A failed read (osu! changing screens) leaves things as they were.
+            if let Ok(status) = reader.status() {
+                set_in_play(&app, status == GameState::Play);
+                if let Some(watch) = replays.as_mut() {
+                    announce_new_replays(&app, watch, status == GameState::Play);
+                }
+            }
             thread::sleep(POLL_INTERVAL);
         }
 
         log::info!("osu! closed, waiting for it to start again");
+        set_in_play(&app, false);
         set_status(&app, ReaderStatus::Waiting);
+    }
+}
+
+/// Watches osu!'s `Data/r` for the replays of the plays to come; `None`
+/// while the osu! folder is not set.
+fn replay_watch<R: Runtime>(app: &AppHandle<R>) -> Option<ReplayWatch> {
+    let osu = app.state::<AppConfigState>().osu_path().ok()?;
+    Some(ReplayWatch::new(scores::replays_dir(&osu)))
+}
+
+/// Sends the mania replays osu! saved after a play as `local-score-added`.
+fn announce_new_replays<R: Runtime>(app: &AppHandle<R>, watch: &mut ReplayWatch, playing: bool) {
+    for name in watch.poll(playing, Instant::now()) {
+        if let Some(score) = scores::from_replay(watch.dir(), &name) {
+            log::info!("new local replay {name}");
+            let _ = app.emit("local-score-added", score);
+        }
     }
 }
 
@@ -249,6 +281,15 @@ fn set_status<R: Runtime>(app: &AppHandle<R>, status: ReaderStatus) {
     }
     snapshot.status = status.clone();
     let _ = app.emit("osu-reader-status", status);
+}
+
+fn set_in_play<R: Runtime>(app: &AppHandle<R>, in_play: bool) {
+    let state = app.state::<OsuReaderState>();
+    let mut snapshot = state.snapshot.lock().unwrap();
+    if snapshot.in_play != in_play {
+        snapshot.in_play = in_play;
+        let _ = app.emit("osu-in-play", in_play);
+    }
 }
 
 fn set_beatmap<R: Runtime>(app: &AppHandle<R>, beatmap: SelectedBeatmap) {

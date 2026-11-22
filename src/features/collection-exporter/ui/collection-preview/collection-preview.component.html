@@ -1,13 +1,19 @@
-<div appearance="floating" tuiCardLarge="compact">
-  <header>
-    <h3 tuiTitle>{{ 'collections.export.preview' | transloco }}</h3>
-    @if (store.selectedCount() > 0) {
-      <span appearance="info" tuiBadge>{{ 'collections.export.sets' | transloco: { count: store.totalSelectedSets() } }}</span>
+@if (store.text()) {
+  <div class="text">
+    <pre>{{ preview() }}</pre>
+    @if (more() > 0) {
+      <span class="more">{{ 'collections.export.moreLines' | transloco: { count: more() } }}</span>
     }
-  </header>
-  <app-beatmap-set-list
-    [sets]="store.selectedSets()"
-    emptyText="collections.export.empty"
-    listHeight="calc(100vh - 23rem)"
-  />
-</div>
+  </div>
+
+  <div class="actions">
+    <button appButton="primary" icon="save" type="button" (click)="store.save()">
+      {{ 'collections.export.save' | transloco }}
+    </button>
+    <button appButton="secondary" icon="copy" type="button" (click)="store.copy()">
+      {{ 'collections.export.copy' | transloco }}
+    </button>
+  </div>
+} @else {
+  <p class="nothing">{{ 'collections.export.nothing' | transloco }}</p>
+}

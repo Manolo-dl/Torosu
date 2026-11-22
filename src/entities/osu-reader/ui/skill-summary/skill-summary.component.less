@@ -108,3 +108,137 @@
     opacity: 0;
   }
 }
+
+.item {
+  cursor: help;
+  outline: none;
+
+  &:focus-visible {
+    box-shadow: var(--focus-ring);
+  }
+}
+
+// ---- The cards over a dan and the MSD (appTooltip, in <body>) ----
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-inline-size: 15rem;
+  white-space: normal;
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.card-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-inline-size: 0;
+}
+
+.card-caption {
+  color: var(--text-3);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.card-name {
+  color: var(--text-1);
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: var(--weight-black);
+  line-height: 1.1;
+}
+
+.card-meaning {
+  color: var(--text-2);
+  font-size: var(--text-xs);
+}
+
+.card-note {
+  margin: 0;
+  color: var(--text-3);
+  font-size: var(--text-2xs);
+
+  &.warn {
+    color: var(--warning);
+  }
+}
+
+.msd-value.big {
+  min-inline-size: 4.5rem;
+  block-size: 3rem;
+  font-size: var(--text-xl);
+}
+
+// A label, a bar filling to its share (a transform) and its value.
+.confidence {
+  --level: var(--success);
+
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-xs);
+
+  &[data-level='mid'] { --level: var(--accent); }
+  &[data-level='low'] { --level: var(--warning); }
+}
+
+.confidence-label {
+  color: var(--text-2);
+}
+
+.confidence-bar {
+  block-size: 0.4rem;
+  border-radius: var(--radius-pill);
+  background: color-mix(in oklch, var(--text-1) 10%, transparent);
+  overflow: hidden;
+}
+
+.confidence-fill {
+  display: block;
+  block-size: 100%;
+  border-radius: inherit;
+  background: var(--level, var(--accent));
+  transform-origin: left;
+  animation: fill-in var(--duration-4) var(--ease-out) backwards;
+}
+
+.confidence-value,
+.skillset-value {
+  color: var(--text-1);
+  font-weight: var(--weight-bold);
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}
+
+.skillsets {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  font-size: var(--text-xs);
+}
+
+.skillset-name {
+  color: var(--text-3);
+
+  &.top {
+    color: var(--accent-text);
+    font-weight: var(--weight-bold);
+  }
+}
+
+@keyframes fill-in {
+  from {
+    transform: scaleX(0);
+  }
+}

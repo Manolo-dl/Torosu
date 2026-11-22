@@ -1,0 +1,76 @@
+:host {
+  --switch-width: 2.25rem;
+  --switch-height: 1.25rem;
+  --switch-gap: 2px;
+  --switch-thumb: calc(var(--switch-height) - 2 * var(--switch-gap));
+
+  -webkit-appearance: none;
+  appearance: none;
+  position: relative;
+  flex-shrink: 0;
+  inline-size: var(--switch-width);
+  block-size: var(--switch-height);
+  margin: 0;
+  border-radius: var(--radius-pill);
+  background: color-mix(in oklch, var(--text-1) 16%, transparent);
+  box-shadow: inset 0 0 0 1px var(--line);
+  cursor: pointer;
+  transition:
+    background var(--duration-2) var(--ease-out),
+    box-shadow var(--duration-2) var(--ease-out);
+
+  /* The thumb: slides with a little spring, stretches while pressed. */
+  &::before {
+    content: '';
+    position: absolute;
+    inset-block-start: var(--switch-gap);
+    inset-inline-start: var(--switch-gap);
+    inline-size: var(--switch-thumb);
+    block-size: var(--switch-thumb);
+    border-radius: var(--radius-pill);
+    background: oklch(0.98 0.005 var(--p-surface-h));
+    box-shadow: 0 1px 3px oklch(0 0 0 / 0.3);
+    transition:
+      transform var(--duration-3) var(--ease-spring),
+      inline-size var(--duration-2) var(--ease-out);
+  }
+
+  &:hover:not(:disabled) {
+    background: color-mix(in oklch, var(--text-1) 22%, transparent);
+  }
+
+  &:active:not(:disabled)::before {
+    inline-size: calc(var(--switch-thumb) + 0.25rem);
+  }
+
+  &:checked {
+    background: var(--accent);
+    box-shadow: 0 0 14px -4px var(--accent-glow);
+
+    &::before {
+      transform: translateX(calc(var(--switch-width) - var(--switch-thumb) - 2 * var(--switch-gap)));
+    }
+
+    &:hover:not(:disabled) {
+      background: var(--accent-hover);
+    }
+
+    &:active:not(:disabled)::before {
+      transform: translateX(calc(var(--switch-width) - var(--switch-thumb) - 2 * var(--switch-gap) - 0.25rem));
+    }
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    box-shadow: var(--focus-ring);
+  }
+}
+
+:host([data-size='s']) {
+  --switch-width: 1.875rem;
+  --switch-height: 1.05rem;
+}

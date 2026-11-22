@@ -22,6 +22,12 @@
 - **Trainer**: change the rate, the stats, the long notes or the key count of the map selected in osu!. It reads the map straight from the game, so there is nothing to open by hand. Make several versions in one go, each with its own changes (1.1x, 1.2x, 1.3x and 1.4x, say), and keep the ones you use as presets, which can also run with a keyboard shortcut while you play (not on Wayland).
   - **Dan and MSD**: for 4K, 6K and 7K maps the Trainer shows the dan of the selected map, and the dan each version would have before you make it, with [Mania Tracker](https://mania-tracker.com)'s calculator. It also shows the MSD (MinaCalc's, or Prism's on 6K to 8K). Choose dan, MSD, both or none in the settings: with none, nothing is rated.
   - **Key converter**: from any key count to 1K to 10K, 12K, 14K, 16K or 18K, with the playstyles of the osu! wiki for 12K and up. On 10K2S and 7K+1 the scratches follow the music: they go where the song has its hard hits.
+- **Replay Analysis**: see how you played your osu!mania scores, from the replays osu! keeps on your computer, with nothing to export or open by hand. While osu! is open, each play you pass is analysed as soon as it ends.
+  - **Timing**: the error early and late and the unstable rate, counted as osu!'s results screen does, or only for the normal notes (rice) or only for the long notes (presses and releases).
+  - **By key**: the mean offset, unstable rate and misses of each key, to find the fingers that go early or late.
+  - **Charts**: the distribution of the offsets against the judgement windows, and every offset along the song, to see where you drift or tire. Turn off the ones you don't use in the settings.
+  - **Judgements**: since 2026 osu! saves with each replay when it gave each judgement, so each note has the judgement the game gave it. Older replays are judged by Torosu as stable does, which a few long notes may not match.
+  - Replays of converts and of plays with Random can't be analysed yet.
 
 Torosu is in English, Spanish, French, Japanese, Korean and Simplified Chinese: choose the language in the settings, under General.
 
@@ -55,7 +61,7 @@ osu! is expected to run under Wine, for example with [osu-winello](https://githu
 
 #### Reading osu!'s memory
 
-The Trainer reads the selected map from osu!'s memory. Most distributions only let a program read another one's memory when it has the permission for it. If the Trainer shows *Can't read osu!*, give it to Torosu once:
+The Trainer reads the selected map from osu!'s memory, and Replay Analysis reads it to notice when a play ends. Most distributions only let a program read another one's memory when it has the permission for it. If the Trainer shows *Can't read osu!*, give it to Torosu once:
 
 ```sh
 sudo setcap cap_sys_ptrace=eip /usr/bin/torosu

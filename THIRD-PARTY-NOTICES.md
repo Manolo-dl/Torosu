@@ -86,3 +86,18 @@ The MIT License of each of them reads:
 > LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 > OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 > SOFTWARE.
+
+## Fonts
+
+Torosu bundles five fonts, each under the SIL Open Font License, Version 1.1,
+packaged by [Fontsource](https://fontsource.org):
+
+- **Nunito**: Copyright 2014 The Nunito Project Authors (<https://github.com/googlefonts/nunito>)
+- **Outfit**: Copyright 2021 The Outfit Project Authors (<https://github.com/Outfitio/Outfit-Fonts>)
+- **Inter**: Copyright 2016 The Inter Project Authors (<https://github.com/rsms/inter>)
+- **Space Grotesk**: Copyright 2020 The Space Grotesk Project Authors (<https://github.com/floriankarsten/space-grotesk>)
+- **JetBrains Mono**: Copyright 2020 The JetBrains Mono Project Authors (<https://github.com/JetBrains/JetBrainsMono>)
+
+Their copyright notices and the full license text are distributed with
+Torosu, in `assets/licenses/fonts/` inside the installed app (and in
+`src/assets/licenses/fonts/` in the source code).

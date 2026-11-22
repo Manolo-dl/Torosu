@@ -1,0 +1,187 @@
+@import 'shared/styles/mixins';
+
+:host {
+  display: block;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+// ---- The timing ----
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(7.25rem, 1fr));
+  gap: var(--space-2);
+}
+
+.tile {
+  --tile: var(--text-3);
+
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: var(--space-3);
+  border: 1px solid var(--line-subtle);
+  border-inline-start: 3px solid var(--tile);
+  border-radius: var(--radius-md);
+  background: color-mix(in oklch, var(--tile) 7%, var(--surface-1));
+  outline: none;
+  animation: tile-in var(--duration-3) var(--ease-out) backwards;
+
+  &:nth-child(2) { animation-delay: calc(var(--stagger) * 1); }
+  &:nth-child(3) { animation-delay: calc(var(--stagger) * 2); }
+  &:nth-child(4) { animation-delay: calc(var(--stagger) * 3); }
+
+  &:focus-visible {
+    box-shadow: var(--focus-ring);
+  }
+
+  &.ur { --tile: var(--accent); }
+  &.early { --tile: var(--viz-early, #3987e5); }
+  &.late { --tile: var(--viz-late, #e66767); }
+
+  .label {
+    color: var(--text-3);
+    font-size: var(--text-2xs);
+    font-weight: var(--weight-bold);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .value {
+    color: var(--text-1);
+    font-size: var(--text-lg);
+    font-weight: var(--weight-black);
+    font-variant-numeric: tabular-nums;
+
+    small {
+      color: var(--text-3);
+      font-size: var(--text-xs);
+      font-weight: var(--weight-medium);
+    }
+  }
+}
+
+// How the hits split: early on the left, late on the right.
+.split-bar {
+  display: flex;
+  gap: 2px;
+  block-size: 0.35rem;
+  margin-block-start: var(--space-1);
+
+  .split-early,
+  .split-late {
+    border-radius: var(--radius-pill);
+    transition: flex-grow var(--duration-3) var(--ease-out);
+  }
+
+  .split-early {
+    flex-grow: var(--early);
+    background: var(--viz-early, #3987e5);
+  }
+
+  .split-late {
+    flex-grow: calc(1 - var(--early));
+    background: var(--viz-late, #e66767);
+  }
+}
+
+@keyframes tile-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+// ---- The judgements ----
+
+.judgement-bar {
+  display: flex;
+  gap: 2px;
+  block-size: 0.6rem;
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+
+  .segment {
+    flex-basis: 0;
+    min-inline-size: 3px;
+    transform-origin: left;
+    animation: segment-in var(--duration-4) var(--ease-out) backwards;
+  }
+}
+
+@keyframes segment-in {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+.counts {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font: var(--tui-typography-body-s);
+  font-variant-numeric: tabular-nums;
+
+  th,
+  td {
+    padding: 0.25rem 0.5rem;
+    text-align: end;
+  }
+
+  th:first-child {
+    text-align: start;
+    color: var(--tui-text-secondary);
+    font-weight: normal;
+  }
+
+  thead th {
+    font-weight: bold;
+  }
+
+  // A mark beside each judgement's name, in an order checked for colour
+  // blindness in both themes (the name is always shown with it).
+  .swatch {
+    display: inline-block;
+    inline-size: 0.5rem;
+    block-size: 0.5rem;
+    margin-inline-end: 0.25rem;
+    border-radius: 2px;
+    vertical-align: middle;
+
+  }
+
+  .off {
+    color: var(--tui-text-warning);
+  }
+}
+
+.note {
+  margin: 0;
+  font: var(--tui-typography-body-xs);
+  color: var(--tui-text-tertiary);
+}
+
+// Each judgement's colour, for its mark in the table and its part of the bar:
+// in an order checked for colour blindness in both themes.
+.swatch,
+.segment {
+  &[data-judgement='max'] { background: #6250d6; }
+  &[data-judgement='n300'] { background: #eda100; }
+  &[data-judgement='n200'] { background: #1baf7a; }
+  &[data-judgement='n100'] { background: #2a78d6; }
+  &[data-judgement='n50'] { background: #008300; }
+  &[data-judgement='miss'] { background: #e34948; }
+
+  :host-context([tuiTheme='dark']) & {
+    &[data-judgement='max'] { background: #9085e9; }
+    &[data-judgement='n300'] { background: #c98500; }
+    &[data-judgement='n200'] { background: #199e70; }
+    &[data-judgement='n100'] { background: #3987e5; }
+    &[data-judgement='n50'] { background: #0ca30c; }
+    &[data-judgement='miss'] { background: #e66767; }
+  }
+}

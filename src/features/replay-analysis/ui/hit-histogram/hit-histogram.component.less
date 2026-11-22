@@ -1,0 +1,42 @@
+@import '../charts/viz';
+
+:host {
+  .viz-colors();
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.viz-chart();
+
+.band {
+  fill: var(--viz-band);
+
+  &.alt {
+    fill: var(--viz-band-alt);
+  }
+}
+
+path {
+  &[data-side='early'] { fill: var(--viz-early); }
+  &[data-side='late'] { fill: var(--viz-late); }
+  &[data-side='zero'] { fill: var(--viz-neutral); }
+
+  &:hover {
+    opacity: 0.75;
+  }
+}
+
+.mean {
+  stroke: var(--tui-text-primary);
+  stroke-width: 2;
+}
+
+.swatch {
+  &.early { background: var(--viz-early); }
+  &.late { background: var(--viz-late); }
+  &.mean {
+    inline-size: 2px;
+    background: var(--tui-text-primary);
+  }
+}

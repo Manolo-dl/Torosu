@@ -1,0 +1,34 @@
+@let settings = store.settings();
+<app-option-group class="views" [options]="views()" [active]="viewIndex()" (activeChange)="pickView($event)" />
+
+<app-analysis-summary [entry]="entry()" [analysis]="analysis()" [view]="store.view()" />
+
+@if (settings.key_chart) {
+  <div appCard class="card">
+    <h3 tuiTitle>
+      {{ 'replays.keys.title' | transloco }}
+      <span tuiSubtitle>{{ 'replays.keys.subtitle' | transloco }}</span>
+    </h3>
+    <app-key-stats [analysis]="analysis()" [view]="store.view()" />
+  </div>
+}
+
+@if (settings.histogram) {
+  <div appCard class="card">
+    <h3 tuiTitle>
+      {{ 'replays.histogram.title' | transloco }}
+      <span tuiSubtitle>{{ 'replays.histogram.subtitle' | transloco }}</span>
+    </h3>
+    <app-hit-histogram [analysis]="analysis()" [view]="store.view()" />
+  </div>
+}
+
+@if (settings.timeline) {
+  <div appCard class="card">
+    <h3 tuiTitle>
+      {{ 'replays.timeline.title' | transloco }}
+      <span tuiSubtitle>{{ 'replays.timeline.subtitle' | transloco }}</span>
+    </h3>
+    <app-timeline [analysis]="analysis()" [view]="store.view()" />
+  </div>
+}

@@ -12,12 +12,15 @@
       "general": "일반",
       "downloader": "다운로더",
       "packs": "팩",
-      "trainer": "트레이너"
+      "trainer": "트레이너",
+      "replays": "리플레이",
+      "appearance": "모양",
+      "performance": "성능"
     },
     "general": {
       "osu": "osu!",
       "osuPath": "osu! 폴더 경로",
-      "osuPathPlaceholder": "C:\\Users\\you\\AppData\\Local\\osu!",
+      "osuPathPlaceholder": "C:\\Users\\사용자\\AppData\\Local\\osu!",
       "pickOsuPath": "osu! 폴더 선택",
       "language": "언어",
       "languageHint": "Torosu의 표시 언어",
@@ -108,6 +111,62 @@
         "mode": "osu!mania",
         "keys": "7K, mania 전용"
       }
+    },
+    "replays": {
+      "analysis": "분석",
+      "charts": "그래프",
+      "chartsHint": "끈 그래프는 그리지 않습니다"
+    },
+    "appearance": {
+      "title": "모양",
+      "palette": "팔레트",
+      "font": "글꼴",
+      "reducedMotion": "애니메이션 줄이기",
+      "reducedMotionHint": "애니메이션과 전환을 줄입니다. 시스템 설정에서 요청할 때도 적용됩니다",
+      "palettes": {
+        "sakura": "벚꽃",
+        "nebula": "성운",
+        "aurora": "오로라",
+        "ember": "잔불",
+        "mono": "모노"
+      },
+      "fonts": {
+        "outfit": "osu!처럼 기하학적인 글꼴",
+        "nunito": "둥글고 부드러운 글꼴",
+        "inter": "중립적이고 촘촘한 글꼴",
+        "grotesk": "기술적이고 개성 있는 글꼴"
+      },
+      "visualizer": "제목 표시줄의 음악",
+      "visualizerHint": "osu!에서 재생 중인 곡을 따라 움직이는 막대. 이를 위해 백그라운드에서 osu!를 읽습니다",
+      "theme": "테마",
+      "themes": {
+        "system": "시스템",
+        "dark": "다크",
+        "light": "라이트"
+      }
+    },
+    "saved": "설정을 저장했습니다",
+    "saving": "저장 중…",
+    "autosave": "닫을 때 저장됩니다",
+    "saveFailed": "설정을 저장할 수 없습니다",
+    "performance": {
+      "effects": "효과",
+      "backgrounds": "움직이는 배경",
+      "backgroundsHint": "삼각형, 빛 입자, 모드 궤도. 끄면 멈춥니다",
+      "quality": "효과 품질",
+      "qualityHint": "낮음은 더 적게, 초당 30프레임으로 그려 느린 컴퓨터에서 가볍습니다",
+      "qualities": {
+        "high": "높음",
+        "low": "낮음"
+      },
+      "transitions": "페이지 전환 효과",
+      "transitionsHint": "페이지와 테마가 애니메이션으로 바뀝니다",
+      "music": "osu! 음악",
+      "reactive": "앱이 음악에 맞춰 움직임",
+      "reactiveHint": "로고가 베이스에 맞춰 뛰고 페이지 뒤의 빛이 음악을 따릅니다",
+      "motion": "움직임",
+      "covers": "맵 커버",
+      "coversHint": "각 맵의 배경으로 만들어 캐시에 보관합니다 (최대 32MB). 끄면 이미지를 읽거나 처리하지 않습니다"
     }
   },
   "nav": {
@@ -115,7 +174,7 @@
     "downloader": "다운로더",
     "downloaderDescription": "링크 목록에서 비트맵 세트를 Songs 폴더로 바로 다운로드하고, 이미 가진 것은 건너뜁니다.",
     "exportCollections": "컬렉션 내보내기",
-    "exportCollectionsDescription": "컬렉션을 비트맵 링크로, 또는 다른 설치에서 가져올 수 있는 목록으로 저장합니다.",
+    "exportCollectionsDescription": "컬렉션을 저장하거나 복사해 Torosu에서 가져오거나 세트를 내려받을 수 있습니다.",
     "importCollections": "컬렉션 가져오기",
     "importCollectionsDescription": "파일의 컬렉션을 osu!로 가져와 기존 컬렉션과 합칩니다.",
     "exportLibrary": "라이브러리 내보내기",
@@ -127,9 +186,14 @@
     "logs": "로그",
     "osuData": "osu-data",
     "changelog": "변경 내역",
-    "github": "Github",
-    "issues": "Issues",
-    "support": "후원"
+    "github": "GitHub",
+    "issues": "버그 제보",
+    "support": "후원",
+    "replays": "리플레이 분석",
+    "replaysDescription": "로컬 점수의 플레이를 분석합니다: 타이밍, 빠르거나 늦은 입력과 릴리스를 키별로 확인하세요.",
+    "tools": "도구",
+    "collapse": "사이드바 접기",
+    "expand": "사이드바 펼치기"
   },
   "header": {
     "toggleTheme": "테마 전환",
@@ -137,6 +201,7 @@
     "updateTo": "{{ version }}(으)로 업데이트",
     "new": "새 버전",
     "youHave": "현재 버전은 {{ version }}입니다. 설치가 끝나면 Torosu가 다시 시작됩니다.",
+    "seeOnGitHub": "GitHub에서 보기",
     "updateFailed": "Torosu가 직접 설치하지 못했습니다(예: Arch Linux 패키지). 릴리스 페이지에서 다운로드해 처음과 같은 방법으로 설치하세요.",
     "openReleases": "릴리스 페이지 열기",
     "updateAndRestart": "업데이트 후 다시 시작"
@@ -152,7 +217,24 @@
     "noLazer": "Lazer는 지원하지 않습니다: 도구들은 osu! stable의 파일을 읽고 씁니다.",
     "changeFolder": "설정에서 바꿀 수 있습니다",
     "tools": "도구",
-    "noTools": "모든 도구가 꺼져 있습니다. 설정의 '일반'에서 켜세요."
+    "noTools": "모든 도구가 꺼져 있습니다. 설정의 '일반'에서 켜세요.",
+    "library": {
+      "title": "내 라이브러리",
+      "hint": "osu!.db를 읽으면 Songs 폴더의 내용을 볼 수 있습니다: 모드별 맵, Ranked와 Loved 수, 플레이한 수.",
+      "read": "osu!.db 읽기",
+      "diffs": "난이도",
+      "inSets": "{{ count }}개 세트",
+      "sets": "{{ count }}개 세트",
+      "ranked": "랭크됨",
+      "loved": "러브드",
+      "unsubmitted": "미업로드",
+      "played": "플레이함"
+    },
+    "selected": {
+      "title": "osu!에서 선택됨",
+      "by": "매퍼: {{ mapper }}",
+      "trainer": "트레이너에서 열기"
+    }
   },
   "osuPath": {
     "notFound": "osu! 폴더를 찾을 수 없습니다",
@@ -174,7 +256,12 @@
     "exported": "{{ name }}을(를) 내보냈습니다",
     "exportFailed": "비트맵을 내보내지 못했습니다: {{ error }}",
     "looking": "osu!를 찾는 중...",
-    "startFailed": "osu! 리더를 시작하지 못했습니다."
+    "startFailed": "osu! 리더를 시작하지 못했습니다.",
+    "badge": {
+      "connected": "연결됨",
+      "waiting": "osu!를 기다리는 중",
+      "error": "osu!를 읽을 수 없음"
+    }
   },
   "trainer": {
     "subtitle": "새 맵을 만들기 전에 난이도 수치를 조정하고 변경 사항을 조합합니다.",
@@ -182,10 +269,22 @@
     "mappedBy": "제작: {{ mapper }}",
     "exportOsz": ".osz로 내보내기",
     "dan": {
-      "hint": "Mania Tracker가 추정한 단위, 신뢰도 {{ confidence }}%"
+      "hint": "Mania Tracker가 추정한 단위, 신뢰도 {{ confidence }}%",
+      "confidence": "신뢰도",
+      "lowConfidence": "신뢰도 낮음: 비교한 단 코스와 성격이 다른 맵입니다. 참고용으로 보세요.",
+      "source": "Mania Tracker 계산기로 추정했습니다.",
+      "keys": "{{ keys }}K 코스",
+      "variants": {
+        "top": "{{ dan }}단의 최상위",
+        "high": "{{ dan }}단의 상위",
+        "mid": "딱 {{ dan }}단",
+        "low": "{{ dan }}단의 하위",
+        "bottom": "{{ dan }}단의 최하위"
+      }
     },
     "msd": {
-      "hint": "종합 MSD, {{ calc }} 기준"
+      "hint": "종합 MSD, {{ calc }} 기준",
+      "skillsets": "스킬셋별"
     },
     "skill": {
       "dan": "단위",
@@ -199,7 +298,9 @@
       "lock": "잠금",
       "unlock": "잠금 해제",
       "lockStat": "{{ stat }} 잠금",
-      "unlockStat": "{{ stat }} 잠금 해제"
+      "unlockStat": "{{ stat }} 잠금 해제",
+      "restoreAll": "맵 값으로",
+      "backTo": "맵의 {{ value }}(으)로 되돌리기"
     },
     "actions": {
       "reset": "초기화",
@@ -260,7 +361,7 @@
     "tasks": {
       "RateChange": "배속 변경기",
       "SVNormalizer": "SV 정규화",
-      "FlnConverter": "Full LN",
+      "FlnConverter": "풀 LN",
       "NoLn": "LN 없음",
       "ShortLn": "짧은 LN",
       "KeyConverter": "키 변환"
@@ -272,7 +373,8 @@
       "scaleVideo": "영상 맞추기",
       "noFfmpeg": "영상 속도를 바꾸려면 <strong>ffmpeg</strong>가 필요하지만 찾지 못했습니다. 설치하고 PATH에 있는지 확인한 뒤 앱을 다시 시작하세요.",
       "videoSlow": "영상은 새 속도로 다시 인코딩되므로, 긴 영상은 시간이 걸릴 수 있습니다.",
-      "storyboard": "세트에 공유 <strong>.osb</strong> 스토리보드가 있으면 모든 난이도가 그것을 쓰므로, 원본과 겹치지 않도록 이 난이도는 <strong>새 비트맵 세트</strong>(제목 끝이 <strong>({{ rate }}x SB)</strong>)로 내보내집니다."
+      "storyboard": "세트에 공유 <strong>.osb</strong> 스토리보드가 있으면 모든 난이도가 그것을 쓰므로, 원본과 겹치지 않도록 이 난이도는 <strong>새 비트맵 세트</strong>(제목 끝이 <strong>({{ rate }}x SB)</strong>)로 내보내집니다.",
+      "quick": "빠른 배속"
     },
     "sv": {
       "description": "원래의 SV 변화를 없애고 BPM이 바뀔 때마다 SV를 설정해, 스크롤 속도를 메인 BPM의 속도로 유지합니다. BPM 변화, 키아이, 히트사운드는 그대로 남습니다."
@@ -332,6 +434,24 @@
       "16_EZ2AC": "10K2S와, 어느 손이든 옮겨 가서 치는 가운데 4키.",
       "18_10K8K": "10K에, 엄지를 뺀 각 손가락용 키를 손마다 4개 더합니다(4K10K4K).",
       "18_9K9K": "손마다 9키를 두 줄로. pop'n music의 DP 같은 배치."
+    },
+    "banner": {
+      "waiting": "osu!를 기다리는 중",
+      "waitingHint": "osu! stable을 열면 거기서 선택한 맵이 여기에 표시되어 바로 바꿀 수 있습니다.",
+      "select": "osu!에서 맵을 선택하세요",
+      "selectHint": "곡 선택 화면에서 맵을 고르면 여기에 표시되어 바로 바꿀 수 있습니다.",
+      "error": "osu!를 읽을 수 없습니다"
+    },
+    "oneTask": "작업 1개",
+    "tasksCount": "작업 {{ count }}개",
+    "dragTask": "드래그해서 순서 변경",
+    "taskHints": {
+      "RateChange": "BPM과 오디오까지 빠르게 또는 느리게",
+      "SVNormalizer": "처음부터 끝까지 같은 스크롤 속도",
+      "FlnConverter": "모든 노트를 다음 노트까지 늘림",
+      "NoLn": "롱노트를 일반 노트로 변환",
+      "ShortLn": "롱노트를 일정 길이 안으로",
+      "KeyConverter": "다른 키 수의 맵으로 변환"
     }
   },
   "downloader": {
@@ -381,7 +501,12 @@
       "isRequired": "쿠키가 필요합니다",
       "tooShort": "쿠키가 너무 짧습니다",
       "tooLong": "쿠키가 너무 깁니다",
-      "failed": "쿠키를 사용하지 못했습니다"
+      "failed": "쿠키를 사용하지 못했습니다",
+      "updated": "쿠키 사용 중: 이제 다운로드할 수 있습니다",
+      "activeHint": "다운로드에 osu! 계정을 사용합니다.",
+      "change": "변경",
+      "show": "쿠키 보기",
+      "hide": "쿠키 숨기기"
     },
     "queue": {
       "queued": "{{ count }}개 대기 중",
@@ -392,7 +517,12 @@
       "failedFile": "실패한 맵은 osu! 폴더의 <strong>failed_downloads.txt</strong>에 저장됩니다.",
       "clear": "대기열 비우기",
       "start": "다운로드 시작",
-      "downloadFailed": "다운로드 실패"
+      "downloadFailed": "다운로드 실패",
+      "setNumber": "비트맵 세트 #{{ id }}",
+      "openPage": "osu!에서 페이지 열기",
+      "remove": "대기열에서 제거",
+      "overall": "{{ total }}개 중 {{ finished }}개",
+      "nameSoon": "시작하면 이름이 표시됩니다"
     },
     "status": {
       "pending": "보류",
@@ -403,6 +533,24 @@
     "notification": {
       "title": "다운로더",
       "body": "{{ succeeded }}개 다운로드, {{ failed }}개 실패"
+    },
+    "importer": {
+      "file": "파일",
+      "paste": "링크 붙여넣기",
+      "pastePlaceholder": "한 줄에 링크나 세트 ID 하나:\nhttps://osu.ppy.sh/beatmapsets/39804\n39804",
+      "found": "{{ count }}개 세트 발견",
+      "add": "대기열에 추가",
+      "added": "{{ count }}개 세트를 대기열에 추가했습니다",
+      "addedSkipped": "{{ count }}개 세트를 대기열에 추가했습니다. {{ skipped }}개는 이미 대기열이나 라이브러리에 있습니다",
+      "nothing": "맵 링크나 ID를 찾지 못했습니다"
+    },
+    "steps": {
+      "session": "세션",
+      "import": "다운로드할 맵",
+      "queue": "대기열",
+      "help": "도움말",
+      "needSession": "먼저 세션을 설정하세요. osu!는 계정으로만 맵을 다운로드할 수 있습니다.",
+      "queueEmpty": "추가한 맵이 여기에 표시되며 바로 다운로드할 수 있습니다."
     }
   },
   "dropzone": {
@@ -445,7 +593,15 @@
     "search": "제목, 아티스트, 파일 이름으로 검색...",
     "created": "팩 {{ title }}을(를) 만들었습니다!",
     "createdParts": "팩 {{ title }}을(를) {{ parts }}개로 나눠 만들었습니다!",
-    "createFailed": "팩을 만들지 못했습니다: {{ error }}"
+    "createFailed": "팩을 만들지 못했습니다: {{ error }}",
+    "stats": {
+      "diffs": "난이도",
+      "sets": "세트",
+      "packs": "팩",
+      "stars": "별",
+      "packsHint": "설정의 팩당 최대 세트 수로 나뉩니다"
+    },
+    "emptyHint": "맵에서 난이도를 고르거나 컬렉션을 통째로 추가하세요."
   },
   "beatmaps": {
     "none": "비트맵이 없습니다"
@@ -458,37 +614,93 @@
     "collectionsDone": "컬렉션 {{ count }}개를 불러왔습니다",
     "collectionsFailed": "컬렉션을 불러오지 못했습니다",
     "logs": "로그를 불러오는 중입니다. 잠시 기다려 주세요...",
-    "logsFailed": "로그를 불러오지 못했습니다"
+    "logsFailed": "로그를 불러오지 못했습니다",
+    "localScores": "로컬 점수를 읽는 중입니다. 잠시 기다려 주세요...",
+    "localScoresFailed": "scores.db를 읽지 못했습니다",
+    "retry": "다시 시도"
   },
   "collections": {
     "export": {
-      "list": "컬렉션",
-      "selectAll": "모두 선택",
-      "notLoaded": "컬렉션을 열어 시작하세요",
-      "none": "컬렉션을 찾을 수 없습니다",
-      "summary": "요약",
-      "selected": "선택됨",
-      "totalSets": "전체 비트맵 세트",
-      "format": "형식",
-      "links": "다운로드 링크",
-      "importFormat": "가져오기 형식",
-      "preview": "미리보기",
+      "steps": {
+        "collections": "컬렉션",
+        "format": "형식",
+        "export": "내보내기",
+        "pickFirst": "컬렉션을 하나 이상 고르세요",
+        "textHere": "저장하거나 복사할 텍스트가 여기에 표시됩니다"
+      },
+      "notLoaded": "컬렉션을 읽지 못했습니다",
+      "retry": "다시 시도",
+      "none": "osu!에 컬렉션이 없습니다",
+      "libraryNotLoaded": "라이브러리를 불러오지 않았습니다",
+      "libraryHint": "MD5는 라이브러리 없이도 내보낼 수 있지만, 세트 링크와 설치된 맵 수는 알 수 없습니다.",
+      "loadLibrary": "라이브러리 불러오기",
+      "search": "컬렉션 찾기",
+      "picked": "{{ total }}개 중 {{ count }}개 선택",
+      "pickAll": "모두 선택",
+      "pickNone": "선택 해제",
+      "noMatch": "그 이름의 컬렉션이 없습니다",
+      "empty": "비어 있음",
+      "showSets": "세트 보기",
+      "maps": "맵 {{ count }}개",
       "sets": "세트 {{ count }}개",
-      "empty": "컬렉션을 선택하면 미리보기가 표시됩니다"
+      "md5": "Torosu에서 가져오기용",
+      "md5Hint": "각 맵을 MD5로 씁니다. 없는 맵도 포함되어, 가져가는 사람은 같은 난이도를 받습니다.",
+      "links": "세트 링크",
+      "linksHint": "세트마다 링크 하나. 다운로더나 웹사이트에서 받을 때 씁니다. 세트의 모든 난이도가 함께 옵니다.",
+      "linkCount": "링크 {{ count }}개",
+      "unsubmitted": "세트 {{ count }}개는 osu! 웹사이트에 올라가 있지 않아 링크가 없습니다. 남기려면 MD5로 내보내세요",
+      "notInLibrary": "맵 {{ count }}개는 라이브러리에 없어 세트를 알 수 없습니다. 남기려면 MD5로 내보내세요",
+      "moreLines": "외 {{ count }}줄",
+      "save": ".txt로 저장",
+      "copy": "복사",
+      "nothing": "고른 컬렉션에는 이 형식으로 쓸 내용이 없습니다",
+      "saved": "컬렉션을 저장했습니다",
+      "failed": "컬렉션을 저장하지 못했습니다: {{ error }}",
+      "copied": "클립보드에 복사했습니다",
+      "copyFailed": "클립보드에 복사하지 못했습니다"
     },
     "import": {
-      "subtitle": "비트맵 해시를 이용해 텍스트 파일에서 컬렉션을 가져옵니다.",
-      "file": "파일",
-      "fileHint": "블록 하나에 컬렉션 하나. 비트맵 해시나 링크를 적습니다.",
-      "preview": "미리보기",
-      "empty": ".txt 파일을 올리면 가져올 컬렉션의 미리보기가 표시됩니다",
-      "merge": "합쳐짐",
-      "new": "새로 만듦",
-      "sets": "세트 {{ count }}개",
-      "noInstalled": "설치된 비트맵을 찾을 수 없습니다",
-      "importMaps": "맵 {{ count }}개 가져오기",
-      "clear": "지우기",
-      "done": "컬렉션을 가져왔습니다",
+      "subtitle": "내보내기 기능이 작성한 텍스트 파일의 컬렉션을 osu! 컬렉션에 추가합니다.",
+      "steps": {
+        "file": "가져올 컬렉션",
+        "collections": "컬렉션",
+        "import": "가져오기",
+        "needFile": "파일을 불러오거나 컬렉션을 붙여 넣으면 여기에 표시됩니다",
+        "closeOsu": "가져오려면 osu!를 닫아야 합니다. osu!는 컬렉션을 메모리에 두고 종료할 때 덮어씁니다"
+      },
+      "fromFile": "파일",
+      "fromPaste": "붙여 넣기",
+      "pastePlaceholder": "- 컬렉션 이름\n맵 MD5 또는 세트 링크, 한 줄에 하나씩\nhttps://osu.ppy.sh/beatmapsets/39804",
+      "found": "컬렉션 {{ count }}개 발견",
+      "use": "사용",
+      "nothing": "컬렉션을 찾지 못했습니다. 각 컬렉션은 \"- 이름\" 같은 줄로 시작합니다",
+      "format": "블록마다 컬렉션 하나: \"- 이름\" 줄 다음에 한 줄에 하나씩 맵의 MD5 또는 세트 링크.",
+      "loaded": "컬렉션 {{ count }}개",
+      "loadedMaps": "맵 {{ count }}개",
+      "remove": "제거",
+      "libraryNotLoaded": "라이브러리를 불러오지 않았습니다",
+      "libraryHint": "라이브러리가 없으면 세트 링크를 맵으로 바꿀 수 없고 세트도 표시할 수 없습니다.",
+      "loadLibrary": "라이브러리 불러오기",
+      "picked": "컬렉션 {{ total }}개 중 {{ count }}개 선택",
+      "pickAll": "모두 선택",
+      "pickNone": "선택 해제",
+      "upToDate": "최신",
+      "merge": "기존에 추가",
+      "new": "새 컬렉션",
+      "showSets": "세트 보기",
+      "toAdd": "추가할 맵 {{ count }}개",
+      "already": "{{ count }}개는 이미 있음",
+      "notInstalled": "{{ count }}개 미설치",
+      "unresolved": "라이브러리에 없는 세트 링크 {{ count }}개",
+      "noInstalled": "이 맵은 하나도 설치되어 있지 않습니다. osu!에서는 누락된 맵으로 표시됩니다",
+      "osuOpen": "가져오려면 osu!를 닫으세요",
+      "osuOpenHint": "osu!는 컬렉션을 메모리에 두고 종료할 때 collection.db를 덮어씁니다. osu!가 열려 있는 동안 가져온 내용은 사라집니다. 닫으면 이 표시는 자동으로 바뀝니다.",
+      "osuClosed": "osu!가 닫혀 있습니다",
+      "importMaps": "맵 {{ count }}개를 컬렉션 {{ collections }}개로 가져오기",
+      "doneMaps": "맵 {{ count }}개를 가져왔습니다",
+      "doneCollections": "새 컬렉션 {{ created }}개, 기존 컬렉션 {{ merged }}개에 추가했습니다. osu!를 열어 확인하세요.",
+      "doneNothing": "가져올 것이 없습니다. 모든 맵이 이미 컬렉션에 있습니다",
+      "backup": "이전 collection.db는 collection.db.torosu-backup으로 보관됩니다.",
       "failed": "컬렉션을 가져오지 못했습니다: {{ error }}"
     }
   },
@@ -524,7 +736,85 @@
     "filtered": "걸러낸 비트맵 세트",
     "export": "내보내기",
     "preview": "미리보기",
-    "empty": "현재 필터에 맞는 비트맵이 없습니다"
+    "empty": "현재 필터에 맞는 비트맵이 없습니다",
+    "statuses": {
+      "ranked": "랭크됨",
+      "loved": "러브드",
+      "approved": "승인됨",
+      "qualified": "퀄리파이드",
+      "unranked": "언랭크"
+    }
+  },
+  "replays": {
+    "subtitle": "osu!가 저장한 리플레이로 본 플레이",
+    "search": "제목, 아티스트, 난이도, 매퍼로 검색",
+    "allKeys": "전체",
+    "none": "리플레이가 있는 mania 로컬 점수가 없습니다",
+    "noMatch": "검색과 일치하는 점수가 없습니다",
+    "mapMissing": "이 점수의 맵이 osu!.db에 없습니다. osu!에서 선택하세요 (osu!는 종료할 때만 새 맵을 osu!.db에 추가합니다)",
+    "unknownMap": "알 수 없는 맵",
+    "pick": "점수를 선택하면 리플레이를 분석합니다",
+    "analyzing": "리플레이를 분석하는 중...",
+    "mean": "평균",
+    "median": "중앙값",
+    "error": "오차 (빠름 / 늦음 평균)",
+    "earlyLate": "빠름 / 늦음",
+    "accuracy": "정확도",
+    "game": "게임",
+    "analysis": "분석",
+    "countsDiffer": "일부 판정은 노트에 배정되지 않아 분석의 판정으로 남았습니다.",
+    "judgements": {
+      "max": "MAX",
+      "n300": "300",
+      "n200": "200",
+      "n100": "100",
+      "n50": "50",
+      "miss": "미스"
+    },
+    "early": "빠름",
+    "late": "늦음",
+    "views": {
+      "all": "전체",
+      "rice": "일반 노트",
+      "ln": "LN",
+      "allHint": "모든 입력과 롱노트 릴리스. osu! 결과 화면과 같은 방식입니다.",
+      "riceHint": "일반 노트만: 각 노트를 누른 시점.",
+      "lnHint": "롱노트만: 누른 시점과 뗀 시점."
+    },
+    "keys": {
+      "title": "키별",
+      "subtitle": "각 키의 평균 오차: 0보다 아래는 빠름, 위는 늦음",
+      "chartLabel": "각 키의 평균 오차",
+      "key": "키 {{ key }}",
+      "nothing": "이 키에서 측정된 것이 없습니다",
+      "column": "키",
+      "notes": "노트",
+      "letGoEarly": "일찍 뗌",
+      "heldLong": "너무 오래 누름"
+    },
+    "histogram": {
+      "title": "분포",
+      "subtitle": "판정 범위에 대해 각 오차에 몇 개가 있었는지",
+      "label": "오차 히스토그램",
+      "count": "노트 {{ count }}개"
+    },
+    "timeline": {
+      "title": "곡 진행에 따라",
+      "subtitle": "시간에 따른 모든 오차로, 어디서 밀리거나 지치는지 확인하세요",
+      "label": "곡 진행에 따른 오차",
+      "movingMean": "노트 {{ count }}개 평균",
+      "misses": "Miss ({{ count }})"
+    },
+    "follow": "새 플레이 분석",
+    "followHint": "osu!가 열려 있는 동안 클리어한 플레이를 끝나자마자 분석합니다",
+    "reconciled": "리플레이와 함께 저장되는 .osg에서 osu! 판정 {{ total }}개 중 {{ matched }}개를 해당 노트에 배정했습니다. 각 노트는 게임이 준 판정입니다.",
+    "noGraph": "이 리플레이에는 .osg가 없습니다 (osu!는 2026년부터 저장). 판정은 분석 결과이며 일부 롱노트는 게임과 다를 수 있습니다.",
+    "realTime": "{{ rate }}x에서는 osu!가 위처럼 맵 기준 ms로 셉니다. 오프셋에 영향을 주는 실제 시간으로는: {{ early }} / {{ late }} ms, UR {{ ur }}.",
+    "earlyMean": "빠름 평균",
+    "lateMean": "느림 평균",
+    "urHint": "Unstable rate: osu!와 같은 방식으로 센 오차의 흩어짐. 낮을수록 안정적입니다.",
+    "playedBy": "플레이어: {{ name }}",
+    "judgementsTitle": "판정"
   },
   "errors": {
     "io": "파일 오류: {{ detail }}",
@@ -560,6 +850,27 @@
     "onePlayer": "키 변환은 1인용 맵을 만듭니다. {{ layout }}은(는) 지원하지 않습니다",
     "noAudio": "맵의 오디오에 지원하는 트랙이 없습니다",
     "video": "영상을 다시 인코딩하지 못했습니다: {{ detail }}",
+    "convertReplay": "컨버트 맵의 리플레이는 아직 분석할 수 없습니다. osu!mania 맵만 가능합니다",
+    "randomReplay": "Random 리플레이는 분석할 수 없습니다: osu!가 노트를 섞기 때문입니다",
+    "replayUnreadable": "{{ file }}은(는) Torosu가 읽을 수 있는 osu!mania 리플레이가 아닙니다",
+    "osuRunning": "먼저 osu!를 닫으세요. osu!는 컬렉션을 메모리에 두고 종료할 때 collection.db를 덮어씁니다",
     "noUpdate": "설치할 업데이트가 없습니다"
+  },
+  "modes": {
+    "standard": "스탠다드",
+    "taiko": "태고",
+    "catch": "캐치",
+    "mania": "매니아"
+  },
+  "dev": {
+    "osuData": {
+      "subtitle": "osu! 메모리에서 읽은 선택된 맵",
+      "empty": "아직 받은 데이터가 없습니다."
+    },
+    "logs": {
+      "subtitle": "앱 로그 (레벨·모듈별)",
+      "entries": "{{ count }}개 항목",
+      "empty": "항목 없음"
+    }
   }
 }

@@ -1,6 +1,6 @@
 [package]
 name = "torosu"
-version = "1.3.0"
+version = "2.0.0"
 description = "osu! stable tools in one app: beatmap downloader, collections, packs and a map trainer"
 license = "MIT"
 authors = ["Manolo-dl"]
@@ -23,7 +23,9 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "2", default-features = false, features = ["wry", "compression", "common-controls-v6", "x11", "protocol-asset"] }
+# `dbus`: on Linux the window follows the system's dark or light mode (the
+# freedesktop portal's color-scheme), and with it the page's prefers-color-scheme.
+tauri = { version = "2", default-features = false, features = ["wry", "compression", "common-controls-v6", "x11", "dbus", "protocol-asset"] }
 tauri-plugin-opener = "2"
 tauri-plugin-updater = { version = "2.14.0", default-features = false, features = ["rustls-tls"] }
 tauri-plugin-log = "2.10.1"
@@ -40,6 +42,8 @@ osynic_osudb = "0.1.5"
 anyhow = "1.0.104"
 thiserror = "2"
 rosu-map = "0.2.1"
+# Small covers of the beatmap sets, from their backgrounds (commands/system/covers.rs).
+image = { version = "0.25", default-features = false, features = ["jpeg", "png"] }
 # Built from source and linked in: otherwise, on Linux, it links to the system
 # libSoundTouch, which the CI runner and most users don't have.
 soundtouch = { version = "0.5.4", features = ["bundled"] }
@@ -51,6 +55,8 @@ futures-util = { version = "0.3.34", default-features = false }
 reqwest = { version = "0.13.5", default-features = false, features = ["rustls-no-provider", "stream"] }
 rustls = { version = "0.23", default-features = false, features = ["ring"] }
 vorbis_rs = "0.5.6"
+# The frames of .osr replays are LZMA "alone", which osynic_osudb does not read.
+liblzma = "0.4.9"
 osu-memory-reader = { version = "0.2.1", features = ["serde", "difficulty"] }
 # Mania Tracker's dan calculator. Not on crates.io: pinned to a commit.
 # `aot`: MinaCalc's wasm is compiled when Torosu is built, so there is no

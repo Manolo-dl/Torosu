@@ -5,6 +5,7 @@ use tauri_plugin_log::{Target, TargetKind};
 use crate::commands::osu_reader::ReaderSnapshot;
 use crate::state::{AppConfigState, OsuReaderState, SessionState, UpdateState};
 
+pub mod allocator;
 mod commands;
 mod error;
 mod name_format;
@@ -21,6 +22,41 @@ mod translations;
 /// workaround there (see `main`), and global shortcuts don't work.
 pub fn wayland_session() -> bool {
     cfg!(target_os = "linux") && std::env::var_os("WAYLAND_DISPLAY").is_some()
+}
+
+/// Whether NVIDIA's own driver is loaded in a version before 555, the first
+/// with explicit sync, which WebKitGTK's DMABUF renderer needs (see `main`).
+pub fn nvidia_without_explicit_sync() -> bool {
+    std::fs::read_to_string("/proc/driver/nvidia/version")
+        .ok()
+        .and_then(|text| nvidia_major_version(&text))
+        .is_some_and(|major| major < 555)
+}
+
+/// The major version in /proc/driver/nvidia/version: "NVRM version: NVIDIA
+/// UNIX Open Kernel Module for x86_64  595.99.02  Release Build …".
+fn nvidia_major_version(text: &str) -> Option<u32> {
+    let line = text.lines().find(|line| line.starts_with("NVRM version"))?;
+    line.split_whitespace()
+        .find(|word| word.contains('.') && word.chars().next().is_some_and(|c| c.is_ascii_digit()))?
+        .split('.')
+        .next()?
+        .parse()
+        .ok()
+}
+
+#[cfg(test)]
+mod nvidia_tests {
+    use super::nvidia_major_version;
+
+    #[test]
+    fn reads_the_major_version() {
+        let open = "NVRM version: NVIDIA UNIX Open Kernel Module for x86_64  595.99.02  Release Build  (dvs-builder@U22)  Wed Aug 26 2026\nGCC version:  gcc version 13.3.0\n";
+        assert_eq!(nvidia_major_version(open), Some(595));
+        let old = "NVRM version: NVIDIA UNIX x86_64 Kernel Module  535.183.01  Sun May 12 19:39:15 UTC 2024\n";
+        assert_eq!(nvidia_major_version(old), Some(535));
+        assert_eq!(nvidia_major_version("nothing here"), None);
+    }
 }
 
 pub fn run() {
@@ -52,6 +88,8 @@ pub fn run() {
             app.manage(UpdateState { pending: Mutex::new(None) });
 
             // osu! memory reader, started by the first page that needs it
+            // The song's position for the title bar's visualizer, when it asks.
+            app.manage(commands::osu_reader::audio::OsuAudioState::default());
             app.manage(OsuReaderState {
                 started: AtomicBool::new(false),
                 snapshot: Mutex::new(ReaderSnapshot::new()),
@@ -99,7 +137,10 @@ pub fn run() {
             commands::system::osu_path::get_osu_path,
             commands::system::osu_path::save_osu_path,
             commands::system::osu_path::clear_osu_path,
+            commands::system::osu_process::is_osu_running,
             commands::system::songs_file::read_songs_file,
+            commands::system::songs_file::read_song_samples,
+            commands::system::covers::beatmap_cover,
             commands::system::update::check_update,
             commands::system::update::install_update,
             commands::system::session::is_wayland,
@@ -116,6 +157,7 @@ pub fn run() {
             commands::packs::creator::create_pack,
             commands::dev::logs::read_logs,
             commands::osu_reader::connect_osu_reader,
+            commands::osu_reader::audio::watch_osu_audio,
             commands::osu_reader::export::export_selected_osz,
             commands::trainer::run::run_trainer,
             commands::trainer::preview::preview_converts,
@@ -124,7 +166,9 @@ pub fn run() {
             commands::packs::naming::pack_name_example,
             commands::trainer::presets::read_trainer_presets,
             commands::trainer::presets::write_trainer_presets,
-            commands::trainer::video::is_ffmpeg_available
+            commands::trainer::video::is_ffmpeg_available,
+            commands::replays::list_local_scores,
+            commands::replays::analyze_replay
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

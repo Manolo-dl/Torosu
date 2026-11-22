@@ -1,0 +1,84 @@
+@let c = chart();
+@let releases = showReleases();
+
+<div class="chart" (mouseleave)="hovered.set(null)">
+  <svg [attr.viewBox]="'0 0 ' + width() + ' ' + height" role="img" [attr.aria-label]="'replays.keys.chartLabel' | transloco">
+    @for (tick of c.ticks; track tick.y) {
+      <line class="grid" [attr.x1]="margin.left" [attr.x2]="width() - margin.right" [attr.y1]="tick.y" [attr.y2]="tick.y" />
+      <text class="axis-label" text-anchor="end" dominant-baseline="middle" [attr.x]="margin.left - 6" [attr.y]="tick.y">{{ tick.label }}</text>
+    }
+    <line class="zero" [attr.x1]="margin.left" [attr.x2]="width() - margin.right" [attr.y1]="c.zero" [attr.y2]="c.zero" />
+
+    @for (bar of c.bars; track bar.key) {
+      @if (bar.path) {
+        <path [attr.d]="bar.path" [class.early]="bar.early" [class.late]="!bar.early" [class.dim]="hovered() !== null && hovered() !== bar.key" />
+      }
+      <text class="axis-label" text-anchor="middle" [attr.x]="bar.center" [attr.y]="height - 6">{{ bar.key + 1 }}</text>
+      <rect
+        class="hit"
+        [attr.x]="bar.band.x"
+        [attr.y]="margin.top"
+        [attr.width]="bar.band.width"
+        [attr.height]="height - margin.top - margin.bottom"
+        (mouseenter)="hovered.set(bar.key)"
+      />
+    }
+  </svg>
+
+  @if (tooltip(); as t) {
+    <div class="tooltip" [style.left.px]="t.left" [style.top.px]="t.top">
+      <div class="tooltip-title">{{ 'replays.keys.key' | transloco: { key: t.bar.key + 1 } }}</div>
+      @if (t.bar.timing.count) {
+        <div>{{ 'replays.mean' | transloco }}: {{ signed(t.bar.timing.mean) }} ms</div>
+        <div>UR: {{ t.bar.timing.unstableRate | number: '1.0-0' }}</div>
+        <div>{{ 'replays.earlyLate' | transloco }}: {{ t.bar.timing.early }} / {{ t.bar.timing.late }}</div>
+      } @else {
+        <div>{{ 'replays.keys.nothing' | transloco }}</div>
+      }
+    </div>
+  }
+</div>
+
+<div class="legend">
+  <span><span class="swatch early"></span>{{ 'replays.early' | transloco }}</span>
+  <span><span class="swatch late"></span>{{ 'replays.late' | transloco }}</span>
+</div>
+
+<table class="table">
+  <thead>
+    <tr>
+      <th>{{ 'replays.keys.column' | transloco }}</th>
+      <th>{{ 'replays.keys.notes' | transloco }}</th>
+      <th>{{ 'replays.mean' | transloco }}</th>
+      <th>{{ 'replays.median' | transloco }}</th>
+      <th>UR</th>
+      <th>{{ 'replays.earlyLate' | transloco }}</th>
+      @if (releases) {
+        <th>{{ 'replays.keys.letGoEarly' | transloco }}</th>
+        <th>{{ 'replays.keys.heldLong' | transloco }}</th>
+      }
+      <th>{{ 'replays.judgements.miss' | transloco }}</th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (bar of c.bars; track bar.key) {
+      <tr [class.hovered]="hovered() === bar.key" (mouseenter)="hovered.set(bar.key)" (mouseleave)="hovered.set(null)">
+        <td>{{ bar.key + 1 }}</td>
+        <td>{{ bar.stats.notes }}</td>
+        @if (bar.timing.count) {
+          <td>{{ signed(bar.timing.mean) }}</td>
+          <td>{{ signed(bar.timing.median) }}</td>
+          <td>{{ bar.timing.unstableRate | number: '1.0-0' }}</td>
+          <td>{{ bar.timing.early }} / {{ bar.timing.late }}</td>
+        } @else {
+          <td>–</td><td>–</td><td>–</td><td>–</td>
+        }
+        @if (releases) {
+          <td>{{ bar.stats.earlyReleases }}</td>
+          <td>{{ bar.stats.lateReleases }}</td>
+        }
+        <td>{{ bar.stats.counts.miss }}</td>
+      </tr>
+    }
+  </tbody>
+</table>

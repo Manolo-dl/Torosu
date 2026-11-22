@@ -1,11 +1,10 @@
-<div appearance="floating" tuiCardLarge="compact">
+<div appCard>
   <header>
     <h3 tuiTitle>{{ 'exportSongs.filters' | transloco }}</h3>
     <button
-      appearance="flat"
-      iconStart="@tui.rotate-ccw"
+      appButton="ghost"
+      icon="@tui.rotate-ccw"
       size="xs"
-      tuiButton
       type="button"
       (click)="reset()"
     >
@@ -21,18 +20,18 @@
       [style.--mode-color]="m.color"
     >
       <div class="mode-header" (click)="toggleExpand(m.value)">
-        <tui-icon class="mode-icon" [icon]="m.icon" />
-        <span class="mode-label">{{ m.label }}</span>
+        <app-icon class="mode-icon" [name]="m.icon" />
+        <span class="mode-label">{{ m.label | transloco }}</span>
         <input
           size="s"
-          tuiSwitch
+          appSwitch
           type="checkbox"
-          [attr.aria-label]="(isModeExcluded(m.value) ? 'exportSongs.enable' : 'exportSongs.disable') | transloco: { mode: m.label }"
+          [attr.aria-label]="(isModeExcluded(m.value) ? 'exportSongs.enable' : 'exportSongs.disable') | transloco: { mode: (m.label | transloco) }"
           [ngModel]="!isModeExcluded(m.value)"
           (ngModelChange)="toggleExclude(m.value)"
           (click)="$event.stopPropagation()"
         />
-        <tui-icon icon="@tui.chevron-down" class="chevron" [class.open]="isExpanded(m.value)" />
+        <app-icon name="@tui.chevron-down" class="chevron" [class.open]="isExpanded(m.value)" />
       </div>
 
       <tui-expand [expanded]="isExpanded(m.value)">
@@ -57,7 +56,7 @@
                   [appearance]="modeFilters(m.value).status === s.toLowerCase() ? 'primary' : 'neutral'"
                   (click)="setModeFilter(m.value, 'status', s.toLowerCase())"
                 >
-                  {{ s }}
+                  {{ 'exportSongs.statuses.' + s.toLowerCase() | transloco }}
                 </button>
               }
             </div>
@@ -131,14 +130,12 @@
 
   <div class="filter-group other">
     <span class="label">{{ 'exportSongs.played' | transloco }}</span>
-    <tui-segmented
+    <app-option-group
       size="s"
-      [activeItemIndex]="playedOptions.indexOf(store.filters().lastPlayed)"
-      (activeItemIndexChange)="setLastPlayed(playedOptions[$event])"
-    >
-      <button type="button">{{ 'exportSongs.all' | transloco }}</button>
-      <button type="button">{{ 'exportSongs.playedYes' | transloco }}</button>
-      <button type="button">{{ 'exportSongs.playedNo' | transloco }}</button>
-    </tui-segmented>
+      stretch
+      [options]="playedLabels"
+      [active]="playedOptions.indexOf(store.filters().lastPlayed)"
+      (activeChange)="setLastPlayed(playedOptions[$event])"
+    />
   </div>
 </div>

@@ -12,7 +12,10 @@
       "general": "Général",
       "downloader": "Téléchargeur",
       "packs": "Packs",
-      "trainer": "Trainer"
+      "trainer": "Trainer",
+      "replays": "Replays",
+      "appearance": "Apparence",
+      "performance": "Performances"
     },
     "general": {
       "osu": "osu!",
@@ -108,6 +111,62 @@
         "mode": "osu!mania",
         "keys": "7K, seulement en mania"
       }
+    },
+    "replays": {
+      "analysis": "Analyse",
+      "charts": "Graphiques",
+      "chartsHint": "Les graphiques désactivés ne sont pas dessinés"
+    },
+    "appearance": {
+      "title": "Apparence",
+      "palette": "Palette",
+      "font": "Police",
+      "reducedMotion": "Réduire les animations",
+      "reducedMotionHint": "Moins d'animations et de transitions ; aussi quand le système le demande",
+      "palettes": {
+        "sakura": "Sakura",
+        "nebula": "Nébuleuse",
+        "aurora": "Aurore",
+        "ember": "Braise",
+        "mono": "Mono"
+      },
+      "fonts": {
+        "outfit": "Géométrique, comme celle d'osu!",
+        "nunito": "Arrondie et douce",
+        "inter": "Neutre et compacte",
+        "grotesk": "Technique, avec du caractère"
+      },
+      "visualizer": "Musique dans la barre de titre",
+      "visualizerHint": "Des barres qui suivent la musique jouée par osu! ; osu! est lu en arrière-plan pour cela",
+      "theme": "Thème",
+      "themes": {
+        "system": "Système",
+        "dark": "Sombre",
+        "light": "Clair"
+      }
+    },
+    "saved": "Paramètres enregistrés",
+    "saving": "Enregistrement…",
+    "autosave": "Enregistré à la fermeture",
+    "saveFailed": "Impossible d'enregistrer les paramètres",
+    "performance": {
+      "effects": "Effets",
+      "backgrounds": "Arrière-plans animés",
+      "backgroundsHint": "Triangles, particules de lumière et l'orbite des modes ; immobiles si désactivé",
+      "quality": "Qualité des effets",
+      "qualityHint": "Basse en dessine moins, à 30 images par seconde : plus légère sur les ordinateurs lents",
+      "qualities": {
+        "high": "Haute",
+        "low": "Basse"
+      },
+      "transitions": "Transitions entre les pages",
+      "transitionsHint": "Les pages et le thème changent avec une animation",
+      "music": "Musique d'osu!",
+      "reactive": "L'app bouge avec la musique",
+      "reactiveHint": "Le logo bat avec les basses et une lumière derrière les pages suit la musique",
+      "motion": "Mouvement",
+      "covers": "Couvertures des maps",
+      "coversHint": "Faites à partir de l'arrière-plan de chaque map et gardées en cache (jusqu'à 32 Mo) ; désactivées, aucune image n'est lue ni traitée"
     }
   },
   "nav": {
@@ -115,7 +174,7 @@
     "downloader": "Téléchargeur",
     "downloaderDescription": "Téléchargez des sets de beatmaps depuis une liste de liens directement dans votre dossier Songs, en ignorant ceux que vous avez déjà.",
     "exportCollections": "Exporter les collections",
-    "exportCollectionsDescription": "Enregistrez vos collections sous forme de liens de beatmaps, ou de liste à importer sur une autre installation.",
+    "exportCollectionsDescription": "Enregistrez ou copiez vos collections, pour les importer dans Torosu ou télécharger leurs sets.",
     "importCollections": "Importer des collections",
     "importCollectionsDescription": "Ajoutez à osu! des collections depuis un fichier, fusionnées avec celles que vous avez déjà.",
     "exportLibrary": "Exporter la bibliothèque",
@@ -127,9 +186,14 @@
     "logs": "logs",
     "osuData": "osu-data",
     "changelog": "Nouveautés",
-    "github": "Github",
+    "github": "GitHub",
     "issues": "Problèmes",
-    "support": "Soutenir"
+    "support": "Soutenir",
+    "replays": "Analyse de replays",
+    "replaysDescription": "Voyez comment vous avez joué vos scores locaux : timing, appuis et relâchements en avance ou en retard, touche par touche.",
+    "tools": "Outils",
+    "collapse": "Réduire la barre latérale",
+    "expand": "Agrandir la barre latérale"
   },
   "header": {
     "toggleTheme": "Changer de thème",
@@ -137,6 +201,7 @@
     "updateTo": "Mettre à jour vers {{ version }}",
     "new": "Nouveau",
     "youHave": "Vous avez la version {{ version }}. Torosu redémarre une fois la mise à jour installée.",
+    "seeOnGitHub": "Voir sur GitHub",
     "updateFailed": "Torosu n’a pas pu l’installer lui-même, comme avec le paquet Arch Linux. Téléchargez-la depuis la page des versions et installez-la comme la première fois.",
     "openReleases": "Ouvrir la page des versions",
     "updateAndRestart": "Mettre à jour et redémarrer"
@@ -152,7 +217,24 @@
     "noLazer": "Lazer n’est pas pris en charge : les outils lisent et écrivent les fichiers d’osu! stable.",
     "changeFolder": "Changez-le dans les paramètres",
     "tools": "Outils",
-    "noTools": "Tous les outils sont désactivés. Activez-les dans les paramètres, dans Général."
+    "noTools": "Tous les outils sont désactivés. Activez-les dans les paramètres, dans Général.",
+    "library": {
+      "title": "Ta bibliothèque",
+      "hint": "Lis osu!.db pour voir ce que contient ton dossier Songs : les maps de chaque mode, combien sont ranked ou loved, et combien tu en as joué.",
+      "read": "Lire osu!.db",
+      "diffs": "difficultés",
+      "inSets": "dans {{ count }} sets",
+      "sets": "{{ count }} sets",
+      "ranked": "Classées",
+      "loved": "Loved",
+      "unsubmitted": "Non publiées",
+      "played": "Jouées"
+    },
+    "selected": {
+      "title": "Sélectionnée dans osu!",
+      "by": "mappée par {{ mapper }}",
+      "trainer": "Ouvrir dans le trainer"
+    }
   },
   "osuPath": {
     "notFound": "Dossier d’osu! introuvable",
@@ -174,7 +256,12 @@
     "exported": "{{ name }} exporté",
     "exportFailed": "Impossible d’exporter la beatmap : {{ error }}",
     "looking": "Recherche d’osu!...",
-    "startFailed": "Impossible de démarrer le lecteur d’osu!."
+    "startFailed": "Impossible de démarrer le lecteur d’osu!.",
+    "badge": {
+      "connected": "Connecté",
+      "waiting": "En attente d'osu!",
+      "error": "Impossible de lire osu!"
+    }
   },
   "trainer": {
     "subtitle": "Ajustez les stats de difficulté et enchaînez les modificateurs avant de générer une nouvelle map.",
@@ -182,10 +269,22 @@
     "mappedBy": "mappée par {{ mapper }}",
     "exportOsz": "Exporter en .osz",
     "dan": {
-      "hint": "Dan estimé par Mania Tracker, confiance de {{ confidence }} %"
+      "hint": "Dan estimé par Mania Tracker, confiance de {{ confidence }} %",
+      "confidence": "Confiance",
+      "lowConfidence": "Confiance faible : la map ne ressemble pas aux cours de dan avec lesquels elle a été comparée ; à prendre comme indication.",
+      "source": "Estimé par le calculateur de Mania Tracker.",
+      "keys": "Cours {{ keys }}K",
+      "variants": {
+        "top": "Tout en haut du dan {{ dan }}",
+        "high": "Dans le haut du dan {{ dan }}",
+        "mid": "Pile dans le dan {{ dan }}",
+        "low": "Dans le bas du dan {{ dan }}",
+        "bottom": "Tout en bas du dan {{ dan }}"
+      }
     },
     "msd": {
-      "hint": "MSD global, de {{ calc }}"
+      "hint": "MSD global, de {{ calc }}",
+      "skillsets": "Par skillset"
     },
     "skill": {
       "dan": "Dan",
@@ -199,7 +298,9 @@
       "lock": "Verrouiller",
       "unlock": "Déverrouiller",
       "lockStat": "Verrouiller {{ stat }}",
-      "unlockStat": "Déverrouiller {{ stat }}"
+      "unlockStat": "Déverrouiller {{ stat }}",
+      "restoreAll": "Valeurs de la map",
+      "backTo": "Revenir au {{ value }} de la map"
     },
     "actions": {
       "reset": "Réinitialiser",
@@ -207,7 +308,7 @@
       "createMaps": "Créer {{ count }} maps"
     },
     "presets": {
-      "title": "Presets",
+      "title": "Préréglages",
       "subtitle": "Remplace les converts par une liste enregistrée",
       "delete": "Supprimer le preset",
       "deleteTitle": "Supprimer ce preset",
@@ -260,7 +361,7 @@
     "tasks": {
       "RateChange": "Changeur de rate",
       "SVNormalizer": "Normaliseur de SV",
-      "FlnConverter": "Full LN",
+      "FlnConverter": "LN complètes",
       "NoLn": "Sans LN",
       "ShortLn": "LN courtes",
       "KeyConverter": "Convertisseur de touches"
@@ -272,7 +373,8 @@
       "scaleVideo": "Adapter la vidéo",
       "noFfmpeg": "Adapter la vidéo nécessite <strong>ffmpeg</strong>, qui est introuvable. Installez-le, vérifiez qu’il est dans le PATH, puis redémarrez l’application.",
       "videoSlow": "La vidéo est réencodée à la nouvelle vitesse, ce qui peut prendre du temps pour les vidéos longues.",
-      "storyboard": "Si le set a un storyboard <strong>.osb</strong> partagé, toutes les difficultés l’utilisent : cette difficulté sera donc exportée dans un <strong>nouveau set de beatmaps</strong> (titre se terminant par <strong>({{ rate }}x SB)</strong>) pour ne pas se superposer à l’original."
+      "storyboard": "Si le set a un storyboard <strong>.osb</strong> partagé, toutes les difficultés l’utilisent : cette difficulté sera donc exportée dans un <strong>nouveau set de beatmaps</strong> (titre se terminant par <strong>({{ rate }}x SB)</strong>) pour ne pas se superposer à l’original.",
+      "quick": "Rates rapides"
     },
     "sv": {
       "description": "Les changements de SV d’origine sont supprimés et un SV est placé à chaque changement de BPM, pour que la vitesse de défilement reste celle du BPM principal. Les changements de BPM, le kiai et les hitsounds sont conservés."
@@ -332,6 +434,24 @@
       "16_EZ2AC": "10K2S et 4 touches centrales vers lesquelles l’une ou l’autre main se déplace.",
       "18_10K8K": "10K et 4 touches de plus par main pour chaque doigt sauf le pouce (4K10K4K).",
       "18_9K9K": "9 touches par main sur deux rangées, comme un DP pour pop'n music."
+    },
+    "banner": {
+      "waiting": "En attente d'osu!",
+      "waitingHint": "Ouvre osu! stable : la map que tu y sélectionnes apparaît ici, prête à être modifiée.",
+      "select": "Sélectionne une map dans osu!",
+      "selectHint": "Choisis-en une dans la sélection des musiques et elle apparaît ici, prête à être modifiée.",
+      "error": "Impossible de lire osu!"
+    },
+    "oneTask": "1 tâche",
+    "tasksCount": "{{ count }} tâches",
+    "dragTask": "Glissez pour changer l'ordre",
+    "taskHints": {
+      "RateChange": "Plus rapide ou plus lent, avec le BPM et l’audio",
+      "SVNormalizer": "Une seule vitesse de défilement partout",
+      "FlnConverter": "Chaque note tenue jusqu’à la suivante",
+      "NoLn": "Les notes longues deviennent des notes normales",
+      "ShortLn": "Les notes longues gardées dans une durée",
+      "KeyConverter": "La map sur un autre nombre de touches"
     }
   },
   "downloader": {
@@ -381,7 +501,12 @@
       "isRequired": "Le cookie est obligatoire",
       "tooShort": "Le cookie est trop court",
       "tooLong": "Le cookie est trop long",
-      "failed": "Impossible d’utiliser le cookie"
+      "failed": "Impossible d’utiliser le cookie",
+      "updated": "Cookie utilisé : tu peux télécharger",
+      "activeHint": "Les téléchargements utilisent ton compte osu!.",
+      "change": "Changer",
+      "show": "Afficher le cookie",
+      "hide": "Masquer le cookie"
     },
     "queue": {
       "queued": "{{ count }} en file",
@@ -392,7 +517,12 @@
       "failedFile": "Les maps en échec sont enregistrées dans <strong>failed_downloads.txt</strong> dans votre dossier osu!.",
       "clear": "Vider la file",
       "start": "Lancer le téléchargement",
-      "downloadFailed": "Le téléchargement a échoué"
+      "downloadFailed": "Le téléchargement a échoué",
+      "setNumber": "Set de maps #{{ id }}",
+      "openPage": "Ouvrir sa page sur osu!",
+      "remove": "Retirer de la file",
+      "overall": "{{ finished }} sur {{ total }}",
+      "nameSoon": "son nom s'affiche au démarrage"
     },
     "status": {
       "pending": "en attente",
@@ -403,6 +533,24 @@
     "notification": {
       "title": "Téléchargeur",
       "body": "{{ succeeded }} téléchargées, {{ failed }} en échec"
+    },
+    "importer": {
+      "file": "Fichier",
+      "paste": "Coller des liens",
+      "pastePlaceholder": "Un lien ou ID de set par ligne :\nhttps://osu.ppy.sh/beatmapsets/39804\n39804",
+      "found": "{{ count }} sets trouvés",
+      "add": "Ajouter à la file",
+      "added": "{{ count }} sets ajoutés à la file",
+      "addedSkipped": "{{ count }} sets ajoutés à la file ; {{ skipped }} y étaient déjà ou sont dans ta bibliothèque",
+      "nothing": "Aucun lien ni ID de map trouvé"
+    },
+    "steps": {
+      "session": "Session",
+      "import": "Maps à télécharger",
+      "queue": "File",
+      "help": "Aide",
+      "needSession": "Renseigne d'abord la session : osu! ne laisse télécharger des maps qu'avec un compte.",
+      "queueEmpty": "Les maps que tu ajoutes apparaissent ici, prêtes à télécharger."
     }
   },
   "dropzone": {
@@ -445,7 +593,15 @@
     "search": "Rechercher par titre, artiste ou nom de fichier...",
     "created": "Pack {{ title }} créé !",
     "createdParts": "Pack {{ title }} créé en {{ parts }} parties !",
-    "createFailed": "Impossible de créer le pack : {{ error }}"
+    "createFailed": "Impossible de créer le pack : {{ error }}",
+    "stats": {
+      "diffs": "Difficultés",
+      "sets": "Sets",
+      "packs": "Packs",
+      "stars": "Étoiles",
+      "packsHint": "Découpé selon le maximum de sets par pack des paramètres"
+    },
+    "emptyHint": "Choisis des difficultés dans les maps, ou ajoute une collection entière."
   },
   "beatmaps": {
     "none": "Aucune beatmap"
@@ -458,38 +614,94 @@
     "collectionsDone": "{{ count }} collections chargées",
     "collectionsFailed": "Impossible de charger les collections",
     "logs": "Chargement des logs, veuillez patienter...",
-    "logsFailed": "Impossible de charger les logs"
+    "logsFailed": "Impossible de charger les logs",
+    "localScores": "Lecture de vos scores locaux, veuillez patienter...",
+    "localScoresFailed": "Impossible de lire scores.db",
+    "retry": "Réessayer"
   },
   "collections": {
     "export": {
-      "list": "Collections",
-      "selectAll": "Tout sélectionner",
-      "notLoaded": "Ouvrez une collection pour commencer",
-      "none": "Aucune collection trouvée",
-      "summary": "Résumé",
-      "selected": "Sélectionnées",
-      "totalSets": "Total des sets de beatmaps",
-      "format": "Format",
-      "links": "Liens de téléchargement",
-      "importFormat": "Format d’import",
-      "preview": "Aperçu",
+      "steps": {
+        "collections": "Collections",
+        "format": "Format",
+        "export": "Exporter",
+        "pickFirst": "Choisissez au moins une collection",
+        "textHere": "Le texte à enregistrer ou copier s’affichera ici"
+      },
+      "notLoaded": "Impossible de lire vos collections",
+      "retry": "Réessayer",
+      "none": "Vous n’avez aucune collection dans osu!",
+      "libraryNotLoaded": "Votre bibliothèque n’est pas chargée",
+      "libraryHint": "Les MD5 peuvent être exportés sans elle, mais pas les liens de sets, ni le nombre de maps installées.",
+      "loadLibrary": "Charger la bibliothèque",
+      "search": "Chercher une collection",
+      "picked": "{{ count }} sur {{ total }} choisies",
+      "pickAll": "Tout choisir",
+      "pickNone": "Ne rien choisir",
+      "noMatch": "Aucune collection ne porte ce nom",
+      "empty": "Vide",
+      "showSets": "Voir les sets",
+      "maps": "{{ count }} maps",
       "sets": "{{ count }} sets",
-      "empty": "Sélectionnez une collection pour en voir l’aperçu"
+      "md5": "Pour importer dans Torosu",
+      "md5Hint": "Chaque map par son MD5, même celles que vous n’avez pas : qui l’importe aura les mêmes difficultés.",
+      "links": "Liens de sets",
+      "linksHint": "Un lien par set, pour les télécharger avec le téléchargeur ou sur le site. Toutes les difficultés du set viennent avec.",
+      "linkCount": "{{ count }} liens",
+      "unsubmitted": "{{ count }} sets ne sont pas publiés sur le site d’osu!, ils n’ont donc pas de lien : exportez-les en MD5 pour les garder",
+      "notInLibrary": "{{ count }} maps ne sont pas dans votre bibliothèque, leur set est donc inconnu : exportez-les en MD5 pour les garder",
+      "moreLines": "et {{ count }} lignes de plus",
+      "save": "Enregistrer en .txt",
+      "copy": "Copier",
+      "nothing": "Aucune des collections choisies n’a rien à écrire dans ce format",
+      "saved": "Collections enregistrées",
+      "failed": "Impossible d’enregistrer les collections : {{ error }}",
+      "copied": "Copié dans le presse-papiers",
+      "copyFailed": "Impossible de copier dans le presse-papiers"
     },
     "import": {
-      "subtitle": "Importez des collections depuis un fichier texte avec les hashs des beatmaps.",
-      "file": "Fichier",
-      "fileHint": "Une collection par bloc, avec des hashs ou des liens de beatmaps.",
-      "preview": "Aperçu",
-      "empty": "Chargez un fichier .txt pour voir les collections à importer",
-      "merge": "Sera fusionnée",
+      "subtitle": "Ajoutez à celles d’osu! des collections d’un fichier texte, telles que l’exportateur les écrit.",
+      "steps": {
+        "file": "Collections à importer",
+        "collections": "Collections",
+        "import": "Importer",
+        "needFile": "Chargez un fichier ou collez des collections pour les voir ici",
+        "closeOsu": "osu! doit être fermé pour importer : il garde les collections en mémoire et les réécrit en se fermant"
+      },
+      "fromFile": "Fichier",
+      "fromPaste": "Coller",
+      "pastePlaceholder": "- Nom de la collection\nMD5 de la map ou lien du set, un par ligne\nhttps://osu.ppy.sh/beatmapsets/39804",
+      "found": "{{ count }} collections trouvées",
+      "use": "Utiliser",
+      "nothing": "Aucune collection trouvée : chacune commence par une ligne comme « - Nom »",
+      "format": "Une collection par bloc : une ligne « - Nom », puis une map par ligne, avec son MD5 ou un lien vers son set.",
+      "loaded": "{{ count }} collections",
+      "loadedMaps": "{{ count }} maps",
+      "remove": "Retirer",
+      "libraryNotLoaded": "Votre bibliothèque n’est pas chargée",
+      "libraryHint": "Sans elle, les liens de sets ne peuvent pas devenir des maps et les sets ne peuvent pas être affichés.",
+      "loadLibrary": "Charger la bibliothèque",
+      "picked": "{{ count }} sur {{ total }} collections choisies",
+      "pickAll": "Tout choisir",
+      "pickNone": "Ne rien choisir",
+      "upToDate": "À jour",
+      "merge": "Dans la vôtre",
       "new": "Nouvelle",
-      "sets": "{{ count }} sets",
-      "noInstalled": "Aucune beatmap installée trouvée",
-      "importMaps": "Importer {{ count }} maps",
-      "clear": "Vider",
-      "done": "Collections importées",
-      "failed": "Impossible d’importer les collections : {{ error }}"
+      "showSets": "Voir les sets",
+      "toAdd": "{{ count }} maps à ajouter",
+      "already": "{{ count }} déjà présentes",
+      "notInstalled": "{{ count }} non installées",
+      "unresolved": "{{ count }} liens de sets absents de votre bibliothèque",
+      "noInstalled": "Aucune de ces maps n’est installée : osu! les affichera comme manquantes",
+      "osuOpen": "Fermez osu! pour importer",
+      "osuOpenHint": "osu! garde les collections en mémoire et réécrit collection.db en se fermant : ce qui serait importé pendant qu’il est ouvert serait perdu. Ceci se met à jour tout seul dès sa fermeture.",
+      "osuClosed": "osu! est fermé",
+      "importMaps": "Importer {{ count }} maps dans {{ collections }} collections",
+      "doneMaps": "{{ count }} maps importées",
+      "doneCollections": "{{ created }} nouvelles collections, {{ merged }} des vôtres complétées. Ouvrez osu! pour les voir.",
+      "doneNothing": "Rien à importer : chaque map était déjà dans sa collection",
+      "backup": "Le collection.db d’avant est gardé sous le nom collection.db.torosu-backup.",
+      "failed": "Impossible d’importer les collections : {{ error }}"
     }
   },
   "export": {
@@ -524,7 +736,85 @@
     "filtered": "Sets de beatmaps filtrés",
     "export": "Exporter",
     "preview": "Aperçu",
-    "empty": "Aucune beatmap ne correspond aux filtres actuels"
+    "empty": "Aucune beatmap ne correspond aux filtres actuels",
+    "statuses": {
+      "ranked": "Classées",
+      "loved": "Loved",
+      "approved": "Approuvées",
+      "qualified": "Qualifiées",
+      "unranked": "Non classées"
+    }
+  },
+  "replays": {
+    "subtitle": "Vos parties, d'après les replays qu'osu! conserve",
+    "search": "Rechercher par titre, artiste, difficulté ou mappeur",
+    "allKeys": "Toutes",
+    "none": "Aucun score local de mania avec replay",
+    "noMatch": "Aucun score ne correspond à la recherche",
+    "mapMissing": "La map de ce score n'est pas dans osu!.db : sélectionnez-la dans osu! (osu! n'ajoute les nouvelles maps à osu!.db qu'à sa fermeture)",
+    "unknownMap": "Map inconnue",
+    "pick": "Choisissez un score pour analyser son replay",
+    "analyzing": "Analyse du replay...",
+    "mean": "Moyenne",
+    "median": "Médiane",
+    "error": "Erreur (moy. avance / retard)",
+    "earlyLate": "Avance / retard",
+    "accuracy": "Précision",
+    "game": "Jeu",
+    "analysis": "Analyse",
+    "countsDiffer": "Certains jugements n'ont pas pu être associés à leur note et restent tels que l'analyse les a jugés.",
+    "judgements": {
+      "max": "MAX",
+      "n300": "300",
+      "n200": "200",
+      "n100": "100",
+      "n50": "50",
+      "miss": "Raté"
+    },
+    "early": "En avance",
+    "late": "En retard",
+    "views": {
+      "all": "Tout",
+      "rice": "Rice",
+      "ln": "LN",
+      "allHint": "Chaque appui et chaque relâchement de long note, comme l'écran de résultats d'osu! les compte.",
+      "riceHint": "Seulement les notes normales : quand chacune a été appuyée.",
+      "lnHint": "Seulement les long notes : quand chacune a été appuyée et relâchée."
+    },
+    "keys": {
+      "title": "Par touche",
+      "subtitle": "Décalage moyen de chaque touche : sous zéro en avance, au-dessus en retard",
+      "chartLabel": "Décalage moyen de chaque touche",
+      "key": "Touche {{ key }}",
+      "nothing": "Rien de mesuré sur cette touche",
+      "column": "Touche",
+      "notes": "Notes",
+      "letGoEarly": "Relâchées tôt",
+      "heldLong": "Tenues trop longtemps"
+    },
+    "histogram": {
+      "title": "Distribution",
+      "subtitle": "Combien à chaque décalage, face aux fenêtres de jugement",
+      "label": "Histogramme des décalages",
+      "count": "{{ count }} notes"
+    },
+    "timeline": {
+      "title": "Au fil de la chanson",
+      "subtitle": "Chaque décalage dans le temps, pour voir où vous dérivez ou fatiguez",
+      "label": "Décalages au fil de la chanson",
+      "movingMean": "Moyenne de {{ count }} notes",
+      "misses": "Miss ({{ count }})"
+    },
+    "follow": "Analyser les nouvelles parties",
+    "followHint": "Avec osu! ouvert, chaque partie réussie est analysée dès qu'elle se termine",
+    "reconciled": "{{ matched }} sur {{ total }} jugements d'osu! placés sur leur note, d'après le .osg enregistré avec le replay : chaque note a le jugement donné par le jeu.",
+    "noGraph": "Ce replay n'a pas de .osg (osu! en enregistre un depuis 2026) : les jugements sont ceux de l'analyse, et quelques long notes peuvent différer du jeu.",
+    "realTime": "À {{ rate }}x, osu! compte les ms de la map, comme ci-dessus. En temps réel, dont dépend l'offset : {{ early }} / {{ late }} ms, UR {{ ur }}.",
+    "earlyMean": "En avance, en moyenne",
+    "lateMean": "En retard, en moyenne",
+    "urHint": "Unstable rate : la dispersion des écarts, comme osu! la compte. Plus il est bas, plus c'est régulier.",
+    "playedBy": "Joué par {{ name }}",
+    "judgementsTitle": "Jugements"
   },
   "errors": {
     "io": "Erreur de fichier : {{ detail }}",
@@ -560,6 +850,27 @@
     "onePlayer": "Le convertisseur de touches mappe pour un seul joueur, pas {{ layout }}",
     "noAudio": "L’audio de la map n’a aucune piste prise en charge",
     "video": "Impossible de réencoder la vidéo : {{ detail }}",
+    "convertReplay": "Les replays de maps converties ne peuvent pas encore être analysés, seulement ceux des maps osu!mania",
+    "randomReplay": "Les replays avec Random ne peuvent pas être analysés : osu! mélange leurs notes",
+    "replayUnreadable": "{{ file }} n'est pas un replay osu!mania que Torosu peut lire",
+    "osuRunning": "Fermez d’abord osu! : il garde les collections en mémoire et réécrit collection.db en se fermant",
     "noUpdate": "Aucune mise à jour à installer"
+  },
+  "modes": {
+    "standard": "Standard",
+    "taiko": "Taiko",
+    "catch": "Catch",
+    "mania": "Mania"
+  },
+  "dev": {
+    "osuData": {
+      "subtitle": "La map sélectionnée, lue dans la mémoire d'osu!",
+      "empty": "Rien reçu pour l'instant."
+    },
+    "logs": {
+      "subtitle": "Le journal de l'app, par niveau et module",
+      "entries": "{{ count }} entrées",
+      "empty": "Aucune entrée"
+    }
   }
 }

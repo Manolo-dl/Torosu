@@ -1,0 +1,54 @@
+@import 'shared/styles/mixins';
+@import '../charts/viz';
+
+:host {
+  .viz-colors();
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.viz-chart();
+
+path {
+  transition: opacity var(--tui-duration, 0.3s);
+
+  &.early { fill: var(--viz-early); }
+  &.late { fill: var(--viz-late); }
+  &.dim { opacity: 0.4; }
+}
+
+.swatch.early { background: var(--viz-early); }
+.swatch.late { background: var(--viz-late); }
+
+.hit {
+  fill: transparent;
+}
+
+.table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font: var(--tui-typography-body-s);
+  font-variant-numeric: tabular-nums;
+
+  th,
+  td {
+    padding: 0.25rem 0.5rem;
+    text-align: end;
+  }
+
+  th {
+    font-weight: normal;
+    color: var(--tui-text-secondary);
+    border-block-end: 1px solid var(--tui-border-normal);
+  }
+
+  th:first-child,
+  td:first-child {
+    text-align: start;
+  }
+
+  tr.hovered td {
+    background: var(--tui-background-elevation-2);
+  }
+}

@@ -1,11 +1,12 @@
 import { NgTemplateOutlet } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, input, signal, TemplateRef } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, TemplateRef } from '@angular/core';
 import { OsuBeatmapSet, OsuDiff, setStatus } from '../../osu-db.model';
 import { openUrl } from '@tauri-apps/plugin-opener';
-import { StarBadgeComponent } from '@shared/ui';
+import { StarBadgeComponent, BadgeComponent, IconComponent } from '@shared/ui';
 import { beatmapsetUrl, modeColor, modeIcon, starBg } from '@shared/utils';
-import { TuiExpand, TuiIcon, TuiLink } from '@taiga-ui/core';
-import { TuiBadge } from '@taiga-ui/kit';
+import { BeatmapCoverService } from '../../beatmap-cover.service';
+import { AppearanceStore } from '@shared/stores';
+import { TuiExpand } from '@taiga-ui/core';
 
 /** Pips of each mode on the closed card; the rest are only counted. */
 const MAX_PIPS = 6;
@@ -18,7 +19,7 @@ export interface DiffActionContext {
 
 @Component({
   selector: 'app-beatmap-set-card',
-  imports: [NgTemplateOutlet, StarBadgeComponent, TuiBadge, TuiExpand, TuiIcon, TuiLink],
+  imports: [NgTemplateOutlet, StarBadgeComponent, TuiExpand, BadgeComponent, IconComponent],
   templateUrl: './beatmap-set-card.component.html',
   styleUrl: './beatmap-set-card.component.less',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -29,6 +30,27 @@ export class BeatmapSetCardComponent {
   readonly diffAction = input<TemplateRef<DiffActionContext>>();
 
   readonly expanded = signal(false);
+
+  /** Its cover, from its own background (`BeatmapCoverService`); none while it comes, or without one. */
+  readonly cover = signal<string | null>(null);
+  readonly coverLoaded = signal(false);
+  private readonly covers = inject(BeatmapCoverService);
+  private readonly appearance = inject(AppearanceStore);
+
+  constructor() {
+    // Again for each set: a virtual list gives a card another set as it scrolls.
+    effect(onCleanup => {
+      const set = this.set();
+      this.appearance.covers();
+      this.cover.set(null);
+      this.coverLoaded.set(false);
+      const file = set.diffs[0]?.fileName;
+      if (!file) return;
+      let current = true;
+      onCleanup(() => (current = false));
+      this.covers.cover(set.folderName, file).then(url => current && this.cover.set(url));
+    });
+  }
   readonly status = computed(() => setStatus(this.set()));
 
   /** By mode, then by stars. */

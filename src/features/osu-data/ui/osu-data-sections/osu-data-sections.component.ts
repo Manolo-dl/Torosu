@@ -1,14 +1,12 @@
+import { TranslocoPipe } from '@jsverse/transloco';
+import { BadgeComponent, CardComponent, AccordionComponent, AccordionItemComponent, AccordionHeadingDirective, AccordionContentDirective } from '@shared/ui';
 import { Component, computed, inject, ChangeDetectionStrategy } from '@angular/core';
 import { OsuReaderStore } from '@entities/osu-reader';
-import { TuiItem } from '@taiga-ui/cdk';
-import { TuiExpand } from '@taiga-ui/core';
-import { TuiAccordion, TuiBadge } from '@taiga-ui/kit';
-import { TuiCardLarge } from '@taiga-ui/layout';
 import { OsuFieldTreeComponent } from '../osu-field-tree/osu-field-tree.component';
 
 @Component({
     selector: 'app-osu-data-sections',
-    imports: [OsuFieldTreeComponent, TuiAccordion, TuiBadge, TuiCardLarge, TuiExpand, TuiItem],
+    imports: [TranslocoPipe, AccordionComponent, AccordionItemComponent, AccordionHeadingDirective, AccordionContentDirective, OsuFieldTreeComponent, BadgeComponent, CardComponent],
     templateUrl: './osu-data-sections.component.html',
     styleUrl: './osu-data-sections.component.less',
     changeDetection: ChangeDetectionStrategy.OnPush,

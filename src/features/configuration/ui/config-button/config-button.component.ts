@@ -1,25 +1,20 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { TuiButton } from '@taiga-ui/core';
+import { ButtonComponent } from '@shared/ui';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { ConfigurationStore } from '@entities/configuration';
 import { ConfigDrawerComponent } from '../config-drawer/config-drawer.component';
 
 /**
  * The settings button. The drawer and its form (Taiga kit, maskito, forms)
- * are only downloaded the first time it opens.
+ * are only downloaded the first time it opens: nothing here may name it
+ * outside @defer, or it would be in the app's first download. Once open, the
+ * drawer covers the button and closes (saving) by itself.
  */
 @Component({
   selector: 'app-config-button',
-  imports: [TuiButton, ConfigDrawerComponent, TranslocoPipe],
+  imports: [ButtonComponent, ConfigDrawerComponent, TranslocoPipe],
   template: `
-    <button
-      size="m"
-      appearance="flat"
-      iconStart="@tui.settings"
-      tuiIconButton
-      type="button"
-      (click)="toggle()"
-    >
+    <button appButton="ghost" icon="settings" iconOnly type="button" (click)="toggle()">
       {{ 'header.settings' | transloco }}
     </button>
 
@@ -35,10 +30,7 @@ export class ConfigButtonComponent {
   readonly open = signal(false);
 
   async toggle() {
-    if (this.open()) {
-      this.open.set(false);
-      return;
-    }
+    if (this.open()) return;
 
     // The drawer starts from the saved settings.
     await this.store.ensureLoaded();

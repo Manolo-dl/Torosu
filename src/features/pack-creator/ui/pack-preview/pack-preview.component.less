@@ -10,12 +10,116 @@ header {
   justify-content: space-between;
 }
 
-.viewport {
-  block-size: calc(100vh - 36rem);
-  min-block-size: 10rem;
-  .full-width-virtual-scroll();
+// ---- The pack at a glance ----
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(4.5rem, 1fr));
+  gap: var(--space-2);
 }
 
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: color-mix(in oklch, var(--text-1) 5%, transparent);
+  outline: none;
+
+  strong {
+    color: var(--text-1);
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    font-weight: var(--weight-black);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.2;
+  }
+
+  span {
+    color: var(--text-3);
+    font-size: var(--text-2xs);
+    font-weight: var(--weight-bold);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  &.parts {
+    background: var(--accent-soft);
+    cursor: help;
+
+    strong {
+      color: var(--accent-text);
+    }
+  }
+
+  .range {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: var(--text-sm);
+
+    .dash {
+      color: var(--text-3);
+      font-size: var(--text-sm);
+      text-transform: none;
+    }
+  }
+}
+
+// As tall as its diffs, up to what the window allows.
+.viewport {
+  .full-width-virtual-scroll();
+  max-block-size: max(12rem, calc(100vh - 40rem));
+}
+
+// ---- Nothing picked yet ----
+
 .empty {
-  .empty-state(2rem 1rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-6) var(--space-4);
+  text-align: center;
+
+  p {
+    margin: 0;
+    color: var(--text-2);
+    font-size: var(--text-sm);
+  }
+
+  .hint {
+    color: var(--text-3);
+    font-size: var(--text-xs);
+  }
+}
+
+.empty-icon {
+  display: grid;
+  place-items: center;
+  inline-size: 3.25rem;
+  block-size: 3.25rem;
+  margin-block-end: var(--space-1);
+  border-radius: var(--radius-lg);
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-size: 1.6rem;
+  animation: float 3s var(--ease-in-out) infinite;
+}
+
+@keyframes float {
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+/* Still with reduced motion or the animated backgrounds off, paused while osu! plays a map (OsuReaderStore). */
+:host-context([data-motion='reduced']) .empty-icon,
+:host-context([data-effects='off']) .empty-icon {
+  animation: none;
+}
+
+:host-context([data-playing='on']) .empty-icon {
+  animation-play-state: paused;
 }

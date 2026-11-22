@@ -108,6 +108,19 @@ pub enum Error {
     #[error("video processing failed: {detail}")]
     Video { detail: String },
 
+    // ── Replay analysis ─────────────────────────────────────────────────────
+    #[error("replays of converted maps can't be analysed, only those of osu!mania maps")]
+    ConvertReplay,
+
+    #[error("replays with Random can't be analysed: their notes are shuffled")]
+    RandomReplay,
+
+    #[error("{file} is not an osu!mania replay that can be read")]
+    ReplayUnreadable { file: String },
+
+    #[error("close osu! first: it keeps the collections in memory and writes collection.db over when it closes")]
+    OsuRunning,
+
     // ── App ─────────────────────────────────────────────────────────────────
     #[error("no update to install")]
     NoUpdate,
@@ -122,7 +135,7 @@ impl Error {
         "internal", "message", "osuFolderNotFound", "notOsuFolder", "osuDbCorrupted", "collectionDbRead",
         "collectionDbWrite", "noBeatmapSelected", "noSession", "outputFolderNotFound", "httpStatus", "setTooLarge",
         "createFolder", "readDiff", "nothingToConvert", "sameDifficulty", "convert", "maniaOnly", "lnTasksTogether", "unsupportedKeys",
-        "onePlayer", "noAudio", "video", "noUpdate",
+        "onePlayer", "noAudio", "video", "convertReplay", "randomReplay", "replayUnreadable", "osuRunning", "noUpdate",
     ];
 }
 
@@ -170,6 +183,10 @@ impl Error {
             Error::OnePlayer { layout } => ("onePlayer", params(json!({ "layout": layout }))),
             Error::NoAudio => ("noAudio", Map::new()),
             Error::Video { detail } => ("video", params(json!({ "detail": detail }))),
+            Error::ConvertReplay => ("convertReplay", Map::new()),
+            Error::RandomReplay => ("randomReplay", Map::new()),
+            Error::ReplayUnreadable { file } => ("replayUnreadable", params(json!({ "file": file }))),
+            Error::OsuRunning => ("osuRunning", Map::new()),
             Error::NoUpdate => ("noUpdate", Map::new()),
         }
     }
@@ -275,6 +292,9 @@ mod tests {
             Error::OnePlayer { layout: String::new() },
             Error::NoAudio,
             Error::Video { detail: String::new() },
+            Error::ConvertReplay,
+            Error::RandomReplay,
+            Error::ReplayUnreadable { file: String::new() },
             Error::NoUpdate,
             Error::Io(std::io::Error::other("x")),
             Error::Other(anyhow::anyhow!("x")),

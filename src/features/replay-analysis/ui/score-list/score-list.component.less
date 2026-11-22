@@ -1,0 +1,142 @@
+@import 'shared/styles/mixins';
+
+:host {
+  display: block;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.viewport {
+  .full-width-virtual-scroll();
+  // Its height is its rows' (set on it), up to this.
+  max-block-size: max(16rem, calc(100vh - 21rem));
+
+  // Above the charts (see the page): a few rows, not the whole window.
+  @media (max-width: 1280px) {
+    max-block-size: 16rem;
+  }
+}
+
+.item {
+  inline-size: 100%;
+  padding-block-end: 4px;
+}
+
+.score {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  inline-size: 100%;
+  block-size: 60px;
+  padding: 0.375rem 0.75rem 0.375rem 0.5rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: color-mix(in oklch, var(--text-1) 4%, transparent);
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition:
+    background var(--duration-2) var(--ease-out),
+    border-color var(--duration-2) var(--ease-out),
+    transform var(--duration-2) var(--ease-out);
+
+  &:hover:not(:disabled) {
+    background: color-mix(in oklch, var(--text-1) 8%, transparent);
+    transform: translateX(2px);
+  }
+
+  &.selected {
+    border-color: color-mix(in oklch, var(--accent) 45%, transparent);
+    background: var(--accent-soft);
+  }
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.5;
+  }
+}
+
+.titles {
+  flex: 1;
+  min-inline-size: 0;
+  display: flex;
+  flex-direction: column;
+
+  .title {
+    .ellipsis();
+    color: var(--text-1);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-bold);
+  }
+
+  .diff,
+  .date {
+    .ellipsis();
+    font: var(--tui-typography-body-xs);
+    color: var(--tui-text-secondary);
+  }
+
+  .date {
+    color: var(--tui-text-tertiary);
+  }
+}
+
+.side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+
+  .accuracy {
+    color: var(--text-1);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-bold);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .badges {
+    display: flex;
+    gap: 2px;
+  }
+}
+
+.empty {
+  .empty-state(2rem 0);
+}
+
+/* While the plays and osu!.db are read: rows the shape of a score. */
+.skeletons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  -webkit-mask-image: linear-gradient(#000 50%, transparent);
+  mask-image: linear-gradient(#000 50%, transparent);
+}
+
+.skeleton-score {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  block-size: 60px;
+  padding: 0 0.75rem;
+
+  .titles,
+  .side {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .titles {
+    flex: 1;
+  }
+
+  .side {
+    align-items: flex-end;
+  }
+}

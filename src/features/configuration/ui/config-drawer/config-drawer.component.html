@@ -1,59 +1,30 @@
-<tui-drawer *tuiPopup="open()">
-    <header>
-        <h2 tuiHeader="body-l">
-            <div tuiTitle>
-                {{ 'settings.title' | transloco }}
-                <div tuiSubtitle>{{ 'settings.subtitle' | transloco }}</div>
-            </div>
+<app-drawer
+    [open]="open()"
+    [autoClose]="false"
+    [heading]="'settings.title' | transloco"
+    [subtitle]="'settings.subtitle' | transloco"
+    (closeRequest)="close()"
+>
+    <span appDrawerStatus class="status" [class.saving]="saving()">
+        <app-icon [name]="saving() ? 'loader-circle' : 'cloud-check'" />
+        {{ (saving() ? 'settings.saving' : 'settings.autosave') | transloco }}
+    </span>
 
-            <div tuiAccesories>
-                <button
-                    size="m"
-                    appearance="icon"
-                    iconStart="@tui.x"
-                    tuiIconButton
-                    type="button"
-                    (click)="open.set(false)"
-                >
-                    {{ 'settings.close' | transloco }}
-                </button>
-            </div>
-        </h2>
-        <nav tuiNavigationNav>
-            <tui-tabs [(activeItemIndex)]="activeTab">
-                <button
-                    tuiTab
-                    type="button"
-                >
-                    {{ 'settings.tabs.general' | transloco }}
-                </button>
-                <button
-                    tuiTab
-                    type="button"
-                >
-                    {{ 'settings.tabs.downloader' | transloco }}
-                </button>
-                <button
-                    tuiTab
-                    type="button"
-                >
-                    {{ 'settings.tabs.packs' | transloco }}
-                </button>
-                <button
-                    tuiTab
-                    type="button"
-                >
-                    {{ 'settings.tabs.trainer' | transloco }}
-                </button>
-            </tui-tabs>
-        </nav>
-    </header>
+    <app-option-group
+        appDrawerSide
+        variant="nav"
+        class="sections"
+        [options]="tabs"
+        [active]="activeTab()"
+        (activeChange)="activeTab.set($event)"
+    />
 
     <div class="content">
         @switch (activeTab()) {
             @case (0) {
+                <!-- The language first: everything else reads in it. -->
                 <section>
-                    <h3 tuiTitle="s">{{ 'settings.general.language' | transloco }}</h3>
+                    <h3 appSectionTitle>{{ 'settings.general.language' | transloco }}</h3>
                     <app-option-group
                         [active]="languageIndex()"
                         [options]="languageOptions"
@@ -63,7 +34,7 @@
                 </section>
 
                 <section>
-                    <h3 tuiTitle="s">{{ 'settings.general.osu' | transloco }}</h3>
+                    <h3 appSectionTitle>{{ 'settings.general.osu' | transloco }}</h3>
                     <tui-textfield>
                         <label tuiLabel>{{ 'settings.general.osuPath' | transloco }}</label>
                         <input
@@ -73,10 +44,10 @@
                             (ngModelChange)="draft().osu_path = $event || undefined"
                         />
                         <button
-                            appearance="icon"
-                            iconStart="@tui.folder-open"
+                            appButton="ghost"
+                            iconOnly
+                            icon="@tui.folder-open"
                             size="xs"
-                            tuiIconButton
                             type="button"
                             (click)="pickOsuPath()"
                         >
@@ -89,7 +60,7 @@
                             <span tuiSubtitle>{{ 'settings.general.devModeHint' | transloco }}</span>
                         </span>
                         <input
-                            tuiSwitch
+                            appSwitch
                             type="checkbox"
                             [(ngModel)]="draft().dev_mode"
                         />
@@ -97,12 +68,12 @@
                 </section>
 
                 <section>
-                    <h3 tuiTitle="s">{{ 'settings.general.tools' | transloco }}</h3>
+                    <h3 appSectionTitle>{{ 'settings.general.tools' | transloco }}</h3>
                     @for (tool of tools; track tool.route) {
                         <label tuiCell>
                             <span tuiTitle>{{ tool.label | transloco }}</span>
                             <input
-                                tuiSwitch
+                                appSwitch
                                 type="checkbox"
                                 [ngModel]="isToolEnabled(tool.route)"
                                 (ngModelChange)="setToolEnabled(tool.route, $event)"
@@ -113,15 +84,23 @@
             }
 
             @case (1) {
+                <app-appearance-settings />
+            }
+
+            @case (2) {
+                <app-performance-settings />
+            }
+
+            @case (3) {
                 <section>
-                    <h3 tuiTitle="s">{{ 'settings.downloader.account' | transloco }}</h3>
+                    <h3 appSectionTitle>{{ 'settings.downloader.account' | transloco }}</h3>
                     <label tuiCell>
                         <span tuiTitle>
                             {{ 'settings.downloader.saveCookie' | transloco }}
                             <span tuiSubtitle>{{ 'settings.downloader.saveCookieHint' | transloco }}</span>
                         </span>
                         <input
-                            tuiSwitch
+                            appSwitch
                             type="checkbox"
                             [(ngModel)]="draft().downloader.save_session"
                         />
@@ -129,7 +108,7 @@
                 </section>
 
                 <section>
-                    <h3 tuiTitle="s">{{ 'settings.output' | transloco }}</h3>
+                    <h3 appSectionTitle>{{ 'settings.output' | transloco }}</h3>
                     <tui-textfield>
                         <label tuiLabel>{{ 'settings.downloader.outputPath' | transloco }}</label>
                         <input
@@ -139,10 +118,10 @@
                             (ngModelChange)="draft().downloader.output_path = $event || undefined"
                         />
                         <button
-                            appearance="icon"
-                            iconStart="@tui.folder-open"
+                            appButton="ghost"
+                            iconOnly
+                            icon="@tui.folder-open"
                             size="xs"
-                            tuiIconButton
                             type="button"
                             (click)="pickOutputPath()"
                         >
@@ -161,14 +140,14 @@
                 </section>
 
                 <section>
-                    <h3 tuiTitle="s">{{ 'settings.downloader.behaviour' | transloco }}</h3>
+                    <h3 appSectionTitle>{{ 'settings.downloader.behaviour' | transloco }}</h3>
                     <label tuiCell>
                         <span tuiTitle>
                             {{ 'settings.downloader.skipVideo' | transloco }}
                             <span tuiSubtitle>{{ 'settings.downloader.skipVideoHint' | transloco }}</span>
                         </span>
                         <input
-                            tuiSwitch
+                            appSwitch
                             type="checkbox"
                             [(ngModel)]="draft().downloader.skip_video"
                         />
@@ -179,7 +158,7 @@
                             <span tuiSubtitle>{{ 'settings.downloader.openFileHint' | transloco }}</span>
                         </span>
                         <input
-                            tuiSwitch
+                            appSwitch
                             type="checkbox"
                             [(ngModel)]="draft().open_file"
                         />
@@ -190,7 +169,7 @@
                             <span tuiSubtitle>{{ 'settings.downloader.loadLibraryHint' | transloco }}</span>
                         </span>
                         <input
-                            tuiSwitch
+                            appSwitch
                             type="checkbox"
                             [(ngModel)]="draft().downloader.load_library"
                         />
@@ -201,7 +180,7 @@
                             <span tuiSubtitle>{{ 'settings.downloader.notifyHint' | transloco }}</span>
                         </span>
                         <input
-                            tuiSwitch
+                            appSwitch
                             type="checkbox"
                             [(ngModel)]="draft().downloader.notify"
                         />
@@ -212,7 +191,7 @@
                             <span tuiSubtitle>{{ 'settings.downloader.errorFileHint' | transloco }}</span>
                         </span>
                         <input
-                            tuiSwitch
+                            appSwitch
                             type="checkbox"
                             [(ngModel)]="draft().downloader.error_file"
                         />
@@ -220,16 +199,16 @@
                 </section>
             }
 
-            @case (2) {
+            @case (4) {
                 <section>
-                    <h3 tuiTitle="s">{{ 'settings.packs.createPacks' | transloco }}</h3>
+                    <h3 appSectionTitle>{{ 'settings.packs.createPacks' | transloco }}</h3>
                     <label tuiCell>
                         <span tuiTitle>
                             {{ 'settings.packs.keepBackgrounds' | transloco }}
                             <span tuiSubtitle>{{ 'settings.packs.keepBackgroundsHint' | transloco }}</span>
                         </span>
                         <input
-                            tuiSwitch
+                            appSwitch
                             type="checkbox"
                             [(ngModel)]="draft().packs.keep_background"
                         />
@@ -246,7 +225,7 @@
                 </section>
 
                 <section>
-                    <h3 tuiTitle="s">{{ 'settings.difficultyName' | transloco }}</h3>
+                    <h3 appSectionTitle>{{ 'settings.difficultyName' | transloco }}</h3>
                     <app-name-format-field
                         exampleCommand="pack_name_example"
                         [fields]="packNameFields"
@@ -256,16 +235,16 @@
                 </section>
             }
 
-            @case (3) {
+            @case (5) {
                 <section>
-                    <h3 tuiTitle="s">{{ 'settings.trainer.quality' | transloco }}</h3>
+                    <h3 appSectionTitle>{{ 'settings.trainer.quality' | transloco }}</h3>
                     <label tuiCell>
                         <span tuiTitle>
                             {{ 'settings.trainer.hqAudio' | transloco }}
                             <span tuiSubtitle>{{ 'settings.trainer.hqAudioHint' | transloco }}</span>
                         </span>
                         <input
-                            tuiSwitch
+                            appSwitch
                             type="checkbox"
                             [(ngModel)]="draft().trainer.high_quality_audio"
                         />
@@ -276,7 +255,7 @@
                             <span tuiSubtitle>{{ 'settings.trainer.hqVideoHint' | transloco }}</span>
                         </span>
                         <input
-                            tuiSwitch
+                            appSwitch
                             type="checkbox"
                             [(ngModel)]="draft().trainer.high_quality_video"
                         />
@@ -284,7 +263,7 @@
                 </section>
 
                 <section>
-                    <h3 tuiTitle="s">{{ 'settings.trainer.skill' | transloco }}</h3>
+                    <h3 appSectionTitle>{{ 'settings.trainer.skill' | transloco }}</h3>
                     <app-option-group
                         [active]="skillDisplayIndex()"
                         [options]="skillDisplayOptions"
@@ -297,7 +276,7 @@
                             <span tuiSubtitle>{{ 'settings.trainer.includeModsHint' | transloco }}</span>
                         </span>
                         <input
-                            tuiSwitch
+                            appSwitch
                             type="checkbox"
                             [disabled]="draft().trainer.skill_display === 'none'"
                             [(ngModel)]="draft().trainer.include_mods"
@@ -306,14 +285,14 @@
                 </section>
 
                 <section>
-                    <h3 tuiTitle="s">{{ 'settings.trainer.rateChange' | transloco }}</h3>
+                    <h3 appSectionTitle>{{ 'settings.trainer.rateChange' | transloco }}</h3>
                     <label tuiCell>
                         <span tuiTitle>
                             {{ 'settings.trainer.autoPitch' | transloco }}
                             <span tuiSubtitle>{{ 'settings.trainer.autoPitchHint' | transloco }}</span>
                         </span>
                         <input
-                            tuiSwitch
+                            appSwitch
                             type="checkbox"
                             [(ngModel)]="draft().trainer.auto_pitch"
                         />
@@ -321,14 +300,14 @@
                 </section>
 
                 <section>
-                    <h3 tuiTitle="s">{{ 'settings.output' | transloco }}</h3>
+                    <h3 appSectionTitle>{{ 'settings.output' | transloco }}</h3>
                     <label tuiCell>
                         <span tuiTitle>
                             {{ 'settings.trainer.openOsz' | transloco }}
                             <span tuiSubtitle>{{ 'settings.trainer.openOszHint' | transloco }}</span>
                         </span>
                         <input
-                            tuiSwitch
+                            appSwitch
                             type="checkbox"
                             [(ngModel)]="draft().trainer.open_osz"
                         />
@@ -336,7 +315,7 @@
                 </section>
 
                 <section>
-                    <h3 tuiTitle="s">{{ 'settings.trainer.shortcuts' | transloco }}</h3>
+                    <h3 appSectionTitle>{{ 'settings.trainer.shortcuts' | transloco }}</h3>
                     <label tuiCell>
                         <span tuiTitle>
                             {{ 'settings.trainer.runShortcuts' | transloco }}
@@ -347,7 +326,7 @@
                             }
                         </span>
                         <input
-                            tuiSwitch
+                            appSwitch
                             type="checkbox"
                             [disabled]="platform.wayland() === true"
                             [(ngModel)]="draft().trainer.shortcuts_enabled"
@@ -356,7 +335,7 @@
                 </section>
 
                 <section>
-                    <h3 tuiTitle="s">{{ 'settings.difficultyName' | transloco }}</h3>
+                    <h3 appSectionTitle>{{ 'settings.difficultyName' | transloco }}</h3>
                     <app-name-format-field
                         exampleCommand="trainer_name_example"
                         [fields]="trainerNameFields"
@@ -365,26 +344,37 @@
                     />
                 </section>
             }
+
+            @case (6) {
+                <section>
+                    <h3 appSectionTitle>{{ 'settings.replays.analysis' | transloco }}</h3>
+                    <label tuiCell>
+                        <span tuiTitle>
+                            {{ 'replays.follow' | transloco }}
+                            <span tuiSubtitle>{{ 'replays.followHint' | transloco }}</span>
+                        </span>
+                        <input appSwitch type="checkbox" [(ngModel)]="draft().replays.follow" />
+                    </label>
+                </section>
+
+                <section>
+                    <h3 appSectionTitle>{{ 'settings.replays.charts' | transloco }}</h3>
+                    <label tuiCell>
+                        <span tuiTitle>{{ 'replays.keys.title' | transloco }}</span>
+                        <input appSwitch type="checkbox" [(ngModel)]="draft().replays.key_chart" />
+                    </label>
+                    <label tuiCell>
+                        <span tuiTitle>{{ 'replays.histogram.title' | transloco }}</span>
+                        <input appSwitch type="checkbox" [(ngModel)]="draft().replays.histogram" />
+                    </label>
+                    <label tuiCell>
+                        <span tuiTitle>{{ 'replays.timeline.title' | transloco }}</span>
+                        <input appSwitch type="checkbox" [(ngModel)]="draft().replays.timeline" />
+                    </label>
+                    <span class="hint">{{ 'settings.replays.chartsHint' | transloco }}</span>
+                </section>
+            }
         }
     </div>
 
-    <footer>
-        <button
-            appearance="secondary"
-            size="m"
-            tuiButton
-            type="button"
-            (click)="open.set(false)"
-        >
-            {{ 'settings.cancel' | transloco }}
-        </button>
-        <button
-            size="m"
-            tuiButton
-            type="button"
-            (click)="save()"
-        >
-            {{ 'settings.save' | transloco }}
-        </button>
-    </footer>
-</tui-drawer>
+</app-drawer>

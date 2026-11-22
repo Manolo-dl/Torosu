@@ -1,17 +1,52 @@
-<div appearance="floating" tuiCardLarge="compact">
+<div appCard>
   <header>
     <h3 tuiTitle>{{ 'packs.preview' | transloco }}</h3>
-    <span appearance="info" tuiBadge>{{ 'packs.diffs' | transloco: { count: store.selectedDiffs().length } }}</span>
   </header>
 
-  @if (store.selectedDiffs().length === 0) {
-    <p class="empty">{{ 'packs.empty' | transloco }}</p>
+  @let count = store.selectedDiffs().length;
+  @if (count === 0) {
+    <div class="empty">
+      <span class="empty-icon"><app-icon name="package-open" /></span>
+      <p>{{ 'packs.empty' | transloco }}</p>
+      <span class="hint">{{ 'packs.emptyHint' | transloco }}</span>
+    </div>
   } @else {
+    <!-- The pack at a glance. -->
+    <div class="stats">
+      <div class="stat">
+        <strong [appCountUp]="count"></strong>
+        <span>{{ 'packs.stats.diffs' | transloco }}</span>
+      </div>
+      <div class="stat">
+        <strong [appCountUp]="store.setCount()"></strong>
+        <span>{{ 'packs.stats.sets' | transloco }}</span>
+      </div>
+      @if (store.packCount() > 1) {
+        <div class="stat parts" tabindex="0" [appTooltip]="'packs.stats.packsHint' | transloco">
+          <strong>{{ store.packCount() }}</strong>
+          <span>{{ 'packs.stats.packs' | transloco }}</span>
+        </div>
+      }
+      @if (stars(); as range) {
+        <div class="stat">
+          <strong class="range">
+            <app-star-badge size="s" [stars]="range.low" />
+            @if (range.high !== range.low) {
+              <span class="dash">–</span>
+              <app-star-badge size="s" [stars]="range.high" />
+            }
+          </strong>
+          <span>{{ 'packs.stats.stars' | transloco }}</span>
+        </div>
+      }
+    </div>
+
     <!-- itemSize must match the fixed height of app-pack-preview-card -->
     <cdk-virtual-scroll-viewport
-      itemSize="36"
+      itemSize="66"
       tuiScrollRef
       class="viewport"
+      [style.height.px]="count * 66"
     >
       <tui-scroll-controls />
       <app-pack-preview-card
