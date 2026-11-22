@@ -1,5 +1,6 @@
 import { afterNextRender, ChangeDetectionStrategy, Component, DestroyRef, effect, ElementRef, inject, input, viewChild } from '@angular/core';
 import { AppearanceStore } from '../../stores/appearance.store';
+import { OsuPlayState } from '../../stores/osu-play-state';
 
 interface Triangle {
     /** Across the box, 0 to 1. */
@@ -61,6 +62,7 @@ export class TrianglesComponent {
 
     private readonly canvas = viewChild.required<ElementRef<HTMLCanvasElement>>('canvas');
     private readonly appearance = inject(AppearanceStore);
+    private readonly playState = inject(OsuPlayState);
     private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
     private triangles: Triangle[] = [];
@@ -93,6 +95,12 @@ export class TrianglesComponent {
             });
         });
 
+        // Paused while osu! plays a map, on again after it.
+        effect(() => {
+            this.playState.inPlay();
+            this.schedule();
+        });
+
         // The palette's accents, again when the palette or the theme changes.
         effect(() => {
             this.appearance.palette();
@@ -108,9 +116,13 @@ export class TrianglesComponent {
         });
     }
 
-    /** Drawn once and left still: with reduced motion, or the animated backgrounds off. */
+    /**
+     * Drawn once and left still: with reduced motion, or the animated
+     * backgrounds off. Paused as they are while osu! plays a map.
+     */
     private get still(): boolean {
         return (
+            this.playState.inPlay() ||
             !this.appearance.effects() ||
             this.appearance.reducedMotion() ||
             matchMedia('(prefers-reduced-motion: reduce)').matches

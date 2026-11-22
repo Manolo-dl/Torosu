@@ -5,6 +5,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { computed, inject } from "@angular/core";
 import { NotifyService } from '@shared/services';
+import { OsuPlayState } from '@shared/stores';
 import { TranslocoService } from '@jsverse/transloco';
 import { save } from '@tauri-apps/plugin-dialog';
 
@@ -54,7 +55,7 @@ export const OsuReaderStore = signalStore(
         played: computed(() => store.data()?.played ?? null),
     })),
 
-    withMethods((store, notify = inject(NotifyService), transloco = inject(TranslocoService), language = inject(LanguageService)) => {
+    withMethods((store, notify = inject(NotifyService), transloco = inject(TranslocoService), language = inject(LanguageService), playState = inject(OsuPlayState)) => {
         // Path of the background being shown (or loading), to skip reloading it
         // and to drop responses that arrive late.
         let backgroundPath: string | null = null;
@@ -86,14 +87,9 @@ export const OsuReaderStore = signalStore(
             if (previous) URL.revokeObjectURL(previous);
         }
 
-        /**
-         * data-playing on <html> while osu! plays a map: the looping ornaments
-         * (the home's orbit and glow, the invite's modes...) stand still then,
-         * as no one looks at Torosu and osu! wants the CPU (each costs a tenth
-         * of a core while it moves).
-         */
+        /** While osu! plays a map the looping ornaments stand still (see OsuPlayState). */
         function setInPlay(inPlay: boolean) {
-            document.documentElement.dataset['playing'] = inPlay ? 'on' : 'off';
+            playState.inPlay.set(inPlay);
         }
 
         function setBeatmap(data: SelectedBeatmap | null) {
