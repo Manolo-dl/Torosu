@@ -1,4 +1,5 @@
 import { inject, Injectable } from '@angular/core';
+import { FramePace } from '@shared/services';
 import { OsuAudioService } from './osu-audio.service';
 
 /** What the music is doing, this frame. */
@@ -22,14 +23,6 @@ const FALL = 7;
 const BEAT_FALL = 5;
 /** While nothing plays and everything rests, how often to look again. */
 const IDLE_MS = 300;
-/**
- * Frames a second at the low quality, or while another window is active
- * (osu!, mostly): every frame costs WebKit the same whatever moves in it,
- * about a fifth of a core at 60 a second between the page and the window.
- * Both: fewer still.
- */
-const REDUCED_FPS = 30;
-const LEAST_FPS = 20;
 
 /**
  * One loop for everything that moves with osu!'s music (the bars, the logo,
@@ -40,6 +33,7 @@ const LEAST_FPS = 20;
 @Injectable({ providedIn: 'root' })
 export class MusicService {
     private readonly audio = inject(OsuAudioService);
+    private readonly pace = inject(FramePace);
     private readonly listeners = new Set<MusicListener>();
     private readonly music: Music = { levels: new Float32Array(MUSIC_BANDS), energy: 0, beat: 0 };
     /** The bass, averaged slowly: a beat is the bass going well over it. */
@@ -47,22 +41,11 @@ export class MusicService {
     private frame = 0;
     private idle: ReturnType<typeof setTimeout> | undefined;
     private last = 0;
-    /** When the last frame was drawn, to keep to the rate. */
-    private drawn = 0;
-    /** The low quality setting: fewer frames. */
-    lowQuality = false;
 
     constructor() {
         document.addEventListener('visibilitychange', () => this.wake());
     }
 
-    /** The least time between two frames drawn, in ms; 0 for every frame. */
-    private get frameMs(): number {
-        // Wayland doesn't tell a window it is out of sight, but it does tell it lost the focus.
-        const reduced = this.lowQuality || !document.hasFocus();
-        if (!reduced) return 0;
-        return 1000 / (this.lowQuality && !document.hasFocus() ? LEAST_FPS : REDUCED_FPS);
-    }
 
     /** Called every frame with the music; returns a function that stops it. */
     listen(listener: MusicListener): () => void {
@@ -88,14 +71,13 @@ export class MusicService {
     }
 
     private tick(now: number) {
-        // Fewer frames at the low quality or without the focus: skipped,
-        // nothing changes on the page and WebKit draws nothing. A little
-        // early is on time: frames don't come exactly every 1/60 s.
-        if (now - this.drawn < this.frameMs - 4) {
+        // Fewer frames at the low quality or without the focus, the same
+        // ones as the canvases and the ornaments (FramePace): on those
+        // skipped nothing changes and WebKit draws nothing.
+        if (!this.pace.isFrame(now)) {
             this.frame = requestAnimationFrame(next => this.tick(next));
             return;
         }
-        this.drawn = now;
 
         const seconds = Math.min((now - this.last) / 1000, 0.1);
         this.last = now;

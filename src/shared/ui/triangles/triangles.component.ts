@@ -1,6 +1,7 @@
 import { afterNextRender, ChangeDetectionStrategy, Component, DestroyRef, effect, ElementRef, inject, input, viewChild } from '@angular/core';
 import { AppearanceStore } from '../../stores/appearance.store';
 import { OsuPlayState } from '../../stores/osu-play-state';
+import { FramePace } from '../../services/frame-pace.service';
 
 interface Triangle {
     /** Across the box, 0 to 1. */
@@ -63,6 +64,7 @@ export class TrianglesComponent {
     private readonly canvas = viewChild.required<ElementRef<HTMLCanvasElement>>('canvas');
     private readonly appearance = inject(AppearanceStore);
     private readonly playState = inject(OsuPlayState);
+    private readonly pace = inject(FramePace);
     private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
     private triangles: Triangle[] = [];
@@ -129,7 +131,7 @@ export class TrianglesComponent {
         );
     }
 
-    /** The low quality: half as many, at 30 frames a second, at one pixel per CSS pixel. */
+    /** The low quality: half as many, at one pixel per CSS pixel (and fewer frames: FramePace). */
     private get low(): boolean {
         return this.appearance.quality() === 'low';
     }
@@ -181,12 +183,9 @@ export class TrianglesComponent {
         this.frame = requestAnimationFrame(now => this.tick(now));
     }
 
-    private skipped = false;
-
     private tick(now: number) {
-        // Every other frame only, at the low quality.
-        this.skipped = this.low && !this.skipped;
-        if (this.skipped) {
+        // Fewer frames at the low quality or without the focus, the same ones as the rest (FramePace).
+        if (!this.pace.isFrame(now)) {
             this.frame = requestAnimationFrame(next => this.tick(next));
             return;
         }
