@@ -7,7 +7,7 @@
 <p align="center">All the tools you would need for <strong>osu! stable</strong> in the same place.</p>
 
 <p align="center">
-  <img src="docs/trainer.png" alt="The Trainer: the map selected in osu! with its dan, and two rate changes with the dan each one would have" width="800" />
+  <img src="docs/home.png" alt="Torosu's home: the map selected in osu!, the seven tools, and bars following osu!'s music across the title bar" width="720" />
 </p>
 
 ---
@@ -15,8 +15,8 @@
 ## Features
 
 - **Downloader**: download beatmap sets from a list of links straight into your Songs folder, skipping the ones you already have.
-- **Export Collections**: save your collections as beatmap links, or as a list to import on another install.
-- **Import Collections**: bring collections from a file into osu!, merged with the ones you already have.
+- **Export Collections**: save your collections to a file or copy them, as set links to download them, or as each map's MD5 to import them in Torosu with the same diffs (also the maps you don't have installed).
+- **Import Collections**: bring collections from a file or pasted text into osu!, merged with the ones you already have. Pick which ones, and see what each adds before importing. osu! has to be closed: it keeps the collections in memory and writes them over when it closes. The `collection.db` from before is kept as `collection.db.torosu-backup`.
 - **Export Library**: filter your library by mode, status, stars, length and more, and export it as beatmap links.
 - **Create Packs**: put diffs from any sets, rates and unsubmitted maps too, into a pack of your own, with the diffs named the way you choose.
 - **Trainer**: change the rate, the stats, the long notes or the key count of the map selected in osu!. It reads the map straight from the game, so there is nothing to open by hand. Make several versions in one go, each with its own changes (1.1x, 1.2x, 1.3x and 1.4x, say), and keep the ones you use as presets, which can also run with a keyboard shortcut while you play (not on Wayland).
@@ -29,13 +29,19 @@
   - **Judgements**: since 2026 osu! saves with each replay when it gave each judgement, so each note has the judgement the game gave it. Older replays are judged by Torosu as stable does, which a few long notes may not match.
   - Replays of converts and of plays with Random can't be analysed yet.
 
+### Look and feel
+
+- **Theme**: dark or light, or as your system is (the default), in five palettes and four fonts.
+- **osu!'s music**: bars follow the music osu! is playing across the title bar, and the logo beats with it.
+- **Light on your computer**: the animations stand still while you play a map in osu!, draw fewer frames while another window is active, and can be turned down or off under Performance in the settings.
+
 Torosu is in English, Spanish, French, Japanese, Korean and Simplified Chinese: choose the language in the settings, under General.
 
 Torosu is made for **osu! stable**. osu!lazer is not supported: the tools read and write osu! stable's files.
 
 ## Install
 
-Download the file for your system from the [latest release](https://github.com/Manolo-dl/Torosu/releases/latest). `<v>` is the version, for example `1.0.0`.
+Download the file for your system from the [latest release](https://github.com/Manolo-dl/Torosu/releases/latest). `<v>` is the version, for example `2.0.0`.
 
 ### Windows
 
@@ -61,7 +67,7 @@ osu! is expected to run under Wine, for example with [osu-winello](https://githu
 
 #### Reading osu!'s memory
 
-The Trainer reads the selected map from osu!'s memory, and Replay Analysis reads it to notice when a play ends. Most distributions only let a program read another one's memory when it has the permission for it. If the Trainer shows *Can't read osu!*, give it to Torosu once:
+The Trainer and the home read the selected map from osu!'s memory, the title bar the music osu! is playing, and Replay Analysis reads it to notice when a play ends. Most distributions only let a program read another one's memory when it has the permission for it. If the Trainer shows *Can't read osu!*, give it to Torosu once:
 
 ```sh
 sudo setcap cap_sys_ptrace=eip /usr/bin/torosu
@@ -77,7 +83,7 @@ echo 0 | sudo tee /proc/sys/kernel/yama/ptrace_scope
 
 ### Updates
 
-Torosu looks for a new version when it starts. When there is one, an icon shows up in the header: open it and choose **Update and restart**. The Windows installer, the AppImage, the `.deb` and the `.rpm` update themselves; otherwise Torosu links to the releases page.
+Torosu looks for a new version when it starts. When there is one, a button shows up in the header: open it and choose **Update and restart**. The Windows installer, the AppImage, the `.deb` and the `.rpm` update themselves; otherwise Torosu links to the releases page. The AppImage also says where its updates are, for AppImageUpdate and the like.
 
 ### Coming from osu-tools
 
@@ -85,7 +91,7 @@ Torosu is the new name of osu-tools, and 1.0.0 installs as a new app: uninstall 
 
 ## First start
 
-Torosu looks for your osu! folder: the one of the running osu!, or the usual install folders. If it can't find it, it asks for it: choose the folder that has `osu!.db`. You can change it later in the settings (the gear in the header), where you can also choose the language, turn tools off, set up the downloader and the packs, and save the osu! session cookie between sessions. The trainer's settings choose how the new diffs are named, the quality of the audio and video it makes, whether each `.osz` opens in osu! once made, what it shows of each map's difficulty (dan, MSD, both or none), and its keyboard shortcuts.
+Torosu looks for your osu! folder: the one of the running osu!, or the usual install folders. If it can't find it, it asks for it: choose the folder that has `osu!.db`. You can change it later in the settings (the gear in the header), where you can also choose the language, the theme, palette and font, how much moves (Performance), turn tools off, set up the downloader and the packs, and save the osu! session cookie between sessions. The trainer's settings choose how the new diffs are named, the quality of the audio and video it makes, whether each `.osz` opens in osu! once made, what it shows of each map's difficulty (dan, MSD, both or none), and its keyboard shortcuts.
 
 ## Building from source
 
