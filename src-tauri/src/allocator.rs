@@ -33,10 +33,25 @@ pub fn give_memory_back() {
 #[cfg(test)]
 mod tests {
     /// Large blocks freed on other threads are given back: what was kept
-    /// before the threshold was fixed.
+    /// before the threshold was fixed. Measured in a process of its own
+    /// (`measure_in_a_process_of_its_own`): the other tests, running at the
+    /// same time, take memory too.
     #[cfg(all(target_os = "linux", target_env = "gnu"))]
     #[test]
     fn large_blocks_freed_on_threads_are_given_back() {
+        let output = std::process::Command::new(std::env::current_exe().unwrap())
+            .args(["--exact", "allocator::tests::measure_in_a_process_of_its_own", "--ignored", "--nocapture", "--test-threads=1"])
+            .output()
+            .unwrap();
+        let printed = String::from_utf8_lossy(&output.stdout) + String::from_utf8_lossy(&output.stderr);
+        assert!(output.status.success() && printed.contains("1 passed"), "{printed}");
+    }
+
+    /// Run by `large_blocks_freed_on_threads_are_given_back`, alone.
+    #[cfg(all(target_os = "linux", target_env = "gnu"))]
+    #[test]
+    #[ignore = "run alone by large_blocks_freed_on_threads_are_given_back"]
+    fn measure_in_a_process_of_its_own() {
         fn anonymous_mb() -> u64 {
             let status = std::fs::read_to_string("/proc/self/status").unwrap();
             let line = status.lines().find(|l| l.starts_with("RssAnon:")).unwrap();
