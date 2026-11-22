@@ -20,86 +20,87 @@ pub struct DecodedAudio {
     pub channels: usize,
 }
 
-pub fn decode_audio(path: &Path) -> Result<DecodedAudio> {
-    let file = File::open(path)?;
-    let mss = MediaSourceStream::new(Box::new(file), Default::default());
+/// An audio file decoded a packet at a time, so that what is kept of it can
+/// be made as it comes (see `read_song_samples`) instead of from all of it.
+pub struct PacketDecoder {
+    format: Box<dyn symphonia::core::formats::FormatReader>,
+    decoder: Box<dyn symphonia::core::codecs::audio::AudioDecoder>,
+    track_id: u32,
+    pub sample_rate: u32,
+    pub channels: usize,
+    /// The samples of the last packet, interleaved; reused from one to the next.
+    samples: Vec<f32>,
+    packets: usize,
+    decoded: usize,
+}
 
-    let mut hint = Hint::new();
-    if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
-        hint.with_extension(ext);
-    }
+impl PacketDecoder {
+    pub fn open(path: &Path) -> Result<Self> {
+        let file = File::open(path)?;
+        let mss = MediaSourceStream::new(Box::new(file), Default::default());
 
-    let fmt_opts: FormatOptions = Default::default();
-    let meta_opts: MetadataOptions = Default::default();
-
-    let mut format = symphonia::default::get_probe()
-        .probe(&hint, mss, fmt_opts, meta_opts)?;
-
-    let (track_id, audio_params) = format
-        .tracks()
-        .iter()
-        .find_map(|t| {
-            if let Some(CodecParameters::Audio(params)) = &t.codec_params {
-                Some((t.id, params.clone()))
-            } else {
-                None
-            }
-        })
-        .ok_or(crate::error::Error::NoAudio)?;
-
-    let sample_rate = audio_params.sample_rate.unwrap_or(44100);
-    let channels = audio_params
-        .channels
-        .as_ref()
-        .map(|c| c.count())
-        .unwrap_or(2);
-
-    let dec_opts: AudioDecoderOptions = Default::default();
-    let mut decoder = symphonia::default::get_codecs()
-        .make_audio_decoder(&audio_params, &dec_opts)?;
-
-    let mut samples: Vec<f32> = Vec::new();
-    let mut packet_count = 0;
-    let mut decoded_count = 0;
-
-    // Reused across packets: copy_to_vec_interleaved resizes, so it overwrites
-    // the contents while keeping the already reserved capacity.
-    let mut packet_samples: Vec<f32> = Vec::new();
-
-    loop {
-        let packet = match format.next_packet()? {
-            Some(packet) => packet,
-            None => break,
-        };
-        packet_count += 1;
-
-        if packet.track_id != track_id {
-            continue;
+        let mut hint = Hint::new();
+        if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
+            hint.with_extension(ext);
         }
 
-        match decoder.decode(&packet) {
-            Ok(decoded) => {
-                decoded_count += 1;
-                decoded.copy_to_vec_interleaved::<f32>(&mut packet_samples);
-                samples.extend_from_slice(&packet_samples);
-            }
-            Err(e) => {
-                log::warn!("decode error on packet: {:?}", e);
+        let fmt_opts: FormatOptions = Default::default();
+        let meta_opts: MetadataOptions = Default::default();
+        let format = symphonia::default::get_probe().probe(&hint, mss, fmt_opts, meta_opts)?;
+
+        let (track_id, audio_params) = format
+            .tracks()
+            .iter()
+            .find_map(|t| {
+                if let Some(CodecParameters::Audio(params)) = &t.codec_params {
+                    Some((t.id, params.clone()))
+                } else {
+                    None
+                }
+            })
+            .ok_or(crate::error::Error::NoAudio)?;
+
+        let sample_rate = audio_params.sample_rate.unwrap_or(44100);
+        let channels = audio_params.channels.as_ref().map(|c| c.count()).unwrap_or(2);
+
+        let dec_opts: AudioDecoderOptions = Default::default();
+        let decoder = symphonia::default::get_codecs().make_audio_decoder(&audio_params, &dec_opts)?;
+
+        Ok(Self { format, decoder, track_id, sample_rate, channels, samples: Vec::new(), packets: 0, decoded: 0 })
+    }
+
+    /// The samples of the next packet of the track, interleaved; `None` at the
+    /// end. A packet that fails to decode is skipped.
+    pub fn next_samples(&mut self) -> Result<Option<&[f32]>> {
+        loop {
+            let Some(packet) = self.format.next_packet()? else {
+                log::debug!("decoding finished: {} packets read, {} decoded ok", self.packets, self.decoded);
+                return Ok(None);
+            };
+            self.packets += 1;
+            if packet.track_id != self.track_id {
                 continue;
             }
+            match self.decoder.decode(&packet) {
+                Ok(decoded) => {
+                    self.decoded += 1;
+                    // Overwrites the buffer, keeping the capacity it reserved.
+                    decoded.copy_to_vec_interleaved::<f32>(&mut self.samples);
+                    return Ok(Some(&self.samples));
+                }
+                Err(e) => log::warn!("decode error on packet: {:?}", e),
+            }
         }
     }
+}
 
-    log::debug!(
-        "decode_audio finished: {} packets read, {} decoded ok, {} total samples",
-        packet_count, decoded_count, samples.len()
-    );
-
-    Ok(DecodedAudio {
-        samples,
-        sample_rate,
-        channels,
-    })
+pub fn decode_audio(path: &Path) -> Result<DecodedAudio> {
+    let mut decoder = PacketDecoder::open(path)?;
+    let mut samples: Vec<f32> = Vec::new();
+    while let Some(packet) = decoder.next_samples()? {
+        samples.extend_from_slice(packet);
+    }
+    Ok(DecodedAudio { samples, sample_rate: decoder.sample_rate, channels: decoder.channels })
 }
 
 /// Frames pushed into SoundTouch before draining its output.
