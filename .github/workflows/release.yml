@@ -69,6 +69,11 @@ jobs:
           # Where the AppImage's updates are, for AppImageUpdate and the like:
           # linuxdeploy embeds it and writes the .zsync next to the AppImage.
           LDAI_UPDATE_INFORMATION: gh-releases-zsync|Manolo-dl|Torosu|latest|torosu_*_amd64.AppImage.zsync
+          # Windows: soundtouch-ffi makes its bindings with bindgen, whose
+          # libclang only reads the headers (MSVC builds SoundTouch). Visual
+          # Studio 18's standard library refuses a Clang older than 22 there
+          # (STL1000), and the runner's is older: its own switch lets it be.
+          BINDGEN_EXTRA_CLANG_ARGS: ${{ matrix.platform == 'windows-latest' && '-D_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH' || '' }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: Torosu ${{ github.ref_name }}
