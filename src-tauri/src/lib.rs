@@ -27,10 +27,16 @@ pub fn wayland_session() -> bool {
 /// Whether NVIDIA's own driver is loaded in a version before 555, the first
 /// with explicit sync, which WebKitGTK's DMABUF renderer needs (see `main`).
 pub fn nvidia_without_explicit_sync() -> bool {
-    std::fs::read_to_string("/proc/driver/nvidia/version")
-        .ok()
-        .and_then(|text| nvidia_major_version(&text))
-        .is_some_and(|major| major < 555)
+    nvidia_driver_major().is_some_and(|major| major < 555)
+}
+
+/// Whether NVIDIA's own driver is loaded in version 555 or later (see `main`).
+pub fn nvidia_with_explicit_sync() -> bool {
+    nvidia_driver_major().is_some_and(|major| major >= 555)
+}
+
+fn nvidia_driver_major() -> Option<u32> {
+    std::fs::read_to_string("/proc/driver/nvidia/version").ok().and_then(|text| nvidia_major_version(&text))
 }
 
 /// The major version in /proc/driver/nvidia/version: "NVRM version: NVIDIA
